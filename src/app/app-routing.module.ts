@@ -20,6 +20,6 @@ const routes: Routes = [
 @NgModule({
   imports: [RouterModule.forRoot(routes)],
   exports: [RouterModule],
-  providers: [{ provide: APP_BASE_HREF, useValue: "/agora-gestion-personas/" }],
+  providers: [{ provide: APP_BASE_HREF, useValue: "/gestion-proveedor" }],
 })
 export class AppRoutingModule {}
