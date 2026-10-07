@@ -1,3 +1,5 @@
+@use 'src/app/shared/styles/tokens' as t;
+
 :host {
   display: block;
   --agora-page-header-offset: 0;
@@ -7,7 +9,7 @@
   width: min(100% - 3rem, 86.25rem);
   margin: 0 auto;
   padding: 2rem 0 6rem;
-  color: #251819;
+  color: var(--agora-text);
 }
 
 .breadcrumb {
@@ -107,7 +109,7 @@
 }
 
 
-@media (max-width: 40rem) {
+@media (max-width: t.$bp-sm) {
 
   .contenedor-pagina {
     width: min(100% - 1.5rem, 80rem);

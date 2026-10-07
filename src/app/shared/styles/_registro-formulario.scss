@@ -1,3 +1,5 @@
+@use 'src/app/shared/styles/tokens' as t;
+
 @mixin entrada($selector) {
 	#{$selector} {
 		animation: aparecer-desde-arriba 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -40,7 +42,7 @@
 		flex-direction: column;
 		gap: 0.35rem;
 		color: var(--agora-text);
-		font-size: 0.6875rem;
+		font-size: t.$fuente-xs;
 		font-weight: 700;
 		line-height: 1.3;
 		text-transform: uppercase;
@@ -48,7 +50,7 @@
 
 	.campo b,
 	:is(.opciones, .responsabilidades) b {
-		color: #ba1a1a;
+		color: var(--agora-error);
 	}
 
 	.campo :is(input, select) {
@@ -57,38 +59,38 @@
 		min-height: 2.5rem;
 		padding: 0.625rem 0.75rem;
 		border: 1px solid transparent;
-		border-radius: 0.5rem;
-		background: #fff8f7;
+		border-radius: t.$radio-md;
+		background: var(--agora-background);
 		color: var(--agora-text);
 		font: inherit;
-		font-size: 0.875rem;
+		font-size: t.$fuente-lg;
 		font-weight: 500;
 		text-transform: none;
-		box-shadow: 0 0.125rem 0.35rem rgb(37 24 25 / 7%);
+		box-shadow: var(--agora-sombra-xs);
 	}
 
 	.campo :is(input, select):focus {
 		border-color: var(--agora-primary);
-		outline: 2px solid rgb(105 16 27 / 14%);
+		outline: 2px solid color-mix(in srgb, var(--agora-primary) 14%, transparent);
 	}
 
 	.campo input[readonly] {
-		background: #f6dddd;
+		background: var(--agora-surface-highlight);
 		text-align: center;
 	}
 
 	.campo--invalido :is(input, select, textarea) {
-		border: 2px solid #ba1a1a !important;
-		outline: 2px solid rgb(186 26 26 / 28%);
-		background: #fff1f1 !important;
-		box-shadow: 0 0 0 2px rgb(186 26 26 / 12%);
+		border: 2px solid var(--agora-error) !important;
+		outline: 2px solid color-mix(in srgb, var(--agora-error) 28%, transparent);
+		background: var(--agora-error-surface) !important;
+		box-shadow: 0 0 0 2px color-mix(in srgb, var(--agora-error) 12%, transparent);
 	}
 
 	.mensaje-error-formulario {
 		display: block;
 		margin-top: 0.15rem;
-		color: #ba1a1a;
-		font-size: 0.6875rem;
+		color: var(--agora-error);
+		font-size: t.$fuente-xs;
 		font-weight: 600;
 		line-height: 1.3;
 		text-transform: none;
@@ -97,16 +99,16 @@
 	:is(.vinculacion h3, .direccion h3, .subtitulo) {
 		margin: 0;
 		color: var(--agora-primary);
-		font-size: 0.875rem;
+		font-size: t.$fuente-lg;
 		font-weight: 700;
 	}
 
 	:is(.vinculacion, .direccion, .responsabilidades, .opciones) {
 		margin-bottom: 1rem;
 		padding: 1rem;
-		border: 1px solid #f6dddd;
-		border-radius: 0.75rem;
-		background: #fff0f0;
+		border: 1px solid var(--agora-border);
+		border-radius: t.$radio-lg;
+		background: var(--agora-surface-soft);
 	}
 
 	:is(.vinculacion h3, .direccion h3, .subtitulo) {
@@ -125,7 +127,7 @@
 	.vinculacion p {
 		margin: 0.25rem 0 0.75rem;
 		color: var(--agora-text-muted);
-		font-size: 0.75rem;
+		font-size: t.$fuente-sm;
 	}
 
 	.boton {
@@ -133,11 +135,20 @@
 		min-height: 2.5rem;
 		padding: 0.625rem 1rem;
 		border: 0;
-		border-radius: 0.5rem;
+		border-radius: t.$radio-md;
 		background: var(--agora-primary);
-		color: #fff;
+		color: var(--agora-on-primary);
 		font-weight: 700;
 		cursor: pointer;
+	}
+
+	.boton:hover {
+		background: var(--agora-primary-dark);
+	}
+
+	.boton:focus-visible {
+		outline: 2px solid color-mix(in srgb, var(--agora-primary) 45%, transparent);
+		outline-offset: 2px;
 	}
 
 	.documentos-grid {
@@ -149,9 +160,9 @@
 	.documento-card,
 	.soporte-rup {
 		padding: 1rem;
-		border: 1px solid #f6dddd;
-		border-radius: 0.75rem;
-		background: #fff0f0;
+		border: 1px solid var(--agora-border);
+		border-radius: t.$radio-lg;
+		background: var(--agora-surface-soft);
 	}
 
 	.documento-card {
@@ -163,13 +174,13 @@
 	.documento-card h3 {
 		margin: 0;
 		color: var(--agora-primary);
-		font-size: 0.875rem;
+		font-size: t.$fuente-lg;
 	}
 
 	.documento-card p {
 		margin: 0;
 		color: var(--agora-text-muted);
-		font-size: 0.75rem;
+		font-size: t.$fuente-sm;
 		line-height: 1.45;
 	}
 
@@ -179,9 +190,9 @@
 		justify-content: center;
 		width: 2.5rem;
 		height: 2.5rem;
-		border-radius: 0.75rem;
-		background: #fee2e2;
-		color: #7f1d1d;
+		border-radius: t.$radio-lg;
+		background: var(--agora-error-surface);
+		color: var(--agora-error);
 	}
 
 	.documento-acciones,
@@ -195,7 +206,7 @@
 	.soporte-rup .boton {
 		min-height: 2.25rem;
 		padding: 0.5rem 0.75rem;
-		font-size: 0.75rem;
+		font-size: t.$fuente-sm;
 	}
 
 	.boton mat-icon {
@@ -205,19 +216,23 @@
 
 	.boton--secundario {
 		background: var(--agora-primary);
-		color: #fff;
+		color: var(--agora-on-primary);
 	}
 
 	.boton--ligero {
-		background: #fce2e3;
+		background: var(--agora-surface-highlight);
 		color: var(--agora-primary);
+	}
+
+	.boton--ligero:hover {
+		background: color-mix(in srgb, var(--agora-primary) 12%, var(--agora-surface));
 	}
 
 	.etiqueta-documento {
 		display: block;
 		margin-bottom: 0.35rem;
 		color: var(--agora-primary);
-		font-size: 0.6875rem;
+		font-size: t.$fuente-xs;
 		font-weight: 700;
 		text-transform: uppercase;
 	}
@@ -233,9 +248,9 @@
 		padding: 0.55rem 0.65rem;
 		border: 0;
 		border-radius: 0.4rem;
-		background: #fff;
+		background: var(--agora-surface);
 		color: var(--agora-text);
-		font-size: 0.75rem;
+		font-size: t.$fuente-sm;
 	}
 
 	:is(.opciones, .responsabilidades) legend,
@@ -248,7 +263,7 @@
 		float: none;
 		margin: 0 0 0.6rem;
 		color: var(--agora-text);
-		font-size: 0.75rem;
+		font-size: t.$fuente-sm;
 		font-weight: 700;
 	}
 
@@ -257,7 +272,7 @@
 		align-items: flex-start;
 		gap: 0.5rem;
 		color: var(--agora-text);
-		font-size: 0.875rem;
+		font-size: t.$fuente-lg;
 		line-height: 1.45;
 	}
 
@@ -282,13 +297,13 @@
 	.checkbox-line small {
 		margin-left: auto;
 		color: var(--agora-text-muted);
-		font-size: 0.6875rem;
+		font-size: t.$fuente-xs;
 		font-weight: 400;
 	}
 
 	.subtitulo { margin: 1.5rem 0 0.75rem; }
 
-	@media (min-width: 40rem) {
+	@media (min-width: t.$bp-sm) {
 		.campo-grid--two { --columnas: 2; }
 		.campo-grid--three,
 		.campo-grid--four { --columnas: 2; }
@@ -296,14 +311,14 @@
 		.responsabilidades { --columnas: 2; }
 	}
 
-	@media (min-width: 64rem) {
+	@media (min-width: t.$bp-xl) {
 		.campo-grid--three { --columnas: 3; }
 		.campo-grid--four,
 		.responsabilidades { --columnas: 4; }
 		.documentos-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 	}
 
-	@media (max-width: 40rem) {
+	@media (max-width: t.$bp-sm) {
 		.checkbox-line { align-items: flex-start; flex-wrap: wrap; }
 		.checkbox-line small { width: 100%; margin-left: 1.5rem; }
 	}

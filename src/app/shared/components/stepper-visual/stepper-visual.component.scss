@@ -1,10 +1,12 @@
+@use 'src/app/shared/styles/tokens' as t;
+
 :host {
-	--stepper-primary: var(--agora-primary, #47000b);
-	--stepper-primary-light: var(--agora-primary-light, #ffdad9);
-	--stepper-success: #147a47;
-	--stepper-surface: var(--agora-surface, #ffffff);
-	--stepper-muted: var(--agora-text-muted, #6f5d5d);
-	--stepper-border: var(--agora-border, #ead7d7);
+	--stepper-primary: var(--agora-primary);
+	--stepper-primary-light: var(--agora-primary-light);
+	--stepper-success: var(--agora-success);
+	--stepper-surface: var(--agora-surface);
+	--stepper-muted: var(--agora-text-muted);
+	--stepper-border: var(--agora-border);
 	display: block;
 }
 
@@ -15,10 +17,10 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1rem;
   padding: 2rem 1.5rem 1.5rem;
-  border: 1px solid rgb(234 215 215 / 55%);
+  border: 1px solid color-mix(in srgb, var(--agora-border-strong) 55%, transparent);
   border-radius: 1rem;
   background: var(--stepper-surface);
-  box-shadow: 0 0.125rem 0.5rem rgb(37 24 25 / 8%);
+  box-shadow: var(--agora-sombra-tarjeta);
 }
 
 .paso {
@@ -44,11 +46,11 @@
 }
 
 .paso__fila {
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 2.25rem;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.25rem;
 }
 
 .paso__indicador {
@@ -72,14 +74,14 @@
 }
 
 .paso__conector {
-        position: absolute;
-        top: 50%;
-        left: calc(50% + 1.125rem);
-        right: calc(-50% - 1rem + 1.125rem);
-        height: 0.25rem;
-        border-radius: 999px;
-        background: var(--stepper-border);
-        transform: translateY(-50%);
+  position: absolute;
+  top: 50%;
+  left: calc(50% + 1.125rem);
+  right: calc(-50% - 1rem + 1.125rem);
+  height: 0.25rem;
+  border-radius: 999px;
+  background: var(--stepper-border);
+  transform: translateY(-50%);
 }
 
 .paso__nombre {
@@ -87,7 +89,7 @@
   width: min(100%, 13rem);
   min-height: 2.2rem;
   margin: 0.5rem auto 0;
-  color: #251819;
+  color: var(--agora-text);
   font-size: 0.75rem;
   font-weight: 600;
   line-height: 1.1rem;
@@ -98,7 +100,7 @@
 .paso--activo .paso__indicador {
 	background: var(--stepper-primary);
 	box-shadow: 0 0 0 0.25rem var(--stepper-primary-light);
-	color: #fff;
+	color: var(--agora-on-primary);
 }
 
 .paso--activo .paso__etiqueta,
@@ -109,7 +111,7 @@
 .paso--completado .paso__indicador {
 	background: var(--stepper-success);
 	box-shadow: none;
-	color: #fff;
+	color: var(--agora-on-primary);
 }
 
 .paso--completado .paso__conector {
@@ -126,7 +128,7 @@
 	gap: 1rem;
 }
 
-@media (max-width: 48rem) {
+@media (max-width: t.$bp-md) {
 	.stepper-visual {
 		grid-template-columns: 1fr;
 		gap: 0.75rem;
