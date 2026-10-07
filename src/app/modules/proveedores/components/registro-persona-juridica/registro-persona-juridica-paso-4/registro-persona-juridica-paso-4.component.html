@@ -9,11 +9,15 @@
     </aviso-legal-formulario>
     <div class="subtitulo"><mat-icon>category</mat-icon> Clasificación Industrial Internacional Uniforme (CIIU Rev. 4 A.C.)</div>
     <div class="actividades-lista">
-      @for (actividad of actividadesCiiu; track actividad.codigo) {
-        <div class="vinculacion actividad-item" [class.actividad-principal]="actividad.principal">
+      @for (actividad of actividadesCiiu; track actividad.id) {
+        <div class="vinculacion actividad-item">
+          <input
+            [checked]="estaActividadSeleccionada(actividad.id)"
+            (change)="cambiarActividad(actividad.id, $any($event.target).checked)"
+            type="checkbox"
+          >
           <div class="actividad-codigo">{{ actividad.codigo }}</div>
-          <div><strong>{{ actividad.principal ? 'Principal en RUT (Casilla 46)' : 'Actividad secundaria' }}</strong><p>{{ actividad.nombre }}</p></div>
-          @if (actividad.principal) { <mat-icon>star</mat-icon> } @else { <button class="boton boton--ligero" title="Eliminar actividad" type="button"><mat-icon>delete</mat-icon></button> }
+          <div><strong>{{ actividad.nombre }}</strong><p>{{ actividad.descripcion }}</p></div>
         </div>
       }
     </div>
@@ -50,8 +54,8 @@
   >
     <div class="opciones declaraciones-lista" role="group" aria-labelledby="declaraciones-proveedor-titulo">
       <span class="opciones__titulo" id="declaraciones-proveedor-titulo">Declaraciones del proveedor <b>*</b></span>
-      @for (declaracion of declaraciones; track declaracion.value) {
-        <label><input [checked]="estaDeclaracionSeleccionada(declaracion.value)" (change)="cambiarDeclaracion(declaracion.value, $any($event.target).checked)" type="checkbox"> {{ declaracion.label }}</label>
+      @for (declaracion of declaraciones; track declaracion.id) {
+        <label><input [checked]="estaDeclaracionSeleccionada(declaracion.id)" (change)="cambiarDeclaracion(declaracion.id, $any($event.target).checked)" type="checkbox"> {{ declaracion.nombre }}</label>
       }
     </div>
   </plantilla-tarjeta-contenedora>

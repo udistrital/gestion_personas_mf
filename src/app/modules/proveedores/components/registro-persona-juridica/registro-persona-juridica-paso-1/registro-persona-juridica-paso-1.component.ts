@@ -1,5 +1,9 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormGroup } from '@angular/forms';
+import {
+  CatalogosPersonaJuridica,
+  OpcionCatalogo,
+} from '../services/registro-persona-juridica-catalogos.service';
 
 interface Opcion<T> {
   label: string;
@@ -12,39 +16,35 @@ interface Opcion<T> {
   styleUrls: ['./registro-persona-juridica-paso-1.component.scss'],
   standalone: false,
 })
-export class RegistroPersonaJuridicaPaso1Component {
+export class RegistroPersonaJuridicaPaso1Component implements OnInit {
 
   @Input() formulario: FormGroup = new FormGroup({});
+  @Input() catalogos: CatalogosPersonaJuridica | null = null;
   @Output() formularioChange = new EventEmitter<FormGroup>();
 
-  opcionesProcedencia: Opcion<string>[] = [
-    { label: 'Nacional (Constituida en Colombia)', value: 'nacional'},
-    { label: 'Extranjera con Sucursal en Colombia', value: 'extranjera_sucursal'},
-    { label: 'Extranjera sin Domicilio en el País', value: 'extranjera_sin_domicilio'},
-  ];
+  get opcionesProcedencia(): OpcionCatalogo[] {
+    return this.catalogos?.procedencia ?? [];
+  }
 
-  opcionesCamaraComercio: Opcion<string>[] = [
-    { label: 'Cámara de Comercio de Bogotá', value: 'bogota'},
-    { label: 'Cámara de Comercio de Medellín', value: 'medellin'},
-    { label: 'Cámara de Comercio de Cali', value: 'cali'},
-    { label: 'Cámara de Comercio de Barranquilla', value: 'barranquilla'},
-    { label: 'Otra Jurisdicción Nacional', value: 'otro'},
-  ];
+  get opcionesCamaraComercio(): OpcionCatalogo[] {
+    return this.catalogos?.camaraComercio ?? [];
+  }
 
-  opcionesTipoOrganizacion: Opcion<string>[] = [
-    { label: 'Sociedad por Acciones Simplificada - S.A.S.', value: 'sas' },
-    { label: 'Sociedad Anónima - S.A.', value: 'sa' },
-    { label: 'Sociedad de Responsabilidad Limitada - Ltda.', value: 'ltda' },
-    { label: 'Entidad Sin Ánimo de Lucro - ESAL', value: 'esal' },
-    { label: 'Sucursal de Sociedad Extranjera', value: 'sucursal_extranjera' },
-  ];
+  get opcionesTipoOrganizacion(): OpcionCatalogo[] {
+    return this.catalogos?.tipoOrganizacion ?? [];
+  }
 
-  opcionesTamanoEmpresarial: Opcion<string>[] = [
-    { label: 'Microempresa (Hasta 23.563 UVT Servicios)', value: 'micro' },
-    { label: 'Pequeña Empresa (Hasta 204.653 UVT Servicios)', value: 'pequena' },
-    { label: 'Mediana Empresa (Hasta 483.034 UVT Servicios)', value: 'mediana' },
-    { label: 'Gran Empresa (Mayor a 483.034 UVT)', value: 'gran' },
-  ];
+  get opcionesTamanoEmpresarial(): OpcionCatalogo[] {
+    return this.catalogos?.tamanoEmpresa ?? [];
+  }
+
+  get opcionesCargo(): OpcionCatalogo[] {
+    return this.catalogos?.cargo ?? [];
+  }
+
+  get opcionesResponsabilidadesFiscales(): OpcionCatalogo[] {
+    return this.catalogos?.responsabilidadFiscal ?? [];
+  }
 
 
   opcionesLimitacionEstatutaria: Opcion<boolean>[] = [
@@ -80,13 +80,6 @@ export class RegistroPersonaJuridicaPaso1Component {
   opcionesExencionIca: Opcion<boolean>[] = [
     { label: 'No, tarifa plena Distrital', value: false },
     { label: 'Sí, Actividad Exenta Distrital', value: true }
-  ];
-
-  opcionesResponsabilidadesFiscales: Opcion<number>[] = [
-    { label: '05: Renta Régimen Ordinario', value: 5 },
-    { label: '48: Impuesto a las Ventas - IVA', value: 48 },
-    { label: '14: Informante de Exógena', value: 14 },
-    { label: '42: Obligado a llevar contabilidad', value: 42 }
   ];
 
   opcionesDepartamento: Opcion<string>[] = [
@@ -157,7 +150,7 @@ export class RegistroPersonaJuridicaPaso1Component {
   }
 
   cambiarResponsabilidad(valor: number, seleccionado: boolean): void {
-    const responsabilidades = this.formulario.get('responsabilidades')?.value ?? [];
+    const responsabilidades: number[] = this.formulario.get('responsabilidades')?.value ?? [];
     const actualizadas = seleccionado
       ? [...responsabilidades, valor]
       : responsabilidades.filter((responsabilidad: number) => responsabilidad !== valor);

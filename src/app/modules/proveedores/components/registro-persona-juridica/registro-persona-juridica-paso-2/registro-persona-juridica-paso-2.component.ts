@@ -1,5 +1,9 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormGroup } from '@angular/forms';
+import {
+  CatalogosPersonaJuridica,
+  OpcionCatalogo,
+} from '../services/registro-persona-juridica-catalogos.service';
 
 interface Opcion<T> {
   label: string;
@@ -14,14 +18,12 @@ interface Opcion<T> {
 })
 export class RegistroPersonaJuridicaPaso2Component {
   @Input() formulario: FormGroup = new FormGroup({});
+  @Input() catalogos: CatalogosPersonaJuridica | null = null;
   @Output() formularioChange = new EventEmitter<FormGroup>();
 
-  opcionesTipoConstitucion: Opcion<string>[] = [
-    { label: 'Capital Privado Nacional (100%)', value: 'capital_privado_nacional' },
-    { label: 'Economía Mixta con aporte estatal', value: 'economia_mixta' },
-    { label: 'Capital Privado con Inversión Extranjera', value: 'capital_extranjero' },
-    { label: 'Entidad Sin Ánimo de Lucro (Patrimonio Institucional)', value: 'sin_animo_lucro' },
-  ];
+  get opcionesTipoConstitucion(): OpcionCatalogo[] {
+    return this.catalogos?.tipoCapital ?? [];
+  }
 
   opcionesBanco: Opcion<string>[] = [
     { label: '001 - BANCO DE BOGOTÁ', value: 'banco_bogota' },

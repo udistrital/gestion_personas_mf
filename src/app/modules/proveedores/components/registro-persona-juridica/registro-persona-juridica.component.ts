@@ -1,8 +1,13 @@
-import { Component } from "@angular/core";
+import { Component, OnInit } from "@angular/core";
 import { FormControl, FormGroup, Validators } from "@angular/forms";
 import { Router } from "@angular/router";
 import { PasoStepperVisual } from "src/app/shared/components/stepper-visual/stepper-visual.component";
 import { camposPorPaso } from "./registro-persona-juridica.component.utils";
+import { PersonaJuridicaCatalogosPayload } from "./models/registro-persona-juridica-payload.model";
+import {
+  CatalogosPersonaJuridica,
+  RegistroPersonaJuridicaCatalogosService,
+} from "./services/registro-persona-juridica-catalogos.service";
 
 const SOLO_DIGITOS = /^\d+$/;
 const NIT = /^\d{9}$/;
@@ -20,9 +25,27 @@ const OTP = /^\d{6}$/;
   styleUrls: ["./registro-persona-juridica.component.scss"],
   standalone: false,
 })
-export class RegistroPersonaJuridicaComponent {
+export class RegistroPersonaJuridicaComponent implements OnInit {
   titulo = "Módulo de Registro de Persona Jurídica";
   pasoActual = 1;
+  payloadCatalogos?: PersonaJuridicaCatalogosPayload;
+  catalogos: CatalogosPersonaJuridica | null = null;
+
+  constructor(private readonly catalogosService: RegistroPersonaJuridicaCatalogosService) {}
+
+  ngOnInit(): void {
+    this.catalogosService.obtenerCatalogos().subscribe({
+      next: catalogos => this.catalogos = catalogos,
+      error: error => console.error('No fue posible cargar los catálogos de Persona Jurídica.', error),
+    });
+
+    // TODO: Bloque temporal para pruebas de desarrollo. Eliminar al implementar lógica del negocio.
+    for (const controlName in this.formulario.controls) {
+      this.formulario.get(controlName)?.valueChanges.subscribe(value => {
+        console.log(`Valor del control ${controlName} cambiado a:`, value);
+      });
+    }
+  }
 
   constructor(private readonly router: Router) {}
 
@@ -38,10 +61,35 @@ export class RegistroPersonaJuridicaComponent {
   ];
 
   finalizar() {
-    if (!this.validarFormulario()) {
+    if (!this.validarFormulario() || this.formulario.invalid) {
+      this.formulario.markAllAsTouched();
+      console.error('No se genera el payload de Persona Jurídica porque el formulario contiene campos inválidos.');
       return;
     }
+    this.payloadCatalogos = this.construirPayloadCatalogos();
     alert("Se ha presionado el botón Finalizar. Se puede redirigir a otra página o mostrar un mensaje de éxito.");
+  }
+
+  construirPayloadCatalogos(): PersonaJuridicaCatalogosPayload {
+    const idsResponsabilidades = this.obtenerIds('responsabilidades');
+    const idsActividades = this.obtenerIds('actividadesCiiu');
+    const idsDeclaraciones = this.obtenerIds('declaraciones');
+
+    return {
+      procedencia_id: this.obtenerId('procedencia'),
+      tipo_organizacion_id: this.obtenerId('tipoOrganizacion'),
+      tamano_empresa_id: this.obtenerId('tamanoEmpresarial'),
+      tipo_capital_id: this.obtenerId('tipoConstitucion'),
+      camara_comercio_id: this.obtenerId('camaraComercio'),
+      responsabilidad_fiscal_perfil: idsResponsabilidades.map(id => ({
+        responsabilidad_fiscal_id: id,
+      })),
+      actividad_economica_proveedor: idsActividades.map(id => ({
+        actividad_economica_id: id,
+      })),
+      representacion: { cargo_id: this.obtenerId('cargoRepresentante') },
+      declaracion: idsDeclaraciones.map(id => ({ tipo_declaracion_id: id })),
+    };
   }
 
   continuar(): void {
@@ -64,21 +112,37 @@ export class RegistroPersonaJuridicaComponent {
     return false;
   }
 
+  private obtenerId(controlName: string): number {
+    const valor: unknown = this.formulario.get(controlName)?.value;
+    if (typeof valor !== 'number' || !Number.isInteger(valor)) {
+      throw new Error(`El control paramétrico "${controlName}" no contiene un ID válido.`);
+    }
+    return valor;
+  }
+
+  private obtenerIds(controlName: string): number[] {
+    const valor: unknown = this.formulario.get(controlName)?.value;
+    if (!Array.isArray(valor) || !valor.every(id => typeof id === 'number' && Number.isInteger(id))) {
+      throw new Error(`El control paramétrico "${controlName}" no contiene una lista válida de IDs.`);
+    }
+    return valor;
+  }
+
   formulario: FormGroup = new FormGroup({
     nit: new FormControl('900845120', [Validators.required, Validators.pattern(NIT)]),
     digitoVerificacion: new FormControl('3', Validators.pattern(DIGITO_VERIFICACION)),
     nitConfirmacion: new FormControl('900845120', [Validators.required, Validators.pattern(NIT)]),
-    procedencia: new FormControl('nacional', Validators.required),
+    procedencia: new FormControl<number | null>(null, Validators.required),
     razonSocial: new FormControl('SOLUCIONES TECNOLÓGICAS E INTEGRACIONES S.A.S.', Validators.required),
     nombreComercial: new FormControl('INTEGRATECH S.A.S.'),
     matriculaMercantil: new FormControl('03148920', [Validators.required, Validators.pattern(SOLO_DIGITOS)]),
-    camaraComercio: new FormControl('bogota', Validators.required),
+    camaraComercio: new FormControl<number | null>(null, Validators.required),
     fechaConstitucion: new FormControl('2016-04-14', Validators.required),
     fechaRenovacion: new FormControl('2025-02-18', Validators.required),
-    tipoOrganizacion: new FormControl('sas', Validators.required),
-    tamanoEmpresarial: new FormControl('pequena', Validators.required),
+    tipoOrganizacion: new FormControl<number | null>(null, Validators.required),
+    tamanoEmpresarial: new FormControl<number | null>(null, Validators.required),
     documentoRepresentante: new FormControl('80234567', [Validators.required, Validators.pattern(SOLO_DIGITOS)]),
-    cargoRepresentante: new FormControl('Gerente General y Representante Legal Principal', Validators.required),
+    cargoRepresentante: new FormControl<number | null>(null, Validators.required),
     primerApellido: new FormControl('RODRÍGUEZ', Validators.required),
     segundoApellido: new FormControl('PATIÑO'),
     primerNombre: new FormControl('CARLOS', Validators.required),
@@ -93,7 +157,7 @@ export class RegistroPersonaJuridicaComponent {
     granContribuyente: new FormControl(false, Validators.required),
     autorretenedor: new FormControl(false, Validators.required),
     exencionIca: new FormControl(false, Validators.required),
-    responsabilidades: new FormControl<number[]>([5, 48, 14, 42], Validators.required),
+    responsabilidades: new FormControl<number[]>([], Validators.required),
     departamento: new FormControl('bogota', Validators.required),
     ciudad: new FormControl('bogota', Validators.required),
     tipoVia: new FormControl('cr', Validators.required),
@@ -111,7 +175,7 @@ export class RegistroPersonaJuridicaComponent {
     contactoComercial: new FormControl('MARCELA GÓMEZ RINCÓN'),
     telefonoAsesor: new FormControl('3186749920', Validators.pattern(TELEFONO)),
     aceptaTerminos: new FormControl(false),
-    tipoConstitucion: new FormControl('capital_privado_nacional', Validators.required),
+    tipoConstitucion: new FormControl<number | null>(null, Validators.required),
     capitalAutorizado: new FormControl('500000000', [Validators.required, Validators.pattern(SOLO_DIGITOS)]),
     capitalSuscritoPagado: new FormControl('350000000', [Validators.required, Validators.pattern(SOLO_DIGITOS)]),
     activosTotales: new FormControl('1240850000', [Validators.required, Validators.pattern(SOLO_DIGITOS)]),
@@ -139,21 +203,12 @@ export class RegistroPersonaJuridicaComponent {
     vigenciaRup: new FormControl('2025-12-31', Validators.required),
     certificadoParafiscales: new FormControl('Cert_Parafiscales_Feb2025.pdf', [Validators.required, Validators.pattern(ARCHIVO_PDF)]),
     aportesSeguridadSocial: new FormControl(true, Validators.requiredTrue),
-    actividadesCiiu: new FormControl<string[]>(['6201', '6202', '6209'], Validators.required),
+    actividadesCiiu: new FormControl<number[]>([], Validators.required),
     codigosUnspsc: new FormControl<string[]>(['43211500', '81111500', '81112200', '43222600'], Validators.required),
     descripcionServicios: new FormControl('Soluciones de infraestructura tecnológica de misión crítica, desarrollo de arquitecturas cloud, ciberseguridad aplicada, soporte integral de hardware institucional y licenciamiento corporativo para entidades de educación superior pública y sectores gubernamentales del Distrito Capital.', Validators.required),
-    declaraciones: new FormControl<string[]>(['veracidad', 'inhabilidades', 'sagrilaft'], Validators.required),
+    declaraciones: new FormControl<number[]>([], Validators.required),
     tokenOtp: new FormControl('482913', [Validators.required, Validators.pattern(OTP)]),
     aceptaTratamiento: new FormControl(true, Validators.requiredTrue)
   });
-
-  ngOnInit() {
-    // TODO: Bloque temporal para pruebas de desarrollo. Eliminar al implementar lógica del negocio.
-    for (const controlName in this.formulario.controls) {
-      this.formulario.get(controlName)?.valueChanges.subscribe(value => {
-        console.log(`Valor del control ${controlName} cambiado a:`, value);
-      });
-    };
-  }
 
 }

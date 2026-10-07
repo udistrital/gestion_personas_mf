@@ -20,8 +20,9 @@
       <label class="campo">
         <span>Procedencia de la Empresa <b>*</b></span>
         <select formControlName="procedencia">
-          @for (opcion of opcionesProcedencia; track opcion.value) {
-            <option [value]="opcion.value">{{ opcion.label }}</option>
+          <option [ngValue]="null">Seleccione...</option>
+          @for (opcion of opcionesProcedencia; track opcion.id) {
+            <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
           }
         </select>
       </label>
@@ -44,8 +45,9 @@
       <label class="campo">
         <span>Cámara de Comercio <b>*</b></span>
         <select formControlName="camaraComercio">
-          @for (opcion of opcionesCamaraComercio; track opcion.value) {
-            <option [value]="opcion.value">{{ opcion.label }}</option>
+          <option [ngValue]="null">Seleccione...</option>
+          @for (opcion of opcionesCamaraComercio; track opcion.id) {
+            <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
           }
         </select>
       </label>
@@ -60,16 +62,18 @@
       <label class="campo campo--wide">
         <span>Tipo de Organización / Figura Jurídica <b>*</b></span>
         <select formControlName="tipoOrganizacion">
-          @for (opcion of opcionesTipoOrganizacion; track opcion.value) {
-            <option [value]="opcion.value">{{ opcion.label }}</option>
+          <option [ngValue]="null">Seleccione...</option>
+          @for (opcion of opcionesTipoOrganizacion; track opcion.id) {
+            <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
           }
         </select>
       </label>
       <label class="campo campo--wide">
         <span>Tamaño Empresarial (Decreto 957/2019) <b>*</b></span>
         <select formControlName="tamanoEmpresarial">
-          @for (opcion of opcionesTamanoEmpresarial; track opcion.value) {
-            <option [value]="opcion.value">{{ opcion.label }}</option>
+          <option [ngValue]="null">Seleccione...</option>
+          @for (opcion of opcionesTamanoEmpresarial; track opcion.id) {
+            <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
           }
         </select>
       </label>
@@ -92,7 +96,12 @@
       <p>Cotejo con Censo Ciudadano</p>
       <div class="campo-grid campo-grid--three">
         <label class="campo"><span>Documento Identificación <b>*</b></span><input formControlName="documentoRepresentante" type="text"></label>
-        <label class="campo"><span>Cargo Representante <b>*</b></span><input formControlName="cargoRepresentante" type="text"></label>
+        <label class="campo"><span>Cargo Representante <b>*</b></span><select formControlName="cargoRepresentante">
+          <option [ngValue]="null">Seleccione...</option>
+          @for (opcion of opcionesCargo; track opcion.id) {
+            <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+          }
+        </select></label>
         <button class="boton boton--primary" type="button">Relacionar</button>
       </div>
     </div>
@@ -152,14 +161,14 @@
     </div>
     <fieldset class="responsabilidades">
       <legend>Responsabilidades Fiscales en Casilla 53 del RUT vigente: <b>*</b></legend>
-      @for (opcion of opcionesResponsabilidadesFiscales; track opcion.value) {
+      @for (opcion of opcionesResponsabilidadesFiscales; track opcion.id) {
         <label>
           <input
-            [checked]="formulario.get('responsabilidades')?.value?.includes(opcion.value)"
-            (change)="cambiarResponsabilidad(opcion.value, $any($event.target).checked)"
+            [checked]="formulario.get('responsabilidades')?.value?.includes(opcion.id)"
+            (change)="cambiarResponsabilidad(opcion.id, $any($event.target).checked)"
             type="checkbox"
           >
-          {{ opcion.label }}
+          {{ opcion.nombre }}
         </label>
       }
     </fieldset>

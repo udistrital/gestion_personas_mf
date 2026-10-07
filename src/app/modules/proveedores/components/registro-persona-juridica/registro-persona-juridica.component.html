@@ -17,11 +17,13 @@
       @case (1) {
         <registro-persona-juridica-paso-1
           [(formulario)]="formulario"
+          [catalogos]="catalogos"
         ></registro-persona-juridica-paso-1>
         }
       @case (2) {
         <registro-persona-juridica-paso-2
           [(formulario)]="formulario"
+          [catalogos]="catalogos"
         ></registro-persona-juridica-paso-2>
       }
       @case (3) {
@@ -32,6 +34,7 @@
       @case (4) {
         <registro-persona-juridica-paso-4
           [(formulario)]="formulario"
+          [catalogos]="catalogos"
         ></registro-persona-juridica-paso-4>
       }
     }

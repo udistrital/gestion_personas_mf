@@ -6,7 +6,8 @@
   >
     <div class="campo-grid campo-grid--three">
       <label class="campo"><span>Tipo de Constitución de Capital <b>*</b></span><select formControlName="tipoConstitucion">
-        @for (opcion of opcionesTipoConstitucion; track opcion.value) { <option [value]="opcion.value">{{ opcion.label }}</option> }
+        <option [ngValue]="null">Seleccione...</option>
+        @for (opcion of opcionesTipoConstitucion; track opcion.id) { <option [ngValue]="opcion.id">{{ opcion.nombre }}</option> }
       </select></label>
       <label class="campo"><span>Capital Autorizado (COP) <b>*</b></span><campo-dinero formControlName="capitalAutorizado"></campo-dinero></label>
       <label class="campo"><span>Capital Suscrito y Pagado (COP) <b>*</b></span><campo-dinero formControlName="capitalSuscritoPagado"></campo-dinero></label>
