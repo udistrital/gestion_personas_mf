@@ -1,9 +1,7 @@
+@use 'src/app/shared/styles/tokens' as t;
+
 :host {
   display: block;
-}
-
-.paso-2 {
-  width: 100%;
 }
 
 /* =========================================================
@@ -18,7 +16,7 @@
   padding: 1.25rem 1.5rem;
   border: 1px solid var(--agora-border);
   border-radius: 0.75rem;
-  background: var(--agora-surface);
+  background: var(--agora-surface-soft);
 }
 
 .step-banner__icon {
@@ -30,7 +28,7 @@
   height: 2.875rem;
   margin-top: 0.125rem;
   border-radius: 0.625rem;
-  background: #f8e7e8;
+  background: var(--agora-border);
   color: var(--agora-primary);
 }
 
@@ -64,8 +62,8 @@
   min-height: 1.5rem;
   padding: 0.125rem 0.5rem;
   border-radius: 0.25rem;
-  background: #fff0f0;
-  color: #8b1d2c;
+  background: var(--agora-border);
+  color: var(--agora-primary-dark);
   font-size: 0.6875rem;
   font-weight: 700;
   line-height: 1.4;
@@ -93,14 +91,15 @@
   gap: 1.5rem;
 
   padding-bottom: 0.75rem;
+  margin-bottom: 1.25rem;
 
-  border-bottom: 1px solid #f3cfd2;
+  border-bottom: 1px solid var(--agora-border);
 }
 
 .form-section__title {
   display: flex;
   align-items: flex-start;
-  gap: 0.75rem;
+  gap: 0.625rem;
 
   min-width: 0;
   flex: 1 1 auto;
@@ -108,23 +107,25 @@
 
 .form-section__icon {
   display: flex;
-  flex: 0 0 2.75rem;
+  flex: 0 0 1.75rem;
   align-items: center;
   justify-content: center;
 
-  width: 2.75rem;
-  height: 2.75rem;
+  width: 1.75rem;
+  height: 1.75rem;
+
+  margin-top: 0.05rem;
 
   border-radius: 0.5rem;
 
-  background: #f8e7e8;
+  background: var(--agora-surface-soft);
   color: var(--agora-primary);
 }
 
 .form-section__icon mat-icon {
-  width: 1.5rem;
-  height: 1.5rem;
-  font-size: 1.5rem;
+  font-size: 1.125rem;
+  width: 1.125rem;
+  height: 1.125rem;
 }
 
 .form-section__title h3 {
@@ -137,10 +138,10 @@
 }
 
 .form-section__title p {
-  margin: 0.25rem 0 0;
+  margin: 0.2rem 0 0;
 
   color: var(--agora-text-muted);
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   line-height: 1.45;
 }
 
@@ -162,8 +163,8 @@
 
   border-radius: 0.25rem;
 
-  background: #fff0f0;
-  color: #5a4143;
+  background: var(--agora-border);
+  color: var(--agora-text);
 
   font-size: 0.6875rem;
   font-weight: 600;
@@ -171,7 +172,7 @@
 }
 
 .form-section__tag--required {
-  color: #69101b;
+  color: var(--agora-primary);
   font-weight: 700;
 }
 
@@ -212,9 +213,9 @@
   width: 100%;
   min-height: 2.75rem;
   padding: 0.625rem 0.75rem;
-  border: 1px solid #d9c4c5;
+  border: 1px solid var(--agora-border-strong);
   border-radius: 0.5rem;
-  background: #fff;
+  background: var(--agora-surface);
   color: var(--agora-text);
   font: inherit;
   font-size: 0.875rem;
@@ -232,16 +233,16 @@
 .form-field input:focus,
 .form-field select:focus {
   border-color: var(--agora-primary);
-  box-shadow: 0 0 0 0.1875rem rgb(105 16 27 / 8%);
+  box-shadow: 0 0 0 0.1875rem color-mix(in srgb, var(--agora-primary) 8%, transparent);
 }
 
 .form-field input.ng-invalid.ng-touched,
 .form-field select.ng-invalid.ng-touched {
-  border-color: #b3261e;
+  border-color: var(--agora-error);
 }
 
 .form-field input:read-only {
-  background: #f7f3f3;
+  background: var(--agora-surface-soft);
   color: var(--agora-text-muted);
   cursor: default;
 }
@@ -262,10 +263,10 @@
 
   padding: 1rem 1.25rem;
 
-  border: 1px solid #f3cfd2;
+  border: 1px solid var(--agora-surface-highlight);
   border-radius: 0.75rem;
 
-  background: #fff0f0;
+  background: var(--agora-surface-soft);
 }
 
 .pensionado-card__info {
@@ -288,7 +289,7 @@
 
   border-radius: 0.5rem;
 
-  background: #f4d5d8;
+  background: var(--agora-primary-light);
   color: var(--agora-primary);
 }
 
@@ -343,10 +344,10 @@
   margin: 0;
   padding: 0.5rem 0.875rem;
 
-  border: 1px solid #e8bfc3;
+  border: 1px solid var(--agora-border-strong);
   border-radius: 0.5rem;
 
-  background: #fff5f5;
+  background: var(--agora-surface-highlight);
 
   color: var(--agora-text);
 
@@ -359,8 +360,8 @@
 }
 
 .pensionado-option:hover {
-  border-color: #d99da3;
-  background: #fff0f0;
+  border-color: var(--agora-error-border);
+  background: var(--agora-surface-soft);
 }
 
 .pensionado-option input {
@@ -383,7 +384,7 @@
 
 .pensionado-option:has(input:checked) {
   border-color: var(--agora-primary);
-  background: #fff5f5;
+  background: var(--agora-surface-highlight);
   box-shadow: 0 0 0 1px var(--agora-primary);
 }
 
@@ -400,7 +401,7 @@
    RESPONSIVE
    ========================================================= */
 
-@media (max-width: 900px) {
+@media (max-width: t.$bp-lg) {
 
   .pensionado-card {
     align-items: flex-start;
@@ -416,7 +417,7 @@
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: t.$bp-sm) {
 
   .pensionado-card__options {
     flex-direction: column;
@@ -469,7 +470,7 @@
 .field-error {
   display: block;
   margin-top: 0.3125rem;
-  color: #b3261e;
+  color: var(--agora-error);
   font-size: 0.75rem;
   font-weight: 500;
   line-height: 1.4;
@@ -492,34 +493,6 @@
   border-top: 1px solid var(--agora-border);
 }
 
-.form-subsection__title {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.625rem;
-  margin-bottom: 1rem;
-}
-
-.form-subsection__title mat-icon {
-  flex: 0 0 auto;
-  margin-top: 0.05rem;
-  color: var(--agora-primary);
-}
-
-.form-subsection__title h4 {
-  margin: 0;
-  color: var(--agora-text);
-  font-size: 0.9375rem;
-  font-weight: 700;
-  line-height: 1.4;
-}
-
-.form-subsection__title p {
-  margin: 0.2rem 0 0;
-  color: var(--agora-text-muted);
-  font-size: 0.75rem;
-  line-height: 1.45;
-}
-
 /* =========================================================
    ALINEACIÓN CON EL CONTENEDOR INSTITUCIONAL
    ========================================================= */
@@ -530,7 +503,7 @@ plantilla-tarjeta-contenedora {
   margin-left: -1.5rem;
 }
 
-@media (max-width: 40rem) {
+@media (max-width: t.$bp-sm) {
   plantilla-tarjeta-contenedora {
     width: calc(100% + 1.5rem);
     margin-left: -0.75rem;
@@ -541,7 +514,7 @@ plantilla-tarjeta-contenedora {
    RESPONSIVE
    ========================================================= */
 
-@media (max-width: 700px) {
+@media (max-width: t.$bp-md) {
   .form-grid {
     grid-template-columns: 1fr;
   }
@@ -560,7 +533,7 @@ plantilla-tarjeta-contenedora {
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: t.$bp-sm) {
   .step-banner {
     flex-direction: column;
   }
@@ -571,62 +544,8 @@ plantilla-tarjeta-contenedora {
 }
 
 /* =========================================================
-   AJUSTES VISUALES DEL MOCKUP PASO 2
-   ========================================================= */
-
-.step-banner {
-  background: #fff0f0;
-}
-
-/* =========================================================
    SECCIONES INTERNAS DEL CONTENEDOR ÚNICO
    ========================================================= */
-
-.form-section__header {
-  padding-bottom: 0.75rem;
-  margin-bottom: 1.25rem;
-  border-bottom: 1px solid var(--agora-border);
-}
-
-.form-section__title {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.625rem;
-}
-
-.form-section__icon {
-  display: flex;
-  flex: 0 0 1.75rem;
-  align-items: center;
-  justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  margin-top: 0.05rem;
-  border-radius: 0.5rem;
-  background: #f4eeee;
-  color: var(--agora-primary);
-}
-
-.form-section__icon mat-icon {
-  font-size: 1.125rem;
-  width: 1.125rem;
-  height: 1.125rem;
-}
-
-.form-section__title h3 {
-  margin: 0;
-  color: var(--agora-text);
-  font-size: 1.125rem;
-  font-weight: 700;
-  line-height: 1.4;
-}
-
-.form-section__title p {
-  margin: 0.2rem 0 0;
-  color: var(--agora-text-muted);
-  font-size: 0.75rem;
-  line-height: 1.45;
-}
 
 .form-section--financial {
   margin-top: 1.75rem;
@@ -654,7 +573,7 @@ plantilla-tarjeta-contenedora {
   padding: 1.5rem;
   border: 0;
   border-radius: 0.75rem;
-  background: #ffffff;
+  background: var(--agora-surface) !important;
   box-shadow: 0 0.125rem 0.5rem rgb(37 24 25 / 8%);
 }
 
@@ -664,7 +583,7 @@ plantilla-tarjeta-contenedora {
 
 .paso-2-card .step-banner {
   margin: 0;
-  background: #fff0f0;
+  background: var(--agora-surface-soft);
 }
 
 /* =========================================================
@@ -734,7 +653,7 @@ plantilla-tarjeta-contenedora {
    RESPONSIVE
    ========================================================= */
 
-@media (max-width: 900px) {
+@media (max-width: t.$bp-lg) {
   .form-section__header {
     align-items: flex-start;
     flex-direction: column;
@@ -745,7 +664,7 @@ plantilla-tarjeta-contenedora {
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: t.$bp-sm) {
   .form-section__meta {
     flex-direction: column;
     align-items: stretch;
@@ -756,7 +675,7 @@ plantilla-tarjeta-contenedora {
   }
 }
 
-@media (max-width: 40rem) {
+@media (max-width: t.$bp-sm) {
 
   .paso-2-card-wrapper {
     width: min(100% - 1.5rem, 80rem);
@@ -785,8 +704,8 @@ plantilla-tarjeta-contenedora {
   min-width: 0;
   padding: 1.25rem;
 
-  background: #ffffff;
-  border: 1px solid #f3cfd2;
+  background: var(--agora-surface);
+  border: 1px solid var(--agora-border);
   border-radius: 0.75rem;
 
   box-sizing: border-box;
@@ -797,7 +716,7 @@ plantilla-tarjeta-contenedora {
   align-items: center;
   gap: 0.625rem;
 
-  color: #3f3032;
+  color: var(--agora-text);
   font-size: 0.9375rem;
   font-weight: 700;
   line-height: 1.35;
@@ -815,14 +734,14 @@ plantilla-tarjeta-contenedora {
   box-sizing: border-box;
 
   border-radius: 0.5rem;
-  background: #f8e7e8;
-  color: #69101b;
+  background: var(--agora-border);
+  color: var(--agora-primary);
 
   font-size: 1.125rem;
 }
 
 .afiliacion-card__title strong {
-  color: #69101b;
+  color: var(--agora-primary);
 }
 
 .afiliacion-card__select {
@@ -835,20 +754,20 @@ plantilla-tarjeta-contenedora {
 
   box-sizing: border-box;
 
-  background: #ffffff;
-  border: 1px solid #d8c8ca;
+  background: var(--agora-background);
+  border: 1px solid var(--agora-border);
   border-radius: 0.5rem;
 }
 
 .afiliacion-card__select:focus-within {
-  border-color: #69101b;
-  box-shadow: 0 0 0 2px rgba(105, 16, 27, 0.08);
+  border-color: var(--agora-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--agora-primary) 8%, transparent);
 }
 
 .afiliacion-card__select mat-icon {
   flex: 0 0 auto;
 
-  color: #69101b;
+  color: var(--agora-primary);
   font-size: 1.125rem;
 }
 
@@ -864,9 +783,9 @@ plantilla-tarjeta-contenedora {
   border: 0;
   outline: 0;
 
-  background: transparent;
+  background: var(--agora-background);
 
-  color: #3f3032;
+  color: var(--agora-text);
   font-family: inherit;
   font-size: 0.875rem;
 }
@@ -874,12 +793,12 @@ plantilla-tarjeta-contenedora {
 .afiliacion-card__description {
   margin: 0;
 
-  color: #756568;
+  color: var(--agora-text-muted);
   font-size: 0.75rem;
   line-height: 1.45;
 }
 
-@media (max-width: 700px) {
+@media (max-width: t.$bp-md) {
   .afiliacion-card {
     grid-column: 1 / -1;
   }
@@ -899,53 +818,25 @@ plantilla-tarjeta-contenedora {
   grid-column: 1 / -1;
 }
 
-@media (max-width: 900px) {
+@media (max-width: t.$bp-lg) {
   .form-grid--bancario {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: t.$bp-sm) {
   .form-grid--bancario {
     grid-template-columns: 1fr;
   }
 }
 
-
-/* ============================================================
-   SELECTORES - FONDO ROSADO SEGÚN LINEAMIENTO VISUAL
-   ============================================================ */
-
-.afiliacion-card__select {
-  background: #fff0f0;
-}
-
-.afiliacion-card__select select {
-  background: #fff0f0;
-}
-
 .afiliacion-card__select input {
-  background: #fff0f0;
+  background: var(--agora-background);
 }
-
 
 /* ============================================================
    TARJETA DE CORREO DE TESORERÍA
    Fondo rosado con campo de correo blanco
-   ============================================================ */
-
-.tesoreria-card {
-  background: #fff0f0;
-}
-
-.tesoreria-card__input {
-  background: #ffffff;
-}
-
-
-/* ============================================================
-   MÓDULO DE CORREO DE TESORERÍA
-   Una sola tarjeta rosada con un único cuadro blanco para correo
    ============================================================ */
 
 .tesoreria-card {
@@ -961,8 +852,8 @@ plantilla-tarjeta-contenedora {
   padding: 1.25rem;
   box-sizing: border-box;
 
-  background: #fff0f0 !important;
-  border: 1px solid #f3cfd2;
+  background: var(--agora-background) !important;
+  border: 1px solid var(--agora-border);
   border-radius: 0.75rem;
 }
 
@@ -976,7 +867,7 @@ plantilla-tarjeta-contenedora {
 
   background: transparent !important;
 
-  color: #3f3032;
+  color: var(--agora-text);
   font-size: 0.9375rem;
   font-weight: 700;
   line-height: 1.35;
@@ -985,7 +876,7 @@ plantilla-tarjeta-contenedora {
 .tesoreria-card__title mat-icon {
   flex: 0 0 auto;
 
-  color: #69101b;
+  color: var(--agora-primary);
   font-size: 1.5rem;
 }
 
@@ -1001,21 +892,21 @@ plantilla-tarjeta-contenedora {
   padding: 0 0.875rem;
   box-sizing: border-box;
 
-  background: #ffffff !important;
+  background: var(--agora-surface) !important;
 
-  border: 1px solid #e4c9cc;
+  border: 1px solid var(--agora-border) !important;
   border-radius: 0.5rem;
 }
 
 .tesoreria-card__input:focus-within {
-  border-color: #69101b;
-  box-shadow: 0 0 0 2px rgba(105, 16, 27, 0.08);
+  border-color: var(--agora-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--agora-primary) 8%, transparent);
 }
 
 .tesoreria-card__input mat-icon {
   flex: 0 0 auto;
 
-  color: #5f4b4e;
+  color: var(--agora-text-muted);
   font-size: 1.25rem;
 }
 
@@ -1030,9 +921,9 @@ plantilla-tarjeta-contenedora {
   border: 0;
   outline: 0;
 
-  background: #ffffff !important;
+  background: var(--agora-surface) !important;
 
-  color: #3f3032;
+  color: var(--agora-text);
   font-family: inherit;
   font-size: 0.9375rem;
 }
@@ -1043,7 +934,7 @@ plantilla-tarjeta-contenedora {
 
   background: transparent !important;
 
-  color: #5f4b4e;
+  color: var(--agora-text-muted);
   font-size: 0.875rem;
   line-height: 1.45;
 }
@@ -1055,7 +946,7 @@ plantilla-tarjeta-contenedora {
 
   margin: 0.25rem 0;
 
-  background: #edc9cd;
+  background: var(--agora-border-strong);
 }
 
 /* Autorización */
@@ -1068,7 +959,7 @@ plantilla-tarjeta-contenedora {
 
   background: transparent !important;
 
-  color: #3f3032;
+  color: var(--agora-text);
   font-size: 0.875rem;
   line-height: 1.45;
 }
@@ -1081,11 +972,11 @@ plantilla-tarjeta-contenedora {
 
   margin-top: 0.125rem;
 
-  accent-color: #69101b;
+  accent-color: var(--agora-primary);
 }
 
 /* Responsive */
-@media (max-width: 700px) {
+@media (max-width: t.$bp-md) {
   .tesoreria-card__input {
     width: 100%;
   }
@@ -1102,8 +993,8 @@ plantilla-tarjeta-contenedora {
 
   padding: 1.25rem;
 
-  background: #fff0f0;
-  border: 1px solid #f3cfd2;
+  background: var(--agora-surface-soft);
+  border: 1px solid var(--agora-border);
   border-radius: 0.75rem;
 }
 
@@ -1128,7 +1019,7 @@ plantilla-tarjeta-contenedora {
 
   margin: 0;
 
-  color: #3f3032;
+  color: var(--agora-text);
   font-size: 0.9375rem;
   font-weight: 700;
   line-height: 1.35;
@@ -1137,12 +1028,12 @@ plantilla-tarjeta-contenedora {
 .capacidad-field > label mat-icon {
   flex: 0 0 auto;
 
-  color: #69101b;
+  color: var(--agora-primary);
   font-size: 1.5rem;
 }
 
 .capacidad-field > label strong {
-  color: #69101b;
+  color: var(--agora-primary);
 }
 
 .capacidad-field__input {
@@ -1155,15 +1046,15 @@ plantilla-tarjeta-contenedora {
 
   box-sizing: border-box;
 
-  background: #ffffff;
+  background: var(--agora-background);
 
-  border: 1px solid #e4c9cc;
+  border: 1px solid var(--agora-border) !important;
   border-radius: 0.5rem;
 }
 
 .capacidad-field__input:focus-within {
-  border-color: #69101b;
-  box-shadow: 0 0 0 2px rgba(105, 16, 27, 0.08);
+  border-color: var(--agora-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--agora-primary) 8%, transparent);
 }
 
 .capacidad-field__currency {
@@ -1171,7 +1062,9 @@ plantilla-tarjeta-contenedora {
 
   margin-right: 0.875rem;
 
-  color: #69101b;
+  background: var(--agora-surface);
+
+  color: var(--agora-primary);
   font-size: 0.875rem;
   font-weight: 700;
 }
@@ -1190,13 +1083,9 @@ plantilla-tarjeta-contenedora {
 
   background: transparent;
 
-  color: #3f3032;
+  color: var(--agora-text);
   font-family: inherit;
   font-size: 0.9375rem;
-}
-
-.capacidad-field__input--readonly {
-  background: #fff0f0;
 }
 
 .capacidad-field__input--readonly mat-icon {
@@ -1204,26 +1093,36 @@ plantilla-tarjeta-contenedora {
 
   margin-right: 0.625rem;
 
-  color: #756568;
+  color: var(--agora-text-muted);
   font-size: 1.375rem;
 }
 
 .capacidad-field__input--readonly input {
   font-weight: 600;
-  color: #3f3032;
+  color: var(--agora-text);
   cursor: not-allowed;
 }
 
 .capacidad-field .field-help {
   margin: 0;
 
-  color: #5f4b4e;
+  color: var(--agora-text-muted);
   font-size: 0.75rem;
   font-weight: 600;
   line-height: 1.4;
 }
 
-@media (max-width: 700px) {
+/* El campo de Capital Autorizado, incluido el prefijo $ COP,
+   debe permanecer blanco (por encima del fondo del input) */
+.capacidad-field__input--moneda {
+  background: var(--agora-surface) !important;
+}
+
+.capacidad-field__input--moneda input {
+  background: var(--agora-surface) !important;
+}
+
+@media (max-width: t.$bp-md) {
   .capacidad-financiera-grid {
     grid-template-columns: 1fr;
   }
@@ -1237,12 +1136,18 @@ plantilla-tarjeta-contenedora {
 .capacidad-financiera-header {
   width: 100%;
   box-sizing: border-box;
+
+  margin-top: 2rem;
+
+  background: var(--agora-surface);
 }
 
 .capacidad-financiera-header__main {
   display: flex;
   align-items: flex-start;
   gap: 0.75rem;
+
+  background: var(--agora-surface);
 }
 
 .capacidad-financiera-header__icon {
@@ -1257,8 +1162,8 @@ plantilla-tarjeta-contenedora {
 
   border-radius: 0.5rem;
 
-  background: #fce2e3;
-  color: #69101b;
+  background: var(--agora-border);
+  color: var(--agora-primary-dark);
 }
 
 .capacidad-financiera-header__icon mat-icon {
@@ -1267,12 +1172,16 @@ plantilla-tarjeta-contenedora {
 
 .capacidad-financiera-header__text {
   min-width: 0;
+
+  background: var(--agora-surface);
 }
 
 .capacidad-financiera-header__text h3 {
   margin: 0;
 
-  color: #2f2527;
+  background: transparent;
+
+  color: var(--agora-text);
 
   font-size: 1.125rem;
   font-weight: 700;
@@ -1283,7 +1192,9 @@ plantilla-tarjeta-contenedora {
 .capacidad-financiera-header__text p {
   margin: 0.25rem 0 0;
 
-  color: #756568;
+  background: transparent;
+
+  color: var(--agora-text-muted);
 
   font-size: 0.9375rem;
   line-height: 1.45;
@@ -1295,10 +1206,10 @@ plantilla-tarjeta-contenedora {
 
   margin: 0.75rem 0 1.25rem;
 
-  background: #f3cfd2;
+  background: var(--agora-border);
 }
 
-@media (max-width: 600px) {
+@media (max-width: t.$bp-sm) {
   .capacidad-financiera-header__main {
     align-items: flex-start;
   }
@@ -1315,167 +1226,5 @@ plantilla-tarjeta-contenedora {
   .capacidad-financiera-header__text p {
     font-size: 0.875rem;
   }
-}
-
-
-/* ============================================================
-   PALETA OFICIAL DEL MOCKUP - PASO 2
-   No usar rosados aproximados.
-   ============================================================ */
-
-/* Cajas / superficies principales */
-.paso-2-card {
-  background: #ffffff !important;
-}
-
-.afiliacion-card,
-.tesoreria-card,
-.form-subsection--capacidad {
-  background: #fff8f7 !important;
-}
-
-/* Bordes */
-.afiliacion-card,
-.tesoreria-card,
-.form-subsection--capacidad {
-  border-color: #fce2e3 !important;
-}
-
-/* Selectores y campos */
-.afiliacion-card__select,
-.afiliacion-card__select select,
-.afiliacion-card__select input {
-  background: #fff8f7 !important;
-  border-color: #fce2e3;
-}
-
-/* Iconos dentro de las tarjetas */
-.afiliacion-card__title mat-icon,
-.capacidad-financiera-header__icon {
-  background: #fce2e3 !important;
-}
-
-/* Módulo de correo */
-.tesoreria-card__input,
-.tesoreria-card__input input {
-  background: #fff8f7 !important;
-}
-
-.tesoreria-card__input {
-  border-color: #fce2e3 !important;
-}
-
-/* Capacidad financiera */
-.capacidad-financiera-divider {
-  background: #fce2e3 !important;
-}
-
-.capacidad-field__input {
-  background: #fff8f7 !important;
-  border-color: #fce2e3 !important;
-}
-
-/* El índice es un campo calculado: ligeramente más diferenciado */
-.capacidad-field__input--readonly {
-  background: #fff0f0 !important;
-}
-
-/* Icono del encabezado */
-.capacidad-financiera-header__icon {
-  color: #47000b !important;
-}
-
-/* Etiquetas y pequeños indicadores */
-.step-banner__tag,
-.form-section__tag {
-  background: #fce2e3 !important;
-}
-
-/* Icono del banner institucional */
-.step-banner__icon {
-  background: #fce2e3 !important;
-}
-
-/* Separadores */
-.form-section__header,
-.capacidad-financiera-divider {
-  border-color: #fce2e3;
-}
-
-
-
-.afiliacion-card {
-  background: #ffffff !important;
-}
-
-.capacidad-field__input {
-  background: #fff8f7 !important;
-}
-
-.tesoreria-card__input,
-.tesoreria-card__input input {
-  background: #fff8f7 !important;
-}
-
-/* CORRECCIÓN: CAJA DE ESCRITURA DEL CORREO */
-.tesoreria-card__input {
-  background: #ffffff !important;
-}
-
-.tesoreria-card__input input {
-  background: #ffffff !important;
-}
-
-
-/* ============================================================
-   CAPACIDAD FINANCIERA
-   ENCABEZADO INDEPENDIENTE + CAJA ROSADA
-   ============================================================ */
-
-.capacidad-financiera-header {
-  background: #ffffff !important;
-}
-
-.capacidad-financiera-header__main {
-  background: #ffffff !important;
-}
-
-.capacidad-financiera-header__text {
-  background: #ffffff !important;
-}
-
-.capacidad-financiera-header__text h3,
-.capacidad-financiera-header__text p {
-  background: transparent !important;
-}
-
-.capacidad-financiera-divider {
-  background: #fce2e3 !important;
-}
-
-/* La caja que contiene Capital e Índice sí es rosada */
-.form-subsection--capacidad {
-  background: #fff0f0 !important;
-}
-
-
-/* Separación entre el módulo de Tesorería y la sección 3 */
-.capacidad-financiera-header {
-  margin-top: 2rem;
-}
-
-
-/* El campo de Capital Autorizado, incluido el prefijo $ COP,
-   debe permanecer blanco */
-.capacidad-field__input--moneda {
-  background: #ffffff !important;
-}
-
-.capacidad-field__input--moneda input {
-  background: #ffffff !important;
-}
-
-.capacidad-field__currency {
-  background: #ffffff !important;
 }
 

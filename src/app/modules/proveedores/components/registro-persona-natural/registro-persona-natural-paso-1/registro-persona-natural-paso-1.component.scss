@@ -1,3 +1,5 @@
+@use 'src/app/shared/styles/tokens' as t;
+
 /* Estilos del formulario Persona Natural - Paso 1 */
 
 /* =========================================================
@@ -19,7 +21,7 @@
   border-radius: 0.75rem;
 
   background: var(--agora-background);
-  box-shadow: 0 1px 3px rgba(105, 16, 27, 0.08);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--agora-primary) 8%, transparent);
 }
 
 .step-banner__icon {
@@ -32,7 +34,7 @@
   flex: 0 0 4rem;
 
   border-radius: 0.5rem;
-  background: #f8e7e8;
+  background: var(--agora-surface-highlight);
   color: var(--agora-primary);
 }
 
@@ -70,7 +72,7 @@
   padding: 0.35rem 0.7rem;
   border-radius: 0.25rem;
 
-  background: #f8e7e8;
+  background: var(--agora-surface-highlight);
   color: var(--agora-primary);
 
   font-size: 11px;
@@ -92,43 +94,6 @@
 
 .form-section {
   padding: 4px 0;
-}
-
-.form-section__header {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.form-section__icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  flex: 0 0 38px;
-  border-radius: 9px;
-  background: #f8e7e8;
-  color: var(--agora-primary);
-}
-
-.form-section__icon .material-symbols-outlined {
-  font-size: 21px;
-}
-
-.form-section__header h3 {
-  margin: 0 0 4px;
-  color: var(--agora-primary);
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.form-section__header p {
-  margin: 0;
-  color: var(--agora-text-muted);
-  font-size: 12px;
-  line-height: 1.45;
 }
 
 .form-grid {
@@ -213,7 +178,7 @@ mat-label {
 .field input:focus,
 .field select:focus,
 .field textarea:focus {
-  box-shadow: 0 0 0 2px rgba(105, 16, 27, 0.18);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--agora-primary) 18%, transparent);
 }
 
 .form-field input.ng-invalid.ng-touched,
@@ -222,7 +187,7 @@ mat-label {
 .field input.ng-invalid.ng-touched,
 .field select.ng-invalid.ng-touched,
 .field textarea.ng-invalid.ng-touched {
-  border-color: #b3261e;
+  border-color: var(--agora-error);
 }
 
 .form-field input::placeholder,
@@ -233,14 +198,10 @@ mat-label {
   opacity: 0.8;
 }
 
-.field--small {
-  max-width: 180px;
-}
-
 .field-error {
   display: block;
   margin-top: 5px;
-  color: #b3261e;
+  color: var(--agora-error);
   font-size: 12px;
   font-weight: 500;
   line-height: 1.4;
@@ -273,55 +234,14 @@ mat-form-field {
   margin: 0 0 32px;
 }
 
-.form-subsection__title .material-symbols-outlined {
-  color: var(--agora-primary);
-  font-size: 20px;
-}
-
-.form-subsection__title h4 {
-  margin: 0;
-  color: var(--agora-text);
-  font-size: 15px;
-}
-
 
 /* =========================================================
    CONSTRUCTOR DE DIRECCIÓN
    ========================================================= */
 
-.address-builder {
-  grid-column: 1 / -1;
-  margin-top: 8px;
-  padding: 20px;
-  border: 1px solid var(--agora-border);
-  border-radius: 10px;
-  background: #faf7f7;
-}
-
-.address-builder__header {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  margin-bottom: 18px;
-}
-
 .address-builder__header mat-icon {
   flex: 0 0 auto;
   color: var(--agora-primary);
-}
-
-.address-builder__header h3 {
-  margin: 0 0 4px;
-  color: var(--agora-text);
-  font-size: 15px;
-  font-weight: 700;
-}
-
-.address-builder__header p {
-  margin: 0;
-  color: var(--agora-text-muted);
-  font-size: 12px;
-  line-height: 1.5;
 }
 
 .address-builder__example {
@@ -332,26 +252,19 @@ mat-form-field {
   padding: 12px 14px;
   border-left: 3px solid var(--agora-primary);
   border-radius: 6px;
-  background: #fff;
+  background: var(--agora-surface);
   color: var(--agora-text-muted);
   font-size: 12px;
   line-height: 1.5;
 }
 
-.address-builder__example mat-icon {
-  flex: 0 0 auto;
-  color: var(--agora-primary);
-  font-size: 18px;
-}
 
 
 
-
-@media (max-width: 700px) {
+@media (max-width: t.$bp-md) {
   .step-banner {
     grid-template-columns: 1fr;
     gap: 1rem;
-    padding: 1.25rem;
   }
 
   .step-banner__headline {
@@ -375,14 +288,14 @@ mat-form-field {
    RESPONSIVE MÓVIL
    ========================================================= */
 
-@media (max-width: 900px) {
+@media (max-width: t.$bp-lg) {
   .form-grid--four,
   .form-grid--five {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 700px) {
+@media (max-width: t.$bp-md) {
   .step-banner {
     padding: 16px;
   }
@@ -393,13 +306,6 @@ mat-form-field {
     grid-template-columns: 1fr;
   }
 
-  .field--small {
-    max-width: none;
-  }
-
-  .address-builder {
-    padding: 16px;
-  }
 }
 
 /* =========================================================
@@ -411,14 +317,6 @@ plantilla-tarjeta-contenedora {
   width: 100%;
   margin: 0;
   box-sizing: border-box;
-}
-
-@media (max-width: 40rem) {
-  plantilla-tarjeta-contenedora {
-    width: 100%;
-    margin: 0;
-    box-sizing: border-box;
-  }
 }
 
 /* =========================================================
@@ -442,7 +340,7 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
   padding: 0.45rem 0.7rem;
 
   border-radius: 999px;
-  background: #f8e7e8;
+  background: var(--agora-surface-highlight);
 
   color: var(--agora-text-muted);
   font-size: 11px;
@@ -453,12 +351,12 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
   padding: 0.2rem 0.5rem;
 
   border-radius: 999px;
-  background: #f1d4d6;
+  background: var(--agora-surface-highlight);
   color: var(--agora-primary);
   font-weight: 700;
 }
 
-@media (max-width: 700px) {
+@media (max-width: t.$bp-md) {
   .tipo-persona-badge {
     position: static;
     margin: 0 0 1rem auto;
@@ -498,7 +396,7 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
 
 :host ::ng-deep .mat-mdc-form-field.mat-focused
   .mat-mdc-text-field-wrapper {
-  box-shadow: 0 0 0 2px rgba(105, 16, 27, 0.18);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--agora-primary) 18%, transparent);
 }
 
 :host ::ng-deep .mat-mdc-form-field .mat-mdc-floating-label {
@@ -530,6 +428,8 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
 :host ::ng-deep .caracterizacion-grid .mat-mdc-text-field-wrapper {
   margin-top: 2px;
   overflow: visible !important;
+  min-height: 40px;
+  height: 40px;
 }
 
 :host ::ng-deep .caracterizacion-grid .mat-mdc-floating-label {
@@ -559,11 +459,6 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
   color: var(--agora-text) !important;
 }
 
-/* Campos más bajos */
-:host ::ng-deep .caracterizacion-grid .mat-mdc-text-field-wrapper {
-  min-height: 40px;
-  height: 40px;
-}
 
 :host ::ng-deep .caracterizacion-grid .mat-mdc-form-field-infix {
   min-height: 40px;
@@ -584,7 +479,7 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
   min-width: 0;
 }
 
-@media (max-width: 900px) {
+@media (max-width: t.$bp-lg) {
   .caracterizacion-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -594,7 +489,7 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
   }
 }
 
-@media (max-width: 700px) {
+@media (max-width: t.$bp-md) {
   .caracterizacion-grid {
     grid-template-columns: 1fr;
   }
@@ -678,7 +573,7 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
 
   border-radius: 0.65rem;
 
-  background: #fff9e9;
+  background: var(--agora-warning-surface);
 }
 
 .aviso-legal-caracterizacion__icon {
@@ -686,7 +581,7 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
   align-items: flex-start;
   justify-content: center;
 
-  color: #a95f00;
+  color: var(--agora-warning);
 
   mat-icon {
     width: 1.5rem;
@@ -707,7 +602,7 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
 .aviso-legal-caracterizacion__headline h3 {
   margin: 0;
 
-  color: #8a4700;
+  color: var(--agora-warning-text);
 
   font-size: 13px;
   font-weight: 700;
@@ -722,8 +617,8 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
 
   border-radius: 999px;
 
-  background: #f4d98f;
-  color: #7a4700;
+  background: var(--agora-warning-border);
+  color: var(--agora-warning-text);
 
   font-size: 11px;
   font-weight: 700;
@@ -733,7 +628,7 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
 .aviso-legal-caracterizacion__content p {
   margin: 0;
 
-  color: #734f2c;
+  color: var(--agora-text-muted);
 
   font-size: 12.5px;
   line-height: 1.5;
@@ -743,7 +638,7 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
   font-weight: 700;
 }
 
-@media (max-width: 700px) {
+@media (max-width: t.$bp-md) {
   .aviso-legal-caracterizacion {
     grid-template-columns: 1fr;
     gap: 0.65rem;
@@ -778,22 +673,6 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
 /* =========================================================
    AYUDA AL FINAL DE CARACTERIZACIÓN
    ========================================================= */
-
-.campo-ayuda-final {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-
-  margin-top: 12px;
-}
-
-.campo-ayuda-final mat-icon {
-  width: 18px;
-  height: 18px;
-
-  color: var(--agora-text-muted);
-  font-size: 18px;
-}
 
 
 /* =========================================================
@@ -832,6 +711,7 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
   margin-top: 28px;
   padding-top: 24px;
   border-top: 1px solid var(--agora-border);
+  background: var(--agora-surface) !important;
 }
 
 .experiencia-contractual > h3 {
@@ -841,7 +721,7 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
 
   margin: 0 0 20px;
 
-  color: var(--agora-text);
+  color: var(--agora-primary);
 
   font-size: 15px;
   font-weight: 700;
@@ -917,13 +797,7 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
 
 :host ::ng-deep .experiencia-grid .mat-focused
   .mat-mdc-text-field-wrapper {
-  box-shadow: 0 0 0 2px rgba(105, 16, 27, 0.18);
-}
-
-@media (max-width: 700px) {
-  .experiencia-grid {
-    grid-template-columns: 1fr;
-  }
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--agora-primary) 18%, transparent);
 }
 
 
@@ -931,55 +805,22 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
    EXPERIENCIA — FORMATO DEL MOCKUP
    ========================================================= */
 
-.experiencia-contractual {
-  margin-top: 28px;
-  padding-top: 24px;
-  border-top: 1px solid var(--agora-border);
-}
-
-.experiencia-contractual > h3 {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
-  margin: 0 0 20px;
-
-  color: var(--agora-primary);
-
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 1.3;
-}
-
-.experiencia-contractual > h3 mat-icon {
-  width: 20px;
-  height: 20px;
-
-  color: var(--agora-primary);
-  font-size: 20px;
-}
-
-.experiencia-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 30px;
-}
-
 .experiencia-card {
   min-width: 0;
-  padding: 28px 30px 26px;
-
-  border-radius: 14px;
-  background: #fdf1f1;
+  padding: 16px 18px 14px;
+  border-radius: 10px;
+  background: var(--agora-surface-highlight) !important;
+  border: 1px solid color-mix(in srgb, var(--agora-primary) 10%, transparent);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--agora-primary) 6%, transparent);
 }
 
 .experiencia-card__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 10px;
 
-  margin-bottom: 14px;
+  margin-bottom: 8px;
 }
 
 .experiencia-card__label {
@@ -987,9 +828,9 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
 
   color: var(--agora-text);
 
-  font-size: 15px;
+  font-size: 11px;
   font-weight: 700;
-  line-height: 1.25;
+  line-height: 1.2;
   text-transform: uppercase;
 }
 
@@ -1002,7 +843,7 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
 
   color: var(--agora-text-muted);
 
-  font-size: 14px;
+  font-size: 10px;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -1013,11 +854,11 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
 }
 
 :host ::ng-deep .experiencia-card__field .mat-mdc-text-field-wrapper {
-  height: 68px;
-  min-height: 68px;
+  height: 40px !important;
+  min-height: 40px !important;
 
-  border-radius: 8px;
-  background: #ffffff !important;
+  border-radius: 6px;
+  background: var(--agora-background) !important;
 }
 
 :host ::ng-deep .experiencia-card__field .mdc-notched-outline,
@@ -1028,43 +869,46 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
 }
 
 :host ::ng-deep .experiencia-card__field .mat-mdc-form-field-infix {
-  min-height: 68px;
-  padding-top: 14px;
-  padding-bottom: 8px;
+  min-height: 40px !important;
+  padding-top: 6px !important;
+  padding-bottom: 4px !important;
 }
 
 :host ::ng-deep .experiencia-card__field .mat-mdc-input-element {
-  font-size: 24px !important;
+  font-size: 16px !important;
   font-weight: 700 !important;
   color: var(--agora-text) !important;
 }
 
 :host ::ng-deep .experiencia-card__field .mat-mdc-form-field-icon-prefix {
-  padding-right: 12px;
+  padding-right: 6px;
 }
 
 :host ::ng-deep .experiencia-card__field .mat-mdc-form-field-icon-prefix mat-icon {
+  width: 16px;
+  height: 16px;
   color: var(--agora-text-muted);
+  font-size: 16px;
 }
 
 :host ::ng-deep .experiencia-card__field .mat-mdc-form-field-text-suffix {
-  padding-left: 12px;
+  padding-left: 6px;
 
   color: var(--agora-text-muted);
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 700;
 }
 
 .experiencia-card__description {
-  margin: 14px 0 0;
+  margin: 7px 0 0;
 
   color: var(--agora-text-muted);
 
-  font-size: 14px;
-  line-height: 1.45;
+  font-size: 11px;
+  line-height: 1.3;
 }
 
-@media (max-width: 900px) {
+@media (max-width: t.$bp-lg) {
   .experiencia-grid {
     grid-template-columns: 1fr;
   }
@@ -1072,92 +916,9 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
   .experiencia-card__header {
     align-items: flex-start;
     flex-direction: column;
-    gap: 6px;
   }
 }
 
-@media (max-width: 700px) {
-  .experiencia-card {
-    padding: 22px 18px;
-  }
-
-  .experiencia-card__label {
-    font-size: 13px;
-  }
-
-  .experiencia-card__equivalencia {
-    font-size: 12px;
-  }
-}
-
-
-/* =========================================================
-   EXPERIENCIA — AJUSTE FINAL SEGÚN MOCKUP
-   ========================================================= */
-
-.experiencia-grid {
-  gap: 16px;
-}
-
-.experiencia-card {
-  padding: 18px 18px 16px;
-  border-radius: 10px;
-  background: #d9aeb5;
-}
-
-.experiencia-card__header {
-  gap: 12px;
-  margin-bottom: 10px;
-}
-
-.experiencia-card__label {
-  font-size: 12px;
-  line-height: 1.2;
-}
-
-.experiencia-card__equivalencia {
-  font-size: 11px;
-}
-
-:host ::ng-deep .experiencia-card__field .mat-mdc-text-field-wrapper {
-  height: 46px !important;
-  min-height: 46px !important;
-  border-radius: 7px;
-  background: #fff !important;
-}
-
-:host ::ng-deep .experiencia-card__field .mat-mdc-form-field-infix {
-  min-height: 46px !important;
-  padding-top: 8px !important;
-  padding-bottom: 5px !important;
-}
-
-:host ::ng-deep .experiencia-card__field .mat-mdc-input-element {
-  font-size: 18px !important;
-  font-weight: 700 !important;
-}
-
-:host ::ng-deep .experiencia-card__field .mat-mdc-form-field-text-suffix {
-  padding-left: 8px;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-:host ::ng-deep .experiencia-card__field .mat-mdc-form-field-icon-prefix {
-  padding-right: 8px;
-}
-
-:host ::ng-deep .experiencia-card__field .mat-mdc-form-field-icon-prefix mat-icon {
-  width: 18px;
-  height: 18px;
-  font-size: 18px;
-}
-
-.experiencia-card__description {
-  margin-top: 9px;
-  font-size: 12px;
-  line-height: 1.35;
-}
 
 /* Mostrar controles de incremento/decremento en los campos numéricos */
 :host ::ng-deep .experiencia-card__field input[type="number"] {
@@ -1176,100 +937,56 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
   display: block !important;
 }
 
-@media (max-width: 700px) {
-  .experiencia-card {
-    padding: 16px;
-  }
-
-  .experiencia-card__header {
-    margin-bottom: 9px;
-  }
-}
-
-
-/* =========================================================
-   EXPERIENCIA — AJUSTE FINO CONTRA MOCKUP
-   ========================================================= */
-
-.experiencia-card {
-  padding: 16px 18px 14px;
-  border-radius: 10px;
-  background: #fff5f5 !important;
-}
-
-.experiencia-card__header {
-  gap: 10px;
-  margin-bottom: 8px;
-}
-
-.experiencia-card__label {
-  font-size: 11px;
-  line-height: 1.2;
-}
-
-.experiencia-card__equivalencia {
-  font-size: 10px;
-}
-
-:host ::ng-deep .experiencia-card__field .mat-mdc-text-field-wrapper {
-  height: 40px !important;
-  min-height: 40px !important;
-  border-radius: 6px;
-}
-
-:host ::ng-deep .experiencia-card__field .mat-mdc-form-field-infix {
-  min-height: 40px !important;
-  padding-top: 6px !important;
-  padding-bottom: 4px !important;
-}
-
-:host ::ng-deep .experiencia-card__field .mat-mdc-input-element {
-  font-size: 16px !important;
-  font-weight: 700 !important;
-}
-
-:host ::ng-deep .experiencia-card__field .mat-mdc-form-field-icon-prefix {
-  padding-right: 6px;
-}
-
-:host ::ng-deep .experiencia-card__field .mat-mdc-form-field-icon-prefix mat-icon {
-  width: 16px;
-  height: 16px;
-  font-size: 16px;
-}
-
-:host ::ng-deep .experiencia-card__field .mat-mdc-form-field-text-suffix {
-  padding-left: 6px;
-}
-
-.experiencia-card__unit {
-  font-size: 11px;
-}
-
-.experiencia-card__description {
-  margin-top: 7px;
-  font-size: 11px;
-  line-height: 1.3;
-}
 
 /* Flechas de incremento/decremento más compactas */
 .experiencia-card__spin-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
   width: 12px;
-  height: 22px;
+  height: 24px;
+
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+
+  transition:
+    opacity 0.15s ease,
+    visibility 0.15s ease;
 }
 
 .experiencia-card__spin-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   width: 12px;
-  height: 11px;
+  height: 12px;
+  padding: 0;
+
+  border: 0;
+  background: transparent;
+
+  color: var(--agora-text-muted);
+
   font-size: 7px;
+  font-weight: 700;
   line-height: 7px;
+
+  cursor: pointer;
 }
 
 
 /* Ajuste de unidad MESES */
 .experiencia-card__unit {
   font-size: 9px !important;
-  font-weight: 700;
+  line-height: 1 !important;
+  font-weight: 700 !important;
+
+  position: relative;
+  left: -5px;
 }
 
 
@@ -1283,50 +1000,8 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
 }
 
 
-.experiencia-card__unit {
-  font-size: 9px !important;
-  line-height: 1 !important;
-  font-weight: 700 !important;
-}
-
-
-.experiencia-card__unit {
-  position: relative;
-  left: -5px;
-}
-
-
 .experiencia-card__field input[type="number"]::-webkit-inner-spin-button {
   margin-right: 6px;
-}
-
-
-/* =========================================================
-   SPINNERS — VISIBLES SOLO AL PASAR EL MOUSE
-   ========================================================= */
-
-.experiencia-card__field input[type="number"]::-webkit-inner-spin-button,
-.experiencia-card__field input[type="number"]::-webkit-outer-spin-button {
-  opacity: 0;
-  transition: opacity 0.15s ease;
-}
-
-.experiencia-card:hover
-  .experiencia-card__field
-  input[type="number"]::-webkit-inner-spin-button,
-.experiencia-card:hover
-  .experiencia-card__field
-  input[type="number"]::-webkit-outer-spin-button {
-  opacity: 1;
-}
-
-.experiencia-card:focus-within
-  .experiencia-card__field
-  input[type="number"]::-webkit-inner-spin-button,
-.experiencia-card:focus-within
-  .experiencia-card__field
-  input[type="number"]::-webkit-outer-spin-button {
-  opacity: 1;
 }
 
 
@@ -1354,54 +1029,8 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
   gap: 6px;
 }
 
-.experiencia-card__spin-buttons {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-
-  width: 12px;
-  height: 24px;
-}
-
-.experiencia-card__spin-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  width: 12px;
-  height: 12px;
-  padding: 0;
-
-  border: 0;
-  background: transparent;
-
-  color: var(--agora-text-muted);
-
-  font-size: 7px;
-  font-weight: 700;
-  line-height: 7px;
-
-  cursor: pointer;
-}
-
 .experiencia-card__spin-button:hover {
   color: var(--agora-primary);
-}
-
-
-/* =========================================================
-   BOTONES DE MESES — SOLO CON HOVER
-   ========================================================= */
-
-.experiencia-card__spin-buttons {
-  visibility: hidden;
-  opacity: 0;
-  pointer-events: none;
-
-  transition:
-    opacity 0.15s ease,
-    visibility 0.15s ease;
 }
 
 .experiencia-card:hover .experiencia-card__spin-buttons {
@@ -1411,158 +1040,21 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
 }
 
 
-/* PRUEBA TEMPORAL DE COLOR */
-.experiencia-card {
-  background: #00ff00 !important;
-}
-
-
-.experiencia-card {
-  background: #d8a5ad !important;
-}
-
-
-.experiencia-card {
-  background: #e7c1c6 !important;
-}
-
-
-.experiencia-card {
-  background: #FFC0CB !important;
-}
-
-
-.experiencia-card {
-  background: #F6DCE0 !important;
-}
-
-
-/* =========================================================
-   EXPERIENCIA — TARJETAS CON EL FONDO DEL MÓDULO
-   ========================================================= */
-
-.experiencia-card {
-  background: #F6DCE0 !important;
-}
-
-
-/* =========================================================
-   EXPERIENCIA — CAMPOS DE MESES CON EL MISMO FONDO
-   ========================================================= */
-
-:host ::ng-deep .experiencia-card__field .mat-mdc-text-field-wrapper {
-  background: #F6DCE0 !important;
-}
-
-
-/* =========================================================
-   CAJAS DE MESES — FONDO DE LA PÁGINA
-   ========================================================= */
-
-:host ::ng-deep .experiencia-card__field .mat-mdc-text-field-wrapper {
-  background: var(--agora-background) !important;
-}
-
-
-/* =========================================================
-   EXPERIENCIA — ROSA MÁS CLARO
-   ========================================================= */
-
-.experiencia-contractual {
-  background: #F9E7E9 !important;
-}
-
-.experiencia-card {
-  background: #F9E7E9 !important;
-}
-
-
-/* =========================================================
-   SEPARACIÓN VISUAL DE LAS TARJETAS DE EXPERIENCIA
-   ========================================================= */
-
-.experiencia-card {
-  border: 1px solid rgba(105, 16, 27, 0.10);
-  box-shadow: 0 1px 3px rgba(105, 16, 27, 0.06);
-}
-
-
-/* =========================================================
-   EXPERIENCIA — PALETA DEFINITIVA
-   ========================================================= */
-
-.experiencia-contractual {
-  background: var(--agora-surface) !important;
-}
-
-.experiencia-card {
-  background: #F9E7E9 !important;
-}
-
-:host ::ng-deep .experiencia-card__field .mat-mdc-text-field-wrapper {
-  background: var(--agora-background) !important;
-}
 
 
 
 /* =========================================================
-   CARACTERIZACIÓN — ALINEACIÓN DE TEXTO EN SELECTS
-   ========================================================= */
-
-:host ::ng-deep .caracterizacion-grid .mat-mdc-select-value-text {
-  display: inline-block;
-  transform: translateX(5px);
-}
-
-
-:host ::ng-deep .caracterizacion-grid .mat-mdc-select-value-text {
-  transform: translateX(8px);
-}
-
-
-:host ::ng-deep .caracterizacion-grid .mat-mdc-select-value-text {
-  transform: translateX(10px);
-}
-
-
-/* =========================================================
-   CARACTERIZACIÓN — MISMO FORMATO QUE SELECTS NATIVOS
+   CARACTERIZACIÓN — ALINEACIÓN Y FORMATO DEL VALOR DEL SELECT
    ========================================================= */
 
 :host ::ng-deep .caracterizacion-grid .mat-mdc-select-value-text {
   display: inline-block;
   transform: none !important;
-
-  font-size: 14px !important;
-  font-weight: 400 !important;
-  color: var(--agora-text) !important;
-}
-
-
-/* =========================================================
-   CARACTERIZACIÓN — FORMATO FINAL DE VALORES
-   ========================================================= */
-
-:host ::ng-deep .caracterizacion-grid .mat-mdc-select-value-text {
-  display: inline-block;
-  transform: none !important;
+  padding-left: 14px !important;
 
   font-size: 13px !important;
   font-weight: 600 !important;
   color: var(--agora-text) !important;
-}\n
-/* =========================================================
-   INDICADOR DE CAMPOS OBLIGATORIOS
-   ========================================================= */
-
-.required {
-  color: #D32F2F !important;
-  font-weight: 700;
-}
-
-:host ::ng-deep .mat-mdc-form-field-required-marker {
-  color: #D32F2F !important;
-  font-weight: 700;
 }
 
 /* =========================================================
@@ -1572,7 +1064,7 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
 :host ::ng-deep .material-field__label .required,
 :host ::ng-deep .required,
 :host ::ng-deep .mat-mdc-form-field-required-marker {
-  color: #B4232F !important;
+  color: var(--agora-error) !important;
   font-weight: 700 !important;
 }
 
@@ -1590,25 +1082,14 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
   width: 100%;
   margin: 0;
 
-  --mdc-outlined-text-field-container-color: #F9E7E9;
+  --mdc-outlined-text-field-container-color: var(--agora-surface-highlight);
   --mdc-outlined-text-field-outline-color: transparent;
   --mdc-outlined-text-field-hover-outline-color: transparent;
   --mdc-outlined-text-field-focus-outline-color: transparent;
 }
 
-:host ::ng-deep .tributario-card .mat-mdc-text-field-wrapper {
-  background: #F9E7E9 !important;
-  border-radius: 10px !important;
-  padding: 8px 14px 6px !important;
-}
-
 :host ::ng-deep .tributario-card .mdc-notched-outline {
   display: none !important;
-}
-
-:host ::ng-deep .tributario-card .mat-mdc-form-field-infix {
-  min-height: 46px !important;
-  padding: 8px 0 !important;
 }
 
 :host ::ng-deep .tributario-card .mat-mdc-form-field-flex {
@@ -1621,45 +1102,27 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
   color: var(--agora-text) !important;
 }
 
-:host ::ng-deep .tributario-card .mat-mdc-select-value-text {
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  color: var(--agora-text) !important;
-  transform: none !important;
-}
-
-:host ::ng-deep .tributario-card .mat-mdc-select-arrow {
-  color: var(--agora-text) !important;
-}
-
-@media (max-width: 900px) {
-  .tributario-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 700px) {
-  .tributario-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
 
 /* =========================================================
    TRIBUTARIA — MISMO FORMATO VISUAL QUE EXPERIENCIA
    ========================================================= */
 
-.tributario-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-}
-
 .tributario-card {
+  position: relative;
   min-width: 0;
-  padding: 16px 18px 14px;
+  width: 100%;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  align-items: stretch;
+  justify-self: center;
+  align-self: center;
+  min-height: 104px;
+  padding: 12px 18px 10px;
+  border: 1px solid color-mix(in srgb, var(--agora-primary) 10%, transparent);
   border-radius: 10px;
-  background: #F9E7E9 !important;
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--agora-primary) 6%, transparent);
+  background: var(--agora-surface-highlight) !important;
 }
 
 .tributario-card__header {
@@ -1667,7 +1130,6 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
   align-items: center;
   justify-content: flex-start;
   gap: 10px;
-  margin-bottom: 8px;
 }
 
 .tributario-card__label {
@@ -1678,38 +1140,36 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
   line-height: 1.2;
 }
 
-.tributario-card__label .required {
-  color: #B4232F !important;
-  font-weight: 700 !important;
-}
-
 .tributario-card__field {
+  position: relative;
+  align-self: center;
   width: 100%;
+  height: 40px !important;
   margin: 0;
 }
 
 :host ::ng-deep .tributario-card__field .mat-mdc-text-field-wrapper {
   height: 40px !important;
   min-height: 40px !important;
+  padding: 8px 14px 6px !important;
   border-radius: 6px !important;
   background: var(--agora-background) !important;
-}
-
-:host ::ng-deep .tributario-card__field .mdc-notched-outline,
-:host ::ng-deep .tributario-card__field .mdc-notched-outline__leading,
-:host ::ng-deep .tributario-card__field .mdc-notched-outline__notch,
-:host ::ng-deep .tributario-card__field .mdc-notched-outline__trailing {
-  border-color: transparent !important;
+  position: relative !important;
+  top: 8px !important;
+  transform: translateY(-2px) !important;
 }
 
 :host ::ng-deep .tributario-card__field .mat-mdc-form-field-infix {
+  height: 40px !important;
   min-height: 40px !important;
-  padding-top: 6px !important;
-  padding-bottom: 4px !important;
+  padding: 6px 0 4px !important;
 }
 
 :host ::ng-deep .tributario-card__field .mat-mdc-select-value-text {
-  display: inline-block;
+  display: inline-flex !important;
+  align-items: center !important;
+  line-height: 1 !important;
+  padding-left: 14px !important;
   transform: none !important;
   font-size: 13px !important;
   font-weight: 600 !important;
@@ -1720,129 +1180,25 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
   color: var(--agora-text) !important;
 }
 
-@media (max-width: 900px) {
+@media (max-width: t.$bp-lg) {
   .tributario-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 700px) {
+@media (max-width: t.$bp-md) {
   .tributario-grid {
     grid-template-columns: 1fr;
   }
-
-  .tributario-card {
-    padding: 16px;
-  }
 }
 
 
-/* =========================================================
-   CARACTERIZACIÓN — SEPARACIÓN INTERNA DEL VALOR DEL SELECT
-   ========================================================= */
-
-:host ::ng-deep .caracterizacion-grid .mat-mdc-select-value-text {
-  padding-left: 14px !important;
-}
-
-
-/* =========================================================
-   TRIBUTARIA — SEPARACIÓN VISUAL DE MÓDULOS
-   ========================================================= */
-
-.tributario-card {
-  border: 1px solid rgba(105, 16, 27, 0.10);
-  box-shadow: 0 1px 3px rgba(105, 16, 27, 0.06);
-}
-
-
-/* =========================================================
-   TRIBUTARIA — REDUCCIÓN DE ALTURA
-   ========================================================= */
-
-.tributario-card {
-  padding: 12px 18px 10px;
-}
-
-.tributario-card__header {
-  margin-bottom: 6px;
-}
-
-:host ::ng-deep .tributario-card__field .mat-mdc-text-field-wrapper {
-  height: 36px !important;
-  min-height: 36px !important;
-}
-
-:host ::ng-deep .tributario-card__field .mat-mdc-form-field-infix {
-  min-height: 36px !important;
-  padding-top: 4px !important;
-  padding-bottom: 3px !important;
-}
-
-
-/* =========================================================
-   TRIBUTARIA — CENTRADO DE TARJETAS
-   ========================================================= */
-
-.tributario-card {
-  width: 100%;
-  justify-self: center;
-  align-self: center;
-  box-sizing: border-box;
-}
-
-
-/* =========================================================
-   TRIBUTARIA — AJUSTE VERTICAL DEL BLOQUE
-   ========================================================= */
-
-.tributario-grid {
-  position: relative;
-  top: 8px;
-}
-
-
-/* =========================================================
-   TRIBUTARIA — POSICIÓN DE LAS TARJETAS
-   ========================================================= */
-
-.tributario-grid {
-  top: 0;
-}
-
-.tributario-card {
-  position: relative;
-  top: 6px;
-}
-
-
-/* =========================================================
-   TRIBUTARIA — BAJAR TARJETAS SÍ/NO
-   ========================================================= */
-
-.tributario-card {
-  position: relative;
-  top: 0;
-  transform: translateY(18px);
-}
-
-/* =========================================================
-   TRIBUTARIA — POSICIÓN FINAL DE TARJETAS
-   ========================================================= */
-
-.tributario-card {
-  position: relative;
-  top: auto;
-  transform: none !important;
-  margin-top: 12px;
-}
 
 
 /* =========================================================
    TRIBUTARIA — FORMATO DE "SELECCIONE..."
    ========================================================= */
 
-:host ::ng-deep .tributario-card__field .mat-mdc-select-value-text,
 :host ::ng-deep .tributario-card__field .mat-mdc-select-placeholder {
   display: inline-block;
   transform: none !important;
@@ -1854,156 +1210,10 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
 }
 
 
-/* =========================================================
-   TRIBUTARIA — POSICIÓN DEL SELECT DENTRO DE LA TARJETA
-   ========================================================= */
-
-.tributario-card__field {
-  position: relative;
-  top: 6px;
-}
 
 
-/* =========================================================
-   TRIBUTARIA — CENTRADO VERTICAL DEL SELECT
-   ========================================================= */
-
-.tributario-card {
-  display: grid;
-  grid-template-rows: auto 1fr;
-  align-items: stretch;
-  min-height: 104px;
-}
-
-.tributario-card__header {
-  margin-bottom: 0;
-}
-
-.tributario-card__field {
-  align-self: center;
-  width: 100%;
-  height: 40px !important;
-  margin: 0 !important;
-  top: 0 !important;
-}
-
-:host ::ng-deep .tributario-card__field .mat-mdc-text-field-wrapper {
-  height: 40px !important;
-  min-height: 40px !important;
-}
-
-:host ::ng-deep .tributario-card__field .mat-mdc-form-field-infix {
-  height: 40px !important;
-  min-height: 40px !important;
-  padding-top: 6px !important;
-  padding-bottom: 4px !important;
-}
 
 
-/* =========================================================
-   TRIBUTARIA — POSICIÓN REAL DEL BLOQUE DE TARJETAS
-   ========================================================= */
-
-.tributario-grid {
-  margin-top: 0 !important;
-  padding-top: 20px !important;
-  position: static !important;
-  transform: none !important;
-}
-
-.tributario-card {
-  margin-top: 0 !important;
-  top: auto !important;
-  transform: none !important;
-}
-
-
-/* =========================================================
-   TRIBUTARIA — BAJAR VISUALMENTE LAS 6 TARJETAS
-   ========================================================= */
-
-.tributario-grid > .tributario-card {
-  transform: translateY(20px) !important;
-}
-
-
-/* =========================================================
-   TRIBUTARIA — POSICIÓN REAL DE LA CAJA DEL SELECT
-   ========================================================= */
-
-:host ::ng-deep .tributario-card__field .mat-mdc-text-field-wrapper {
-  position: relative !important;
-  top: 8px !important;
-}
-
-
-/* =========================================================
-   DEBUG TEMPORAL — IDENTIFICAR ESTRUCTURA DEL SELECT
-   ========================================================= */
-
-.tributario-card {
-  outline: 4px solid blue !important;
-}
-
-.tributario-card__field {
-  outline: 4px solid red !important;
-}
-
-:host ::ng-deep .tributario-card__field .mat-mdc-text-field-wrapper {
-  outline: 4px solid lime !important;
-}
-
-:host ::ng-deep .tributario-card__field .mat-mdc-form-field-flex {
-  outline: 4px solid orange !important;
-}
-
-:host ::ng-deep .tributario-card__field .mat-mdc-form-field-infix {
-  outline: 4px solid magenta !important;
-}
-
-:host ::ng-deep .tributario-card__field .mat-mdc-select {
-  outline: 4px solid cyan !important;
-}
-
-
-/* =========================================================
-   DEBUG — PRUEBA REAL DE POSICIÓN DE LA CAJA DEL SELECT
-   ========================================================= */
-
-:host ::ng-deep .tributario-card__field .mat-mdc-text-field-wrapper {
-  transform: translateY(30px) !important;
-}
-
-
-/* =========================================================
-   TRIBUTARIA — LIMPIEZA DEL DEBUG Y POSICIÓN DEFINITIVA
-   ========================================================= */
-
-.tributario-card,
-.tributario-card__field {
-  outline: none !important;
-}
-
-:host ::ng-deep .tributario-card__field .mat-mdc-text-field-wrapper {
-  outline: none !important;
-}
-
-:host ::ng-deep .tributario-card__field .mat-mdc-form-field-flex {
-  outline: none !important;
-}
-
-:host ::ng-deep .tributario-card__field .mat-mdc-form-field-infix {
-  outline: none !important;
-}
-
-:host ::ng-deep .tributario-card__field .mat-mdc-select {
-  outline: none !important;
-}
-
-/* La prueba de 30px se reemplaza por el ajuste visual real */
-:host ::ng-deep .tributario-card__field .mat-mdc-text-field-wrapper {
-  transform: translateY(-2px) !important;
-}
 
 
 /* =========================================================
@@ -2020,18 +1230,6 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
   display: flex !important;
   align-items: center !important;
   height: 100% !important;
-}
-
-:host ::ng-deep .tributario-card__field .mat-mdc-select-value-text {
-  display: inline-flex !important;
-  align-items: center !important;
-  line-height: 1 !important;
-  padding-left: 14px !important;
-  transform: none !important;
-
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  color: var(--agora-text) !important;
 }
 
 
@@ -2073,39 +1271,6 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
   transform: translateY(-6px) !important;
 }
 
-
-/* =========================================================
-   TRIBUTARIA — POSICIÓN DEFINITIVA DE TEXTO Y FLECHA
-   ========================================================= */
-
-:host ::ng-deep mat-form-field.tributario-card__field
-  .mat-mdc-select
-  .mat-mdc-select-placeholder {
-  position: relative !important;
-  transform: translateY(-6px) !important;
-}
-
-:host ::ng-deep mat-form-field.tributario-card__field
-  .mat-mdc-select-arrow-wrapper {
-  position: relative !important;
-  transform: translateY(-6px) !important;
-}
-
-
-/* =========================================================
-   TRIBUTARIA — ELIMINAR DESPLAZAMIENTOS ACUMULADOS
-   ========================================================= */
-
-.tributario-grid {
-  margin-top: 0 !important;
-  padding-top: 0 !important;
-}
-
-.tributario-grid > .tributario-card {
-  margin-top: 0 !important;
-  top: auto !important;
-  transform: none !important;
-}
 
 
 /* =========================================================
@@ -2153,24 +1318,27 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
    --------------------------------------------------------- */
 
 .residencia-contacto .address-builder {
+  position: relative;
   grid-column: 1 / -1;
 
   margin-top: 0;
   padding: 16px 18px;
 
-  border: 1px solid rgba(105, 16, 27, 0.10);
+  border: 1px solid color-mix(in srgb, var(--agora-primary) 10%, transparent);
   border-radius: 10px;
 
-  background: #F9E7E9;
-  box-shadow: 0 1px 3px rgba(105, 16, 27, 0.06);
+  background: var(--agora-surface-highlight);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--agora-primary) 6%, transparent);
 }
 
 .residencia-contacto .address-builder__header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
 
   margin-bottom: 12px;
+  position: relative;
+  padding-right: 190px;
 }
 
 .residencia-contacto .address-builder__header mat-icon {
@@ -2198,82 +1366,16 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
   line-height: 1.35;
 }
 
-.residencia-contacto .address-builder > .form-grid {
-  display: grid;
-  grid-template-columns:
-    minmax(0, 1fr)
-    minmax(0, 1fr)
-    minmax(0, 0.7fr)
-    minmax(0, 1fr)
-    minmax(0, 0.45fr)
-    minmax(0, 1fr)
-    minmax(0, 0.9fr);
-  gap: 12px;
-}
-
-.residencia-contacto .address-builder .field {
-  min-width: 0;
-}
-
-.residencia-contacto .address-builder .field--small {
-  max-width: none;
-}
-
-/* ---------------------------------------------------------
-   CAMPOS MATERIAL DEL CONSTRUCTOR
-   --------------------------------------------------------- */
-
-:host ::ng-deep .residencia-contacto
-  .address-builder
-  .mat-mdc-text-field-wrapper {
-  min-height: 40px !important;
-  height: 40px !important;
-  border-radius: 6px !important;
-  background: var(--agora-background) !important;
-}
-
-:host ::ng-deep .residencia-contacto
-  .address-builder
-  .mat-mdc-form-field-infix {
-  min-height: 40px !important;
-  height: 40px !important;
-  padding-top: 6px !important;
-  padding-bottom: 4px !important;
-}
-
-:host ::ng-deep .residencia-contacto
-  .address-builder
-  .mat-mdc-input-element {
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  color: var(--agora-text) !important;
-}
-
 /* ---------------------------------------------------------
    EJEMPLO / DIRECCIÓN GENERADA
    --------------------------------------------------------- */
-
-.residencia-contacto .address-builder__example {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
-  margin-top: 12px;
-  padding: 10px 12px;
-
-  border: 1px solid rgba(39, 116, 67, 0.15);
-  border-left: 3px solid #277443;
-  border-radius: 6px;
-
-  background: #fff;
-}
 
 .residencia-contacto .address-builder__example mat-icon {
   flex: 0 0 auto;
   width: 18px;
   height: 18px;
   font-size: 18px;
-  color: #277443;
+  color: var(--agora-success);
 }
 
 .residencia-contacto .address-builder__example span {
@@ -2291,43 +1393,19 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
    CONTACTO — 4 COLUMNAS
    --------------------------------------------------------- */
 
-.residencia-contacto__contacto > div.form-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
-}
-
-.residencia-contacto__contacto .field {
-  min-width: 0;
-}
-
 .residencia-contacto__contacto mat-form-field {
   width: 100%;
-}
-
-/* ---------------------------------------------------------
-   ASTERISCOS
-   --------------------------------------------------------- */
-
-.residencia-contacto .required,
-.residencia-contacto .mat-mdc-form-field-required-marker {
-  color: #B4232F !important;
-  font-weight: 700 !important;
 }
 
 /* ---------------------------------------------------------
    TABLET
    --------------------------------------------------------- */
 
-@media (max-width: 900px) {
+@media (max-width: t.$bp-lg) {
 
   .residencia-contacto__ubicacion > div.form-grid,
   .residencia-contacto__contacto > div.form-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .residencia-contacto .address-builder > .form-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
 }
@@ -2336,7 +1414,7 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
    MÓVIL
    --------------------------------------------------------- */
 
-@media (max-width: 700px) {
+@media (max-width: t.$bp-md) {
 
   .residencia-contacto {
     gap: 18px;
@@ -2344,14 +1422,6 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
 
   .residencia-contacto__ubicacion > div.form-grid,
   .residencia-contacto__contacto > div.form-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .residencia-contacto .address-builder {
-    padding: 14px;
-  }
-
-  .residencia-contacto .address-builder > .form-grid {
     grid-template-columns: 1fr;
   }
 
@@ -2378,11 +1448,6 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
   line-height: 1.2;
 }
 
-.residencia-contacto__label .required {
-  color: #B4232F !important;
-  font-weight: 700 !important;
-}
-
 .residencia-contacto__field {
   width: 100%;
   margin: 0 !important;
@@ -2406,16 +1471,10 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
   padding-bottom: 4px !important;
 }
 
-:host ::ng-deep .residencia-contacto__field .mat-mdc-select-value-text,
 :host ::ng-deep .residencia-contacto__field .mat-mdc-input-element {
   font-size: 13px !important;
   font-weight: 600 !important;
   color: var(--agora-text) !important;
-}
-
-:host ::ng-deep .residencia-contacto__field .mat-mdc-select-value-text {
-  padding-left: 14px !important;
-  transform: none !important;
 }
 
 
@@ -2423,69 +1482,18 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
    GENERADOR DIAN — AJUSTE VISUAL
    ========================================================= */
 
-.residencia-contacto .address-builder {
-  position: relative;
-  margin-top: 0;
-  padding: 16px 18px;
-  border: 1px solid rgba(105, 16, 27, 0.10);
-  border-radius: 10px;
-  background: #F9E7E9;
-  box-shadow: 0 1px 3px rgba(105, 16, 27, 0.06);
-}
-
-.residencia-contacto .address-builder__header {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.residencia-contacto .address-builder__header mat-icon {
-  width: 18px;
-  height: 18px;
-  font-size: 18px;
-  color: var(--agora-primary);
-}
-
-.residencia-contacto .address-builder__header h3 {
-  margin: 0 0 2px;
-  color: var(--agora-text);
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.2;
-  text-transform: uppercase;
-}
-
-.residencia-contacto .address-builder__header p {
-  margin: 0;
-  color: var(--agora-text-muted);
-  font-size: 11px;
-  line-height: 1.35;
-}
-
 .residencia-contacto .address-builder__norma {
-  margin-left: auto;
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: #F1D4D6;
-  color: var(--agora-primary);
-  font-size: 9px;
-  font-weight: 700;
+  position: absolute;
+  top: 2px;
+  right: 0;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--agora-text-muted);
+  font-size: 10px;
+  font-weight: 600;
   white-space: nowrap;
-}
-
-.residencia-contacto .address-builder > .form-grid {
-  display: grid;
-  grid-template-columns:
-    minmax(0, 1.1fr)
-    minmax(0, 1fr)
-    minmax(0, 0.45fr)
-    minmax(0, 1fr)
-    minmax(0, 0.45fr)
-    minmax(0, 1fr)
-    minmax(0, 0.85fr)
-    minmax(0, 0.9fr);
-  gap: 12px;
 }
 
 .residencia-contacto .address-builder .field {
@@ -2542,38 +1550,6 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
   border-color: transparent !important;
 }
 
-/* Separadores # y - */
-.address-static-field {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  padding-top: 15px;
-}
-
-.address-static-field__label {
-  margin-bottom: 7px;
-  color: var(--agora-text);
-  font-size: 10.5px;
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.address-static-field__label .required {
-  color: #B4232F !important;
-}
-
-.address-static-field__value {
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  background: var(--agora-background);
-  color: var(--agora-text);
-  font-size: 13px;
-  font-weight: 700;
-}
-
 /* Resultado */
 .residencia-contacto .address-builder__example {
   display: flex;
@@ -2582,7 +1558,7 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
   margin-top: 12px;
   padding: 10px 12px;
   border: 1px solid rgba(39, 116, 67, 0.15);
-  border-left: 3px solid #277443;
+  border-left: 3px solid var(--agora-success);
   border-radius: 6px;
   background: var(--agora-background);
 }
@@ -2607,8 +1583,8 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
   margin-left: auto;
   padding: 4px 10px;
   border-radius: 999px;
-  background: #EAF6EE;
-  color: #277443;
+  background: var(--agora-success-surface);
+  color: var(--agora-success);
   font-size: 10px;
   font-weight: 700;
   white-space: nowrap;
@@ -2618,26 +1594,12 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
   width: 14px;
   height: 14px;
   font-size: 14px;
-  color: #277443;
+  color: var(--agora-success);
 }
 
-@media (max-width: 900px) {
-  .residencia-contacto .address-builder > .form-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 700px) {
+@media (max-width: t.$bp-md) {
   .residencia-contacto .address-builder {
     padding: 14px;
-  }
-
-  .residencia-contacto .address-builder > .form-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .residencia-contacto .address-builder__norma {
-    display: none;
   }
 
   .residencia-contacto .address-builder__example {
@@ -2655,26 +1617,8 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
    DIAN — NORMA TÉCNICA ALINEADA AL ENCABEZADO
    ========================================================= */
 
-.residencia-contacto .address-builder__header {
-  display: flex;
-  align-items: flex-start;
-}
-
 .residencia-contacto .address-builder__header > div {
   min-width: 0;
-}
-
-.residencia-contacto .address-builder__norma {
-  margin-left: auto;
-  margin-top: 2px;
-  padding: 0;
-  border-radius: 0;
-  background: transparent;
-
-  color: var(--agora-text-muted);
-  font-size: 10px;
-  font-weight: 600;
-  white-space: nowrap;
 }
 
 
@@ -2696,31 +1640,7 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
 
 
 
-/* =========================================================
-   DIAN — NORMA TÉCNICA EN LA ESQUINA SUPERIOR DERECHA
-   ========================================================= */
-
-.residencia-contacto .address-builder__header {
-  position: relative;
-  padding-right: 190px;
-}
-
-.residencia-contacto .address-builder__norma {
-  position: absolute;
-  top: 2px;
-  right: 0;
-
-  margin: 0;
-  padding: 0;
-
-  background: transparent;
-  color: var(--agora-text-muted);
-  font-size: 10px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-@media (max-width: 700px) {
+@media (max-width: t.$bp-md) {
   .residencia-contacto .address-builder__header {
     padding-right: 0;
   }
@@ -2822,28 +1742,9 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
   border-color: transparent !important;
 }
 
-/* Asteriscos */
-.residencia-contacto__contacto .mat-mdc-form-field-required-marker {
-  color: #B4232F !important;
-}
-
 /* Errores */
 :host ::ng-deep .residencia-contacto__contacto .mat-mdc-form-field-subscript-wrapper {
   min-height: 0;
-}
-
-/* Tablet */
-@media (max-width: 900px) {
-  .residencia-contacto__contacto > div.form-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-/* Móvil */
-@media (max-width: 700px) {
-  .residencia-contacto__contacto > div.form-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 
@@ -2871,11 +1772,6 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
   font-size: 11.5px;
   font-weight: 700;
   line-height: 1.2;
-}
-
-.contacto-campo__label .required {
-  color: #B4232F !important;
-  font-weight: 700 !important;
 }
 
 .contacto-campo__field {
@@ -2913,13 +1809,13 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
   border-color: transparent !important;
 }
 
-@media (max-width: 900px) {
+@media (max-width: t.$bp-lg) {
   .contacto-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 700px) {
+@media (max-width: t.$bp-md) {
   .contacto-grid {
     grid-template-columns: 1fr;
   }
@@ -2988,11 +1884,6 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
   white-space: nowrap;
 }
 
-.residencia-contacto .address-builder__field-label .required {
-  color: #B4232F !important;
-  font-weight: 700;
-}
-
 /* Campos Material: misma altura visual que # y - */
 .residencia-contacto
   .address-builder__campo
@@ -3027,6 +1918,7 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
   padding-top: 0 !important;
   padding-bottom: 0 !important;
   line-height: 20px !important;
+  font-size: 13px;
 }
 
 .residencia-contacto .address-builder__campo .field {
@@ -3050,13 +1942,6 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
   color: var(--agora-text);
   font-size: 13px;
   font-weight: 700;
-  transform: translateY(17px) !important;
-}
-
-.residencia-contacto
-  .address-builder__campo
-  .mat-mdc-input-element {
-  font-size: 13px;
 }
 
 .residencia-contacto
@@ -3065,23 +1950,19 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
   font-size: 12px;
 }
 
-@media (max-width: 900px) {
+@media (max-width: t.$bp-lg) {
   .residencia-contacto .address-builder > .form-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 700px) {
+@media (max-width: t.$bp-md) {
   .residencia-contacto .address-builder > .form-grid {
     grid-template-columns: 1fr;
   }
 
   .residencia-contacto .address-builder__field-label {
     white-space: normal;
-  }
-
-  .residencia-contacto .address-static-field__value {
-    transform: none !important;
   }
 }
 
@@ -3120,7 +2001,7 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
   box-shadow: none !important;
 }
 
-@media (max-width: 700px) {
+@media (max-width: t.$bp-md) {
   .residencia-contacto .address-builder__campo .field {
     margin-top: 0 !important;
   }
@@ -3164,7 +2045,7 @@ plantilla-tarjeta-contenedora.tarjeta-identificacion {
   box-sizing: border-box;
 }
 
-@media (max-width: 40rem) {
+@media (max-width: t.$bp-sm) {
   .paso-1-ancho-contenido {
     width: 100%;
   }

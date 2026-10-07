@@ -1,3 +1,5 @@
+@use 'src/app/shared/styles/tokens' as t;
+
 :host {
   display: block;
   width: 100%;
@@ -53,10 +55,10 @@
   padding: 1rem;
   box-sizing: border-box;
 
-  border: 1px solid rgb(105 16 27 / 6%);
+  border: 1px solid color-mix(in srgb, var(--agora-primary) 6%, transparent);
   border-radius: 0.5rem;
 
-  background: #fff0f0;
+  background: var(--agora-surface-soft);
 
   display: flex;
   flex-direction: column;
@@ -72,8 +74,8 @@
   padding: 0.25rem 0.6rem;
   border-radius: 0.15rem;
 
-  background: #f8dddd;
-  color: #5b5050;
+  background: var(--agora-surface-highlight);
+  color: var(--agora-text-muted);
 
   font-size: 0.7rem;
   font-weight: 700;
@@ -84,7 +86,7 @@
 
 .paso4-ciiu-badge--principal {
   background: var(--agora-primary);
-  color: #fff;
+  color: var(--agora-on-primary);
 }
 
 .paso4-ciiu-card h3 {
@@ -104,7 +106,7 @@
   line-height: 1.45;
 }
 
-@media (max-width: 800px) {
+@media (max-width: t.$bp-lg) {
   .paso4-ciiu-grid {
     grid-template-columns: 1fr;
   }
@@ -124,28 +126,13 @@
 .paso4-subseccion-encabezado {
   margin-bottom: 1.25rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid rgb(105 16 27 / 12%);
+  border-bottom: 1px solid color-mix(in srgb, var(--agora-primary) 12%, transparent);
 }
 
 .paso4-subseccion-titulo {
   display: flex;
   align-items: center;
   gap: 0.65rem;
-}
-
-.paso4-subseccion-titulo mat-icon {
-  flex: 0 0 auto;
-  width: 2.5rem;
-  height: 2.5rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 0.65rem;
-  background: #ffdddd;
-  color: var(--agora-primary);
-
-  font-size: 1.35rem;
 }
 
 .paso4-subseccion-titulo h2 {
@@ -174,10 +161,10 @@
   width: 100%;
   overflow: hidden;
 
-  border: 1px solid rgb(105 16 27 / 8%);
+  border: 1px solid color-mix(in srgb, var(--agora-primary) 8%, transparent);
   border-radius: 0.65rem;
 
-  background: #fff;
+  background: var(--agora-surface);
 }
 
 
@@ -193,8 +180,8 @@
 
   box-sizing: border-box;
 
-  background: #fff0f0;
-  border-bottom: 1px solid rgb(105 16 27 / 8%);
+  background: var(--agora-surface-soft);
+  border-bottom: 1px solid color-mix(in srgb, var(--agora-primary) 8%, transparent);
 }
 
 .paso4-editor-toolbar button {
@@ -210,7 +197,7 @@
   border-radius: 0.3rem;
 
   background: transparent;
-  color: #4f4141;
+  color: var(--agora-text-muted);
 
   font-family: inherit;
   font-size: 0.875rem;
@@ -220,7 +207,7 @@
 }
 
 .paso4-editor-toolbar button:hover {
-  background: rgb(105 16 27 / 7%);
+  background: color-mix(in srgb, var(--agora-primary) 7%, transparent);
 }
 
 .paso4-editor-toolbar button strong,
@@ -234,7 +221,7 @@
   height: 1.4rem;
   margin: 0 0.35rem;
 
-  background: rgb(105 16 27 / 15%);
+  background: color-mix(in srgb, var(--agora-primary) 15%, transparent);
 }
 
 
@@ -253,8 +240,8 @@
   outline: none;
   resize: vertical;
 
-  background: #fff;
-  color: var(--agora-text, #251819);
+  background: var(--agora-surface);
+  color: var(--agora-text);
 
   font-family: inherit;
   font-size: 0.95rem;
@@ -265,13 +252,13 @@
 }
 
 .paso4-editor textarea::placeholder {
-  color: #8a7777;
+  color: var(--agora-text-muted);
   opacity: 1;
 }
 
 .paso4-editor textarea:focus {
   outline: none;
-  box-shadow: inset 0 0 0 2px rgb(105 16 27 / 10%);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--agora-primary) 10%, transparent);
 }
 
 
@@ -287,8 +274,8 @@
 
   box-sizing: border-box;
 
-  background: #fff0f0;
-  color: #6f5d5d;
+  background: var(--agora-surface-soft);
+  color: var(--agora-text-muted);
 
   font-size: 0.7rem;
   font-weight: 600;
@@ -297,7 +284,7 @@
 }
 
 
-@media (max-width: 800px) {
+@media (max-width: t.$bp-lg) {
 
   .paso4-subseccion-titulo h2 {
     font-size: 1.05rem;
@@ -330,22 +317,7 @@
   gap: 1rem;
   padding-bottom: 0.85rem;
   margin-bottom: 1rem;
-  border-bottom: 1px solid rgb(105 16 27 / 10%);
-}
-
-.paso4-declaraciones__titulo {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.4rem;
-  min-width: 0;
-}
-
-.paso4-declaraciones__numero {
-  flex: 0 0 auto;
-  color: var(--agora-primary);
-  font-size: 0.82rem;
-  font-weight: 800;
-  line-height: 1.5;
+  border-bottom: 1px solid color-mix(in srgb, var(--agora-primary) 10%, transparent);
 }
 
 .paso4-declaraciones__titulo h2 {
@@ -385,13 +357,13 @@
 
 .paso4-declaraciones__obligatorio {
   background: var(--agora-primary);
-  color: #fff;
+  color: var(--agora-on-primary);
   font-weight: 800;
 }
 
 .paso4-declaraciones__leyes {
-  background: #f8dddd;
-  color: #5b5050;
+  background: var(--agora-surface-highlight);
+  color: var(--agora-text-muted);
 }
 
 
@@ -402,9 +374,9 @@
   gap: 0.8rem;
   padding: 0.9rem;
   margin-bottom: 0.8rem;
-  border: 1px solid rgb(105 16 27 / 18%);
+  border: 1px solid color-mix(in srgb, var(--agora-primary) 18%, transparent);
   border-radius: 0.5rem;
-  background: #fff4f4;
+  background: var(--agora-surface-highlight);
   box-sizing: border-box;
 }
 
@@ -415,7 +387,7 @@
   width: 2rem;
   height: 2rem;
   border-radius: 50%;
-  background: #ead1d1;
+  background: var(--agora-border-strong);
   color: var(--agora-primary);
 }
 
@@ -475,9 +447,9 @@
   gap: 0.45rem;
   min-width: 7rem;
   padding: 0.55rem 0.65rem;
-  border: 1px solid rgb(105 16 27 / 20%);
+  border: 1px solid color-mix(in srgb, var(--agora-primary) 20%, transparent);
   border-radius: 0.4rem;
-  background: #fff;
+  background: var(--agora-surface);
   color: var(--agora-text);
   font-size: 0.68rem;
   font-weight: 700;
@@ -505,7 +477,7 @@
   width: 2.05rem;
   height: 1.15rem;
   border-radius: 999px;
-  background: #c9b8b8;
+  background: var(--agora-border-strong);
   transition: background 160ms ease;
 }
 
@@ -517,7 +489,7 @@
   width: 0.89rem;
   height: 0.89rem;
   border-radius: 50%;
-  background: #fff;
+  background: var(--agora-surface);
   box-shadow: 0 1px 3px rgb(0 0 0 / 18%);
   transition: transform 160ms ease;
 }
@@ -544,8 +516,8 @@
   gap: 0.5rem;
   padding: 0.75rem;
   margin-bottom: 0.7rem;
-  border: 1px solid rgb(105 16 27 / 13%);
-  background: #fff;
+  border: 1px solid color-mix(in srgb, var(--agora-primary) 13%, transparent);
+  background: var(--agora-surface);
   cursor: pointer;
   box-sizing: border-box;
 }
@@ -567,7 +539,7 @@
   margin-top: 0.05rem;
   border: 1px solid var(--agora-primary);
   border-radius: 0.12rem;
-  color: #fff;
+  color: var(--agora-on-primary);
   background: transparent;
 }
 
@@ -613,8 +585,8 @@
   gap: 0.45rem;
   padding: 0.58rem 0.65rem;
   border-radius: 0.25rem;
-  background: #fff0f0;
-  color: #6a5555;
+  background: var(--agora-surface-soft);
+  color: var(--agora-text-muted);
 }
 
 .paso4-advertencia mat-icon {
@@ -637,7 +609,7 @@
 }
 
 
-@media (max-width: 800px) {
+@media (max-width: t.$bp-lg) {
   .paso4-declaraciones__encabezado {
     flex-direction: column;
   }
@@ -656,7 +628,7 @@
   }
 }
 
-@media (max-width: 560px) {
+@media (max-width: t.$bp-sm) {
   .paso4-declaraciones__referencias {
     flex-wrap: wrap;
   }
@@ -692,7 +664,7 @@
   padding: 22px 24px;
   border: 1px solid var(--agora-border);
   border-radius: 12px;
-  background: #fff0f0;
+  background: var(--agora-surface-soft);
 }
 
 .step-banner__icon {
@@ -703,26 +675,8 @@
   height: 46px;
   flex: 0 0 46px;
   border-radius: 10px;
-  background: #f8e7e8;
+  background: var(--agora-surface-highlight);
   color: var(--agora-primary);
-}
-
-.step-banner__icon .material-symbols-outlined {
-  font-size: 24px;
-}
-
-.step-banner__content {
-  min-width: 0;
-}
-
-.step-banner__step {
-  display: block;
-  margin-bottom: 4px;
-  color: var(--agora-primary);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 .step-banner h2 {
@@ -740,54 +694,10 @@
   line-height: 1.5;
 }
 
-.step-banner__legal {
-  margin-top: 8px !important;
-  font-size: 12px !important;
-}
-
 /* =========================================================
    ENCABEZADO 03 — TÉRMINOS Y DECLARACIONES
    Mismo patrón visual de los apartados 01 y 02
    ========================================================= */
-
-.paso4-declaraciones__titulo {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-}
-
-.paso4-declaraciones__icono {
-  flex: 0 0 auto;
-  width: 2.5rem;
-  height: 2.5rem;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 0.65rem;
-  background: #ffdddd;
-  color: var(--agora-primary);
-}
-
-.paso4-declaraciones__icono mat-icon {
-  width: 1.5rem;
-  height: 1.5rem;
-  font-size: 1.5rem;
-}
-
-.paso4-declaraciones__texto {
-  min-width: 0;
-}
-
-.paso4-declaraciones__texto h2 {
-  margin: 0;
-
-  color: var(--agora-primary);
-  font-size: 1.25rem;
-  font-weight: 700;
-  line-height: 1.35;
-}
 
 .paso4-declaraciones__texto p {
   margin: 0.35rem 0 0;
@@ -802,13 +712,7 @@
   display: flex;
   align-items: flex-start;
   gap: 0.75rem;
-}
-
-.paso4-declaraciones__icono {
-  flex: 0 0 2.5rem;
-  width: 2.5rem;
-  height: 2.5rem;
-  margin-top: 0;
+  min-width: 0;
 }
 
 .paso4-declaraciones__texto {
@@ -821,11 +725,19 @@
   align-items: baseline;
   gap: 0.45rem;
   margin: 0;
+
+  color: var(--agora-primary);
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.35;
 }
 
 .paso4-declaraciones__numero {
   flex: 0 0 auto;
+  color: var(--agora-primary);
+  font-size: 0.82rem;
   font-weight: 700;
+  line-height: 1.5;
 }
 
 /* =========================================================
@@ -833,6 +745,7 @@
    ========================================================= */
 
 .paso4-subseccion-titulo mat-icon {
+  flex: 0 0 auto;
   width: 1.5rem;
   height: 1.5rem;
   display: inline-flex;
@@ -847,8 +760,10 @@
 }
 
 .paso4-declaraciones__icono {
+  flex: 0 0 2.5rem;
   width: 1.5rem;
   height: 1.5rem;
+  margin-top: 0;
 
   display: inline-flex;
   align-items: center;
