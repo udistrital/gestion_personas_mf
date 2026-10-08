@@ -4,12 +4,13 @@ import {
   Component,
   EventEmitter,
   Output,
-  signal,
+  Signal,
 } from "@angular/core";
 import { FormBuilder, FormGroup, Validators } from "@angular/forms";
 import { MatDialog } from "@angular/material/dialog";
 import { Router } from "@angular/router";
 
+import { ConsentimientoService } from "src/app/core/services/consentimiento.service";
 import { AlertService } from "src/app/shared/services/alert.service";
 import {
   ConsentimientoDialogComponent,
@@ -35,21 +36,28 @@ export class RegistroInicioComponent implements AfterViewInit {
   readonly opciones: ModalidadRegistro[] = OPCIONES_MODALIDAD_REGISTRO;
   readonly formulario: FormGroup;
 
-  consentimientoAceptado = signal(false);
-
   constructor(
     private readonly fb: FormBuilder,
     private readonly location: Location,
     private readonly router: Router,
     private readonly alertaService: AlertService,
     private readonly dialog: MatDialog,
+    private readonly consentimientoService: ConsentimientoService,
   ) {
     this.formulario = this.fb.group({
       modalidad: ["", Validators.required],
     });
   }
 
+  get consentimientoAceptado(): Signal<boolean> {
+    return this.consentimientoService.aceptado;
+  }
+
   ngAfterViewInit(): void {
+    if (this.consentimientoAceptado()) {
+      this.mostrarConsentimientoConfirmado();
+      return;
+    }
     this.mostrarConsentimientoInformado();
   }
 
@@ -70,7 +78,7 @@ export class RegistroInicioComponent implements AfterViewInit {
   private mostrarConsentimientoInformado(): void {
     this.abrirDialogo("informado", (accion) => {
       if (accion === "aceptar") {
-        this.consentimientoAceptado.set(true);
+        this.consentimientoService.registrarAceptacion();
         this.mostrarConsentimientoConfirmado();
         return;
       }
@@ -145,6 +153,20 @@ export class RegistroInicioComponent implements AfterViewInit {
     );
 
     if (seleccionada) {
+      switch (seleccionada.id) {
+        case "persona-natural":
+          this.router.navigateByUrl("/proveedores/registro-persona-natural");
+          break;
+        case "persona-juridica":
+          this.router.navigateByUrl("/proveedores/registro-persona-juridica");
+          break;
+        case "consorcio":
+          this.router.navigateByUrl("/proveedores/registro-consorcio");
+          break;
+        default:
+          break;
+      }
+      
       this.modalidadSeleccionada.emit(seleccionada);
     }
   }

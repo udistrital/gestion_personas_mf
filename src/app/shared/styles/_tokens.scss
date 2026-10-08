@@ -1,0 +1,100 @@
+/* ── Paleta ─────────────────────────────────────────────────────────────── */
+$primario: #69101b;
+$primario-oscuro: #47000b;
+$primario-claro: #ffdad9;
+$on-primario: #ffffff;
+
+$fondo: #fff8f7;
+$superficie: #ffffff;
+$superficie-suave: #fff0f0;
+$superficie-resalte: #ffe0e0;
+
+$borde: #fce2e3;
+$borde-fuerte: #ddc0bf;
+
+$texto: #251819;
+$texto-suave: #665252;
+
+$error: #ba1a1a;
+$error-superficie: #fff1f1;
+$error-borde: #f2b8b5;
+
+$exito: #166534;
+$exito-superficie: #f0fdf4;
+$exito-borde: #bbf7d0;
+
+$advertencia: #a96d00;
+$advertencia-texto: #6d4700;
+$advertencia-superficie: #fff8e1;
+$advertencia-borde: #fcd17e;
+
+/* ── Radios ─────────────────────────────────────────────────────────────── */
+$radio-sm: 0.375rem;
+$radio-md: 0.5rem;
+$radio-lg: 0.75rem;
+$radio-xl: 1rem;
+
+/* ── Sombras ────────────────────────────────────────────────────────────── */
+$sombra-xs: 0 1px 3px rgb(37 24 25 / 8%);
+$sombra-sm: 0 1px 3px rgb(0 0 0 / 8%);
+$sombra-md: 0 4px 6px -1px rgb(0 0 0 / 10%), 0 2px 4px -1px rgb(0 0 0 / 10%);
+$sombra-tarjeta: 0 0.125rem 0.5rem rgb(37 24 25 / 8%);
+$sombra-alta: 0 10px 15px -3px rgb(0 0 0 / 10%), 0 4px 6px -4px rgb(0 0 0 / 10%);
+
+/* ── Breakpoints (mobile-first, únicos en toda la app) ──────────────────── */
+$bp-xs: 36rem; /* 576px  — apilado de botones */
+$bp-sm: 40rem; /* 640px  — ajustes finos, apilado de acciones */
+$bp-md: 48rem; /* 768px  — tablet */
+$bp-lg: 56rem; /* 896px  — formularios a 2/3 columnas */
+$bp-xl: 64rem; /* 1024px — escritorio, grids completos */
+
+$fuente-xs: 0.6875rem; /* 11px — etiquetas, antetítulos */
+$fuente-sm: 0.75rem; /* 12px — texto secundario */
+$fuente-md: 0.8125rem; /* 13px — botones, ayudas */
+$fuente-lg: 0.875rem; /* 14px — cuerpo */
+$fuente-xl: 1rem; /* 16px — títulos de tarjeta */
+
+/* ── Variables CSS canónicas ────────────────────────────────────────────── */
+@mixin tokens {
+  :root {
+    --agora-primary: #{$primario};
+    --agora-primary-dark: #{$primario-oscuro};
+    --agora-primary-light: #{$primario-claro};
+    --agora-on-primary: #{$on-primario};
+
+    --agora-background: #{$fondo};
+    --agora-surface: #{$superficie};
+    --agora-surface-soft: #{$superficie-suave};
+    --agora-surface-highlight: #{$superficie-resalte};
+
+    --agora-border: #{$borde};
+    --agora-border-strong: #{$borde-fuerte};
+
+    --agora-text: #{$texto};
+    --agora-text-muted: #{$texto-suave};
+
+    --agora-error: #{$error};
+    --agora-error-surface: #{$error-superficie};
+    --agora-error-border: #{$error-borde};
+
+    --agora-success: #{$exito};
+    --agora-success-surface: #{$exito-superficie};
+    --agora-success-border: #{$exito-borde};
+
+    --agora-warning: #{$advertencia};
+    --agora-warning-text: #{$advertencia-texto};
+    --agora-warning-surface: #{$advertencia-superficie};
+    --agora-warning-border: #{$advertencia-borde};
+
+    --agora-font-xs: #{$fuente-xs};
+    --agora-font-sm: #{$fuente-sm};
+    --agora-font-md: #{$fuente-md};
+    --agora-font-lg: #{$fuente-lg};
+    --agora-font-xl: #{$fuente-xl};
+
+    --agora-sombra-xs: #{$sombra-xs};
+    --agora-sombra-tarjeta: #{$sombra-tarjeta};
+    --agora-radio-md: #{$radio-md};
+    --agora-radio-lg: #{$radio-lg};
+  }
+}

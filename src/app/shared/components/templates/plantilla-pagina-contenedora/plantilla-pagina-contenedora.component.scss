@@ -1,3 +1,5 @@
+@use 'src/app/shared/styles/tokens' as t;
+
 :host {
   display: block;
   --agora-page-header-offset: 0;
@@ -7,7 +9,7 @@
   width: min(100% - 3rem, 86.25rem);
   margin: 0 auto;
   padding: 2rem 0 6rem;
-  color: #251819;
+  color: var(--agora-text);
 }
 
 .breadcrumb {
@@ -37,8 +39,8 @@
 
 .encabezado {
   display: flex;
-  align-items: flex-start;
-  justify-content: left;
+  align-items: center;
+  justify-content: space-between;
   gap: 1.5rem;
   padding: 0 0 1.5rem;
 }
@@ -85,14 +87,66 @@
 }
 
 .boton-regresar {
-  flex: 0 0 auto;
-  color: var(--agora-primary);
-  border-color: var(--agora-primary);
-  white-space: nowrap;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 18px;
+  color: var(--agora-on-primary);
+  border-radius: 0.5rem !important;
+  background-color: var(--agora-primary);
+  font: inherit;
+  font-size: 13px;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out,
+    transform 0.1s ease-in-out;
 }
 
-.boton-regresar mat-icon {
-  margin-right: 0.25rem;
+.boton-regresar:hover {
+  background-color: var(--agora-primary-dark);
+  filter: saturate(50%);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+}
+
+.boton-regresar:active {
+  transform: scale(0.98);
+}
+
+.boton-regresar:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--agora-primary) 45%, transparent);
+  outline-offset: 2px;
+}
+
+.boton-regresar:disabled {
+  color: color-mix(in srgb, var(--agora-primary-dark) 40%, var(--agora-surface));
+  background-color: color-mix(in srgb, var(--agora-primary-dark) 18%, var(--agora-surface));
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.boton-regresar .rp-ico-continuar {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  transition: transform 0.2s ease-in-out;
+}
+
+.boton-regresar:hover .rp-ico-continuar {
+  transform: translateX(-3px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boton-regresar,
+  .boton-regresar .rp-ico-continuar {
+    transition: none;
+  }
+}
+
+@media (min-width: t.$bp-xs) {
+  .boton-regresar {
+    width: auto;
+  }
 }
 
 .contenido {
@@ -107,7 +161,7 @@
 }
 
 
-@media (max-width: 40rem) {
+@media (max-width: t.$bp-sm) {
 
   .contenedor-pagina {
     width: min(100% - 1.5rem, 80rem);
@@ -116,6 +170,7 @@
 
   .encabezado {
     flex-direction: column;
+    align-items: stretch;
     padding-bottom: 1.25rem;
   }
 

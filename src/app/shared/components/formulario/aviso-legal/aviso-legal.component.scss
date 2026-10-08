@@ -1,3 +1,5 @@
+@use 'src/app/shared/styles/tokens' as t;
+
 :host {
   display: block;
 }
@@ -11,20 +13,20 @@
   margin: 0 auto 1rem;
   padding: 1rem;
   border-radius: 0.75rem;
-  background: #fff8e1;
-  color: #5f4100;
-  border: 1px solid #f6dddd;
+  background: var(--agora-warning-surface);
+  color: var(--agora-warning-text);
+  border: 1px solid var(--agora-border);
 }
 
 .aviso-legal mat-icon {
   flex: 0 0 auto;
   margin-top: 0.125rem;
-  color: #a96d00;
+  color: var(--agora-warning);
 }
 
 .aviso-legal h3 {
   margin: 0;
-  color: #6d4700;
+  color: var(--agora-warning-text);
   font-size: 0.875rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -36,7 +38,7 @@
   line-height: 1.55;
 }
 
-@media (max-width: 40rem) {
+@media (max-width: t.$bp-sm) {
   .aviso-legal {
     width: min(100% - 1.5rem, 80rem);
   }

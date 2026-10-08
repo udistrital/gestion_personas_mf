@@ -1,5 +1,6 @@
 /* Estilos globales de agora-gestion-personas-mf */
 @use '@angular/material' as mat;
+@use 'src/app/shared/styles/tokens' as tokens;
 
 /* ---------------------------------------------------------------------------
    Bootstrap 5.3 — solo variables, mixins y utilities.
@@ -16,6 +17,9 @@
 @import "bootstrap/scss/utilities";
 @import "bootstrap/scss/utilities/api";
 
+/* Tokens de diseño compartidos (colores, tipografía, radios, sombras). */
+@include tokens.tokens;
+
 :root {
   /* Ajustes mínimos para asegurar que las utilities de radio funcionen sin root/reboot */
   --bs-border-radius-sm: 0.25rem;
@@ -24,50 +28,6 @@
   --bs-border-radius-xl: 1rem;
   --bs-border-radius-xxl: 2rem;
   --bs-border-radius-pill: 50rem;
-  --agora-primary: #69101b;
-  --agora-primary-dark: #47000b;
-  --agora-background: #fff8f7;
-  --agora-surface: #ffffff;
-  --agora-border: #fce2e3;
-  --agora-text: #251819;
-  --agora-text-muted: #665252;
-
-  --rp-superficie: #ffffff;
-  --rp-superficie-baja: var(--md-primary-50, #ffeae6);
-  --rp-primario: var(--md-primary-900, #490606);
-  --rp-primario-contenedor: var(--md-primary-800, #4a0d0d);
-  --rp-secundario: var(--md-primary-500, #a11413);
-  --rp-en-primary: #ffffff;
-  --rp-texto-variante: #564241;
-  --rp-contorno: #ddc0bf;
-  --rp-alerta-fondo: color-mix(in srgb, var(--warning-base, #fbbb3e) 28%, #ffffff);
-  --rp-alerta-borde: var(--warning-main, #fcd17e);
-  --rp-alerta-icono: color-mix(in srgb, var(--warning-accent, #faa500) 65%, #000000);
-  --rp-alerta-titulo: color-mix(in srgb, var(--warning-accent, #faa500) 55%, #000000);
-  --rp-alerta-texto: color-mix(in srgb, var(--warning-accent, #faa500) 50%, #000000);
-  --rp-bloqueo-fondo: color-mix(in srgb, var(--error-base, #c0392b) 8%, #ffffff);
-  --rp-bloqueo-borde: color-mix(in srgb, var(--error-base, #c0392b) 35%, #ffffff);
-  --rp-bloqueo-icono: var(--error-accent, #b3261e);
-  --rp-bloqueo-titulo: color-mix(in srgb, var(--error-base, #c0392b) 80%, #000000);
-  --rp-bloqueo-texto: color-mix(in srgb, var(--error-base, #c0392b) 70%, #000000);
-  --rp-superficie-alta: var(--md-primary-100, #ffe0e0);
-
-  --cn-primario: var(--md-primary-900, #490606);
-  --cn-primario-contenedor: var(--md-primary-800, #4a0d0d);
-  --cn-secundario: var(--md-primary-500, #a11413);
-  --cn-en-primary: #ffffff;
-  --cn-superficie: #ffffff;
-  --cn-superficie-baja: var(--md-primary-50, #ffeae6);
-  --cn-texto: #251819;
-  --cn-texto-variante: #564241;
-  --cn-contorno: #ddc0bf;
-  --cn-exito: #1b5e20;
-  --cn-exito-superficie: #e6f4ea;
-  --cn-exito-contorno: #a5d6a7;
-  --cn-error: #8c1d18;
-  --cn-error-superficie: #fdecea;
-  --cn-error-contorno: #f2b8b5;
-
 }
 
 html,
@@ -84,4 +44,5 @@ agora-gestion-personas-mf {
   display: block;
   min-height: 100vh;
   background: var(--agora-background);
+  color: var(--agora-text);
 }

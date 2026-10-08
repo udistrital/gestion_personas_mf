@@ -31,13 +31,12 @@
 
       @if (mostrarBotonRegresar) {
         <button
-          class="boton-regresar"
-          mat-stroked-button
           type="button"
+          class="boton-regresar d-inline-flex align-items-center justify-content-center border-0 rounded-1 fw-bold"
           (click)="emitirEventoRegresar()"
         >
-          <mat-icon aria-hidden="true">arrow_back</mat-icon>
-          Regresar
+          <mat-icon class="rp-ico-continuar">arrow_back</mat-icon>
+          <span>Regresar</span>
         </button>
       }
     </header>

@@ -1,3 +1,5 @@
+@use 'src/app/shared/styles/tokens' as t;
+
 @use 'src/app/shared/styles/registro-formulario' as registro-formulario;
 
 @include registro-formulario.styles;
@@ -39,12 +41,12 @@
 }
 
 .actividad-principal {
-	border: 1px solid #f6dddd;
-	background: #fff8f7;
+	border: 1px solid var(--agora-border);
+	background: var(--agora-background);
 }
 
 .actividad-principal > mat-icon {
-	color: #a96d00;
+	color: var(--agora-warning);
 }
 
 .codigos-lista {
@@ -54,7 +56,7 @@
 	margin-bottom: 1rem;
 	padding: 1rem;
 	border-radius: 0.75rem;
-	background: #fff0f0;
+	background: var(--agora-surface-soft);
 }
 
 .codigo-item {
@@ -63,7 +65,7 @@
 	gap: 0.35rem;
 	padding: 0.5rem 0.65rem;
 	border-radius: 0.5rem;
-	background: #fff;
+	background: var(--agora-surface);
 	color: var(--agora-text-muted);
 	font-size: 0.75rem;
 }
@@ -97,7 +99,7 @@
 .editor-servicios {
 	overflow: hidden;
 	border-radius: 0.75rem;
-	background: #fff0f0;
+	background: var(--agora-surface-soft);
 	box-shadow: inset 0 0.125rem 0.35rem rgb(37 24 25 / 7%);
 }
 
@@ -120,7 +122,7 @@
 	border: 0;
 	outline: 0;
 	resize: vertical;
-	background: #fff;
+	background: var(--agora-surface);
 	color: var(--agora-text);
 	font: inherit;
 	font-size: 0.875rem;
@@ -145,11 +147,11 @@
 	margin-top: 1rem;
 	padding: 0.75rem;
 	border-radius: 0.5rem;
-	background: #f0fdf4;
-	color: #166534;
+	background: var(--agora-success-surface);
+	color: var(--agora-success);
 }
 
-@media (max-width: 40rem) {
+@media (max-width: t.$bp-sm) {
 	.editor-encabezado {
 		align-items: flex-start;
 		flex-direction: column;

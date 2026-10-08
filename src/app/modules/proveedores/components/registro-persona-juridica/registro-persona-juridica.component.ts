@@ -1,5 +1,6 @@
 import { Component } from "@angular/core";
 import { FormControl, FormGroup, Validators } from "@angular/forms";
+import { Router } from "@angular/router";
 import { PasoStepperVisual } from "src/app/shared/components/stepper-visual/stepper-visual.component";
 import { camposPorPaso } from "./registro-persona-juridica.component.utils";
 
@@ -22,6 +23,12 @@ const OTP = /^\d{6}$/;
 export class RegistroPersonaJuridicaComponent {
   titulo = "Módulo de Registro de Persona Jurídica";
   pasoActual = 1;
+
+  constructor(private readonly router: Router) {}
+
+  regresarARegistroInicial(): void {
+    void this.router.navigateByUrl("/proveedores");
+  }
 
   pasos: PasoStepperVisual[] = [
     { numero: 1, icono: "person", nombre: "Datos Societarios y Representación" },

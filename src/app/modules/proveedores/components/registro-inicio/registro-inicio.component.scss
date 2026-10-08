@@ -1,3 +1,5 @@
+@use 'src/app/shared/styles/tokens' as t;
+
 .rp-contenedor {
   max-width: 1000px;
   display: flex;
@@ -8,21 +10,21 @@
 
 .rp-tarjeta {
   max-width: 1000px;
-  background-color: var(--rp-superficie);
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.03);
+  background-color: var(--agora-surface);
+  box-shadow: var(--agora-sombra-tarjeta);
   overflow: hidden;
 }
 
 .rp-tarjeta-banda {
-  background-color: var(--rp-superficie-baja);
-  border-bottom: 1px solid color-mix(in srgb, var(--rp-contorno) 30%, transparent);
+  background-color: var(--agora-surface-highlight);
+  border-bottom: 1px solid color-mix(in srgb, var(--agora-border-strong) 30%, transparent);
 }
 
 .rp-banda-icono {
   width: 48px;
   height: 48px;
-  background-color: var(--rp-primario-contenedor);
-  color: var(--rp-en-primary);
+  background-color: var(--agora-primary);
+  color: var(--agora-on-primary);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
 
@@ -39,14 +41,14 @@
 .rp-banda-titulos h2 {
   font-size: 16px;
   line-height: 24px;
-  color: var(--rp-primario);
+  color: var(--agora-primary-dark);
 }
 
 .rp-badge {
   padding: 3px 8px;
   border-radius: 12px;
-  background-color: var(--rp-primario-contenedor);
-  color: var(--rp-en-primary);
+  background-color: var(--agora-primary);
+  color: var(--agora-on-primary);
   font-size: 11px;
   white-space: nowrap;
 }
@@ -55,14 +57,14 @@
   font-size: 14px;
   line-height: 1.625;
   font-weight: 400;
-  color: var(--rp-texto-variante);
+  color: var(--agora-text-muted);
 }
 
 .rp-tarjeta-cuerpo {
   padding: 16px;
 }
 
-@media (min-width: 992px) {
+@media (min-width: t.$bp-xl) {
   .rp-tarjeta-cuerpo {
     padding: 32px;
   }
@@ -71,8 +73,8 @@
 .rp-alerta {
   gap: 14px;
   padding: 16px;
-  background-color: var(--rp-alerta-fondo);
-  border: 1px solid var(--rp-alerta-borde);
+  background-color: var(--agora-warning-surface);
+  border: 1px solid var(--agora-warning-border);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
@@ -81,36 +83,36 @@
   font-size: 26px;
   width: 26px;
   height: 26px;
-  color: var(--rp-alerta-icono);
+  color: var(--agora-warning);
 }
 
 .rp-alerta-titulo {
   font-size: 13px;
   line-height: 1.25;
-  color: var(--rp-alerta-titulo);
+  color: var(--agora-warning-text);
 }
 
 .rp-alerta-texto {
   font-size: 12px;
   line-height: 1.625;
-  color: var(--rp-alerta-texto);
+  color: var(--agora-warning-text);
 }
 
 .rp-alerta--bloqueo {
-  background-color: var(--rp-bloqueo-fondo);
-  border-color: var(--rp-bloqueo-borde);
+  background-color: var(--agora-error-surface);
+  border-color: var(--agora-error-border);
 }
 
 .rp-alerta--bloqueo .rp-alerta-icono {
-  color: var(--rp-bloqueo-icono);
+  color: var(--agora-error);
 }
 
 .rp-alerta--bloqueo .rp-alerta-titulo {
-  color: var(--rp-bloqueo-titulo);
+  color: var(--agora-error);
 }
 
 .rp-alerta--bloqueo .rp-alerta-texto {
-  color: var(--rp-bloqueo-texto);
+  color: var(--agora-error);
 }
 
 .rp-grupo {
@@ -121,14 +123,14 @@
   font-size: 13px;
   line-height: 18px;
   letter-spacing: 0.05em;
-  color: var(--rp-primario);
+  color: var(--agora-primary-dark);
 }
 
 .rp-ico-leyenda {
   font-size: 20px;
   width: 20px;
   height: 20px;
-  color: var(--rp-secundario);
+  color: var(--agora-primary);
 }
 
 .rp-obligatorio-leyenda {
@@ -138,11 +140,11 @@
 
 .rp-tarjeta-pie {
   padding: 16px;
-  background-color: var(--rp-superficie-baja);
-  border-top: 1px solid color-mix(in srgb, var(--rp-contorno) 30%, transparent);
+  background-color: var(--agora-surface-highlight);
+  border-top: 1px solid color-mix(in srgb, var(--agora-border-strong) 30%, transparent);
 }
 
-@media (min-width: 992px) {
+@media (min-width: t.$bp-xl) {
   .rp-tarjeta-pie {
     padding-inline: 32px;
   }
@@ -153,8 +155,8 @@
   width: 100%;
   min-height: 44px;
   padding: 0 24px;
-  color: var(--rp-en-primary);
-  background-color: var(--rp-primario-contenedor);
+  color: var(--agora-on-primary);
+  background-color: var(--agora-primary);
   font: inherit;
   font-size: 13px;
   cursor: pointer;
@@ -164,7 +166,7 @@
 }
 
 .rp-btn-continuar:hover {
-  background-color: var(--rp-primario);
+  background-color: var(--agora-primary-dark);
   filter: saturate(50%);
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
 }
@@ -173,9 +175,14 @@
   transform: scale(0.98);
 }
 
+.rp-btn-continuar:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--agora-primary) 45%, transparent);
+  outline-offset: 2px;
+}
+
 .rp-btn-continuar:disabled {
-  color: color-mix(in srgb, var(--rp-primario) 40%, var(--rp-superficie));
-  background-color: color-mix(in srgb, var(--rp-primario) 18%, var(--rp-superficie));
+  color: color-mix(in srgb, var(--agora-primary-dark) 40%, var(--agora-surface));
+  background-color: color-mix(in srgb, var(--agora-primary-dark) 18%, var(--agora-surface));
   box-shadow: none;
   cursor: not-allowed;
 }
@@ -198,7 +205,7 @@
   }
 }
 
-@media (min-width: 576px) {
+@media (min-width: t.$bp-xs) {
   .rp-btn-continuar {
     width: auto;
   }

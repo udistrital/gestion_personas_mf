@@ -1,19 +1,21 @@
+@use 'src/app/shared/styles/tokens' as t;
+
 .rp-seguridad {
   border: 1px solid transparent;
   border-radius: 8px;
-  background-color: var(--rp-superficie-baja);
+  background-color: var(--agora-surface-highlight);
   font: inherit;
   cursor: pointer;
   transition: border-color 0.2s ease-in-out, background-color 0.2s ease-in-out;
 }
 
 .rp-seguridad:hover {
-  background-color: var(--rp-superficie-alta);
-  border-color: color-mix(in srgb, var(--rp-primario-contenedor) 40%, transparent);
+  background-color: var(--agora-surface-highlight);
+  border-color: color-mix(in srgb, var(--agora-primary) 40%, transparent);
 }
 
 .rp-seguridad:focus-visible {
-  outline: 3px solid var(--rp-secundario);
+  outline: 3px solid var(--agora-primary);
   outline-offset: 3px;
 }
 
@@ -25,8 +27,8 @@
   width: 36px;
   height: 36px;
   border-radius: 12px;
-  background-color: var(--rp-primario);
-  color: var(--rp-superficie);
+  background-color: var(--agora-primary-dark);
+  color: var(--agora-surface);
 }
 
 .rp-ico-seguridad {
@@ -39,25 +41,25 @@
   font-size: 11px;
   line-height: 16px;
   letter-spacing: 0.02em;
-  color: var(--rp-primario);
+  color: var(--agora-primary-dark);
 }
 
 .rp-seguridad-descripcion {
   font-size: 12px;
   line-height: 16px;
-  color: var(--rp-texto-variante);
+  color: var(--agora-text-muted);
 }
 
 .rp-seguridad-enlace {
   padding: 6px 12px;
-  background-color: var(--rp-primario-contenedor);
-  color: var(--rp-en-primary);
+  background-color: var(--agora-primary);
+  color: var(--agora-on-primary);
   font-size: 12px;
   white-space: nowrap;
   transition: background-color 0.2s ease-in-out;
 }
 
-@media (max-width: 570px) {
+@media (max-width: t.$bp-xs) {
   .rp-seguridad-enlace {
     width: 100%;
     display: flex;
@@ -68,7 +70,7 @@
 }
 
 .rp-seguridad:hover .rp-seguridad-enlace {
-  background-color: var(--rp-primario);
+  background-color: var(--agora-primary-dark);
 }
 
 .rp-ico-seguridad-enlace {

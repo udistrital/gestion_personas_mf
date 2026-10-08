@@ -1,33 +1,35 @@
+@use 'src/app/shared/styles/tokens' as t;
+
 .rp-consentimiento--exito {
-  --cn-tono: var(--cn-exito);
-  --cn-tono-superficie: var(--cn-exito-superficie);
-  --cn-tono-contorno: var(--cn-exito-contorno);
+  --estado-tono: var(--agora-success);
+  --estado-superficie: var(--agora-success-surface);
+  --estado-borde: var(--agora-success-border);
 }
 
 .rp-consentimiento--error {
-  --cn-tono: var(--cn-error);
-  --cn-tono-superficie: var(--cn-error-superficie);
-  --cn-tono-contorno: var(--cn-error-contorno);
+  --estado-tono: var(--agora-error);
+  --estado-superficie: var(--agora-error-surface);
+  --estado-borde: var(--agora-error-border);
 }
 
 .rp-consentimiento--primario {
-  --cn-tono: var(--cn-primario-contenedor);
-  --cn-tono-superficie: var(--cn-superficie-baja);
-  --cn-tono-contorno: color-mix(in srgb, var(--cn-contorno) 40%, transparent);
+  --estado-tono: var(--agora-primary);
+  --estado-superficie: var(--agora-surface-highlight);
+  --estado-borde: color-mix(in srgb, var(--agora-border-strong) 40%, transparent);
 }
 
 .rp-consentimiento-cabecera {
   padding: 20px;
   border-radius: 8px 8px 0 0;
-  background-color: var(--cn-tono-superficie);
-  border-bottom: 1px solid var(--cn-tono-contorno);
+  background-color: var(--estado-superficie);
+  border-bottom: 1px solid var(--estado-borde);
 }
 
 .rp-consentimiento-icono {
   width: 48px;
   height: 48px;
-  background-color: var(--cn-tono);
-  color: var(--cn-en-primary);
+  background-color: var(--estado-tono);
+  color: var(--agora-on-primary);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
 
@@ -47,7 +49,7 @@
   font-size: 11px;
   line-height: 16px;
   letter-spacing: 0.08em;
-  color: var(--cn-texto-variante);
+  color: var(--agora-text-muted);
 }
 
 .rp-consentimiento-titulo {
@@ -56,7 +58,7 @@
   font-size: 18px;
   line-height: 16px;
   letter-spacing: -0.01em;
-  color: var(--cn-tono);
+  color: var(--estado-tono);
 }
 
 .rp-consentimiento-cuerpo {
@@ -71,7 +73,7 @@
   font-size: 13px;
   line-height: 1.625;
   text-align: justify;
-  color: var(--cn-texto);
+  color: var(--agora-text);
 }
 
 .rp-consentimiento-parrafo:last-child {
@@ -79,18 +81,18 @@
 }
 
 .rp-consentimiento-enlace {
-  color: var(--cn-secundario);
+  color: var(--agora-primary);
   text-decoration: underline;
   text-underline-offset: 2px;
   transition: color 0.2s ease-in-out;
 }
 
 .rp-consentimiento-enlace:hover {
-  color: var(--cn-primario-contenedor);
+  color: var(--agora-primary);
 }
 
 .rp-consentimiento-enlace:focus-visible {
-  outline: 2px solid var(--cn-secundario);
+  outline: 2px solid var(--agora-primary);
   outline-offset: 2px;
   border-radius: 2px;
 }
@@ -98,16 +100,16 @@
 .rp-consentimiento-acciones {
   gap: 12px;
   padding: 20px;
-  border-top: 1px solid color-mix(in srgb, var(--cn-contorno) 30%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--agora-border-strong) 30%, transparent);
 }
 
 .rp-consentimiento-boton {
   width: 100%;
   min-height: 44px;
   padding: 0 20px;
-  border: 1px solid var(--cn-contorno);
-  color: var(--cn-primario);
-  background-color: var(--cn-superficie);
+  border: 1px solid var(--agora-border-strong);
+  color: var(--agora-primary-dark);
+  background-color: var(--agora-surface);
   font: inherit;
   font-size: 13px;
   cursor: pointer;
@@ -115,7 +117,7 @@
     color 0.2s ease-in-out, box-shadow 0.2s ease-in-out, transform 0.1s ease-in-out;
 }
 
-@media (min-width: 576px) {
+@media (min-width: t.$bp-xs) {
   .rp-consentimiento-boton {
     width: auto;
     min-width: 160px;
@@ -123,8 +125,8 @@
 }
 
 .rp-consentimiento-boton:hover {
-  background-color: var(--cn-superficie-baja);
-  border-color: color-mix(in srgb, var(--cn-primario-contenedor) 60%, transparent);
+  background-color: var(--agora-surface-highlight);
+  border-color: color-mix(in srgb, var(--agora-primary) 60%, transparent);
 }
 
 .rp-consentimiento-boton:active {
@@ -132,7 +134,7 @@
 }
 
 .rp-consentimiento-boton:focus-visible {
-  outline: 3px solid var(--cn-secundario);
+  outline: 3px solid var(--agora-primary);
   outline-offset: 3px;
 }
 
@@ -144,9 +146,9 @@
 
 .rp-consentimiento-boton--destacado,
 .rp-consentimiento-boton--destacado:hover {
-  border-color: var(--cn-tono);
-  color: var(--cn-en-primary);
-  background-color: var(--cn-tono);
+  border-color: var(--estado-tono);
+  color: var(--agora-on-primary);
+  background-color: var(--estado-tono);
 }
 
 .rp-consentimiento-boton--destacado:hover {

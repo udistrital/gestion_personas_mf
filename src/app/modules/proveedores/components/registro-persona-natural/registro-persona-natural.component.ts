@@ -8,6 +8,7 @@ import {
   ValidatorFn,
   Validators,
 } from "@angular/forms";
+import { Router } from "@angular/router";
 import { debounceTime } from "rxjs/operators";
 import { BorradorRegistroService } from "../../services/borrador-registro.service";
 
@@ -141,7 +142,10 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
     return this.personaNaturalForm.get("actividadDeclaracion") as FormGroup;
   }
 
-  constructor(private readonly fb: FormBuilder) {
+  constructor(
+    private readonly fb: FormBuilder,
+    private readonly router: Router,
+  ) {
     this.personaNaturalForm = this.fb.group({
       // =======================================================
       // PASO 1 - IDENTIFICACIÓN
@@ -419,6 +423,10 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
 
         numeroHijos?.updateValueAndValidity();
       });
+  }
+
+  regresarARegistroInicial(): void {
+    void this.router.navigateByUrl("/proveedores");
   }
 
   ngOnInit(): void {
