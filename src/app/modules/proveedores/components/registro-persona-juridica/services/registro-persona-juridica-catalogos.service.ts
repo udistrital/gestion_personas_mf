@@ -1,7 +1,15 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { forkJoin, map, Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
+
+interface GrupoInfoComplementaria {
+  Id: number;
+  Nombre?: string;
+  Descripcion?: string;
+  CodigoAbreviacion?: string;
+  Activo?: boolean;
+}
 
 interface RegistroCatalogo {
   Id?: number;
@@ -9,10 +17,7 @@ interface RegistroCatalogo {
   Descripcion?: string;
   CodigoAbreviacion?: string;
   Activo?: boolean;
-  NumeroOrden?: number;
-  ParametroPadreId?: number;
-  TipoParametroId?: number;
-  GrupoInfoComplementariaId?: number;
+  GrupoInfoComplementariaId?: GrupoInfoComplementaria;
 }
 
 type RegistroCatalogoConId = RegistroCatalogo & { Id: number };
@@ -26,53 +31,35 @@ export interface OpcionCatalogo {
 
 export interface CatalogosPersonaJuridica {
   procedencia: OpcionCatalogo[];
-  camaraComercio: OpcionCatalogo[];
   tipoOrganizacion: OpcionCatalogo[];
   tamanoEmpresa: OpcionCatalogo[];
   tipoCapital: OpcionCatalogo[];
-  responsabilidadFiscal: OpcionCatalogo[];
-  actividadEconomica: OpcionCatalogo[];
-  cargo: OpcionCatalogo[];
-  tipoDeclaracion: OpcionCatalogo[];
+  camaraComercio?: OpcionCatalogo[];
+  responsabilidadFiscal?: OpcionCatalogo[];
+  actividadEconomica?: OpcionCatalogo[];
+  cargo?: OpcionCatalogo[];
+  tipoDeclaracion?: OpcionCatalogo[];
 }
 
 @Injectable({ providedIn: 'root' })
 export class RegistroPersonaJuridicaCatalogosService {
-  private readonly parametrosUrl = environment.PARAMETROS_SERVICE.replace(/\/+$/, '');
   private readonly tercerosUrl = environment.TERCEROS_SERVICE.replace(/\/+$/, '');
 
   constructor(private readonly http: HttpClient) {}
 
   obtenerCatalogos(): Observable<CatalogosPersonaJuridica> {
     return forkJoin({
-      parametros: this.obtenerRegistros(
-        `${this.parametrosUrl}/parametro`,
-        this.crearHeaders(environment.PARAMETROS_API_KEY_HEADER, environment.PARAMETROS_API_KEY),
-      ),
-      tiposParametro: this.obtenerRegistros(
-        `${this.parametrosUrl}/tipo_parametro`,
-        this.crearHeaders(environment.PARAMETROS_API_KEY_HEADER, environment.PARAMETROS_API_KEY),
-      ),
       gruposInfoComplementaria: this.obtenerRegistros(
         `${this.tercerosUrl}/grupo_info_complementaria`,
-        this.crearHeaders(environment.TERCEROS_API_KEY_HEADER, environment.TERCEROS_API_KEY),
       ),
-      infoComplementaria: this.obtenerRegistros(
-        `${this.tercerosUrl}/info_complementaria`,
-        this.crearHeaders(environment.TERCEROS_API_KEY_HEADER, environment.TERCEROS_API_KEY),
-      ),
+      infoComplementaria: this.obtenerRegistros(`${this.tercerosUrl}/info_complementaria`),
     }).pipe(
-      map(({ tiposParametro, parametros, gruposInfoComplementaria, infoComplementaria }) => {
+      map(({ gruposInfoComplementaria, infoComplementaria }) => {
         const catalogos: CatalogosPersonaJuridica = {
           procedencia: this.obtenerOpcionesComplementarias(
             gruposInfoComplementaria,
             infoComplementaria,
             ['procedencia'],
-          ),
-          camaraComercio: this.obtenerOpcionesParametro(
-            tiposParametro,
-            parametros,
-            ['camara comercio', 'camara de comercio'],
           ),
           tipoOrganizacion: this.obtenerOpcionesComplementarias(
             gruposInfoComplementaria,
@@ -89,32 +76,15 @@ export class RegistroPersonaJuridicaCatalogosService {
             infoComplementaria,
             ['tipo capital'],
           ),
-          responsabilidadFiscal: this.obtenerOpcionesParametro(
-            tiposParametro,
-            parametros,
-            ['responsabilidad fiscal'],
-          ),
-          actividadEconomica: this.obtenerOpcionesParametro(
-            tiposParametro,
-            parametros,
-            ['actividad economica'],
-          ),
-          cargo: this.obtenerOpcionesParametro(tiposParametro, parametros, ['cargo']),
-          tipoDeclaracion: this.obtenerOpcionesParametro(
-            tiposParametro,
-            parametros,
-            ['tipo declaracion'],
-          ),
         };
-        this.validarCatalogosNoVacios(catalogos);
         return catalogos;
       }),
     );
   }
 
-  private obtenerRegistros(url: string, headers: HttpHeaders): Observable<RegistroCatalogoConId[]> {
+  private obtenerRegistros(url: string): Observable<RegistroCatalogoConId[]> {
     return this.http
-      .get<unknown>(url, { headers })
+      .get<unknown>(url)
       .pipe(map(respuesta => this.validarListaRegistros(respuesta, url)));
   }
 
@@ -138,14 +108,41 @@ export class RegistroPersonaJuridicaCatalogosService {
       Descripcion: this.textoOpcional(cuerpo['Descripcion'], url, 'Descripcion'),
       CodigoAbreviacion: this.textoOpcional(cuerpo['CodigoAbreviacion'], url, 'CodigoAbreviacion'),
       Activo: this.booleanoOpcional(cuerpo['Activo'], url, 'Activo'),
-      NumeroOrden: this.numeroOpcional(cuerpo['NumeroOrden'], url, 'NumeroOrden'),
-      ParametroPadreId: this.numeroOpcional(cuerpo['ParametroPadreId'], url, 'ParametroPadreId'),
-      TipoParametroId: this.numeroOpcional(cuerpo['TipoParametroId'], url, 'TipoParametroId'),
-      GrupoInfoComplementariaId: this.numeroOpcional(
+      GrupoInfoComplementariaId: this.grupoInfoComplementariaOpcional(
         cuerpo['GrupoInfoComplementariaId'],
         url,
-        'GrupoInfoComplementariaId',
       ),
+    };
+  }
+
+  private grupoInfoComplementariaOpcional(
+    valor: unknown,
+    url: string,
+  ): GrupoInfoComplementaria | undefined {
+    if (valor === undefined || valor === null) {
+      return undefined;
+    }
+    if (typeof valor !== 'object' || Array.isArray(valor)) {
+      throw new Error(
+        `La respuesta de ${url} contiene un "GrupoInfoComplementariaId" que no es un objeto.`,
+      );
+    }
+
+    const grupo = valor as Record<string, unknown>;
+    return {
+      Id: this.numeroRequerido(grupo['Id'], url, 'GrupoInfoComplementariaId.Id'),
+      Nombre: this.textoOpcional(grupo['Nombre'], url, 'GrupoInfoComplementariaId.Nombre'),
+      Descripcion: this.textoOpcional(
+        grupo['Descripcion'],
+        url,
+        'GrupoInfoComplementariaId.Descripcion',
+      ),
+      CodigoAbreviacion: this.textoOpcional(
+        grupo['CodigoAbreviacion'],
+        url,
+        'GrupoInfoComplementariaId.CodigoAbreviacion',
+      ),
+      Activo: this.booleanoOpcional(grupo['Activo'], url, 'GrupoInfoComplementariaId.Activo'),
     };
   }
 
@@ -154,13 +151,6 @@ export class RegistroPersonaJuridicaCatalogosService {
       throw new Error(`La respuesta de ${url} contiene un "${campo}" que no es un entero.`);
     }
     return valor;
-  }
-
-  private numeroOpcional(valor: unknown, url: string, campo: string): number | undefined {
-    if (valor === undefined || valor === null) {
-      return undefined;
-    }
-    return this.numeroRequerido(valor, url, campo);
   }
 
   private textoOpcional(valor: unknown, url: string, campo: string): string | undefined {
@@ -183,20 +173,6 @@ export class RegistroPersonaJuridicaCatalogosService {
     return valor;
   }
 
-  private obtenerOpcionesParametro(
-    tiposParametro: RegistroCatalogoConId[],
-    parametros: RegistroCatalogoConId[],
-    aliases: string[],
-  ): OpcionCatalogo[] {
-    const idsTipos = new Set(
-      tiposParametro
-        .filter(tipo => this.coincideCategoria(tipo, aliases))
-        .map(tipo => tipo.Id),
-    );
-
-    return this.aOpciones(parametros.filter(parametro => idsTipos.has(parametro.TipoParametroId ?? -1)));
-  }
-
   private obtenerOpcionesComplementarias(
     grupos: RegistroCatalogoConId[],
     registros: RegistroCatalogoConId[],
@@ -209,7 +185,9 @@ export class RegistroPersonaJuridicaCatalogosService {
     );
 
     return this.aOpciones(
-      registros.filter(registro => idsGrupos.has(registro.GrupoInfoComplementariaId ?? -1)),
+      registros.filter(registro =>
+        idsGrupos.has(registro.GrupoInfoComplementariaId?.Id ?? -1),
+      ),
     );
   }
 
@@ -217,7 +195,6 @@ export class RegistroPersonaJuridicaCatalogosService {
     const activos = registros.filter(registro => registro.Activo !== false);
 
     return activos
-      .sort((a, b) => (a.NumeroOrden ?? 0) - (b.NumeroOrden ?? 0))
       .map(registro => ({
         id: registro.Id,
         nombre: this.nombreRequerido(registro.Nombre),
@@ -233,14 +210,6 @@ export class RegistroPersonaJuridicaCatalogosService {
     return nombre;
   }
 
-  private validarCatalogosNoVacios(catalogos: CatalogosPersonaJuridica): void {
-    for (const [nombre, opciones] of Object.entries(catalogos)) {
-      if (opciones.length === 0) {
-        throw new Error(`La API no devolvió opciones para el catálogo obligatorio "${nombre}".`);
-      }
-    }
-  }
-
   private coincideCategoria(registro: RegistroCatalogo, aliases: string[]): boolean {
     const nombre = this.normalizar(registro.Nombre ?? '');
     return aliases.some(alias => nombre === this.normalizar(alias));
@@ -253,9 +222,5 @@ export class RegistroPersonaJuridicaCatalogosService {
       .replace(/[_-]+/g, ' ')
       .toLowerCase()
       .trim();
-  }
-
-  private crearHeaders(nombreHeader: string, apiKey: string): HttpHeaders {
-    return nombreHeader && apiKey ? new HttpHeaders().set(nombreHeader, apiKey) : new HttpHeaders();
   }
 }
