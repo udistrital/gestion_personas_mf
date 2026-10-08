@@ -5,9 +5,9 @@
    ========================================================= */
 
 .registro-persona-natural-contenido {
-  width: 92%;
+  width: 100%;
   max-width: 100%;
-  margin: 0 auto;
+  margin: 0;
   box-sizing: border-box;
 }
 
@@ -68,43 +68,16 @@
   }
 }
 
-@media (min-width: t.$bp-xl) {
-  .registro-persona-natural-contenido {
-    width: 150%;
-    max-width: 1200px;
-    margin: 0 auto;
-  }
-}
-
-:host ::ng-deep .registro-persona-natural-contenido > barra-acciones-formulario {
-  display: block;
-  position: fixed !important;
-  left: 50% !important;
-  bottom: 1rem !important;
-  transform: translateX(-50%);
-  width: min(1200px, calc(100vw - 4rem)) !important;
-  height: auto !important;
-  min-height: 86px;
-  z-index: 9999 !important;
-}
 /* =========================================================
    STEPPER PERSONA NATURAL
-   Alineado con aviso y contenido de los pasos
    ========================================================= */
 
 .persona-natural-stepper {
-  width: min(calc(100% - 3rem), 86.25rem);
-  margin: 0 auto;
+  width: 100%;
   box-sizing: border-box;
 }
 
 .persona-natural-stepper stepper-visual {
   display: block;
   width: 100%;
-}
-
-@media (max-width: t.$bp-sm) {
-  .persona-natural-stepper {
-    width: calc(100% - 1.5rem);
-  }
 }

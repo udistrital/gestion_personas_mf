@@ -9,15 +9,13 @@
 
 
 .paso3-rut-seccion {
-  width: min(calc(100% - 3rem), 75rem);
+  width: min(100% - 3rem, 86.25rem);
   margin: 0 auto;
   box-sizing: border-box;
   background: var(--agora-surface);
   border-radius: 0.75rem;
-  padding: 1rem 1.5rem 1.5rem;
-  box-shadow:
-    0 1px 3px color-mix(in srgb, var(--agora-primary) 4%, transparent),
-    0 1px 2px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+  box-shadow: var(--agora-sombra-tarjeta);
 }
 
 .paso3-rut-seccion__encabezado {
@@ -52,15 +50,15 @@
 }
 
 .paso3-rut-seccion__titulo h3 {
-  margin: 0;
-  color: var(--agora-primary-dark);
-  font-size: 1rem;
+  margin: 0 0 0.75rem;
+  color: var(--agora-primary);
+  font-size: 0.875rem;
   line-height: 1.5rem;
   font-weight: 700;
 }
 
 .paso3-rut-seccion__titulo p {
-  margin: 0.125rem 0 0;
+  margin: 0.25rem 0 0.75rem;
   color: var(--agora-text-muted);
   font-size: 0.75rem;
   line-height: 1rem;
@@ -172,7 +170,7 @@
   border-radius: 0.5rem;
   background: var(--agora-surface);
   color: var(--agora-primary-dark);
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   line-height: 1rem;
   font-weight: 600;
   cursor: pointer;
@@ -208,7 +206,7 @@
 @media (max-width: t.$bp-sm) {
   .paso3-rut-seccion {
     width: calc(100% - 1.5rem);
-    padding: 1rem;
+    padding: 1.25rem;
   }
 
   .paso3-rut-vacio {
@@ -240,7 +238,7 @@
   display: flex;
   align-items: flex-start;
   gap: 1rem;
-  width: min(calc(100% - 3rem), 75rem);
+  width: min(100% - 3rem, 86.25rem);
   margin: 0 auto 1.5rem;
   padding: 1rem;
   box-sizing: border-box;
@@ -286,7 +284,7 @@
 .paso3-banner__contenido p {
   margin: 0;
   color: var(--agora-text-muted);
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   line-height: 1.5rem;
 }
 
@@ -361,16 +359,14 @@
    ========================================================= */
 
 .paso3-rup-seccion {
-  width: min(calc(100% - 3rem), 75rem);
+  width: min(100% - 3rem, 86.25rem);
   margin: 0 auto;
-  padding: 1rem 1.5rem 1.5rem;
+  padding: 1.5rem;
   box-sizing: border-box;
   background: var(--agora-surface);
   border-radius: 0.75rem;
   font-family: inherit;
-  box-shadow:
-    0 1px 3px color-mix(in srgb, var(--agora-primary) 4%, transparent),
-    0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--agora-sombra-tarjeta);
 }
 
 .paso3-rup-seccion__encabezado {
@@ -485,14 +481,14 @@
 .paso3-rup-datos {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem;
+  gap: 1rem;
   margin-top: 0.75rem;
 }
 
 .paso3-rup-dato {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.35rem;
   min-width: 0;
 }
 
@@ -510,8 +506,8 @@
   background: var(--agora-surface);
   color: var(--agora-primary-dark);
   font-family: inherit;
-  font-size: 13px;
-  line-height: 18px;
+  font-size: 0.75rem;
+  line-height: 1.125rem;
   font-weight: 600;
   letter-spacing: 0.01em;
   cursor: pointer;
@@ -562,7 +558,7 @@
 @media (max-width: t.$bp-sm) {
   .paso3-rup-seccion {
     width: calc(100% - 1.5rem);
-    padding: 1rem;
+    padding: 1.25rem;
   }
 
   .paso3-rup-toggle {
@@ -605,8 +601,8 @@
   flex: 0 0 auto;
   box-sizing: border-box;
   font-family: inherit;
-  font-size: 13px;
-  line-height: 18px;
+  font-size: 0.75rem;
+  line-height: 1.125rem;
   font-weight: 600;
   white-space: nowrap;
   overflow: visible;
@@ -628,8 +624,8 @@
   flex: 0 0 auto;
   box-sizing: border-box;
   font-family: inherit;
-  font-size: 13px;
-  line-height: 18px;
+  font-size: 0.75rem;
+  line-height: 1.125rem;
   font-weight: 600;
   white-space: nowrap;
   overflow: visible;
@@ -657,21 +653,21 @@
    ========================================================= */
 
 .paso3-rup-seccion__titulo h3 {
-  margin: 0;
-  color: var(--agora-primary-dark);
+  margin: 0 0 0.75rem;
+  color: var(--agora-primary);
   font-family: inherit;
-  font-size: 16px;
-  line-height: 24px;
+  font-size: 0.875rem;
+  line-height: 1.5rem;
   font-weight: 700;
   letter-spacing: 0;
 }
 
 .paso3-rup-seccion__titulo p {
-  margin: 0.125rem 0 0;
+  margin: 0.25rem 0 0.75rem;
   color: var(--agora-text-muted);
   font-family: inherit;
-  font-size: 12px;
-  line-height: 16px;
+  font-size: 0.75rem;
+  line-height: 1rem;
   font-weight: 400;
 }
 
@@ -685,16 +681,16 @@
   background: var(--agora-surface-soft);
   color: var(--agora-text-muted);
   font-family: inherit;
-  font-size: 10px;
-  line-height: 14px;
+  font-size: 0.6875rem;
+  line-height: 0.875rem;
   font-weight: 600;
 }
 
 .paso3-rup-toggle strong {
   color: var(--agora-primary-dark);
   font-family: inherit;
-  font-size: 13px;
-  line-height: 18px;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
   font-weight: 600;
 }
 
@@ -702,8 +698,8 @@
   display: block;
   color: var(--agora-text);
   font-family: inherit;
-  font-size: 14px;
-  line-height: 20px;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -711,28 +707,34 @@
 }
 
 .paso3-rup-dato span {
-  color: var(--agora-text-muted);
+  color: var(--agora-text);
   font-family: inherit;
-  font-size: 10px;
-  line-height: 14px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-size: 0.6875rem;
+  line-height: 0.875rem;
+  font-weight: 700;
+  letter-spacing: normal;
   text-transform: uppercase;
 }
 
 .paso3-rup-dato input {
   width: 100%;
-  min-height: 2.25rem;
-  padding: 0.5rem 0.625rem;
-  border: 1px solid var(--agora-border-strong);
+  min-height: 2.5rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid transparent;
   border-radius: 0.5rem;
-  background: var(--agora-surface);
+  background: var(--agora-background);
   color: var(--agora-text);
   box-sizing: border-box;
   font-family: inherit;
-  font-size: 14px;
-  line-height: 20px;
-  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  box-shadow: var(--agora-sombra-xs);
+}
+
+.paso3-rup-dato input:focus {
+  border-color: var(--agora-primary);
+  outline: 2px solid color-mix(in srgb, var(--agora-primary) 14%, transparent);
 }
 
 .paso3-rup-vacio {
@@ -744,8 +746,8 @@
   background: var(--agora-surface-soft);
   color: var(--agora-text-muted);
   font-family: inherit;
-  font-size: 14px;
-  line-height: 20px;
+  font-size: 0.75rem;
+  line-height: 1.25rem;
   font-weight: 400;
 }
 

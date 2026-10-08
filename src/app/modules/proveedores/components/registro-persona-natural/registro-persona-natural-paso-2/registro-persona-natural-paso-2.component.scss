@@ -84,6 +84,10 @@
   padding: 0.25rem 0;
 }
 
+.form-section + .form-section {
+  margin-top: 1rem;
+}
+
 .form-section__header {
   display: flex;
   align-items: center;
@@ -129,10 +133,10 @@
 }
 
 .form-section__title h3 {
-  margin: 0;
+  margin: 0 0 0.75rem;
 
-  color: var(--agora-text);
-  font-size: 1.125rem;
+  color: var(--agora-primary);
+  font-size: 0.875rem;
   font-weight: 700;
   line-height: 1.4;
 }
@@ -179,7 +183,7 @@
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1.25rem 1.5rem;
+  gap: 1rem;
 }
 
 .form-field {
@@ -195,10 +199,12 @@
 
 .form-field > label:not(.radio-option):not(.checkbox-option) {
   display: block;
-  margin-bottom: 0.4375rem;
+  margin-bottom: 0.35rem;
   color: var(--agora-text);
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: normal;
+  text-transform: uppercase;
   line-height: 1.4;
 }
 
@@ -211,16 +217,18 @@
   box-sizing: border-box;
   display: block;
   width: 100%;
-  min-height: 2.75rem;
+  min-height: 2.5rem;
   padding: 0.625rem 0.75rem;
-  border: 1px solid var(--agora-border-strong);
+  border: 1px solid transparent;
   border-radius: 0.5rem;
-  background: var(--agora-surface);
+  background: var(--agora-background);
   color: var(--agora-text);
   font: inherit;
   font-size: 0.875rem;
+  font-weight: 500;
   line-height: 1.4;
   outline: none;
+  box-shadow: var(--agora-sombra-xs);
   transition:
     border-color 0.15s ease,
     box-shadow 0.15s ease;
@@ -233,17 +241,22 @@
 .form-field input:focus,
 .form-field select:focus {
   border-color: var(--agora-primary);
-  box-shadow: 0 0 0 0.1875rem color-mix(in srgb, var(--agora-primary) 8%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--agora-primary) 14%, transparent);
+  box-shadow: var(--agora-sombra-xs);
 }
 
 .form-field input.ng-invalid.ng-touched,
 .form-field select.ng-invalid.ng-touched {
-  border-color: var(--agora-error);
+  border: 2px solid var(--agora-error);
+  outline: 2px solid color-mix(in srgb, var(--agora-error) 28%, transparent);
+  background: var(--agora-error-surface);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--agora-error) 12%, transparent);
 }
 
 .form-field input:read-only {
-  background: var(--agora-surface-soft);
-  color: var(--agora-text-muted);
+  background: var(--agora-surface-highlight);
+  text-align: center;
+  color: var(--agora-text);
   cursor: default;
 }
 
@@ -307,7 +320,7 @@
   margin: 0;
 
   color: var(--agora-text);
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   font-weight: 700;
   line-height: 1.4;
 }
@@ -338,7 +351,7 @@
   gap: 0.5rem;
 
   min-width: 10rem;
-  min-height: 2.75rem;
+  min-height: 2.5rem;
   box-sizing: border-box;
 
   margin: 0;
@@ -350,6 +363,8 @@
   background: var(--agora-surface-highlight);
 
   color: var(--agora-text);
+  font-size: 0.875rem;
+  font-weight: 500;
 
   cursor: pointer;
 
@@ -469,15 +484,15 @@
 
 .field-error {
   display: block;
-  margin-top: 0.3125rem;
+  margin-top: 0.15rem;
   color: var(--agora-error);
-  font-size: 0.75rem;
-  font-weight: 500;
+  font-size: 0.6875rem;
+  font-weight: 600;
   line-height: 1.4;
 }
 
 .field-help {
-  margin-top: 0.3125rem;
+  margin: 0.25rem 0 0.75rem;
   color: var(--agora-text-muted);
   font-size: 0.75rem;
   line-height: 1.4;
@@ -488,7 +503,7 @@
    ========================================================= */
 
 .form-subsection {
-  margin-top: 1.75rem;
+  margin-top: 1.5rem;
   padding-top: 1.5rem;
   border-top: 1px solid var(--agora-border);
 }
@@ -574,7 +589,7 @@ plantilla-tarjeta-contenedora {
   border: 0;
   border-radius: 0.75rem;
   background: var(--agora-surface) !important;
-  box-shadow: 0 0.125rem 0.5rem rgb(37 24 25 / 8%);
+  box-shadow: var(--agora-sombra-tarjeta);
 }
 
 /* =========================================================
@@ -717,7 +732,7 @@ plantilla-tarjeta-contenedora {
   gap: 0.625rem;
 
   color: var(--agora-text);
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   font-weight: 700;
   line-height: 1.35;
 }
@@ -749,7 +764,7 @@ plantilla-tarjeta-contenedora {
   align-items: center;
   gap: 0.625rem;
 
-  min-height: 3rem;
+  min-height: 2.5rem;
   padding: 0 0.875rem;
 
   box-sizing: border-box;
@@ -776,7 +791,7 @@ plantilla-tarjeta-contenedora {
   min-width: 0;
   width: 100%;
 
-  height: 2.75rem;
+  min-height: 2.5rem;
 
   padding: 0;
 
@@ -788,6 +803,7 @@ plantilla-tarjeta-contenedora {
   color: var(--agora-text);
   font-family: inherit;
   font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .afiliacion-card__description {
@@ -868,7 +884,7 @@ plantilla-tarjeta-contenedora {
   background: transparent !important;
 
   color: var(--agora-text);
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   font-weight: 700;
   line-height: 1.35;
 }
@@ -887,7 +903,7 @@ plantilla-tarjeta-contenedora {
   gap: 0.625rem;
 
   width: 70%;
-  min-height: 3rem;
+  min-height: 2.5rem;
 
   padding: 0 0.875rem;
   box-sizing: border-box;
@@ -914,7 +930,7 @@ plantilla-tarjeta-contenedora {
   flex: 1;
   min-width: 0;
   width: 100%;
-  height: 2.75rem;
+  min-height: 2.5rem;
 
   padding: 0;
 
@@ -925,7 +941,8 @@ plantilla-tarjeta-contenedora {
 
   color: var(--agora-text);
   font-family: inherit;
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 /* Texto explicativo */
@@ -996,6 +1013,8 @@ plantilla-tarjeta-contenedora {
   background: var(--agora-surface-soft);
   border: 1px solid var(--agora-border);
   border-radius: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
 }
 
 .capacidad-financiera-grid {
@@ -1020,7 +1039,7 @@ plantilla-tarjeta-contenedora {
   margin: 0;
 
   color: var(--agora-text);
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   font-weight: 700;
   line-height: 1.35;
 }
@@ -1040,7 +1059,7 @@ plantilla-tarjeta-contenedora {
   display: flex;
   align-items: center;
 
-  min-height: 3rem;
+  min-height: 2.5rem;
 
   padding: 0 0.875rem;
 
@@ -1074,7 +1093,7 @@ plantilla-tarjeta-contenedora {
   min-width: 0;
 
   width: 100%;
-  height: 2.75rem;
+  min-height: 2.5rem;
 
   padding: 0;
 
@@ -1085,7 +1104,8 @@ plantilla-tarjeta-contenedora {
 
   color: var(--agora-text);
   font-family: inherit;
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .capacidad-field__input--readonly mat-icon {
@@ -1104,7 +1124,7 @@ plantilla-tarjeta-contenedora {
 }
 
 .capacidad-field .field-help {
-  margin: 0;
+  margin: 0.25rem 0 0.75rem;
 
   color: var(--agora-text-muted);
   font-size: 0.75rem;
@@ -1177,16 +1197,16 @@ plantilla-tarjeta-contenedora {
 }
 
 .capacidad-financiera-header__text h3 {
-  margin: 0;
+  margin: 0 0 0.75rem;
 
   background: transparent;
 
-  color: var(--agora-text);
+  color: var(--agora-primary);
 
-  font-size: 1.125rem;
+  font-size: 0.875rem;
   font-weight: 700;
   line-height: 1.35;
-  letter-spacing: -0.01em;
+  letter-spacing: normal;
 }
 
 .capacidad-financiera-header__text p {
@@ -1196,7 +1216,7 @@ plantilla-tarjeta-contenedora {
 
   color: var(--agora-text-muted);
 
-  font-size: 0.9375rem;
+  font-size: 0.75rem;
   line-height: 1.45;
 }
 
