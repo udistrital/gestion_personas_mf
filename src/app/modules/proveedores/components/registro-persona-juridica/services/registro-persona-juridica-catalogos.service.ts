@@ -11,22 +11,32 @@ interface GrupoInfoComplementaria {
   Activo?: boolean;
 }
 
+interface ReferenciaParametro {
+  Id: number;
+  Nombre?: string;
+}
+
 interface RegistroCatalogo {
-  Id?: number;
+  Id: number;
   Nombre?: string;
   Descripcion?: string;
   CodigoAbreviacion?: string;
   Activo?: boolean;
-  GrupoInfoComplementariaId?: GrupoInfoComplementaria;
+  GrupoInfoComplementariaId?: GrupoInfoComplementaria | null;
+  TipoParametroId?: ReferenciaParametro | null;
+  ParametroPadreId?: ReferenciaParametro | number | null;
 }
 
-type RegistroCatalogoConId = RegistroCatalogo & { Id: number };
+interface RespuestaParametros {
+  Data?: unknown;
+}
 
 export interface OpcionCatalogo {
   id: number;
   nombre: string;
   codigo?: string;
   descripcion?: string;
+  parametroPadreId?: number | null;
 }
 
 export interface CatalogosPersonaJuridica {
@@ -34,16 +44,20 @@ export interface CatalogosPersonaJuridica {
   tipoOrganizacion: OpcionCatalogo[];
   tamanoEmpresa: OpcionCatalogo[];
   tipoCapital: OpcionCatalogo[];
-  camaraComercio?: OpcionCatalogo[];
-  responsabilidadFiscal?: OpcionCatalogo[];
-  actividadEconomica?: OpcionCatalogo[];
-  cargo?: OpcionCatalogo[];
-  tipoDeclaracion?: OpcionCatalogo[];
+  camaraComercio: OpcionCatalogo[];
+  responsabilidadFiscal: OpcionCatalogo[];
+  moneda: OpcionCatalogo[];
+  tipoDocumento: OpcionCatalogo[];
+  actividadEconomica: OpcionCatalogo[];
+  tipoRepresentacion: OpcionCatalogo[];
+  tipoDeclaracion: OpcionCatalogo[];
+  cargo: OpcionCatalogo[];
 }
 
 @Injectable({ providedIn: 'root' })
 export class RegistroPersonaJuridicaCatalogosService {
   private readonly tercerosUrl = environment.TERCEROS_SERVICE.replace(/\/+$/, '');
+  private readonly parametrosUrl = environment.PARAMETROS_SERVICE.replace(/\/+$/, '');
 
   constructor(private readonly http: HttpClient) {}
 
@@ -53,9 +67,10 @@ export class RegistroPersonaJuridicaCatalogosService {
         `${this.tercerosUrl}/grupo_info_complementaria`,
       ),
       infoComplementaria: this.obtenerRegistros(`${this.tercerosUrl}/info_complementaria`),
+      tiposParametro: this.obtenerRegistrosParametro(`${this.parametrosUrl}/tipo_parametro`),
+      parametros: this.obtenerRegistrosParametro(`${this.parametrosUrl}/parametro`),
     }).pipe(
-      map(({ gruposInfoComplementaria, infoComplementaria }) => {
-        const catalogos: CatalogosPersonaJuridica = {
+      map(({ gruposInfoComplementaria, infoComplementaria, tiposParametro, parametros }) => ({
           procedencia: this.obtenerOpcionesComplementarias(
             gruposInfoComplementaria,
             infoComplementaria,
@@ -76,27 +91,80 @@ export class RegistroPersonaJuridicaCatalogosService {
             infoComplementaria,
             ['tipo capital'],
           ),
-        };
-        return catalogos;
-      }),
+          camaraComercio: this.obtenerOpcionesParametro(
+            tiposParametro,
+            parametros,
+            ['camara_comercio', 'camara de comercio'],
+          ),
+          responsabilidadFiscal: this.obtenerOpcionesParametro(
+            tiposParametro,
+            parametros,
+            ['responsabilidad_fiscal'],
+          ),
+          moneda: this.obtenerOpcionesParametro(tiposParametro, parametros, ['moneda']),
+          tipoDocumento: this.obtenerOpcionesParametro(
+            tiposParametro,
+            parametros,
+            ['tipo_documento'],
+          ),
+          actividadEconomica: this.obtenerOpcionesParametro(
+            tiposParametro,
+            parametros,
+            ['actividad_economica'],
+          ),
+          tipoRepresentacion: this.obtenerOpcionesParametro(
+            tiposParametro,
+            parametros,
+            ['tipo_representacion'],
+          ),
+          tipoDeclaracion: this.obtenerOpcionesParametro(
+            tiposParametro,
+            parametros,
+            ['tipo_declaracion'],
+          ),
+          cargo: this.obtenerOpcionesParametro(tiposParametro, parametros, ['cargo']),
+        })),
     );
   }
 
-  private obtenerRegistros(url: string): Observable<RegistroCatalogoConId[]> {
+  private obtenerRegistros(url: string): Observable<RegistroCatalogo[]> {
     return this.http
       .get<unknown>(url)
-      .pipe(map(respuesta => this.validarListaRegistros(respuesta, url)));
+      .pipe(map(respuesta => this.validarListaRegistros(respuesta, url, false)));
   }
 
-  private validarListaRegistros(respuesta: unknown, url: string): RegistroCatalogoConId[] {
-    if (!Array.isArray(respuesta)) {
-      throw new Error(`La respuesta de ${url} no es un arreglo directo de registros.`);
+  private obtenerRegistrosParametro(url: string): Observable<RegistroCatalogo[]> {
+    return this.http
+      .get<unknown>(url)
+      .pipe(map(respuesta => this.validarListaRegistros(respuesta, url, true)));
+  }
+
+  private validarListaRegistros(
+    respuesta: unknown,
+    url: string,
+    envueltaEnData: boolean,
+  ): RegistroCatalogo[] {
+    let registros: unknown = respuesta;
+    if (envueltaEnData) {
+      if (!respuesta || typeof respuesta !== 'object' || Array.isArray(respuesta)) {
+        throw new Error(`La respuesta de ${url} no contiene un objeto con Data.`);
+      }
+      registros = (respuesta as RespuestaParametros).Data;
+    }
+    if (!Array.isArray(registros)) {
+      throw new Error(
+        `La respuesta de ${url} ${envueltaEnData ? 'no contiene Data como arreglo' : 'no es un arreglo directo de registros'}.`,
+      );
     }
 
-    return respuesta.map(registro => this.validarRegistro(registro, url));
+    return registros.map(registro => this.validarRegistro(registro, url, envueltaEnData));
   }
 
-  private validarRegistro(registro: unknown, url: string): RegistroCatalogoConId {
+  private validarRegistro(
+    registro: unknown,
+    url: string,
+    esParametro: boolean,
+  ): RegistroCatalogo {
     if (!registro || typeof registro !== 'object') {
       throw new Error(`La respuesta de ${url} contiene un registro que no es un objeto.`);
     }
@@ -108,11 +176,54 @@ export class RegistroPersonaJuridicaCatalogosService {
       Descripcion: this.textoOpcional(cuerpo['Descripcion'], url, 'Descripcion'),
       CodigoAbreviacion: this.textoOpcional(cuerpo['CodigoAbreviacion'], url, 'CodigoAbreviacion'),
       Activo: this.booleanoOpcional(cuerpo['Activo'], url, 'Activo'),
-      GrupoInfoComplementariaId: this.grupoInfoComplementariaOpcional(
-        cuerpo['GrupoInfoComplementariaId'],
-        url,
-      ),
+      ...(esParametro
+        ? {
+            TipoParametroId: this.referenciaParametroOpcional(
+              cuerpo['TipoParametroId'],
+              url,
+              'TipoParametroId',
+            ),
+            ParametroPadreId: this.parametroPadreOpcional(cuerpo['ParametroPadreId'], url),
+          }
+        : {
+            GrupoInfoComplementariaId: this.grupoInfoComplementariaOpcional(
+              cuerpo['GrupoInfoComplementariaId'],
+              url,
+            ),
+          }),
     };
+  }
+
+  private referenciaParametroOpcional(
+    valor: unknown,
+    url: string,
+    campo: string,
+  ): ReferenciaParametro | null | undefined {
+    if (valor === undefined || valor === null) {
+      return valor;
+    }
+    if (typeof valor !== 'object' || Array.isArray(valor)) {
+      throw new Error(`La respuesta de ${url} contiene un "${campo}" que no es un objeto.`);
+    }
+
+    const referencia = valor as Record<string, unknown>;
+    return {
+      Id: this.numeroRequerido(referencia['Id'], url, `${campo}.Id`),
+      Nombre: this.textoOpcional(referencia['Nombre'], url, `${campo}.Nombre`),
+    };
+  }
+
+  private parametroPadreOpcional(
+    valor: unknown,
+    url: string,
+  ): ReferenciaParametro | number | null | undefined {
+    if (valor === undefined || valor === null || typeof valor === 'number') {
+      if (typeof valor === 'number' && !Number.isInteger(valor)) {
+        throw new Error(`La respuesta de ${url} contiene un "ParametroPadreId" que no es un entero.`);
+      }
+      return valor;
+    }
+    return this.referenciaParametroOpcional(valor, url, 'ParametroPadreId');
   }
 
   private grupoInfoComplementariaOpcional(
@@ -174,13 +285,15 @@ export class RegistroPersonaJuridicaCatalogosService {
   }
 
   private obtenerOpcionesComplementarias(
-    grupos: RegistroCatalogoConId[],
-    registros: RegistroCatalogoConId[],
+    grupos: RegistroCatalogo[],
+    registros: RegistroCatalogo[],
     aliases: string[],
   ): OpcionCatalogo[] {
     const idsGrupos = new Set(
       grupos
-        .filter(grupo => this.coincideCategoria(grupo, aliases))
+        .filter(
+          grupo => grupo.Activo !== false && this.coincideCategoria(grupo, aliases),
+        )
         .map(grupo => grupo.Id),
     );
 
@@ -191,7 +304,27 @@ export class RegistroPersonaJuridicaCatalogosService {
     );
   }
 
-  private aOpciones(registros: RegistroCatalogoConId[]): OpcionCatalogo[] {
+  private obtenerOpcionesParametro(
+    tiposParametro: RegistroCatalogo[],
+    parametros: RegistroCatalogo[],
+    aliases: string[],
+  ): OpcionCatalogo[] {
+    const idsTipos = new Set(
+      tiposParametro
+        .filter(tipo => tipo.Activo !== false && this.coincideCategoria(tipo, aliases))
+        .map(tipo => tipo.Id),
+    );
+
+    return this.aOpciones(
+      parametros.filter(parametro =>
+        parametro.TipoParametroId
+        && idsTipos.has(parametro.TipoParametroId.Id),
+      ),
+      true,
+    );
+  }
+
+  private aOpciones(registros: RegistroCatalogo[], incluirJerarquia = false): OpcionCatalogo[] {
     const activos = registros.filter(registro => registro.Activo !== false);
 
     return activos
@@ -200,6 +333,14 @@ export class RegistroPersonaJuridicaCatalogosService {
         nombre: this.nombreRequerido(registro.Nombre),
         codigo: registro.CodigoAbreviacion,
         descripcion: registro.Descripcion,
+        ...(incluirJerarquia
+          ? {
+              parametroPadreId:
+                typeof registro.ParametroPadreId === 'number'
+                  ? registro.ParametroPadreId
+                  : registro.ParametroPadreId?.Id ?? null,
+            }
+          : {}),
       }));
   }
 

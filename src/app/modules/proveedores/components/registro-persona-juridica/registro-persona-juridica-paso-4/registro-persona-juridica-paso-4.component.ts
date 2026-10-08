@@ -20,13 +20,6 @@ export class RegistroPersonaJuridicaPaso4Component {
     return this.catalogos?.actividadEconomica ?? [];
   }
 
-  codigosUnspsc = [
-    { codigo: '43211500', nombre: 'Computadores y estaciones de trabajo' },
-    { codigo: '81111500', nombre: 'Ingeniería y arquitectura de software' },
-    { codigo: '81112200', nombre: 'Mantenimiento y soporte técnico TIC' },
-    { codigo: '43222600', nombre: 'Equipos de redes de datos y telecomunicación' },
-  ];
-
   get declaraciones(): OpcionCatalogo[] {
     return this.catalogos?.tipoDeclaracion ?? [];
   }

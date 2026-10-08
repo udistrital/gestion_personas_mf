@@ -26,7 +26,7 @@ export const camposPorPaso: Record<number, string[]> = {
     'aportesSeguridadSocial',
   ],
   4: [
-    'actividadesCiiu', 'codigosUnspsc', 'descripcionServicios', 'declaraciones',
+    'actividadesCiiu', 'descripcionServicios', 'declaraciones',
     'tokenOtp', 'aceptaTratamiento',
   ]
 };

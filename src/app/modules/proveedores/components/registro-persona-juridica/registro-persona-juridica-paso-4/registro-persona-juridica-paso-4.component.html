@@ -7,7 +7,7 @@
     <aviso-legal-formulario [title]="'Normativa UD'">
       <p>Relacione al menos una actividad económica principal registrada en la casilla 46 del RUT. Los códigos adicionales deben ser coherentes con el objeto social registrado.</p>
     </aviso-legal-formulario>
-    <div class="subtitulo"><mat-icon>category</mat-icon> Clasificación Industrial Internacional Uniforme (CIIU Rev. 4 A.C.)</div>
+    <div class="subtitulo"><mat-icon>category</mat-icon> Catálogo dinámico de actividad económica</div>
     <div class="actividades-lista">
       @for (actividad of actividadesCiiu; track actividad.id) {
         <div class="vinculacion actividad-item">
@@ -19,12 +19,6 @@
           <div class="actividad-codigo">{{ actividad.codigo }}</div>
           <div><strong>{{ actividad.nombre }}</strong><p>{{ actividad.descripcion }}</p></div>
         </div>
-      }
-    </div>
-    <div class="subtitulo"><mat-icon>inventory_2</mat-icon> Segmentos, Familias y Clases UNSPSC</div>
-    <div class="codigos-lista">
-      @for (codigo of codigosUnspsc; track codigo.codigo) {
-        <span class="codigo-item"><strong>{{ codigo.codigo }}</strong> {{ codigo.nombre }} <mat-icon>check_circle</mat-icon></span>
       }
     </div>
   </plantilla-tarjeta-contenedora>

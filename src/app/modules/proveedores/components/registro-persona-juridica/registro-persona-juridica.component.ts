@@ -204,7 +204,6 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
     certificadoParafiscales: new FormControl('Cert_Parafiscales_Feb2025.pdf', [Validators.required, Validators.pattern(ARCHIVO_PDF)]),
     aportesSeguridadSocial: new FormControl(true, Validators.requiredTrue),
     actividadesCiiu: new FormControl<number[]>([], Validators.required),
-    codigosUnspsc: new FormControl<string[]>(['43211500', '81111500', '81112200', '43222600'], Validators.required),
     descripcionServicios: new FormControl('Soluciones de infraestructura tecnológica de misión crítica, desarrollo de arquitecturas cloud, ciberseguridad aplicada, soporte integral de hardware institucional y licenciamiento corporativo para entidades de educación superior pública y sectores gubernamentales del Distrito Capital.', Validators.required),
     declaraciones: new FormControl<number[]>([], Validators.required),
     tokenOtp: new FormControl('482913', [Validators.required, Validators.pattern(OTP)]),
