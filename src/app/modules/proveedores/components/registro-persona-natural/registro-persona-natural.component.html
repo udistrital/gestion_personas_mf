@@ -2,6 +2,8 @@
   [icon]="'person'"
   [title]="'Registro Único de Persona Natural'"
   [breadcrumb]="'<p>Gestión de Proveedores > <b>Persona Natural</b></p>'"
+  [mostrarBotonRegresar]="true"
+  (regresar)="regresarARegistroInicial()"
 >
   <ng-container *ngTemplateOutlet="contenidoDePlantilla"></ng-container>
 </plantilla-pagina-contenedora>
@@ -164,4 +166,3 @@
 <!-- ============================================================= -->
 <!-- PASO 4 - DECLARACIONES                                        -->
 <!-- ============================================================= -->
-
