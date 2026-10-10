@@ -17,7 +17,7 @@ export class RegistroPersonaJuridicaPaso4Component {
   @Output() formularioChange = new EventEmitter<FormGroup>();
 
   get actividadesCiiu(): OpcionCatalogo[] {
-    return this.catalogos?.actividadEconomica ?? [];
+    return this.catalogos?.actividadEconomicaCiiu ?? [];
   }
 
   get declaraciones(): OpcionCatalogo[] {
