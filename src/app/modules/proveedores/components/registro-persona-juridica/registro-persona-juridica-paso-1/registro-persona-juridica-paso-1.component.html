@@ -180,14 +180,16 @@
     [description]="'Diligencie la nomenclatura oficial para notificaciones judiciales y administrativas de la Universidad.'"
   >
     <div class="campo-grid campo-grid--two">
-      <label class="campo"><span>Departamento de Sede Principal <b>*</b></span><select formControlName="departamento" (change)="onDepartamentoChange($any($event.target).value)">
-        @for (opcion of opcionesDepartamento; track opcion.value) {
-          <option [value]="opcion.value">{{ opcion.label }}</option>
+      <label class="campo"><span>Departamento de Sede Principal <b>*</b></span><select formControlName="departamento">
+        <option [ngValue]="null">Seleccione...</option>
+        @for (opcion of opcionesDepartamento; track opcion.id) {
+          <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
         }
       </select></label>
       <label class="campo"><span>Ciudad / Municipio <b>*</b></span><select formControlName="ciudad">
-        @for (opcion of opcionesCiudad; track opcion.value) {
-          <option [value]="opcion.value">{{ opcion.label }}</option>
+        <option [ngValue]="null">Seleccione...</option>
+        @for (opcion of opcionesCiudad; track opcion.id) {
+          <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
         }
       </select></label>
     </div>

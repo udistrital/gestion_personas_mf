@@ -35,7 +35,8 @@
           @for (opcion of opcionesTipoCuenta; track opcion.value) { <option [value]="opcion.value">{{ opcion.label }}</option> }
         </select></label>
         <label class="campo"><span>Ciudad / Plaza de Apertura <b>*</b></span><select formControlName="ciudadApertura">
-          @for (opcion of opcionesCiudadApertura; track opcion.value) { <option [value]="opcion.value">{{ opcion.label }}</option> }
+          <option [ngValue]="null">Seleccione...</option>
+          @for (opcion of opcionesCiudadApertura; track opcion.id) { <option [ngValue]="opcion.id">{{ opcion.nombre }}</option> }
         </select></label>
         <label class="campo"><span>Número de Cuenta Bancaria <b>*</b></span><input formControlName="numeroCuenta" type="text"></label>
         <label class="campo"><span>Confirmar Número de Cuenta <b>*</b></span><input formControlName="numeroCuentaConfirmacion" type="text"></label>

@@ -4,6 +4,10 @@ import {
   CatalogosPersonaJuridica,
   OpcionCatalogo,
 } from '../services/registro-persona-juridica-catalogos.service';
+import {
+  CatalogosUbicacionesPersonaJuridica,
+  OpcionLugar,
+} from '../services/registro-persona-juridica-ubicaciones.service';
 
 interface Opcion<T> {
   label: string;
@@ -19,6 +23,7 @@ interface Opcion<T> {
 export class RegistroPersonaJuridicaPaso2Component {
   @Input() formulario: FormGroup = new FormGroup({});
   @Input() catalogos: CatalogosPersonaJuridica | null = null;
+  @Input() ubicaciones: CatalogosUbicacionesPersonaJuridica | null = null;
   @Output() formularioChange = new EventEmitter<FormGroup>();
 
   get opcionesTipoConstitucion(): OpcionCatalogo[] {
@@ -40,13 +45,9 @@ export class RegistroPersonaJuridicaPaso2Component {
     { label: 'Cuenta de Ahorros Empresarial', value: 'ahorros' },
   ];
 
-  opcionesCiudadApertura: Opcion<string>[] = [
-    { label: 'Bogotá D.C. (Cundinamarca)', value: 'bogota' },
-    { label: 'Medellín (Antioquia)', value: 'medellin' },
-    { label: 'Cali (Valle del Cauca)', value: 'cali' },
-    { label: 'Barranquilla (Atlántico)', value: 'barranquilla' },
-    { label: 'Bucaramanga (Santander)', value: 'bucaramanga' },
-  ];
+  get opcionesCiudadApertura(): OpcionLugar[] {
+    return this.ubicaciones?.ciudades ?? [];
+  }
 
   opcionesSiNo: Opcion<string>[] = [
     { label: 'Sí', value: 'si' },

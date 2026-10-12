@@ -8,6 +8,10 @@ import {
   CatalogosPersonaJuridica,
   RegistroPersonaJuridicaCatalogosService,
 } from "./services/registro-persona-juridica-catalogos.service";
+import {
+  CatalogosUbicacionesPersonaJuridica,
+  RegistroPersonaJuridicaUbicacionesService,
+} from "./services/registro-persona-juridica-ubicaciones.service";
 
 const SOLO_DIGITOS = /^\d+$/;
 const NIT = /^\d{9}$/;
@@ -30,13 +34,21 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
   pasoActual = 1;
   payloadCatalogos?: PersonaJuridicaCatalogosPayload;
   catalogos: CatalogosPersonaJuridica | null = null;
+  catalogosUbicaciones: CatalogosUbicacionesPersonaJuridica | null = null;
 
-  constructor(private readonly catalogosService: RegistroPersonaJuridicaCatalogosService) {}
+  constructor(
+    private readonly catalogosService: RegistroPersonaJuridicaCatalogosService,
+    private readonly ubicacionesService: RegistroPersonaJuridicaUbicacionesService,
+  ) {}
 
   ngOnInit(): void {
     this.catalogosService.obtenerCatalogos().subscribe({
       next: catalogos => this.catalogos = catalogos,
       error: error => console.error('No fue posible cargar los catálogos de Persona Jurídica.', error),
+    });
+    this.ubicacionesService.obtenerCatalogos().subscribe({
+      next: catalogos => this.catalogosUbicaciones = catalogos,
+      error: error => console.error('No fue posible cargar las ubicaciones de Persona Jurídica.', error),
     });
 
     // TODO: Bloque temporal para pruebas de desarrollo. Eliminar al implementar lógica del negocio.
@@ -158,8 +170,8 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
     autorretenedor: new FormControl(false, Validators.required),
     exencionIca: new FormControl(false, Validators.required),
     responsabilidades: new FormControl<number[]>([], Validators.required),
-    departamento: new FormControl('bogota', Validators.required),
-    ciudad: new FormControl('bogota', Validators.required),
+    departamento: new FormControl<number | null>(null, Validators.required),
+    ciudad: new FormControl<number | null>(null, Validators.required),
     tipoVia: new FormControl('cr', Validators.required),
     detalleVia: new FormControl('68', Validators.required),
     numeroCruce: new FormControl('45', Validators.required),
@@ -182,7 +194,7 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
     pasivosTotales: new FormControl('385200000', [Validators.required, Validators.pattern(SOLO_DIGITOS)]),
     banco: new FormControl('banco_bogota', Validators.required),
     tipoCuenta: new FormControl('corriente', Validators.required),
-    ciudadApertura: new FormControl('bogota', Validators.required),
+    ciudadApertura: new FormControl<number | null>(null, Validators.required),
     numeroCuenta: new FormControl('21004598210', [Validators.required, Validators.pattern(CUENTA_BANCARIA)]),
     numeroCuentaConfirmacion: new FormControl('21004598210', [Validators.required, Validators.pattern(CUENTA_BANCARIA)]),
     titularCuenta: new FormControl('SOLUCIONES TECNOLÓGICAS E INTEGRACIONES S.A.S.'),

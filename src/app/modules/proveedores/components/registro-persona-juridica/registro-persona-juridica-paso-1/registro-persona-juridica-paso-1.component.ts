@@ -1,9 +1,13 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import {
   CatalogosPersonaJuridica,
   OpcionCatalogo,
 } from '../services/registro-persona-juridica-catalogos.service';
+import {
+  CatalogosUbicacionesPersonaJuridica,
+  OpcionLugar,
+} from '../services/registro-persona-juridica-ubicaciones.service';
 
 interface Opcion<T> {
   label: string;
@@ -16,10 +20,11 @@ interface Opcion<T> {
   styleUrls: ['./registro-persona-juridica-paso-1.component.scss'],
   standalone: false,
 })
-export class RegistroPersonaJuridicaPaso1Component implements OnInit {
+export class RegistroPersonaJuridicaPaso1Component {
 
   @Input() formulario: FormGroup = new FormGroup({});
   @Input() catalogos: CatalogosPersonaJuridica | null = null;
+  @Input() ubicaciones: CatalogosUbicacionesPersonaJuridica | null = null;
   @Output() formularioChange = new EventEmitter<FormGroup>();
 
   get opcionesProcedencia(): OpcionCatalogo[] {
@@ -82,36 +87,13 @@ export class RegistroPersonaJuridicaPaso1Component implements OnInit {
     { label: 'Sí, Actividad Exenta Distrital', value: true }
   ];
 
-  opcionesDepartamento: Opcion<string>[] = [
-    { label: 'Bogotá D.C.', value: 'bogota' },
-    { label: 'Cundinamarca', value: 'cundinamarca' },
-    { label: 'Antioquia', value: 'antioquia' },
-    { label: 'Valle del Cauca', value: 'valle_del_cauca' }
-  ];
+  get opcionesDepartamento(): OpcionLugar[] {
+    return this.ubicaciones?.departamentos ?? [];
+  }
 
-  opcionesCiudadBogota: Opcion<string>[] = [
-    { label: 'Bogotá D.C.', value: 'bogota' },
-    { label: 'Chía', value: 'chia' },
-    { label: 'Soacha', value: 'soacha' }
-  ];
-
-  opcionesCiudadCundinamarca: Opcion<string>[] = [
-    { label: 'Zipaquirá', value: 'zipaquira' },
-    { label: 'Girardot', value: 'girardot' },
-    { label: 'Facatativá', value: 'facatativa' }
-  ];
-
-  opcionesCiudadAntioquia: Opcion<string>[] = [
-    { label: 'Medellín', value: 'medellin' },
-    { label: 'Envigado', value: 'envigado' },
-    { label: 'Bello', value: 'bello' }
-  ];
-
-  opcionesCiudadValleDelCauca: Opcion<string>[] = [
-    { label: 'Cali', value: 'cali' },
-    { label: 'Palmira', value: 'palmira' },
-    { label: 'Buenaventura', value: 'buenaventura' }
-  ];
+  get opcionesCiudad(): OpcionLugar[] {
+    return this.ubicaciones?.ciudades ?? [];
+  }
 
   opcionesTipoVia: Opcion<string>[] = [
     { label: 'Calle', value: 'cl' },
@@ -128,8 +110,6 @@ export class RegistroPersonaJuridicaPaso1Component implements OnInit {
     { label: 'Edificio', value: 'ed' }
   ];
 
-  opcionesCiudad: Opcion<string>[] = [];
-
   get direccionGenerada(): string {
     const tipoVia = this.formulario.get('tipoVia')?.value ?? '';
     const detalleVia = this.formulario.get('detalleVia')?.value ?? '';
@@ -144,11 +124,6 @@ export class RegistroPersonaJuridicaPaso1Component implements OnInit {
     return [via, cruce ? `# ${cruce}` : '', interior].filter(Boolean).join(' ');
   }
 
-  ngOnInit(): void {
-    const departamento = this.formulario.get('departamento')?.value;
-    this.onDepartamentoChange(departamento);
-  }
-
   cambiarResponsabilidad(valor: number, seleccionado: boolean): void {
     const responsabilidades: number[] = this.formulario.get('responsabilidades')?.value ?? [];
     const actualizadas = seleccionado
@@ -157,28 +132,6 @@ export class RegistroPersonaJuridicaPaso1Component implements OnInit {
 
     this.formulario.get('responsabilidades')?.setValue([...new Set(actualizadas)]);
     this.formularioChange.emit(this.formulario);
-  };
-
-  onDepartamentoChange(departamento: string): void {
-    switch (departamento) {
-      case 'bogota':
-        this.opcionesCiudad = this.opcionesCiudadBogota;
-        break;
-      case 'cundinamarca':
-        this.opcionesCiudad = this.opcionesCiudadCundinamarca;
-        break;
-      case 'antioquia':
-        this.opcionesCiudad = this.opcionesCiudadAntioquia;
-        break;
-      case 'valle_del_cauca':
-        this.opcionesCiudad = this.opcionesCiudadValleDelCauca;
-        break;
-      default:
-        this.opcionesCiudad = [];
-    } 
-    if (this.formulario.get('ciudad')?.value && !this.opcionesCiudad.some(opcion => opcion.value === this.formulario.get('ciudad')?.value)) {
-      this.formulario.get('ciudad')?.setValue(null);
-    }
   };
 
 }
