@@ -468,11 +468,8 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    // Solo permite volver a pasos ya alcanzados.
-    if (paso <= this.currentStep) {
-      this.currentStep = paso;
-      this.persistirBorrador(true);
-    }
+    this.currentStep = paso;
+    this.persistirBorrador(true);
   }
 
   guardarBorrador(): void {
