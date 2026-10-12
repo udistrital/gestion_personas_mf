@@ -29,10 +29,12 @@
       <h3>Cuenta Principal de Abonos</h3>
       <div class="campo-grid campo-grid--three">
         <label class="campo"><span>Entidad Bancaria Autorizada <b>*</b></span><select formControlName="banco">
-          @for (opcion of opcionesBanco; track opcion.value) { <option [value]="opcion.value">{{ opcion.label }}</option> }
+          <option [ngValue]="null">Seleccione...</option>
+          @for (opcion of opcionesBanco; track opcion.id) { <option [ngValue]="opcion.id">{{ opcion.nombre }}</option> }
         </select></label>
         <label class="campo"><span>Tipo de Cuenta <b>*</b></span><select formControlName="tipoCuenta">
-          @for (opcion of opcionesTipoCuenta; track opcion.value) { <option [value]="opcion.value">{{ opcion.label }}</option> }
+          <option [ngValue]="null">Seleccione...</option>
+          @for (opcion of opcionesTipoCuenta; track opcion.id) { <option [ngValue]="opcion.id">{{ opcion.nombre }}</option> }
         </select></label>
         <label class="campo"><span>Ciudad / Plaza de Apertura <b>*</b></span><select formControlName="ciudadApertura">
           <option [ngValue]="null">Seleccione...</option>

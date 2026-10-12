@@ -61,6 +61,8 @@ export interface CatalogosPersonaJuridica {
   tipoRepresentacion: OpcionCatalogo[];
   tipoDeclaracion: OpcionCatalogo[];
   cargo: OpcionCatalogo[];
+  entidadesBancarias: OpcionCatalogo[];
+  tiposCuentaBancaria: OpcionCatalogo[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -76,6 +78,10 @@ export class RegistroPersonaJuridicaCatalogosService {
         `${this.tercerosUrl}/grupo_info_complementaria`,
       ),
       infoComplementaria: this.obtenerRegistros(`${this.tercerosUrl}/info_complementaria`),
+      areasTipo: this.obtenerRegistrosParametro(
+        `${this.parametrosUrl}/area_tipo`,
+        'areaTipo',
+      ),
       tiposParametro: this.obtenerRegistrosParametro(
         `${this.parametrosUrl}/tipo_parametro`,
         'tipoParametro',
@@ -85,7 +91,7 @@ export class RegistroPersonaJuridicaCatalogosService {
         'parametro',
       ),
     }).pipe(
-      map(({ gruposInfoComplementaria, infoComplementaria, tiposParametro, parametros }) => ({
+      map(({ gruposInfoComplementaria, infoComplementaria, areasTipo, tiposParametro, parametros }) => ({
           procedencia: this.obtenerOpcionesComplementarias(
             gruposInfoComplementaria,
             infoComplementaria,
@@ -143,6 +149,18 @@ export class RegistroPersonaJuridicaCatalogosService {
             'TIP_DEC',
           ),
           cargo: this.obtenerOpcionesParametro(tiposParametro, parametros, ['cargo']),
+          entidadesBancarias: this.obtenerOpcionesParametroPorAreaYTipo(
+            areasTipo,
+            tiposParametro,
+            parametros,
+            'EB',
+          ),
+          tiposCuentaBancaria: this.obtenerOpcionesParametroPorAreaYTipo(
+            areasTipo,
+            tiposParametro,
+            parametros,
+            'TCB',
+          ),
         })),
     );
   }
@@ -155,7 +173,7 @@ export class RegistroPersonaJuridicaCatalogosService {
 
   private obtenerRegistrosParametro(
     url: string,
-    tipoRegistro: 'tipoParametro' | 'parametro',
+    tipoRegistro: 'areaTipo' | 'tipoParametro' | 'parametro',
   ): Observable<RegistroCatalogo[]> {
     return this.http
       .get<unknown>(url)
@@ -166,7 +184,7 @@ export class RegistroPersonaJuridicaCatalogosService {
     respuesta: unknown,
     url: string,
     envueltaEnData: boolean,
-    tipoRegistro?: 'tipoParametro' | 'parametro',
+    tipoRegistro?: 'areaTipo' | 'tipoParametro' | 'parametro',
   ): RegistroCatalogo[] {
     let registros: unknown = respuesta;
     if (envueltaEnData) {
@@ -187,6 +205,7 @@ export class RegistroPersonaJuridicaCatalogosService {
         url,
         tipoRegistro === 'parametro',
         tipoRegistro === 'tipoParametro',
+        tipoRegistro === 'areaTipo',
       ),
     );
   }
@@ -195,7 +214,8 @@ export class RegistroPersonaJuridicaCatalogosService {
     registro: unknown,
     url: string,
     esParametro: boolean,
-    esTipoParametro = false,
+    esTipoParametro: boolean,
+    esAreaTipo: boolean,
   ): RegistroCatalogo {
     if (!registro || typeof registro !== 'object') {
       throw new Error(`La respuesta de ${url} contiene un registro que no es un objeto.`);
@@ -219,6 +239,8 @@ export class RegistroPersonaJuridicaCatalogosService {
           }
         : esTipoParametro
         ? { AreaTipoId: this.areaTipoOpcional(cuerpo['AreaTipoId'], url) }
+        : esAreaTipo
+        ? {}
         : {
             GrupoInfoComplementariaId: this.grupoInfoComplementariaOpcional(
               cuerpo['GrupoInfoComplementariaId'],
@@ -419,6 +441,41 @@ export class RegistroPersonaJuridicaCatalogosService {
         && idsTipos.has(parametro.TipoParametroId.Id),
       ),
       true,
+    );
+  }
+
+  private obtenerOpcionesParametroPorAreaYTipo(
+    areasTipo: RegistroCatalogo[],
+    tiposParametro: RegistroCatalogo[],
+    parametros: RegistroCatalogo[],
+    codigoTipo: 'EB' | 'TCB',
+  ): OpcionCatalogo[] {
+    const idsAreasFinancieras = new Set(
+      areasTipo
+        .filter(area => area.Activo !== false && area.CodigoAbreviacion === 'SF')
+        .map(area => area.Id),
+    );
+    const idsTiposParametro = new Set(
+      tiposParametro
+        .filter(tipo =>
+          tipo.Activo !== false
+          && tipo.CodigoAbreviacion === codigoTipo
+          && tipo.AreaTipoId
+          && idsAreasFinancieras.has(tipo.AreaTipoId.Id),
+        )
+        .map(tipo => tipo.Id),
+    );
+
+    return this.aOpciones(
+      parametros.filter(parametro =>
+        parametro.Activo !== false
+        && (
+          parametro.ParametroPadreId === null
+          || parametro.ParametroPadreId === undefined
+        )
+        && parametro.TipoParametroId
+        && idsTiposParametro.has(parametro.TipoParametroId.Id),
+      ),
     );
   }
 

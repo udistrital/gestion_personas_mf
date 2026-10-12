@@ -30,20 +30,13 @@ export class RegistroPersonaJuridicaPaso2Component {
     return this.catalogos?.tipoCapital ?? [];
   }
 
-  opcionesBanco: Opcion<string>[] = [
-    { label: '001 - BANCO DE BOGOTÁ', value: 'banco_bogota' },
-    { label: '007 - BANCOLOMBIA S.A.', value: 'bancolombia' },
-    { label: '051 - BANCO DAVIVIENDA', value: 'davivienda' },
-    { label: '013 - BBVA COLOMBIA', value: 'bbva' },
-    { label: '023 - BANCO DE OCCIDENTE', value: 'occidente' },
-    { label: '002 - BANCO POPULAR', value: 'popular' },
-    { label: '040 - BANCO AGRARIO DE COLOMBIA', value: 'agrario' },
-  ];
+  get opcionesBanco(): OpcionCatalogo[] {
+    return this.catalogos?.entidadesBancarias ?? [];
+  }
 
-  opcionesTipoCuenta: Opcion<string>[] = [
-    { label: 'Cuenta Corriente Empresarial', value: 'corriente' },
-    { label: 'Cuenta de Ahorros Empresarial', value: 'ahorros' },
-  ];
+  get opcionesTipoCuenta(): OpcionCatalogo[] {
+    return this.catalogos?.tiposCuentaBancaria ?? [];
+  }
 
   get opcionesCiudadApertura(): OpcionLugar[] {
     return this.ubicaciones?.ciudades ?? [];
