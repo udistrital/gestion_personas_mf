@@ -39,6 +39,7 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
   constructor(
     private readonly catalogosService: RegistroPersonaJuridicaCatalogosService,
     private readonly ubicacionesService: RegistroPersonaJuridicaUbicacionesService,
+    private readonly router: Router,
   ) {}
 
   ngOnInit(): void {
@@ -58,8 +59,6 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
       });
     }
   }
-
-  constructor(private readonly router: Router) {}
 
   regresarARegistroInicial(): void {
     void this.router.navigateByUrl("/proveedores/registro-inicio-persona");
