@@ -1,4 +1,10 @@
 <form [formGroup]="formulario" (input)="emitirCambio()" (change)="emitirCambio()">
+  @if (cargandoCatalogos) {
+    <p aria-live="polite">Cargando catálogos...</p>
+  } @else if (errorCatalogos) {
+    <p role="alert">{{ errorCatalogos }}</p>
+    <button type="button" (click)="reintentarCatalogos.emit()">Reintentar carga de catálogos</button>
+  }
   <plantilla-tarjeta-contenedora
     [icon]="'account_balance'"
     [title]="'1. Información Financiera Corporativa y Capital Social'"
@@ -36,10 +42,32 @@
           <option [ngValue]="null">Seleccione...</option>
           @for (opcion of opcionesTipoCuenta; track opcion.id) { <option [ngValue]="opcion.id">{{ opcion.nombre }}</option> }
         </select></label>
+        <label class="campo"><span>Departamento de Apertura <b>*</b></span><select formControlName="departamentoApertura">
+          <option [ngValue]="null">Seleccione...</option>
+          @for (opcion of departamentos; track opcion.id) { <option [ngValue]="opcion.id">{{ opcion.nombre }}</option> }
+        </select>
+          @if (cargandoDepartamentos) {
+            <small>Cargando departamentos...</small>
+          } @else if (errorDepartamentos) {
+            <small role="alert">{{ errorDepartamentos }}</small>
+            <button type="button" (click)="reintentarDepartamentos.emit()">Reintentar</button>
+          } @else if (departamentos.length === 0) {
+            <small>No hay departamentos disponibles.</small>
+          }
+        </label>
         <label class="campo"><span>Ciudad / Plaza de Apertura <b>*</b></span><select formControlName="ciudadApertura">
           <option [ngValue]="null">Seleccione...</option>
-          @for (opcion of opcionesCiudadApertura; track opcion.id) { <option [ngValue]="opcion.id">{{ opcion.nombre }}</option> }
-        </select></label>
+          @for (opcion of ciudades; track opcion.id) { <option [ngValue]="opcion.id">{{ opcion.nombre }}</option> }
+        </select>
+          @if (cargandoCiudades) {
+            <small>Cargando ciudades...</small>
+          } @else if (errorCiudades) {
+            <small role="alert">{{ errorCiudades }}</small>
+            <button type="button" (click)="reintentarCiudades.emit()">Reintentar</button>
+          } @else if (formulario.get('departamentoApertura')?.value && ciudades.length === 0) {
+            <small>No hay ciudades disponibles para este departamento.</small>
+          }
+        </label>
         <label class="campo"><span>Número de Cuenta Bancaria <b>*</b></span><input formControlName="numeroCuenta" type="text"></label>
         <label class="campo"><span>Confirmar Número de Cuenta <b>*</b></span><input formControlName="numeroCuentaConfirmacion" type="text"></label>
         <label class="campo"><span>Nombre del Titular Registrado en Banco</span><input formControlName="titularCuenta" type="text" readonly></label>
@@ -73,12 +101,18 @@
         <h3><mat-icon>verified</mat-icon>Parámetros de Facturación DIAN</h3>
         <div class="campo-grid campo-grid--two">
           <label class="campo"><span>Obligado a Facturar Electrónicamente <b>*</b></span><select formControlName="obligadoFacturar">
-            @for (opcion of opcionesSiNo; track opcion.value) { <option [value]="opcion.value">{{ opcion.label }}</option> }
-          </select></label>
+          <option [ngValue]="null">Seleccione...</option>
+          @for (opcion of opcionesObligadoFacturar; track opcion.id) {
+            <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+          }
+        </select></label>
           <label class="campo"><span>Prefijo y Rango de Facturación</span><input formControlName="prefijoFacturacion" type="text"></label>
           <label class="campo"><span>Resolución de Autorización DIAN</span><input formControlName="resolucionDian" type="text"></label>
           <label class="campo"><span>Operaciones en Moneda Extranjera</span><select formControlName="monedaExtranjera">
-            @for (opcion of opcionesSiNo; track opcion.value) { <option [value]="opcion.value">{{ opcion.label }}</option> }
+            <option [ngValue]="null">Seleccione...</option>
+            @for (opcion of opcionesMonedaExtranjera; track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+            }
           </select></label>
         </div>
       </div>

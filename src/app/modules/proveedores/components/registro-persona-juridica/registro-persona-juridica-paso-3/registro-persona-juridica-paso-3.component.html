@@ -1,4 +1,10 @@
 <form [formGroup]="formulario" (input)="emitirCambio()" (change)="emitirCambio()">
+  @if (cargandoCatalogos) {
+    <p aria-live="polite">Cargando catálogos...</p>
+  } @else if (errorCatalogos) {
+    <p role="alert">{{ errorCatalogos }}</p>
+    <button type="button" (click)="reintentarCatalogos.emit()">Reintentar carga de catálogos</button>
+  }
   <plantilla-tarjeta-contenedora
     [icon]="'corporate_fare'"
     [title]="'1. Existencia Legal y Registro Único Tributario (RUT)'"
@@ -8,7 +14,7 @@
       @for (documento of documentosExistencia; track documento.control) {
         <article class="documento-card" [class.documento-cargado]="formulario.get(documento.control)?.value">
           <div class="documento-icono"><mat-icon>{{ documento.icono }}</mat-icon></div>
-          <h3>{{ documento.titulo }}</h3>
+          <h3>{{ nombreTipoDocumento(documento.codigoTipoDocumento) }}</h3>
           <p>{{ documento.descripcion }}</p>
           <label class="campo"><span>Archivo cargado</span><input [formControlName]="documento.control" type="text" readonly></label>
           <div class="documento-acciones">
@@ -22,21 +28,22 @@
 
   <plantilla-tarjeta-contenedora
     [icon]="'workspace_premium'"
-    [title]="'2. Registro Único de Proponentes (RUP) - Ley 1150 de 2007'"
+    [title]="nombreTipoDocumento('RUP') + ' - Ley 1150 de 2007'"
     [description]="'Requerido para licitaciones públicas, selección abreviada y concursos en la Universidad Distrital.'"
   >
     <div class="rup-encabezado">
       <label class="campo"><span>¿Cuenta con RUP vigente?</span><select formControlName="tieneRup">
-        @for (estado of estadosRup; track estado.label) {
-          <option [ngValue]="estado.value">{{ estado.label }}</option>
+        <option [ngValue]="null">Seleccione...</option>
+        @for (estado of estadosRup; track estado.id) {
+          <option [ngValue]="estado.id">{{ estado.nombre }}</option>
         }
       </select></label>
-      <span class="estado-documento" [class.estado-documento--activo]="formulario.get('tieneRup')?.value">
-        <mat-icon>{{ formulario.get('tieneRup')?.value ? 'check_circle' : 'cancel' }}</mat-icon>
-        {{ formulario.get('tieneRup')?.value ? 'Soporte activo' : 'Sin soporte vigente' }}
+      <span class="estado-documento" [class.estado-documento--activo]="tieneRupVigente()">
+        <mat-icon>{{ tieneRupVigente() ? 'check_circle' : 'cancel' }}</mat-icon>
+        {{ tieneRupVigente() ? 'Soporte activo' : 'Sin soporte vigente' }}
       </span>
     </div>
-    @if (formulario.get('tieneRup')?.value) {
+    @if (tieneRupVigente()) {
       <div class="rup-contenido">
         <div class="datos-documento vinculacion">
           <h3>Datos contrastados en RUES</h3>
@@ -67,7 +74,7 @@
       @for (soporte of soportesParafiscales; track soporte.control) {
         <article class="documento-card">
           <div class="documento-icono"><mat-icon>{{ soporte.icono }}</mat-icon></div>
-          <h3>{{ soporte.titulo }}</h3>
+          <h3>{{ nombreTipoDocumento(soporte.codigoTipoDocumento) }}</h3>
           <p>{{ soporte.descripcion }}</p>
           <label class="campo"><span>Archivo cargado</span><input [formControlName]="soporte.control" type="text" readonly></label>
           <div class="documento-acciones">

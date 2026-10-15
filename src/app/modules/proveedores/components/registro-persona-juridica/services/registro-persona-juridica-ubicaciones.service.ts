@@ -1,20 +1,34 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { forkJoin, map, Observable } from 'rxjs';
+import { map, Observable, switchMap } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 interface TipoLugar {
   Id: number;
+  CodigoAbreviacion: string;
   Nombre?: string;
-  CodigoAbreviacion?: string;
   Activo?: boolean;
 }
 
 interface Lugar {
   Id: number;
-  Nombre?: string;
+  Nombre: string;
   Activo?: boolean;
-  TipoLugarId?: TipoLugar | null;
+  TipoLugarId: TipoLugar;
+}
+
+interface ReferenciaLugar {
+  Id: number;
+  Nombre: string;
+  Activo?: boolean;
+  TipoLugarId: TipoLugar;
+}
+
+interface RelacionLugares {
+  Id: number;
+  Activo: boolean;
+  LugarPadre: ReferenciaLugar;
+  LugarHijo: ReferenciaLugar;
 }
 
 export interface OpcionLugar {
@@ -23,11 +37,9 @@ export interface OpcionLugar {
 }
 
 export interface CatalogosUbicacionesPersonaJuridica {
+  pais: OpcionLugar;
   departamentos: OpcionLugar[];
-  ciudades: OpcionLugar[];
 }
-
-type ClasificacionLugar = 'pais' | 'departamento' | 'ciudad';
 
 @Injectable({ providedIn: 'root' })
 export class RegistroPersonaJuridicaUbicacionesService {
@@ -35,135 +47,190 @@ export class RegistroPersonaJuridicaUbicacionesService {
 
   constructor(private readonly http: HttpClient) {}
 
-  obtenerCatalogos(): Observable<CatalogosUbicacionesPersonaJuridica> {
-    return forkJoin({
-      tipos: this.http.get<unknown>(`${this.ubicacionesUrl}/tipo_lugar`),
-      lugares: this.http.get<unknown>(`${this.ubicacionesUrl}/lugar`),
-    }).pipe(
-      map(({ tipos, lugares }) => {
-        const tiposLugar = this.validarTipos(tipos);
-        const registrosLugar = this.validarLugares(lugares);
-        const idsPorClasificacion = new Map<ClasificacionLugar, Set<number>>([
-          ['pais', new Set<number>()],
-          ['departamento', new Set<number>()],
-          ['ciudad', new Set<number>()],
-        ]);
+  obtenerDepartamentos(): Observable<CatalogosUbicacionesPersonaJuridica> {
+    const params = new HttpParams()
+      .set('query', 'TipoLugarId.CodigoAbreviacion:P')
+      .set('limit', '200');
 
-        for (const tipo of tiposLugar) {
-          if (tipo.Activo === false) {
-            continue;
-          }
-          const clasificacion = this.clasificarTipo(tipo);
-          if (clasificacion) {
-            idsPorClasificacion.get(clasificacion)?.add(tipo.Id);
-          }
+    return this.http.get<unknown>(`${this.ubicacionesUrl}/lugar`, { params }).pipe(
+      map(respuesta => this.validarLugares(respuesta, '/lugar')),
+      map(lugares => {
+        const colombia = lugares.find(
+          lugar =>
+            lugar.Activo !== false
+            && lugar.TipoLugarId.CodigoAbreviacion === 'P'
+            && lugar.Nombre.toLowerCase() === 'colombia',
+        );
+        if (!colombia) {
+          throw new Error('No se encontró el lugar activo Colombia en GET /lugar.');
         }
-
-        const ciudades: OpcionLugar[] = [];
-        const departamentos: OpcionLugar[] = [];
-        const idsCiudades = idsPorClasificacion.get('ciudad')!;
-        const idsDepartamentos = idsPorClasificacion.get('departamento')!;
-
-        for (const lugar of registrosLugar) {
-          if (lugar.Activo === false || !lugar.TipoLugarId) {
-            continue;
-          }
-          const opcion = {
-            id: lugar.Id,
-            nombre: this.nombreRequerido(lugar.Nombre, 'lugar'),
-          };
-          if (idsDepartamentos.has(lugar.TipoLugarId.Id)) {
-            departamentos.push(opcion);
-          } else if (idsCiudades.has(lugar.TipoLugarId.Id)) {
-            ciudades.push(opcion);
-          }
-        }
-
-        return { departamentos, ciudades };
+        return colombia;
       }),
+      switchMap(colombia =>
+        this.obtenerRelaciones(colombia.Nombre, 100).pipe(
+          map(relaciones => ({
+            pais: this.aOpcion(colombia),
+            departamentos: relaciones
+              .filter(
+                relacion =>
+                  relacion.Activo
+                  && relacion.LugarPadre.Activo !== false
+                  && relacion.LugarPadre.Id === colombia.Id
+                  && relacion.LugarPadre.TipoLugarId.CodigoAbreviacion === 'P'
+                  && relacion.LugarHijo.Activo !== false
+                  && relacion.LugarHijo.TipoLugarId.CodigoAbreviacion === 'D',
+              )
+              .map(relacion => this.aOpcion(relacion.LugarHijo)),
+          })),
+        ),
+      ),
     );
   }
 
-  private validarTipos(respuesta: unknown): TipoLugar[] {
-    return this.validarArreglo<TipoLugar>(respuesta, 'tipo_lugar', (registro, indice) => {
-      const cuerpo = this.objetoRequerido(registro, `tipo_lugar[${indice}]`);
-      return {
-        Id: this.idRequerido(cuerpo['Id'], `tipo_lugar[${indice}].Id`),
-        Nombre: this.textoOpcional(cuerpo['Nombre'], `tipo_lugar[${indice}].Nombre`),
-        CodigoAbreviacion: this.textoOpcional(
-          cuerpo['CodigoAbreviacion'],
-          `tipo_lugar[${indice}].CodigoAbreviacion`,
-        ),
-        Activo: this.booleanoOpcional(cuerpo['Activo'], `tipo_lugar[${indice}].Activo`),
-      };
-    });
+  obtenerCiudades(departamento: OpcionLugar): Observable<OpcionLugar[]> {
+    return this.obtenerRelaciones(departamento.nombre, 200).pipe(
+      map(relaciones =>
+        relaciones
+          .filter(
+            relacion =>
+              relacion.Activo
+              && relacion.LugarPadre.Activo !== false
+              && relacion.LugarPadre.Id === departamento.id
+              && relacion.LugarPadre.TipoLugarId.CodigoAbreviacion === 'D'
+              && relacion.LugarHijo.Activo !== false
+              && relacion.LugarHijo.TipoLugarId.CodigoAbreviacion === 'C',
+          )
+          .map(relacion => this.aOpcion(relacion.LugarHijo)),
+      ),
+    );
   }
 
-  private validarLugares(respuesta: unknown): Lugar[] {
-    return this.validarArreglo<Lugar>(respuesta, 'lugar', (registro, indice) => {
-      const cuerpo = this.objetoRequerido(registro, `lugar[${indice}]`);
-      return {
-        Id: this.idRequerido(cuerpo['Id'], `lugar[${indice}].Id`),
-        Nombre: this.textoOpcional(cuerpo['Nombre'], `lugar[${indice}].Nombre`),
-        Activo: this.booleanoOpcional(cuerpo['Activo'], `lugar[${indice}].Activo`),
-        TipoLugarId: this.referenciaTipoLugarOpcional(
-          cuerpo['TipoLugarId'],
-          `lugar[${indice}].TipoLugarId`,
-        ),
-      };
-    });
+  private obtenerRelaciones(nombrePadre: string, limite: number): Observable<RelacionLugares[]> {
+    const params = new HttpParams()
+      .set('query', `LugarPadreId.Nombre:${nombrePadre}`)
+      .set('limit', String(limite));
+
+    return this.http
+      .get<unknown>(`${this.ubicacionesUrl}/relacion_lugares`, { params })
+      .pipe(map(respuesta => this.validarRelaciones(respuesta)));
   }
 
-  private validarArreglo<T>(
-    respuesta: unknown,
-    recurso: string,
-    transformar: (registro: unknown, indice: number) => T,
-  ): T[] {
+  private validarLugares(respuesta: unknown, recurso: string): Lugar[] {
     if (!Array.isArray(respuesta)) {
       throw new Error(`La respuesta de ${recurso} no es un arreglo directo.`);
     }
-    return respuesta.map(transformar);
+    return respuesta.map((registro, indice) => {
+      const lugar = this.objetoRequerido(registro, `${recurso}[${indice}]`);
+      return {
+        Id: this.idRequerido(lugar['Id'], `${recurso}[${indice}].Id`),
+        Nombre: this.nombreRequerido(lugar['Nombre'], `${recurso}[${indice}].Nombre`),
+        Activo: this.booleanoOpcional(lugar['Activo'], `${recurso}[${indice}].Activo`),
+        TipoLugarId: this.tipoLugarRequerido(
+          lugar['TipoLugarId'],
+          `${recurso}[${indice}].TipoLugarId`,
+        ),
+      };
+    });
   }
 
-  private referenciaTipoLugarOpcional(
-    valor: unknown,
-    campo: string,
-  ): TipoLugar | null | undefined {
-    if (valor === undefined || valor === null) {
-      return valor;
+  private validarRelaciones(respuesta: unknown): RelacionLugares[] {
+    if (!Array.isArray(respuesta)) {
+      throw new Error('La respuesta de /relacion_lugares no es un arreglo directo.');
     }
-    const referencia = this.objetoRequerido(valor, campo);
+    return respuesta.map((registro, indice) => {
+      const relacion = this.objetoRequerido(registro, `/relacion_lugares[${indice}]`);
+      const padre = this.obtenerReferenciaRelacion(
+        relacion,
+        'LugarPadreId',
+        'LugarPadre',
+        `/relacion_lugares[${indice}]`,
+      );
+      const hijo = this.obtenerReferenciaRelacion(
+        relacion,
+        'LugarHijoId',
+        'LugarHijo',
+        `/relacion_lugares[${indice}]`,
+      );
+
+      return {
+        Id: this.idRequerido(relacion['Id'], `/relacion_lugares[${indice}].Id`),
+        Activo: this.booleanoRequerido(
+          relacion['Activo'],
+          `/relacion_lugares[${indice}].Activo`,
+        ),
+        LugarPadre: this.validarReferenciaLugar(
+          padre,
+          `/relacion_lugares[${indice}].LugarPadre`,
+        ),
+        LugarHijo: this.validarReferenciaLugar(
+          hijo,
+          `/relacion_lugares[${indice}].LugarHijo`,
+        ),
+      };
+    });
+  }
+
+  private obtenerReferenciaRelacion(
+    relacion: Record<string, unknown>,
+    idKey: 'LugarPadreId' | 'LugarHijoId',
+    expandedKey: 'LugarPadre' | 'LugarHijo',
+    campo: string,
+  ): unknown {
+    const referenciaId = relacion[idKey];
+    if (this.esObjeto(referenciaId)) {
+      return referenciaId;
+    }
+    const referenciaExpandida = relacion[expandedKey];
+    if (this.esObjeto(referenciaExpandida)) {
+      return referenciaExpandida;
+    }
+    if (Object.prototype.hasOwnProperty.call(relacion, idKey)) {
+      return relacion[idKey];
+    }
+    if (Object.prototype.hasOwnProperty.call(relacion, expandedKey)) {
+      return relacion[expandedKey];
+    }
+    throw new Error(
+      `La respuesta de ${campo} no contiene "${idKey}" ni "${expandedKey}".`,
+    );
+  }
+
+  private esObjeto(valor: unknown): valor is Record<string, unknown> {
+    return Boolean(valor && typeof valor === 'object' && !Array.isArray(valor));
+  }
+
+  private validarReferenciaLugar(valor: unknown, campo: string): ReferenciaLugar {
+    const lugar = this.objetoRequerido(valor, campo);
     return {
-      Id: this.idRequerido(referencia['Id'], `${campo}.Id`),
-      Nombre: this.textoOpcional(referencia['Nombre'], `${campo}.Nombre`),
-      CodigoAbreviacion: this.textoOpcional(
-        referencia['CodigoAbreviacion'],
-        `${campo}.CodigoAbreviacion`,
-      ),
-      Activo: this.booleanoOpcional(referencia['Activo'], `${campo}.Activo`),
+      Id: this.idRequerido(lugar['Id'], `${campo}.Id`),
+      Nombre: this.nombreRequerido(lugar['Nombre'], `${campo}.Nombre`),
+      Activo: this.booleanoOpcional(lugar['Activo'], `${campo}.Activo`),
+      TipoLugarId: this.tipoLugarRequerido(lugar['TipoLugarId'], `${campo}.TipoLugarId`),
     };
   }
 
-  private clasificarTipo(tipo: TipoLugar): ClasificacionLugar | undefined {
-    const codigo = this.normalizar(tipo.CodigoAbreviacion ?? '');
-    const nombre = this.normalizar(tipo.Nombre ?? '');
-    if (codigo === 'p' || nombre === 'pais') {
-      return 'pais';
+  private tipoLugarRequerido(valor: unknown, campo: string): TipoLugar {
+    const tipo = this.objetoRequerido(valor, campo);
+    const codigo = tipo['CodigoAbreviacion'];
+    if (typeof codigo !== 'string' || codigo.length === 0) {
+      throw new Error(`La respuesta de Ubicaciones contiene un "${campo}.CodigoAbreviacion" inválido.`);
     }
-    if (codigo === 'd' || nombre === 'departamento') {
-      return 'departamento';
-    }
-    if (codigo === 'c' || nombre === 'ciudad') {
-      return 'ciudad';
-    }
-    return undefined;
+    return {
+      Id: this.idRequerido(tipo['Id'], `${campo}.Id`),
+      CodigoAbreviacion: codigo,
+      Activo: this.booleanoOpcional(tipo['Activo'], `${campo}.Activo`),
+    };
+  }
+
+  private aOpcion(lugar: ReferenciaLugar | Lugar): OpcionLugar {
+    return { id: lugar.Id, nombre: lugar.Nombre };
   }
 
   private objetoRequerido(valor: unknown, campo: string): Record<string, unknown> {
-    if (!valor || typeof valor !== 'object' || Array.isArray(valor)) {
+    if (!this.esObjeto(valor)) {
       throw new Error(`La respuesta contiene "${campo}" que no es un objeto.`);
     }
-    return valor as Record<string, unknown>;
+    return valor;
   }
 
   private idRequerido(valor: unknown, campo: string): number {
@@ -173,12 +240,16 @@ export class RegistroPersonaJuridicaUbicacionesService {
     return valor;
   }
 
-  private textoOpcional(valor: unknown, campo: string): string | undefined {
-    if (valor === undefined || valor === null) {
-      return undefined;
+  private nombreRequerido(valor: unknown, campo: string): string {
+    if (typeof valor !== 'string' || valor.length === 0) {
+      throw new Error(`La respuesta contiene "${campo}" que no es un nombre válido.`);
     }
-    if (typeof valor !== 'string') {
-      throw new Error(`La respuesta contiene "${campo}" que no es texto.`);
+    return valor;
+  }
+
+  private booleanoRequerido(valor: unknown, campo: string): boolean {
+    if (typeof valor !== 'boolean') {
+      throw new Error(`La respuesta contiene "${campo}" que no es booleano.`);
     }
     return valor;
   }
@@ -191,20 +262,5 @@ export class RegistroPersonaJuridicaUbicacionesService {
       throw new Error(`La respuesta contiene "${campo}" que no es booleano.`);
     }
     return valor;
-  }
-
-  private nombreRequerido(nombre: string | undefined, recurso: string): string {
-    if (typeof nombre !== 'string' || nombre.length === 0) {
-      throw new Error(`La respuesta contiene un registro activo de ${recurso} sin Nombre.`);
-    }
-    return nombre;
-  }
-
-  private normalizar(valor: string): string {
-    return valor
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .trim()
-      .toLowerCase();
   }
 }

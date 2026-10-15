@@ -5,7 +5,6 @@ import {
   OpcionCatalogo,
 } from '../services/registro-persona-juridica-catalogos.service';
 import {
-  CatalogosUbicacionesPersonaJuridica,
   OpcionLugar,
 } from '../services/registro-persona-juridica-ubicaciones.service';
 
@@ -24,8 +23,19 @@ export class RegistroPersonaJuridicaPaso1Component {
 
   @Input() formulario: FormGroup = new FormGroup({});
   @Input() catalogos: CatalogosPersonaJuridica | null = null;
-  @Input() ubicaciones: CatalogosUbicacionesPersonaJuridica | null = null;
+  @Input() cargandoCatalogos = false;
+  @Input() errorCatalogos: string | null = null;
+  @Input() pais: OpcionLugar | null = null;
+  @Input() departamentos: OpcionLugar[] = [];
+  @Input() ciudades: OpcionLugar[] = [];
+  @Input() cargandoDepartamentos = false;
+  @Input() cargandoCiudades = false;
+  @Input() errorDepartamentos: string | null = null;
+  @Input() errorCiudades: string | null = null;
   @Output() formularioChange = new EventEmitter<FormGroup>();
+  @Output() reintentarCatalogos = new EventEmitter<void>();
+  @Output() reintentarDepartamentos = new EventEmitter<void>();
+  @Output() reintentarCiudades = new EventEmitter<void>();
 
   get opcionesProcedencia(): OpcionCatalogo[] {
     return this.catalogos?.procedencia ?? [];
@@ -51,49 +61,34 @@ export class RegistroPersonaJuridicaPaso1Component {
     return this.catalogos?.responsabilidadFiscal ?? [];
   }
 
+  get opcionesBeneficiariosFinales(): OpcionCatalogo[] {
+    return this.catalogos?.beneficiariosFinalesRub ?? [];
+  }
+
+  get opcionesCotizaBolsa(): OpcionCatalogo[] {
+    return this.catalogos?.cotizaBvc ?? [];
+  }
+
+  get opcionesRevisorFiscal(): OpcionCatalogo[] {
+    return this.catalogos?.obligacionRevisorFiscal ?? [];
+  }
+
+  get opcionesGranContribuyente(): OpcionCatalogo[] {
+    return this.catalogos?.granContribuyenteDian ?? [];
+  }
+
+  get opcionesAutorretenedor(): OpcionCatalogo[] {
+    return this.catalogos?.autorretenedorRenta ?? [];
+  }
+
+  get opcionesExencionIca(): OpcionCatalogo[] {
+    return this.catalogos?.exencionIcaBogota ?? [];
+  }
 
   opcionesLimitacionEstatutaria: Opcion<boolean>[] = [
     { label: 'No, facultades amplias y suficientes sin límite de cuantía (Estatutos tipo S.A.S.)', value: false },
     { label: 'Sí, requiere autorización previa de Junta Directiva / Asamblea de Accionistas', value: true }
   ];
-
-  opcionesBeneficiariosFinales: Opcion<boolean>[] = [
-    { label: 'Sí, titularidad directa/indirecta >= 5%', value: true },
-    { label: 'No, participación pública mayoritaria', value: false }
-  ];
-
-  opcionesCotizaBolsa: Opcion<boolean>[] = [
-    { label: 'No cotiza en bolsa de valores', value: false },
-    { label: 'Sí, cotiza activamente en bolsa', value: true }
-  ];
-
-  opcionesRevisorFiscal: Opcion<boolean>[] = [
-    { label: 'Sí, por monto de activos o estatutos', value: true },
-    { label: 'No obligada legalmente', value: false }
-  ];
-
-  opcionesGranContribuyente: Opcion<boolean>[] = [
-    { label: 'No', value: false },
-    { label: 'Sí (Con Resolución Vigente)', value: true }
-  ];
-  
-  opcionesAutorretenedor: Opcion<boolean>[] = [
-    { label: 'No', value: false },
-    { label: 'Sí (Resolución DIAN)', value: true }
-  ];
-
-  opcionesExencionIca: Opcion<boolean>[] = [
-    { label: 'No, tarifa plena Distrital', value: false },
-    { label: 'Sí, Actividad Exenta Distrital', value: true }
-  ];
-
-  get opcionesDepartamento(): OpcionLugar[] {
-    return this.ubicaciones?.departamentos ?? [];
-  }
-
-  get opcionesCiudad(): OpcionLugar[] {
-    return this.ubicaciones?.ciudades ?? [];
-  }
 
   opcionesTipoVia: Opcion<string>[] = [
     { label: 'Calle', value: 'cl' },

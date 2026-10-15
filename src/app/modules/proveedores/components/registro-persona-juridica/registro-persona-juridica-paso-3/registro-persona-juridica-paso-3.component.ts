@@ -1,10 +1,11 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormGroup } from '@angular/forms';
+import { CatalogosPersonaJuridica } from '../services/registro-persona-juridica-catalogos.service';
 
 interface DocumentoSoporte {
   control: string;
   icono: string;
-  titulo: string;
+  codigoTipoDocumento: string;
   descripcion: string;
   accion: string;
 }
@@ -17,48 +18,62 @@ interface DocumentoSoporte {
 })
 export class RegistroPersonaJuridicaPaso3Component {
   @Input() formulario: FormGroup = new FormGroup({});
+  @Input() catalogos: CatalogosPersonaJuridica | null = null;
+  @Input() cargandoCatalogos = false;
+  @Input() errorCatalogos: string | null = null;
   @Output() formularioChange = new EventEmitter<FormGroup>();
+  @Output() reintentarCatalogos = new EventEmitter<void>();
 
   documentosExistencia: DocumentoSoporte[] = [
     {
       control: 'rutArchivo',
       icono: 'picture_as_pdf',
-      titulo: 'Registro Único Tributario (RUT)',
+      codigoTipoDocumento: 'RUT',
       descripcion: 'Documento vigente validado contra la DIAN.',
       accion: 'Reemplazar',
     },
     {
       control: 'certificadoExistenciaArchivo',
       icono: 'description',
-      titulo: 'Certificado de Existencia y Representación',
+      codigoTipoDocumento: 'CERTIFICADO_EXISTENCIA',
       descripcion: 'Expedido por Cámara de Comercio o RUES.',
       accion: 'Actualizar',
     },
     {
       control: 'cedulaRepresentanteArchivo',
       icono: 'badge',
-      titulo: 'Cédula del Representante Legal',
+      codigoTipoDocumento: 'CEDULA_REPRESENTANTE',
       descripcion: 'Documento de identidad del representante vigente.',
       accion: 'Reemplazar',
     },
   ];
 
-  estadosRup = [
-    { label: 'Sí (Activo)', value: true },
-    { label: 'No (No cuenta con RUP)', value: false },
-  ];
+  get estadosRup() {
+    return this.catalogos?.rupVigente ?? [];
+  }
 
   soportesParafiscales: DocumentoSoporte[] = [
     {
       control: 'certificadoParafiscales',
       icono: 'description',
-      titulo: 'Certificación de Aportes',
+      codigoTipoDocumento: 'CERTIFICACION_APORTES',
       descripcion: 'Soporte firmado por Revisor Fiscal.',
       accion: 'Ver certificación',
     },
   ];
 
-  actualizarEstadoRup(valor: boolean): void {
+  nombreTipoDocumento(codigo: string): string {
+    return this.catalogos?.tipoDocumento.find(documento => documento.codigo === codigo)?.nombre ?? '';
+  }
+
+  tieneRupVigente(): boolean {
+    const idSeleccionado = this.formulario.get('tieneRup')?.value;
+    return this.estadosRup.some(
+      opcion => opcion.id === idSeleccionado && opcion.codigo === 'CUENTA_CON_RUP',
+    );
+  }
+
+  actualizarEstadoRup(valor: number | null): void {
     this.formulario.get('tieneRup')?.setValue(valor);
     this.formularioChange.emit(this.formulario);
   }

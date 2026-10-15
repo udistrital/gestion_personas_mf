@@ -15,7 +15,7 @@ export const camposPorPaso: Record<number, string[]> = {
   ],
   2: [
     'tipoConstitucion', 'capitalAutorizado', 'capitalSuscritoPagado', 'activosTotales',
-    'pasivosTotales', 'banco', 'tipoCuenta', 'ciudadApertura', 'numeroCuenta',
+    'pasivosTotales', 'banco', 'tipoCuenta', 'departamentoApertura', 'ciudadApertura', 'numeroCuenta',
     'numeroCuentaConfirmacion', 'titularCuenta', 'correoPagos', 'correoPagosConfirmacion',
     'responsableTesoreria', 'telefonoTesoreria', 'obligadoFacturar', 'prefijoFacturacion',
     'resolucionDian', 'monedaExtranjera', 'certificacionBancaria',

@@ -28,6 +28,7 @@ interface RegistroCatalogo {
   Nombre?: string;
   Descripcion?: string;
   CodigoAbreviacion?: string;
+  NumeroOrden?: number | null;
   Activo?: boolean;
   AreaTipoId?: AreaTipo | null;
   GrupoInfoComplementariaId?: GrupoInfoComplementaria | null;
@@ -45,6 +46,7 @@ export interface OpcionCatalogo {
   codigo?: string;
   descripcion?: string;
   parametroPadreId?: number | null;
+  numeroOrden?: number | null;
 }
 
 export interface CatalogosPersonaJuridica {
@@ -57,12 +59,20 @@ export interface CatalogosPersonaJuridica {
   moneda: OpcionCatalogo[];
   tipoDocumento: OpcionCatalogo[];
   actividadEconomicaCiiu: OpcionCatalogo[];
-  actividadEconomicaUnspsc: OpcionCatalogo[];
   tipoRepresentacion: OpcionCatalogo[];
   tipoDeclaracion: OpcionCatalogo[];
   cargo: OpcionCatalogo[];
   entidadesBancarias: OpcionCatalogo[];
   tiposCuentaBancaria: OpcionCatalogo[];
+  beneficiariosFinalesRub: OpcionCatalogo[];
+  cotizaBvc: OpcionCatalogo[];
+  obligacionRevisorFiscal: OpcionCatalogo[];
+  granContribuyenteDian: OpcionCatalogo[];
+  autorretenedorRenta: OpcionCatalogo[];
+  exencionIcaBogota: OpcionCatalogo[];
+  rupVigente: OpcionCatalogo[];
+  obligadoFacturar: OpcionCatalogo[];
+  monedaExtranjera: OpcionCatalogo[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -95,60 +105,70 @@ export class RegistroPersonaJuridicaCatalogosService {
           procedencia: this.obtenerOpcionesComplementarias(
             gruposInfoComplementaria,
             infoComplementaria,
-            ['procedencia'],
+            'PROCEDENCIA',
           ),
           tipoOrganizacion: this.obtenerOpcionesComplementarias(
             gruposInfoComplementaria,
             infoComplementaria,
-            ['tipo organizacion'],
+            'TIPO_ORG',
           ),
           tamanoEmpresa: this.obtenerOpcionesComplementarias(
             gruposInfoComplementaria,
             infoComplementaria,
-            ['tamano empresa'],
+            'TAMAÑO_EMPRESA',
           ),
           tipoCapital: this.obtenerOpcionesComplementarias(
             gruposInfoComplementaria,
             infoComplementaria,
-            ['tipo capital'],
+            'TIPO_CAPITAL',
           ),
           camaraComercio: this.obtenerOpcionesParametro(
+            areasTipo,
             tiposParametro,
             parametros,
             'CAM_COM',
           ),
           responsabilidadFiscal: this.obtenerOpcionesParametro(
+            areasTipo,
             tiposParametro,
             parametros,
             'RESP_FIS',
           ),
-          moneda: this.obtenerOpcionesParametro(tiposParametro, parametros, ['moneda']),
-          tipoDocumento: this.obtenerOpcionesParametro(
+          moneda: this.obtenerOpcionesParametro(
+            areasTipo,
+            tiposParametro,
+            parametros,
+            ['moneda'],
+          ),
+          tipoDocumento: this.obtenerOpcionesParametroConCodigo(
+            areasTipo,
             tiposParametro,
             parametros,
             'TIP_DOC',
           ),
-          actividadEconomicaCiiu: this.obtenerOpcionesParametro(
+          actividadEconomicaCiiu: this.obtenerOpcionesCiiu(
+            areasTipo,
             tiposParametro,
             parametros,
-            'CIIU',
-          ),
-          actividadEconomicaUnspsc: this.obtenerOpcionesParametro(
-            tiposParametro,
-            parametros,
-            'UNSPSC',
           ),
           tipoRepresentacion: this.obtenerOpcionesParametro(
+            areasTipo,
             tiposParametro,
             parametros,
             'TIP_REP',
           ),
           tipoDeclaracion: this.obtenerOpcionesParametro(
+            areasTipo,
             tiposParametro,
             parametros,
             'TIP_DEC',
           ),
-          cargo: this.obtenerOpcionesParametro(tiposParametro, parametros, ['cargo']),
+          cargo: this.obtenerOpcionesParametro(
+            areasTipo,
+            tiposParametro,
+            parametros,
+            ['cargo'],
+          ),
           entidadesBancarias: this.obtenerOpcionesParametroPorAreaYTipo(
             areasTipo,
             tiposParametro,
@@ -160,6 +180,60 @@ export class RegistroPersonaJuridicaCatalogosService {
             tiposParametro,
             parametros,
             'TCB',
+          ),
+          beneficiariosFinalesRub: this.obtenerOpcionesParametro(
+            areasTipo,
+            tiposParametro,
+            parametros,
+            'BENEFICIARIOS_FINALES_RUB',
+          ),
+          cotizaBvc: this.obtenerOpcionesParametro(
+            areasTipo,
+            tiposParametro,
+            parametros,
+            'COTIZA_BVC',
+          ),
+          obligacionRevisorFiscal: this.obtenerOpcionesParametro(
+            areasTipo,
+            tiposParametro,
+            parametros,
+            'OBLIGACIÓN_REVISOR_FISCAL',
+          ),
+          granContribuyenteDian: this.obtenerOpcionesParametro(
+            areasTipo,
+            tiposParametro,
+            parametros,
+            'CONTRIBUYENTE_DIAN',
+          ),
+          autorretenedorRenta: this.obtenerOpcionesParametro(
+            areasTipo,
+            tiposParametro,
+            parametros,
+            'AUTORRETENEDOR_RENTA',
+          ),
+          exencionIcaBogota: this.obtenerOpcionesParametro(
+            areasTipo,
+            tiposParametro,
+            parametros,
+            'APLICA_EXENCIÓN_ICA_BOGOTÁ',
+          ),
+          rupVigente: this.obtenerOpcionesParametroConCodigo(
+            areasTipo,
+            tiposParametro,
+            parametros,
+            'RUP_VIGENTE',
+          ),
+          obligadoFacturar: this.obtenerOpcionesParametro(
+            areasTipo,
+            tiposParametro,
+            parametros,
+            'OBLIGACIÓN_FACTURA_ELECTRÓNICA',
+          ),
+          monedaExtranjera: this.obtenerOpcionesParametro(
+            areasTipo,
+            tiposParametro,
+            parametros,
+            'OPERACIONES_MONEDA_EXTRANJERA',
           ),
         })),
     );
@@ -206,6 +280,7 @@ export class RegistroPersonaJuridicaCatalogosService {
         tipoRegistro === 'parametro',
         tipoRegistro === 'tipoParametro',
         tipoRegistro === 'areaTipo',
+        tipoRegistro !== undefined,
       ),
     );
   }
@@ -216,6 +291,7 @@ export class RegistroPersonaJuridicaCatalogosService {
     esParametro: boolean,
     esTipoParametro: boolean,
     esAreaTipo: boolean,
+    validarNumeroOrden: boolean,
   ): RegistroCatalogo {
     if (!registro || typeof registro !== 'object') {
       throw new Error(`La respuesta de ${url} contiene un registro que no es un objeto.`);
@@ -227,6 +303,9 @@ export class RegistroPersonaJuridicaCatalogosService {
       Nombre: this.textoOpcional(cuerpo['Nombre'], url, 'Nombre'),
       Descripcion: this.textoOpcional(cuerpo['Descripcion'], url, 'Descripcion'),
       CodigoAbreviacion: this.textoOpcional(cuerpo['CodigoAbreviacion'], url, 'CodigoAbreviacion'),
+      ...(validarNumeroOrden
+        ? { NumeroOrden: this.numeroOpcional(cuerpo['NumeroOrden'], url, 'NumeroOrden') }
+        : {}),
       Activo: this.booleanoOpcional(cuerpo['Activo'], url, 'Activo'),
       ...(esParametro
         ? {
@@ -361,16 +440,21 @@ export class RegistroPersonaJuridicaCatalogosService {
     return valor;
   }
 
+  private numeroOpcional(valor: unknown, url: string, campo: string): number | null | undefined {
+    if (valor === undefined || valor === null) {
+      return valor;
+    }
+    return this.numeroRequerido(valor, url, campo);
+  }
+
   private obtenerOpcionesComplementarias(
     grupos: RegistroCatalogo[],
     registros: RegistroCatalogo[],
-    aliases: string[],
+    codigoGrupo: string,
   ): OpcionCatalogo[] {
     const idsGrupos = new Set(
       grupos
-        .filter(
-          grupo => grupo.Activo !== false && this.coincideCategoria(grupo, aliases),
-        )
+        .filter(grupo => grupo.Activo === true && grupo.CodigoAbreviacion === codigoGrupo)
         .map(grupo => grupo.Id),
     );
 
@@ -382,27 +466,69 @@ export class RegistroPersonaJuridicaCatalogosService {
   }
 
   private obtenerOpcionesParametro(
+    areasTipo: RegistroCatalogo[],
     tiposParametro: RegistroCatalogo[],
     parametros: RegistroCatalogo[],
     codigoTipo: string | string[],
   ): OpcionCatalogo[] {
     if (Array.isArray(codigoTipo)) {
-      const idsTipos = this.obtenerIdsTiposPorNombre(tiposParametro, codigoTipo);
+      const idsTipos = this.obtenerIdsTiposPorNombre(areasTipo, tiposParametro, codigoTipo);
       return this.opcionesDeIdsTipo(parametros, idsTipos);
     }
 
-    const idsTipos = this.obtenerIdsTiposPorCodigo(tiposParametro, codigoTipo);
+    const idsTipos = this.obtenerIdsTiposPorCodigo(areasTipo, tiposParametro, codigoTipo);
     return this.opcionesDeIdsTipo(parametros, idsTipos);
   }
 
+  private obtenerOpcionesCiiu(
+    areasTipo: RegistroCatalogo[],
+    tiposParametro: RegistroCatalogo[],
+    parametros: RegistroCatalogo[],
+  ): OpcionCatalogo[] {
+    return this.obtenerOpcionesParametro(
+      areasTipo,
+      tiposParametro,
+      parametros,
+      'CIIU',
+    ).map(opcion => {
+      if (typeof opcion.codigo !== 'string' || opcion.codigo.length === 0) {
+        throw new Error(`La actividad CIIU con Id ${opcion.id} no contiene CodigoAbreviacion.`);
+      }
+      return opcion;
+    });
+  }
+
+  private obtenerOpcionesParametroConCodigo(
+    areasTipo: RegistroCatalogo[],
+    tiposParametro: RegistroCatalogo[],
+    parametros: RegistroCatalogo[],
+    codigoTipo: string,
+  ): OpcionCatalogo[] {
+    return this.obtenerOpcionesParametro(
+      areasTipo,
+      tiposParametro,
+      parametros,
+      codigoTipo,
+    ).map(opcion => {
+      if (typeof opcion.codigo !== 'string' || opcion.codigo.length === 0) {
+        throw new Error(
+          `El parámetro con Id ${opcion.id} del tipo "${codigoTipo}" no contiene CodigoAbreviacion.`,
+        );
+      }
+      return opcion;
+    });
+  }
+
   private obtenerIdsTiposPorCodigo(
+    areasTipo: RegistroCatalogo[],
     tiposParametro: RegistroCatalogo[],
     codigoTipo: string,
   ): Set<number> {
-    const tipos = tiposParametro.filter(
-      tipo => tipo.Activo !== false && tipo.CodigoAbreviacion === codigoTipo,
+    const idsAreasTributarias = this.obtenerIdsAreasPorCodigo(areasTipo, 'IT');
+    const tiposPorCodigo = tiposParametro.filter(
+      tipo => tipo.Activo === true && tipo.CodigoAbreviacion === codigoTipo,
     );
-    for (const tipo of tipos) {
+    for (const tipo of tiposPorCodigo) {
       if (!tipo.AreaTipoId) {
         console.error(
           `Se omitió el tipo de parámetro "${codigoTipo}" (Id ${tipo.Id}) porque no contiene AreaTipoId.`,
@@ -411,23 +537,41 @@ export class RegistroPersonaJuridicaCatalogosService {
     }
 
     return new Set(
-      tipos
-        .filter(tipo =>
-          tipo.AreaTipoId?.Activo !== false
-          && tipo.AreaTipoId?.CodigoAbreviacion === 'IT',
+      tiposPorCodigo
+        .filter(
+          tipo => tipo.AreaTipoId && idsAreasTributarias.has(tipo.AreaTipoId.Id),
         )
         .map(tipo => tipo.Id),
     );
   }
 
   private obtenerIdsTiposPorNombre(
+    areasTipo: RegistroCatalogo[],
     tiposParametro: RegistroCatalogo[],
     aliases: string[],
   ): Set<number> {
+    const idsAreasTributarias = this.obtenerIdsAreasPorCodigo(areasTipo, 'IT');
     return new Set(
       tiposParametro
-        .filter(tipo => tipo.Activo !== false && this.coincideCategoria(tipo, aliases))
+        .filter(
+          tipo =>
+            tipo.Activo === true
+            && tipo.AreaTipoId
+            && idsAreasTributarias.has(tipo.AreaTipoId.Id)
+            && this.coincideCategoria(tipo, aliases),
+        )
         .map(tipo => tipo.Id),
+    );
+  }
+
+  private obtenerIdsAreasPorCodigo(
+    areasTipo: RegistroCatalogo[],
+    codigoArea: string,
+  ): Set<number> {
+    return new Set(
+      areasTipo
+        .filter(area => area.Activo === true && area.CodigoAbreviacion === codigoArea)
+        .map(area => area.Id),
     );
   }
 
@@ -452,13 +596,13 @@ export class RegistroPersonaJuridicaCatalogosService {
   ): OpcionCatalogo[] {
     const idsAreasFinancieras = new Set(
       areasTipo
-        .filter(area => area.Activo !== false && area.CodigoAbreviacion === 'SF')
+        .filter(area => area.Activo === true && area.CodigoAbreviacion === 'SF')
         .map(area => area.Id),
     );
     const idsTiposParametro = new Set(
       tiposParametro
         .filter(tipo =>
-          tipo.Activo !== false
+          tipo.Activo === true
           && tipo.CodigoAbreviacion === codigoTipo
           && tipo.AreaTipoId
           && idsAreasFinancieras.has(tipo.AreaTipoId.Id),
@@ -468,7 +612,7 @@ export class RegistroPersonaJuridicaCatalogosService {
 
     return this.aOpciones(
       parametros.filter(parametro =>
-        parametro.Activo !== false
+        parametro.Activo === true
         && (
           parametro.ParametroPadreId === null
           || parametro.ParametroPadreId === undefined
@@ -480,14 +624,15 @@ export class RegistroPersonaJuridicaCatalogosService {
   }
 
   private aOpciones(registros: RegistroCatalogo[], incluirJerarquia = false): OpcionCatalogo[] {
-    const activos = registros.filter(registro => registro.Activo !== false);
+    const activos = registros.filter(registro => registro.Activo === true);
 
-    return activos
+    const opciones = activos
       .map(registro => ({
         id: registro.Id,
         nombre: this.nombreRequerido(registro.Nombre),
         codigo: registro.CodigoAbreviacion,
         descripcion: registro.Descripcion,
+        numeroOrden: registro.NumeroOrden,
         ...(incluirJerarquia
           ? {
               parametroPadreId:
@@ -497,6 +642,9 @@ export class RegistroPersonaJuridicaCatalogosService {
             }
           : {}),
       }));
+    return opciones.every(opcion => typeof opcion.numeroOrden === 'number')
+      ? opciones.sort((a, b) => Number(a.numeroOrden) - Number(b.numeroOrden))
+      : opciones;
   }
 
   private nombreRequerido(nombre: string | undefined): string {

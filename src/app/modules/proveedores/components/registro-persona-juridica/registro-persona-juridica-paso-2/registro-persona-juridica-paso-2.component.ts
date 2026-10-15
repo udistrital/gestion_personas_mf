@@ -5,14 +5,8 @@ import {
   OpcionCatalogo,
 } from '../services/registro-persona-juridica-catalogos.service';
 import {
-  CatalogosUbicacionesPersonaJuridica,
   OpcionLugar,
 } from '../services/registro-persona-juridica-ubicaciones.service';
-
-interface Opcion<T> {
-  label: string;
-  value: T;
-}
 
 @Component({
   selector: 'registro-persona-juridica-paso-2',
@@ -23,8 +17,19 @@ interface Opcion<T> {
 export class RegistroPersonaJuridicaPaso2Component {
   @Input() formulario: FormGroup = new FormGroup({});
   @Input() catalogos: CatalogosPersonaJuridica | null = null;
-  @Input() ubicaciones: CatalogosUbicacionesPersonaJuridica | null = null;
+  @Input() cargandoCatalogos = false;
+  @Input() errorCatalogos: string | null = null;
+  @Input() pais: OpcionLugar | null = null;
+  @Input() departamentos: OpcionLugar[] = [];
+  @Input() ciudades: OpcionLugar[] = [];
+  @Input() cargandoDepartamentos = false;
+  @Input() cargandoCiudades = false;
+  @Input() errorDepartamentos: string | null = null;
+  @Input() errorCiudades: string | null = null;
   @Output() formularioChange = new EventEmitter<FormGroup>();
+  @Output() reintentarCatalogos = new EventEmitter<void>();
+  @Output() reintentarDepartamentos = new EventEmitter<void>();
+  @Output() reintentarCiudades = new EventEmitter<void>();
 
   get opcionesTipoConstitucion(): OpcionCatalogo[] {
     return this.catalogos?.tipoCapital ?? [];
@@ -38,14 +43,13 @@ export class RegistroPersonaJuridicaPaso2Component {
     return this.catalogos?.tiposCuentaBancaria ?? [];
   }
 
-  get opcionesCiudadApertura(): OpcionLugar[] {
-    return this.ubicaciones?.ciudades ?? [];
+  get opcionesObligadoFacturar(): OpcionCatalogo[] {
+    return this.catalogos?.obligadoFacturar ?? [];
   }
 
-  opcionesSiNo: Opcion<string>[] = [
-    { label: 'Sí', value: 'si' },
-    { label: 'No', value: 'no' },
-  ];
+  get opcionesMonedaExtranjera(): OpcionCatalogo[] {
+    return this.catalogos?.monedaExtranjera ?? [];
+  }
 
   umbralMinimo = 1.50;
 

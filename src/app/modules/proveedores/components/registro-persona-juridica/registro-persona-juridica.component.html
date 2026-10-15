@@ -18,25 +18,58 @@
         <registro-persona-juridica-paso-1
           [(formulario)]="formulario"
           [catalogos]="catalogos"
-          [ubicaciones]="catalogosUbicaciones"
+          [cargandoCatalogos]="cargandoCatalogos"
+          [errorCatalogos]="errorCatalogos"
+          [pais]="pais"
+          [departamentos]="departamentos"
+          [ciudades]="ciudadesDomicilio"
+          [cargandoDepartamentos]="cargandoDepartamentos"
+          [cargandoCiudades]="cargandoCiudadesDomicilio"
+          [errorDepartamentos]="errorDepartamentos"
+          [errorCiudades]="errorCiudadesDomicilio"
+          (reintentarCatalogos)="reintentarCatalogos()"
+          (reintentarDepartamentos)="reintentarCargaDepartamentos()"
+          (reintentarCiudades)="reintentarCiudadesDomicilio()"
         ></registro-persona-juridica-paso-1>
         }
       @case (2) {
         <registro-persona-juridica-paso-2
           [(formulario)]="formulario"
           [catalogos]="catalogos"
-          [ubicaciones]="catalogosUbicaciones"
+          [cargandoCatalogos]="cargandoCatalogos"
+          [errorCatalogos]="errorCatalogos"
+          [pais]="pais"
+          [departamentos]="departamentos"
+          [ciudades]="ciudadesApertura"
+          [cargandoDepartamentos]="cargandoDepartamentos"
+          [cargandoCiudades]="cargandoCiudadesApertura"
+          [errorDepartamentos]="errorDepartamentos"
+          [errorCiudades]="errorCiudadesApertura"
+          (reintentarCatalogos)="reintentarCatalogos()"
+          (reintentarDepartamentos)="reintentarCargaDepartamentos()"
+          (reintentarCiudades)="reintentarCiudadesApertura()"
         ></registro-persona-juridica-paso-2>
       }
       @case (3) {
         <registro-persona-juridica-paso-3
           [(formulario)]="formulario"
+          [catalogos]="catalogos"
+          [cargandoCatalogos]="cargandoCatalogos"
+          [errorCatalogos]="errorCatalogos"
+          (reintentarCatalogos)="reintentarCatalogos()"
         ></registro-persona-juridica-paso-3>
       }
       @case (4) {
         <registro-persona-juridica-paso-4
           [(formulario)]="formulario"
           [catalogos]="catalogos"
+          [cargandoCatalogos]="cargandoCatalogos"
+          [errorCatalogos]="errorCatalogos"
+          [catalogoUnspsc]="catalogoUnspsc"
+          [cargandoUnspsc]="cargandoUnspsc"
+          [errorUnspsc]="errorUnspsc"
+          (reintentarCatalogos)="reintentarCatalogos()"
+          (reintentarUnspsc)="reintentarUnspsc()"
         ></registro-persona-juridica-paso-4>
       }
     }
