@@ -36,6 +36,12 @@
 
 <div>
 
+  <registro-persona-juridica-estado-catalogos
+    [cargando]="estadoCatalogos.cargando"
+    [error]="estadoCatalogos.error"
+    (reintentar)="reintentarCatalogos.emit()"
+  ></registro-persona-juridica-estado-catalogos>
+
   <plantilla-tarjeta-contenedora
     class="tarjeta-identificacion"
     [icon]="'badge'"
@@ -227,18 +233,9 @@
 
           <select formControlName="tipoDocumento">
             <option value="">Seleccione...</option>
-            <option value="CC">
-              C.C. Cédula de Ciudadanía
-            </option>
-            <option value="CE">
-              C.E. Cédula de Extranjería
-            </option>
-            <option value="PAS">
-              Pasaporte
-            </option>
-            <option value="PPT">
-              PPT - Permiso por Protección Temporal
-            </option>
+            @for (opcion of opciones("tiposDocumento"); track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+            }
           </select>
           @if (
             identificacionForm.get("tipoDocumento")?.touched &&
@@ -262,21 +259,9 @@
 
             <option value="">Seleccione...</option>
 
-            <option value="CC">
-              C.C. Cédula de Ciudadanía
-            </option>
-
-            <option value="CE">
-              C.E. Cédula de Extranjería
-            </option>
-
-            <option value="PAS">
-              Pasaporte
-            </option>
-
-            <option value="PPT">
-              PPT - Permiso por Protección Temporal
-            </option>
+            @for (opcion of opciones("tiposDocumento"); track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+            }
 
           </select>
 
@@ -455,11 +440,9 @@
           <select formControlName="paisExpedicion">
 
             <option value="">Seleccione...</option>
-            <option value="Colombia">Colombia</option>
-            <option value="Venezuela">Venezuela</option>
-            <option value="Ecuador">Ecuador</option>
-            <option value="España">España</option>
-            <option value="Otro">Otro</option>
+            @for (opcion of opciones("paises"); track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+            }
 
           </select>
 
@@ -476,23 +459,17 @@
           <select formControlName="departamentoExpedicion">
 
             <option value="">Seleccione...</option>
-            <option value="Bogotá D.C.">
-              Bogotá D.C.
-            </option>
-            <option value="Cundinamarca">
-              Cundinamarca
-            </option>
-            <option value="Antioquia">
-              Antioquia
-            </option>
-            <option value="Santander">
-              Santander
-            </option>
-            <option value="Valle del Cauca">
-              Valle del Cauca
-            </option>
+            @for (opcion of geografia.departamentosExpedicion.opciones; track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+            }
 
           </select>
+
+          <registro-persona-juridica-estado-catalogos
+            [cargando]="geografia.departamentosExpedicion.cargando"
+            [error]="geografia.departamentosExpedicion.error"
+            (reintentar)="reintentarGeografia.emit('departamentosExpedicion')"
+          ></registro-persona-juridica-estado-catalogos>
 
         </div>
 
@@ -507,20 +484,17 @@
           <select formControlName="ciudadExpedicion">
 
             <option value="">Seleccione...</option>
-            <option value="Bogotá D.C.">
-              Bogotá D.C.
-            </option>
-            <option value="Soacha">
-              Soacha
-            </option>
-            <option value="Chía">
-              Chía
-            </option>
-            <option value="Zipaquirá">
-              Zipaquirá
-            </option>
+            @for (opcion of geografia.ciudadesExpedicion.opciones; track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+            }
 
           </select>
+
+          <registro-persona-juridica-estado-catalogos
+            [cargando]="geografia.ciudadesExpedicion.cargando"
+            [error]="geografia.ciudadesExpedicion.error"
+            (reintentar)="reintentarGeografia.emit('ciudadesExpedicion')"
+          ></registro-persona-juridica-estado-catalogos>
 
         </div>
 
@@ -550,18 +524,9 @@
           <select formControlName="genero">
 
             <option value="">Seleccione...</option>
-            <option value="Masculino">
-              Masculino
-            </option>
-            <option value="Femenino">
-              Femenino
-            </option>
-            <option value="No Binario">
-              No Binario
-            </option>
-            <option value="Prefiero no informar">
-              Prefiero no informar
-            </option>
+            @for (opcion of opciones("genero"); track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+            }
 
           </select>
 
@@ -578,21 +543,9 @@
           <select formControlName="paisNacimiento">
 
             <option value="">Seleccione...</option>
-            <option value="Colombia">
-              Colombia
-            </option>
-            <option value="Argentina">
-              Argentina
-            </option>
-            <option value="Chile">
-              Chile
-            </option>
-            <option value="México">
-              México
-            </option>
-            <option value="Otro">
-              Otro
-            </option>
+            @for (opcion of opciones("paises"); track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+            }
 
           </select>
 
@@ -609,26 +562,9 @@
           <select formControlName="perfilRolPrincipal">
 
             <option value="">Seleccione...</option>
-
-            <option value="Contratista de Prestación de Servicios">
-              Contratista de Prestación de Servicios
-            </option>
-
-            <option value="Docente Hora Cátedra / Ocasional">
-              Docente Hora Cátedra / Ocasional
-            </option>
-
-            <option value="Proveedor Persona Natural">
-              Proveedor Persona Natural
-            </option>
-
-            <option value="Investigador / Consultor Externo">
-              Investigador / Consultor Externo
-            </option>
-
-            <option value="Jurado / Par Académico">
-              Jurado / Par Académico
-            </option>
+            @for (opcion of opciones("perfilRolPrincipal"); track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+            }
 
           </select>
 
@@ -669,29 +605,9 @@
             Seleccione...
           </mat-option>
 
-          <mat-option value="indigena">
-            Indígena
-          </mat-option>
-
-          <mat-option value="afrocolombiano">
-            Afrocolombiano
-          </mat-option>
-
-          <mat-option value="raizal">
-            Raizal
-          </mat-option>
-
-          <mat-option value="palenquero">
-            Palenquero
-          </mat-option>
-
-          <mat-option value="rom">
-            Rrom
-          </mat-option>
-
-          <mat-option value="ninguno">
-            Ninguno
-          </mat-option>
+          @for (opcion of opciones("grupoEtnico"); track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
 
         </mat-select>
 
@@ -721,9 +637,9 @@
               Seleccione...
             </mat-option>
 
-            <mat-option value="cisgenero">
-              Cisgénero
-            </mat-option>
+            @for (opcion of opciones("seReconoceComo"); track opcion.id) {
+              <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+            }
 
           </mat-select>
         </mat-form-field>
@@ -744,25 +660,9 @@
             Seleccione...
           </mat-option>
 
-          <mat-option value="heterosexual">
-            Heterosexual
-          </mat-option>
-
-          <mat-option value="homosexual">
-            Homosexual
-          </mat-option>
-
-          <mat-option value="bisexual">
-            Bisexual
-          </mat-option>
-
-          <mat-option value="otro">
-            Otro
-          </mat-option>
-
-          <mat-option value="prefiero-no-informar">
-            Prefiero no informar
-          </mat-option>
+          @for (opcion of opciones("orientacionSexual"); track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
 
         </mat-select>
         </mat-form-field>
@@ -783,13 +683,9 @@
             Seleccione...
           </mat-option>
 
-          <mat-option value="si">
-            Sí
-          </mat-option>
-
-          <mat-option value="no">
-            No
-          </mat-option>
+          @for (opcion of opciones("migrante"); track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
 
         </mat-select>
 
@@ -819,13 +715,9 @@
             Seleccione...
           </mat-option>
 
-          <mat-option value="si">
-            Sí
-          </mat-option>
-
-          <mat-option value="no">
-            No
-          </mat-option>
+          @for (opcion of opciones("victimaConflicto"); track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
 
         </mat-select>
 
@@ -857,13 +749,9 @@
                 Seleccione...
               </mat-option>
 
-              <mat-option value="si">
-                Sí
-              </mat-option>
-
-              <mat-option value="no">
-                No
-              </mat-option>
+              @for (opcion of opciones("tieneHijos"); track opcion.id) {
+                <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+              }
 
             </mat-select>
 
@@ -881,7 +769,7 @@
         </div>
 
 
-        @if (caracterizacionForm.get("tieneHijos")?.value === "si") {
+        @if (tieneHijosAfirmativo) {
 
           <div class="material-field">
 
@@ -939,13 +827,9 @@
             Seleccione...
           </mat-option>
 
-          <mat-option value="si">
-            Sí
-          </mat-option>
-
-          <mat-option value="no">
-            No
-          </mat-option>
+          @for (opcion of opciones("cabezaFamilia"); track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
 
         </mat-select>
 
@@ -983,13 +867,9 @@
             Seleccione...
           </mat-option>
 
-          <mat-option value="si">
-            Sí
-          </mat-option>
-
-          <mat-option value="no">
-            No
-          </mat-option>
+          @for (opcion of opciones("pep"); track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
 
         </mat-select>
 
@@ -1019,13 +899,9 @@
             Seleccione...
           </mat-option>
 
-          <mat-option value="si">
-            Sí
-          </mat-option>
-
-          <mat-option value="no">
-            No
-          </mat-option>
+          @for (opcion of opciones("personasACargo"); track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
 
         </mat-select>
 
@@ -1055,29 +931,9 @@
             Seleccione...
           </mat-option>
 
-          <mat-option value="soltero">
-            Soltero(a)
-          </mat-option>
-
-          <mat-option value="casado">
-            Casado(a)
-          </mat-option>
-
-          <mat-option value="union-libre">
-            Unión libre
-          </mat-option>
-
-          <mat-option value="separado">
-            Separado(a)
-          </mat-option>
-
-          <mat-option value="divorciado">
-            Divorciado(a)
-          </mat-option>
-
-          <mat-option value="viudo">
-            Viudo(a)
-          </mat-option>
+          @for (opcion of opciones("estadoCivil"); track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
 
         </mat-select>
 
@@ -1107,13 +963,9 @@
             Seleccione...
           </mat-option>
 
-          <mat-option value="si">
-            Sí
-          </mat-option>
-
-          <mat-option value="no">
-            No
-          </mat-option>
+          @for (opcion of opciones("discapacidad"); track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
 
         </mat-select>
 
@@ -1365,8 +1217,9 @@
         class="tributario-card__field"
       >
         <mat-select placeholder="Seleccione..." formControlName="declaranteRenta">
-          <mat-option value="si">Sí</mat-option>
-          <mat-option value="no">No</mat-option>
+          @for (opcion of opciones("declaranteRenta"); track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
         </mat-select>
 
         @if (
@@ -1395,8 +1248,9 @@
         class="tributario-card__field"
       >
         <mat-select placeholder="Seleccione..." formControlName="medicinaPrepagada">
-          <mat-option value="si">Sí</mat-option>
-          <mat-option value="no">No</mat-option>
+          @for (opcion of opciones("medicinaPrepagada"); track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
         </mat-select>
 
         @if (
@@ -1425,8 +1279,9 @@
         class="tributario-card__field"
       >
         <mat-select placeholder="Seleccione..." formControlName="cuentaAfc">
-          <mat-option value="si">Sí</mat-option>
-          <mat-option value="no">No</mat-option>
+          @for (opcion of opciones("cuentaAfc"); track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
         </mat-select>
 
         @if (
@@ -1455,8 +1310,9 @@
         class="tributario-card__field"
       >
         <mat-select placeholder="Seleccione..." formControlName="responsableIva">
-          <mat-option value="si">Sí</mat-option>
-          <mat-option value="no">No</mat-option>
+          @for (opcion of opciones("responsableIva"); track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
         </mat-select>
 
         @if (
@@ -1485,8 +1341,9 @@
         class="tributario-card__field"
       >
         <mat-select placeholder="Seleccione..." formControlName="resideFiscalmenteColombia">
-          <mat-option value="si">Sí</mat-option>
-          <mat-option value="no">No</mat-option>
+          @for (opcion of opciones("resideFiscalmenteColombia"); track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
         </mat-select>
 
         @if (
@@ -1515,8 +1372,9 @@
         class="tributario-card__field"
       >
         <mat-select placeholder="Seleccione..." formControlName="aportesPensionVoluntaria">
-          <mat-option value="si">Sí</mat-option>
-          <mat-option value="no">No</mat-option>
+          @for (opcion of opciones("aportesPensionVoluntaria"); track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
         </mat-select>
 
         @if (
@@ -1560,6 +1418,25 @@
 
     <div class="residencia-contacto__campo">
       <label class="residencia-contacto__label">
+        País de Residencia
+      </label>
+
+      <mat-form-field
+        appearance="outline"
+        class="residencia-contacto__field"
+      >
+        <input
+          matInput
+          type="text"
+          readonly
+          [value]="paisResidenciaNombre"
+          aria-label="País de residencia"
+        />
+      </mat-form-field>
+    </div>
+
+    <div class="residencia-contacto__campo">
+      <label class="residencia-contacto__label">
         Departamento de Residencia
         <span class="required">*</span>
       </label>
@@ -1569,7 +1446,9 @@
         class="residencia-contacto__field"
       >
         <mat-select placeholder="Seleccione..." formControlName="departamentoResidencia">
-          <mat-option value="bogota">Bogotá D.C.</mat-option>
+          @for (opcion of geografia.departamentosResidencia.opciones; track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
         </mat-select>
 
         @if (
@@ -1579,6 +1458,12 @@
           <mat-error>Este campo es obligatorio.</mat-error>
         }
       </mat-form-field>
+
+      <registro-persona-juridica-estado-catalogos
+        [cargando]="geografia.departamentosResidencia.cargando"
+        [error]="geografia.departamentosResidencia.error"
+        (reintentar)="reintentarGeografia.emit('departamentosResidencia')"
+      ></registro-persona-juridica-estado-catalogos>
     </div>
 
     <div class="residencia-contacto__campo">
@@ -1591,12 +1476,11 @@
         appearance="outline"
         class="residencia-contacto__field"
       >
-        <input
-          matInput
-          type="text"
-          formControlName="ciudadMunicipioResidencia"
-          placeholder="Ciudad o municipio"
-        />
+        <mat-select placeholder="Seleccione..." formControlName="ciudadMunicipioResidencia">
+          @for (opcion of geografia.ciudadesResidencia.opciones; track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
+        </mat-select>
 
         @if (
           residenciaForm.get("ciudadMunicipioResidencia")?.touched &&
@@ -1605,6 +1489,12 @@
           <mat-error>Este campo es obligatorio.</mat-error>
         }
       </mat-form-field>
+
+      <registro-persona-juridica-estado-catalogos
+        [cargando]="geografia.ciudadesResidencia.cargando"
+        [error]="geografia.ciudadesResidencia.error"
+        (reintentar)="reintentarGeografia.emit('ciudadesResidencia')"
+      ></registro-persona-juridica-estado-catalogos>
     </div>
 
     <div class="address-builder">
@@ -1629,12 +1519,11 @@
           </label>
 
           <mat-form-field appearance="outline" class="field">
-            <input
-              matInput
-              type="text"
-              formControlName="via"
-              placeholder="Ej. CL"
-            />
+            <mat-select placeholder="Seleccione..." formControlName="via">
+              @for (opcion of opciones("tiposVia"); track opcion.id) {
+                <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+              }
+            </mat-select>
 
             @if (
               residenciaForm.get("via")?.touched &&
@@ -1733,12 +1622,12 @@
           </label>
 
           <mat-form-field appearance="outline" class="field">
-            <input
-              matInput
-              type="text"
-              formControlName="interior1"
-              placeholder="Ej. AP 402"
-            />
+            <mat-select placeholder="Seleccione..." formControlName="interior1">
+              <mat-option value="">Seleccione...</mat-option>
+              @for (opcion of opciones("tiposInterior"); track opcion.id) {
+                <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+              }
+            </mat-select>
           </mat-form-field>
         </div>
 

@@ -1,5 +1,10 @@
-import { Component, Input } from "@angular/core";
+import { Component, EventEmitter, Input, Output } from "@angular/core";
 import { FormGroup } from "@angular/forms";
+import {
+  CatalogosPersonaNaturalPaso2,
+  OpcionNatural,
+} from "../registro-persona-natural-catalogos.service";
+import { EstadoCatalogoNatural } from "../registro-persona-natural.component";
 
 @Component({
   selector: "app-registro-persona-natural-paso-2",
@@ -10,49 +15,34 @@ import { FormGroup } from "@angular/forms";
 export class RegistroPersonaNaturalPaso2Component {
   @Input({ required: true }) afiliacionesFinanzasForm!: FormGroup;
 
+  @Input() catalogos: CatalogosPersonaNaturalPaso2 | null = null;
+  @Input() estadoCatalogos: EstadoCatalogoNatural = { cargando: false, error: null };
+  @Output() reintentarCatalogos = new EventEmitter<void>();
+
   readonly opcionesSiNo = [
   { value: "no", label: "No, cotizante activo" },
   { value: "si", label: "Sí, pensionado" },
 ];
 
-  readonly opcionesEps = [
-    { value: "compensar", label: "Compensar E.P.S. (Código EPS008)" },
-    { value: "sura", label: "EPS Sura (Código EPS010)" },
-    { value: "sanitas", label: "EPS Sanitas (Código EPS005)" },
-    { value: "nueva_eps", label: "Nueva EPS (Código EPS037)" },
-    { value: "famisanar", label: "Famisanar EPS (Código EPS017)" },
-    { value: "salud_total", label: "Salud Total EPS (Código EPS002)" },
-  ];
+  get opcionesEps(): OpcionNatural[] {
+    return this.catalogos?.eps ?? [];
+  }
 
-  readonly opcionesAfp = [
-    { value: "porvenir", label: "Porvenir S.A. - Fondo de Pensiones Obligatorias" },
-    { value: "proteccion", label: "Protección S.A." },
-    { value: "colpensiones", label: "Colpensiones (Régimen de Prima Media RPM)" },
-    { value: "colfondos", label: "Colfondos Pensiones y Cesantías" },
-    { value: "skandia", label: "Skandia Fondo de Pensiones" },
-  ];
+  get opcionesAfp(): OpcionNatural[] {
+    return this.catalogos?.afp ?? [];
+  }
 
-  readonly opcionesCcf = [
-    { value: "compensar_ccf", label: "Compensar Caja de Compensación Familiar" },
-    { value: "colsubsidio", label: "Colsubsidio" },
-    { value: "cafam", label: "Cafam" },
-    { value: "comfacundi", label: "Comfacundi" },
-    { value: "ninguna", label: "Ninguna / No realiza aportes a caja de compensación" },
-  ];
+  get opcionesCcf(): OpcionNatural[] {
+    return this.catalogos?.ccf ?? [];
+  }
 
-  readonly opcionesEntidadesBancarias = [
-    { value: "davivienda", label: "Banco Davivienda S.A. (051)" },
-    { value: "bancolombia", label: "Bancolombia S.A. (007)" },
-    { value: "bogota", label: "Banco de Bogotá (001)" },
-    { value: "bbva", label: "BBVA Colombia (013)" },
-    { value: "occidente", label: "Banco de Occidente (023)" },
-    { value: "popular", label: "Banco Popular (002)" },
-  ];
+  get opcionesEntidadesBancarias(): OpcionNatural[] {
+    return this.catalogos?.entidadesBancarias ?? [];
+  }
 
-  readonly opcionesTipoCuenta = [
-    { value: "ahorros", label: "Cuenta de Ahorros" },
-    { value: "corriente", label: "Cuenta Corriente" },
-  ];
+  get opcionesTipoCuenta(): OpcionNatural[] {
+    return this.catalogos?.tiposCuenta ?? [];
+  }
 
   esInvalido(controlName: string): boolean {
     const control = this.afiliacionesFinanzasForm.get(controlName);

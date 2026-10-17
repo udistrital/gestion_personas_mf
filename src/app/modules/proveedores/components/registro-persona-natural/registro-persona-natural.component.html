@@ -60,6 +60,11 @@
         [tributarioForm]="tributarioForm"
         [residenciaForm]="residenciaForm"
         [contactoForm]="contactoForm"
+        [catalogos]="catalogosPaso1"
+        [estadoCatalogos]="estadoPaso1"
+        [geografia]="geografia"
+        (reintentarCatalogos)="cargarCatalogosPaso1()"
+        (reintentarGeografia)="reintentarGeografia($event)"
       ></app-registro-persona-natural-paso-1>
 
     }
@@ -73,6 +78,9 @@
 
       <app-registro-persona-natural-paso-2
         [afiliacionesFinanzasForm]="afiliacionesFinanzasForm"
+        [catalogos]="catalogosPaso2"
+        [estadoCatalogos]="estadoPaso2"
+        (reintentarCatalogos)="cargarCatalogosPaso2()"
       ></app-registro-persona-natural-paso-2>
 
     }
