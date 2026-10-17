@@ -21,7 +21,6 @@ export class RegistroPersonaJuridicaPaso4Component {
   @Input() cargandoUnspsc = false;
   @Input() errorUnspsc: string | null = null;
   @Output() formularioChange = new EventEmitter<FormGroup>();
-  @Output() reintentarCatalogos = new EventEmitter<void>();
   @Output() reintentarUnspsc = new EventEmitter<void>();
 
   actividadCiiuDisponibleId = new FormControl<number | null>(null);

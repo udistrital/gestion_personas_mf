@@ -17,8 +17,6 @@ import {
 export class RegistroPersonaJuridicaPaso2Component {
   @Input() formulario: FormGroup = new FormGroup({});
   @Input() catalogos: CatalogosPersonaJuridica | null = null;
-  @Input() cargandoCatalogos = false;
-  @Input() errorCatalogos: string | null = null;
   @Input() pais: OpcionLugar | null = null;
   @Input() departamentos: OpcionLugar[] = [];
   @Input() ciudades: OpcionLugar[] = [];
@@ -27,7 +25,6 @@ export class RegistroPersonaJuridicaPaso2Component {
   @Input() errorDepartamentos: string | null = null;
   @Input() errorCiudades: string | null = null;
   @Output() formularioChange = new EventEmitter<FormGroup>();
-  @Output() reintentarCatalogos = new EventEmitter<void>();
   @Output() reintentarDepartamentos = new EventEmitter<void>();
   @Output() reintentarCiudades = new EventEmitter<void>();
 

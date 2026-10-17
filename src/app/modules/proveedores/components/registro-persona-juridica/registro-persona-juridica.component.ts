@@ -2,9 +2,9 @@ import { Component, DestroyRef, OnInit } from "@angular/core";
 import { FormControl, FormGroup, Validators } from "@angular/forms";
 import { Router } from "@angular/router";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { forkJoin, map, Subscription } from "rxjs";
 import { PasoStepperVisual } from "src/app/shared/components/stepper-visual/stepper-visual.component";
 import { camposPorPaso } from "./registro-persona-juridica.component.utils";
-import { PersonaJuridicaCatalogosPayload } from "./models/registro-persona-juridica-payload.model";
 import {
   CatalogosPersonaJuridica,
   RegistroPersonaJuridicaCatalogosService,
@@ -38,10 +38,10 @@ const OTP = /^\d{6}$/;
 export class RegistroPersonaJuridicaComponent implements OnInit {
   titulo = "Módulo de Registro de Persona Jurídica";
   pasoActual = 1;
-  payloadCatalogos?: PersonaJuridicaCatalogosPayload;
   catalogos: CatalogosPersonaJuridica | null = null;
   cargandoCatalogos = false;
   errorCatalogos: string | null = null;
+  catalogosSinRegistros = false;
   catalogoUnspsc: OpcionUnspsc[] = [];
   cargandoUnspsc = false;
   errorUnspsc: string | null = null;
@@ -58,6 +58,7 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
   private solicitudDepartamentos = 0;
   private solicitudCiudadesDomicilio = 0;
   private solicitudCiudadesApertura = 0;
+  private suscripcionCatalogos?: Subscription;
 
   constructor(
     private readonly catalogosService: RegistroPersonaJuridicaCatalogosService,
@@ -78,12 +79,6 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(id => this.cargarCiudades(id, 'apertura'));
 
-    // TODO: Bloque temporal para pruebas de desarrollo. Eliminar al implementar lógica del negocio.
-    for (const controlName in this.formulario.controls) {
-      this.formulario.get(controlName)?.valueChanges.subscribe(value => {
-        console.log(`Valor del control ${controlName} cambiado a:`, value);
-      });
-    }
   }
 
   regresarARegistroInicial(): void {
@@ -140,19 +135,55 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
   }
 
   private cargarCatalogos(): void {
+    this.suscripcionCatalogos?.unsubscribe();
     this.cargandoCatalogos = true;
     this.errorCatalogos = null;
+    this.catalogosSinRegistros = false;
     this.catalogos = null;
-    this.catalogosService.obtenerCatalogos()
+    const aOpcionesCatalogo = map((lugares: { id: number; nombre: string }[]) =>
+      lugares.map(lugar => ({ id: lugar.id, nombre: lugar.nombre })),
+    );
+    this.suscripcionCatalogos = forkJoin({
+      catalogos: this.catalogosService.obtenerCatalogos(),
+      procedencia: this.ubicacionesService.obtenerProcedencias().pipe(aOpcionesCatalogo),
+      tipoVia: this.ubicacionesService.obtenerTiposVia().pipe(aOpcionesCatalogo),
+      tipoInterior: this.ubicacionesService.obtenerTiposInterior().pipe(aOpcionesCatalogo),
+    })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: catalogos => {
-          this.catalogos = catalogos;
+        next: ({ catalogos, procedencia, tipoVia, tipoInterior }) => {
+          this.catalogos = { ...catalogos, procedencia, tipoVia, tipoInterior };
+          this.catalogosSinRegistros = [
+            procedencia,
+            tipoVia,
+            tipoInterior,
+            catalogos.tipoOrganizacion,
+            catalogos.tamanoEmpresa,
+            catalogos.tipoCapital,
+            catalogos.cargo,
+            catalogos.camaraComercio,
+            catalogos.beneficiariosFinalesRub,
+            catalogos.cotizaBvc,
+            catalogos.obligacionRevisorFiscal,
+            catalogos.granContribuyenteDian,
+            catalogos.autorretenedorRenta,
+            catalogos.exencionIcaBogota,
+            catalogos.entidadesBancarias,
+            catalogos.tiposCuentaBancaria,
+            catalogos.obligadoFacturar,
+            catalogos.monedaExtranjera,
+            catalogos.rupVigente,
+            catalogos.actividadEconomicaCiiu,
+          ].some(opciones => opciones.length === 0);
           this.cargandoCatalogos = false;
         },
         error: error => {
           console.error('No fue posible cargar los catálogos de Persona Jurídica.', error);
-          this.errorCatalogos = 'No se pudieron cargar los catálogos. Intente nuevamente.';
+          const detalle = error instanceof Error
+            ? error.message
+            : 'Verifique su conexión e intente nuevamente.';
+          this.errorCatalogos = `No se pudieron cargar uno o más catálogos. ${detalle}`;
+          this.catalogosSinRegistros = false;
           this.cargandoCatalogos = false;
         },
       });
@@ -206,7 +237,6 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
       return;
     }
 
-    ciudadControl?.enable({ emitEvent: false });
     if (destino === 'domicilio') {
       this.cargandoCiudadesDomicilio = true;
     } else {
@@ -230,6 +260,7 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
             this.ciudadesApertura = ciudades;
             this.cargandoCiudadesApertura = false;
           }
+          ciudadControl?.enable({ emitEvent: false });
         },
         error: error => {
           if (
@@ -269,33 +300,9 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
   finalizar() {
     if (!this.validarFormulario() || this.formulario.invalid) {
       this.formulario.markAllAsTouched();
-      console.error('No se genera el payload de Persona Jurídica porque el formulario contiene campos inválidos.');
+      console.error('No se puede finalizar el registro porque el formulario contiene campos inválidos.');
       return;
     }
-    this.payloadCatalogos = this.construirPayloadCatalogos();
-    alert("Se ha presionado el botón Finalizar. Se puede redirigir a otra página o mostrar un mensaje de éxito.");
-  }
-
-  construirPayloadCatalogos(): PersonaJuridicaCatalogosPayload {
-    const idsResponsabilidades = this.obtenerIds('responsabilidades');
-    const idsActividades = this.obtenerIds('actividadesCiiu');
-    const idsDeclaraciones = this.obtenerIds('declaraciones');
-
-    return {
-      procedencia_id: this.obtenerId('procedencia'),
-      tipo_organizacion_id: this.obtenerId('tipoOrganizacion'),
-      tamano_empresa_id: this.obtenerId('tamanoEmpresarial'),
-      tipo_capital_id: this.obtenerId('tipoConstitucion'),
-      camara_comercio_id: this.obtenerId('camaraComercio'),
-      responsabilidad_fiscal_perfil: idsResponsabilidades.map(id => ({
-        responsabilidad_fiscal_id: id,
-      })),
-      actividad_economica_proveedor: idsActividades.map(id => ({
-        actividad_economica_id: id,
-      })),
-      representacion: { cargo_id: this.obtenerId('cargoRepresentante') },
-      declaracion: idsDeclaraciones.map(id => ({ tipo_declaracion_id: id })),
-    };
   }
 
   continuar(): void {
@@ -316,22 +323,6 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
     camposConError.forEach(controlName => this.formulario.get(controlName)?.markAsTouched());
     alert(`Hay campos con error: ${camposConError.join(', ')}.`);
     return false;
-  }
-
-  private obtenerId(controlName: string): number {
-    const valor: unknown = this.formulario.get(controlName)?.value;
-    if (typeof valor !== 'number' || !Number.isInteger(valor)) {
-      throw new Error(`El control paramétrico "${controlName}" no contiene un ID válido.`);
-    }
-    return valor;
-  }
-
-  private obtenerIds(controlName: string): number[] {
-    const valor: unknown = this.formulario.get(controlName)?.value;
-    if (!Array.isArray(valor) || !valor.every(id => typeof id === 'number' && Number.isInteger(id))) {
-      throw new Error(`El control paramétrico "${controlName}" no contiene una lista válida de IDs.`);
-    }
-    return valor;
   }
 
   formulario: FormGroup = new FormGroup({
@@ -366,11 +357,11 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
     responsabilidades: new FormControl<number[]>([], Validators.required),
     departamento: new FormControl<number | null>(null, Validators.required),
     ciudad: new FormControl<number | null>({ value: null, disabled: true }, Validators.required),
-    tipoVia: new FormControl('cr', Validators.required),
+    tipoVia: new FormControl<number | null>(null, Validators.required),
     detalleVia: new FormControl('68', Validators.required),
     numeroCruce: new FormControl('45', Validators.required),
     placaPuerta: new FormControl('20', Validators.required),
-    interiorTipo: new FormControl('of'),
+    interiorTipo: new FormControl<number | null>(null),
     detalleInterior: new FormControl('502'),
     correoNotificaciones: new FormControl('notificaciones@integratech.com.co', [Validators.required, Validators.pattern(CORREO)]),
     correoNotificacionesConfirmacion: new FormControl('notificaciones@integratech.com.co', [Validators.required, Validators.pattern(CORREO)]),

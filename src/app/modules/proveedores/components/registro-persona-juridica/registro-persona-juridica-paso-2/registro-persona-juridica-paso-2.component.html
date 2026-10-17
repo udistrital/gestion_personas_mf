@@ -1,10 +1,4 @@
 <form [formGroup]="formulario" (input)="emitirCambio()" (change)="emitirCambio()">
-  @if (cargandoCatalogos) {
-    <p aria-live="polite">Cargando catálogos...</p>
-  } @else if (errorCatalogos) {
-    <p role="alert">{{ errorCatalogos }}</p>
-    <button type="button" (click)="reintentarCatalogos.emit()">Reintentar carga de catálogos</button>
-  }
   <plantilla-tarjeta-contenedora
     [icon]="'account_balance'"
     [title]="'1. Información Financiera Corporativa y Capital Social'"
@@ -50,7 +44,7 @@
             <small>Cargando departamentos...</small>
           } @else if (errorDepartamentos) {
             <small role="alert">{{ errorDepartamentos }}</small>
-            <button type="button" (click)="reintentarDepartamentos.emit()">Reintentar</button>
+            <button class="boton boton--secundario" type="button" (click)="reintentarDepartamentos.emit()">Reintentar</button>
           } @else if (departamentos.length === 0) {
             <small>No hay departamentos disponibles.</small>
           }
@@ -63,7 +57,7 @@
             <small>Cargando ciudades...</small>
           } @else if (errorCiudades) {
             <small role="alert">{{ errorCiudades }}</small>
-            <button type="button" (click)="reintentarCiudades.emit()">Reintentar</button>
+            <button class="boton boton--secundario" type="button" (click)="reintentarCiudades.emit()">Reintentar</button>
           } @else if (formulario.get('departamentoApertura')?.value && ciudades.length === 0) {
             <small>No hay ciudades disponibles para este departamento.</small>
           }

@@ -19,10 +19,7 @@ interface DocumentoSoporte {
 export class RegistroPersonaJuridicaPaso3Component {
   @Input() formulario: FormGroup = new FormGroup({});
   @Input() catalogos: CatalogosPersonaJuridica | null = null;
-  @Input() cargandoCatalogos = false;
-  @Input() errorCatalogos: string | null = null;
   @Output() formularioChange = new EventEmitter<FormGroup>();
-  @Output() reintentarCatalogos = new EventEmitter<void>();
 
   documentosExistencia: DocumentoSoporte[] = [
     {

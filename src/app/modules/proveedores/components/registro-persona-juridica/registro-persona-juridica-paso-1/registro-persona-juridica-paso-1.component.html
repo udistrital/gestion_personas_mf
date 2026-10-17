@@ -1,10 +1,4 @@
 <form [formGroup]="formulario">
-  @if (cargandoCatalogos) {
-    <p aria-live="polite">Cargando catálogos...</p>
-  } @else if (errorCatalogos) {
-    <p role="alert">{{ errorCatalogos }}</p>
-    <button type="button" (click)="reintentarCatalogos.emit()">Reintentar carga de catálogos</button>
-  }
   <plantilla-tarjeta-contenedora
     [icon]="'business'"
     [title]="'1. Identificación Tributaria y Razón Social de la Entidad'"
@@ -203,7 +197,7 @@
           <small>Cargando departamentos...</small>
         } @else if (errorDepartamentos) {
           <small role="alert">{{ errorDepartamentos }}</small>
-          <button type="button" (click)="reintentarDepartamentos.emit()">Reintentar</button>
+          <button class="boton boton--secundario" type="button" (click)="reintentarDepartamentos.emit()">Reintentar</button>
         } @else if (departamentos.length === 0) {
           <small>No hay departamentos disponibles.</small>
         }
@@ -218,7 +212,7 @@
           <small>Cargando ciudades...</small>
         } @else if (errorCiudades) {
           <small role="alert">{{ errorCiudades }}</small>
-          <button type="button" (click)="reintentarCiudades.emit()">Reintentar</button>
+          <button class="boton boton--secundario" type="button" (click)="reintentarCiudades.emit()">Reintentar</button>
         } @else if (formulario.get('departamento')?.value && ciudades.length === 0) {
           <small>No hay ciudades disponibles para este departamento.</small>
         }
@@ -227,21 +221,35 @@
     <div class="direccion">
       <h3><mat-icon>signpost</mat-icon> Generador de Nomenclatura Estándar DIAN (RUT)</h3>
       <div class="campo-grid campo-grid--direccion">
-        <label class="campo"><span>Vía *</span><select formControlName="tipoVia">
-          @for (opcion of opcionesTipoVia; track opcion.value) {
-            <option [value]="opcion.value">{{ opcion.label }}</option>
+        <label class="campo">
+          <span>Vía *</span>
+          <select formControlName="tipoVia">
+            <option [ngValue]="null">Seleccione...</option>
+            @for (opcion of opcionesTipoVia; track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+            }
+          </select>
+          @if (catalogos && opcionesTipoVia.length === 0) {
+            <small>No hay opciones de vía disponibles en Ubicaciones.</small>
           }
-        </select></label>
+        </label>
         <label class="campo"><span>Detalle Vía *</span><input formControlName="detalleVia" type="text"></label>
         <span class="separador-direccion" aria-hidden="true">#</span>
         <label class="campo"><span>Número Cruce *</span><input formControlName="numeroCruce" type="text"></label>
         <span class="separador-direccion" aria-hidden="true">-</span>
         <label class="campo"><span>Placa Puerta *</span><input formControlName="placaPuerta" type="text"></label>
-        <label class="campo"><span>Interior 1</span><select formControlName="interiorTipo">
-          @for (opcion of opcionesTipoInterior; track opcion.value) {
-            <option [value]="opcion.value">{{ opcion.label }}</option>
+        <label class="campo">
+          <span>Interior 1</span>
+          <select formControlName="interiorTipo">
+            <option [ngValue]="null">Seleccione...</option>
+            @for (opcion of opcionesTipoInterior; track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+            }
+          </select>
+          @if (catalogos && opcionesTipoInterior.length === 0) {
+            <small>No hay opciones de interior disponibles en Ubicaciones.</small>
           }
-        </select></label>
+        </label>
         <label class="campo"><span>Det. Interior</span><input formControlName="detalleInterior" type="text"></label>
       </div>
       <direccion-generada

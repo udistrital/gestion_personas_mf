@@ -1,7 +1,8 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { forkJoin, map, Observable } from 'rxjs';
+import { catchError, forkJoin, map, Observable, shareReplay, throwError } from 'rxjs';
 import { environment } from 'src/environments/environment';
+import { obtenerTodasLasPaginas, descartarRegistrosVacios } from './registro-persona-juridica-paginacion';
 
 interface GrupoInfoComplementaria {
   Id: number;
@@ -40,6 +41,8 @@ interface RespuestaParametros {
   Data?: unknown;
 }
 
+type TipoRegistro = 'areaTipo' | 'tipoParametro' | 'parametro';
+
 export interface OpcionCatalogo {
   id: number;
   nombre: string;
@@ -56,10 +59,8 @@ export interface CatalogosPersonaJuridica {
   tipoCapital: OpcionCatalogo[];
   camaraComercio: OpcionCatalogo[];
   responsabilidadFiscal: OpcionCatalogo[];
-  moneda: OpcionCatalogo[];
   tipoDocumento: OpcionCatalogo[];
   actividadEconomicaCiiu: OpcionCatalogo[];
-  tipoRepresentacion: OpcionCatalogo[];
   tipoDeclaracion: OpcionCatalogo[];
   cargo: OpcionCatalogo[];
   entidadesBancarias: OpcionCatalogo[];
@@ -73,192 +74,204 @@ export interface CatalogosPersonaJuridica {
   rupVigente: OpcionCatalogo[];
   obligadoFacturar: OpcionCatalogo[];
   monedaExtranjera: OpcionCatalogo[];
+  tipoVia: OpcionCatalogo[];
+  tipoInterior: OpcionCatalogo[];
+}
+
+// Procedencia, vía e interior se obtienen de Ubicaciones; este servicio cubre Terceros y Parámetros.
+export type CatalogosTercerosParametros = Omit<
+  CatalogosPersonaJuridica,
+  'procedencia' | 'tipoVia' | 'tipoInterior'
+>;
+
+interface OpcionesParametro {
+  codigoArea?: string;
+  soloRaiz?: boolean;
+  exigirCodigo?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
 export class RegistroPersonaJuridicaCatalogosService {
   private readonly tercerosUrl = environment.TERCEROS_SERVICE.replace(/\/+$/, '');
   private readonly parametrosUrl = environment.PARAMETROS_SERVICE.replace(/\/+$/, '');
+  private readonly solicitudesPaginadas = new Map<string, Observable<RegistroCatalogo[]>>();
 
   constructor(private readonly http: HttpClient) {}
 
-  obtenerCatalogos(): Observable<CatalogosPersonaJuridica> {
+  obtenerCatalogos(): Observable<CatalogosTercerosParametros> {
+    // area_tipo y tipo_parametro se consultan una sola vez por carga y código.
+    const memo = new Map<string, Observable<RegistroCatalogo[]>>();
+    const memorizar = (clave: string, crear: () => Observable<RegistroCatalogo[]>) => {
+      let solicitud = memo.get(clave);
+      if (!solicitud) {
+        solicitud = crear().pipe(shareReplay(1));
+        memo.set(clave, solicitud);
+      }
+      return solicitud;
+    };
+    const complementaria = (codigoGrupo: string) =>
+      this.obtenerInfoComplementaria(codigoGrupo).pipe(map(registros => this.aOpciones(registros)));
+    const parametro = (codigoTipo: string, opciones: OpcionesParametro = {}) =>
+      this.obtenerParametrosPorTipo(codigoTipo, opciones, memorizar);
+
     return forkJoin({
-      gruposInfoComplementaria: this.obtenerRegistros(
-        `${this.tercerosUrl}/grupo_info_complementaria`,
-      ),
-      infoComplementaria: this.obtenerRegistros(`${this.tercerosUrl}/info_complementaria`),
-      areasTipo: this.obtenerRegistrosParametro(
-        `${this.parametrosUrl}/area_tipo`,
-        'areaTipo',
-      ),
-      tiposParametro: this.obtenerRegistrosParametro(
-        `${this.parametrosUrl}/tipo_parametro`,
-        'tipoParametro',
-      ),
-      parametros: this.obtenerRegistrosParametro(
-        `${this.parametrosUrl}/parametro`,
-        'parametro',
-      ),
-    }).pipe(
-      map(({ gruposInfoComplementaria, infoComplementaria, areasTipo, tiposParametro, parametros }) => ({
-          procedencia: this.obtenerOpcionesComplementarias(
-            gruposInfoComplementaria,
-            infoComplementaria,
-            'PROCEDENCIA',
-          ),
-          tipoOrganizacion: this.obtenerOpcionesComplementarias(
-            gruposInfoComplementaria,
-            infoComplementaria,
-            'TIPO_ORG',
-          ),
-          tamanoEmpresa: this.obtenerOpcionesComplementarias(
-            gruposInfoComplementaria,
-            infoComplementaria,
-            'TAMAÑO_EMPRESA',
-          ),
-          tipoCapital: this.obtenerOpcionesComplementarias(
-            gruposInfoComplementaria,
-            infoComplementaria,
-            'TIPO_CAPITAL',
-          ),
-          camaraComercio: this.obtenerOpcionesParametro(
-            areasTipo,
-            tiposParametro,
-            parametros,
-            'CAM_COM',
-          ),
-          responsabilidadFiscal: this.obtenerOpcionesParametro(
-            areasTipo,
-            tiposParametro,
-            parametros,
-            'RESP_FIS',
-          ),
-          moneda: this.obtenerOpcionesParametro(
-            areasTipo,
-            tiposParametro,
-            parametros,
-            ['moneda'],
-          ),
-          tipoDocumento: this.obtenerOpcionesParametroConCodigo(
-            areasTipo,
-            tiposParametro,
-            parametros,
-            'TIP_DOC',
-          ),
-          actividadEconomicaCiiu: this.obtenerOpcionesCiiu(
-            areasTipo,
-            tiposParametro,
-            parametros,
-          ),
-          tipoRepresentacion: this.obtenerOpcionesParametro(
-            areasTipo,
-            tiposParametro,
-            parametros,
-            'TIP_REP',
-          ),
-          tipoDeclaracion: this.obtenerOpcionesParametro(
-            areasTipo,
-            tiposParametro,
-            parametros,
-            'TIP_DEC',
-          ),
-          cargo: this.obtenerOpcionesParametro(
-            areasTipo,
-            tiposParametro,
-            parametros,
-            ['cargo'],
-          ),
-          entidadesBancarias: this.obtenerOpcionesParametroPorAreaYTipo(
-            areasTipo,
-            tiposParametro,
-            parametros,
-            'EB',
-          ),
-          tiposCuentaBancaria: this.obtenerOpcionesParametroPorAreaYTipo(
-            areasTipo,
-            tiposParametro,
-            parametros,
-            'TCB',
-          ),
-          beneficiariosFinalesRub: this.obtenerOpcionesParametro(
-            areasTipo,
-            tiposParametro,
-            parametros,
-            'BENEFICIARIOS_FINALES_RUB',
-          ),
-          cotizaBvc: this.obtenerOpcionesParametro(
-            areasTipo,
-            tiposParametro,
-            parametros,
-            'COTIZA_BVC',
-          ),
-          obligacionRevisorFiscal: this.obtenerOpcionesParametro(
-            areasTipo,
-            tiposParametro,
-            parametros,
-            'OBLIGACIÓN_REVISOR_FISCAL',
-          ),
-          granContribuyenteDian: this.obtenerOpcionesParametro(
-            areasTipo,
-            tiposParametro,
-            parametros,
-            'CONTRIBUYENTE_DIAN',
-          ),
-          autorretenedorRenta: this.obtenerOpcionesParametro(
-            areasTipo,
-            tiposParametro,
-            parametros,
-            'AUTORRETENEDOR_RENTA',
-          ),
-          exencionIcaBogota: this.obtenerOpcionesParametro(
-            areasTipo,
-            tiposParametro,
-            parametros,
-            'APLICA_EXENCIÓN_ICA_BOGOTÁ',
-          ),
-          rupVigente: this.obtenerOpcionesParametroConCodigo(
-            areasTipo,
-            tiposParametro,
-            parametros,
-            'RUP_VIGENTE',
-          ),
-          obligadoFacturar: this.obtenerOpcionesParametro(
-            areasTipo,
-            tiposParametro,
-            parametros,
-            'OBLIGACIÓN_FACTURA_ELECTRÓNICA',
-          ),
-          monedaExtranjera: this.obtenerOpcionesParametro(
-            areasTipo,
-            tiposParametro,
-            parametros,
-            'OPERACIONES_MONEDA_EXTRANJERA',
-          ),
-        })),
+      tipoOrganizacion: complementaria('TIPO_ORG'),
+      tamanoEmpresa: complementaria('TAMAÑO_EMPRESA'),
+      tipoCapital: complementaria('TIPO_CAPITAL'),
+      cargo: complementaria('Grupo_5'),
+      camaraComercio: parametro('CAM_COM'),
+      beneficiariosFinalesRub: parametro('BENEFICIARIOS_FINALES_RUB'),
+      cotizaBvc: parametro('COTIZA_BVC'),
+      obligacionRevisorFiscal: parametro('OBLIGACIÓN_REVISOR_FISCAL'),
+      granContribuyenteDian: parametro('CONTRIBUYENTE_DIAN'),
+      autorretenedorRenta: parametro('AUTORRETENEDOR_RENTA'),
+      exencionIcaBogota: parametro('APLICA_EXENCIÓN_ICA_BOGOTÁ'),
+      entidadesBancarias: parametro('EB'),
+      tiposCuentaBancaria: parametro('TCB'),
+      obligadoFacturar: parametro('OBLIGACIÓN_FACTURA_ELECTRÓNICA'),
+      monedaExtranjera: parametro('OPERACIONES_MONEDA_EXTRANJERA'),
+      rupVigente: parametro('RUP_VIGENTE'),
+      actividadEconomicaCiiu: parametro('CIIU', { exigirCodigo: true }),
+      // Catálogos que usa el formulario y que no figuran en PERSONA_JURIDICA_CONSUMO.md.
+      responsabilidadFiscal: parametro('RESP_FIS', { codigoArea: 'IT' }),
+      tipoDocumento: parametro('TIP_DOC', { codigoArea: 'IT', exigirCodigo: true }),
+      tipoDeclaracion: parametro('TIP_DEC', { codigoArea: 'IT' }),
+    });
+  }
+
+  private obtenerInfoComplementaria(codigoGrupo: string): Observable<RegistroCatalogo[]> {
+    return this.obtenerPaginado(
+      `${this.tercerosUrl}/info_complementaria`,
+      `GrupoInfoComplementariaId.CodigoAbreviacion:${codigoGrupo}`,
+      false,
     );
   }
 
-  private obtenerRegistros(url: string): Observable<RegistroCatalogo[]> {
-    return this.http
-      .get<unknown>(url)
-      .pipe(map(respuesta => this.validarListaRegistros(respuesta, url, false)));
+  private obtenerParametrosPorTipo(
+    codigoTipo: string,
+    opciones: OpcionesParametro,
+    memorizar: (clave: string, crear: () => Observable<RegistroCatalogo[]>) => Observable<RegistroCatalogo[]>,
+  ): Observable<OpcionCatalogo[]> {
+    const parametros$ = this.obtenerPaginado(
+      `${this.parametrosUrl}/parametro`,
+      `TipoParametroId.CodigoAbreviacion:${codigoTipo}`,
+      true,
+      'parametro',
+    );
+
+    const aOpcionesFinales = (registros: RegistroCatalogo[]) => {
+      const filtrados = opciones.soloRaiz
+        ? registros.filter(
+            registro => registro.ParametroPadreId === null || registro.ParametroPadreId === undefined,
+          )
+        : registros;
+      const resultado = this.aOpciones(filtrados, true);
+      if (opciones.exigirCodigo) {
+        for (const opcion of resultado) {
+          if (typeof opcion.codigo !== 'string' || opcion.codigo.length === 0) {
+            throw new Error(
+              `El parámetro con Id ${opcion.id} del tipo "${codigoTipo}" no contiene CodigoAbreviacion.`,
+            );
+          }
+        }
+      }
+      return resultado;
+    };
+
+    if (!opciones.codigoArea) {
+      return parametros$.pipe(map(aOpcionesFinales));
+    }
+
+    const codigoArea = opciones.codigoArea;
+    const areas$ = memorizar(`area:${codigoArea}`, () =>
+      this.obtenerPaginado(
+        `${this.parametrosUrl}/area_tipo`,
+        `CodigoAbreviacion:${codigoArea}`,
+        true,
+        'areaTipo',
+      ),
+    );
+    const tipos$ = memorizar(`tipo:${codigoTipo}`, () =>
+      this.obtenerPaginado(
+        `${this.parametrosUrl}/tipo_parametro`,
+        `CodigoAbreviacion:${codigoTipo}`,
+        true,
+        'tipoParametro',
+      ),
+    );
+
+    return forkJoin({ areas: areas$, tipos: tipos$, parametros: parametros$ }).pipe(
+      map(({ areas, tipos, parametros }) => {
+        const idsAreas = new Set(
+          areas
+            .filter(area => area.Activo !== false && area.CodigoAbreviacion === codigoArea)
+            .map(area => area.Id),
+        );
+        const tiposPorCodigo = tipos.filter(
+          tipo => tipo.Activo !== false && tipo.CodigoAbreviacion === codigoTipo,
+        );
+        for (const tipo of tiposPorCodigo) {
+          if (!tipo.AreaTipoId) {
+            console.error(
+              `Se omitió el tipo de parámetro "${codigoTipo}" (Id ${tipo.Id}) porque no contiene AreaTipoId.`,
+            );
+          }
+        }
+        const idsTipos = new Set(
+          tiposPorCodigo
+            .filter(tipo => tipo.AreaTipoId && idsAreas.has(tipo.AreaTipoId.Id))
+            .map(tipo => tipo.Id),
+        );
+        return aOpcionesFinales(
+          parametros.filter(
+            parametro => parametro.TipoParametroId && idsTipos.has(parametro.TipoParametroId.Id),
+          ),
+        );
+      }),
+    );
   }
 
-  private obtenerRegistrosParametro(
+  private obtenerPaginado(
     url: string,
-    tipoRegistro: 'areaTipo' | 'tipoParametro' | 'parametro',
+    query: string,
+    envueltaEnData: boolean,
+    tipoRegistro?: TipoRegistro,
   ): Observable<RegistroCatalogo[]> {
-    return this.http
-      .get<unknown>(url)
-      .pipe(map(respuesta => this.validarListaRegistros(respuesta, url, true, tipoRegistro)));
+    const clave = `${url}|${query}|${envueltaEnData}|${tipoRegistro ?? ''}`;
+    const existente = this.solicitudesPaginadas.get(clave);
+    if (existente) {
+      return existente;
+    }
+
+    const solicitud = obtenerTodasLasPaginas<RegistroCatalogo>(
+      (limit, offset) => {
+        const params = new HttpParams()
+          .set('query', query)
+          .set('limit', String(limit))
+          .set('offset', String(offset));
+        return this.http
+          .get<unknown>(url, { params })
+          .pipe(map(respuesta => this.validarListaRegistros(respuesta, url, envueltaEnData, tipoRegistro)));
+      },
+      registro => registro.Id,
+      url,
+    ).pipe(
+      catchError(error => {
+        this.solicitudesPaginadas.delete(clave);
+        console.error(`No fue posible cargar ${url} (query "${query}").`, error);
+        return throwError(() => error);
+      }),
+      shareReplay(1),
+    );
+    this.solicitudesPaginadas.set(clave, solicitud);
+    return solicitud;
   }
 
   private validarListaRegistros(
     respuesta: unknown,
     url: string,
     envueltaEnData: boolean,
-    tipoRegistro?: 'areaTipo' | 'tipoParametro' | 'parametro',
+    tipoRegistro?: TipoRegistro,
   ): RegistroCatalogo[] {
     let registros: unknown = respuesta;
     if (envueltaEnData) {
@@ -273,7 +286,7 @@ export class RegistroPersonaJuridicaCatalogosService {
       );
     }
 
-    return registros.map(registro =>
+    return descartarRegistrosVacios(registros).map(registro =>
       this.validarRegistro(
         registro,
         url,
@@ -447,186 +460,10 @@ export class RegistroPersonaJuridicaCatalogosService {
     return this.numeroRequerido(valor, url, campo);
   }
 
-  private obtenerOpcionesComplementarias(
-    grupos: RegistroCatalogo[],
-    registros: RegistroCatalogo[],
-    codigoGrupo: string,
-  ): OpcionCatalogo[] {
-    const idsGrupos = new Set(
-      grupos
-        .filter(grupo => grupo.Activo === true && grupo.CodigoAbreviacion === codigoGrupo)
-        .map(grupo => grupo.Id),
-    );
-
-    return this.aOpciones(
-      registros.filter(registro =>
-        idsGrupos.has(registro.GrupoInfoComplementariaId?.Id ?? -1),
-      ),
-    );
-  }
-
-  private obtenerOpcionesParametro(
-    areasTipo: RegistroCatalogo[],
-    tiposParametro: RegistroCatalogo[],
-    parametros: RegistroCatalogo[],
-    codigoTipo: string | string[],
-  ): OpcionCatalogo[] {
-    if (Array.isArray(codigoTipo)) {
-      const idsTipos = this.obtenerIdsTiposPorNombre(areasTipo, tiposParametro, codigoTipo);
-      return this.opcionesDeIdsTipo(parametros, idsTipos);
-    }
-
-    const idsTipos = this.obtenerIdsTiposPorCodigo(areasTipo, tiposParametro, codigoTipo);
-    return this.opcionesDeIdsTipo(parametros, idsTipos);
-  }
-
-  private obtenerOpcionesCiiu(
-    areasTipo: RegistroCatalogo[],
-    tiposParametro: RegistroCatalogo[],
-    parametros: RegistroCatalogo[],
-  ): OpcionCatalogo[] {
-    return this.obtenerOpcionesParametro(
-      areasTipo,
-      tiposParametro,
-      parametros,
-      'CIIU',
-    ).map(opcion => {
-      if (typeof opcion.codigo !== 'string' || opcion.codigo.length === 0) {
-        throw new Error(`La actividad CIIU con Id ${opcion.id} no contiene CodigoAbreviacion.`);
-      }
-      return opcion;
-    });
-  }
-
-  private obtenerOpcionesParametroConCodigo(
-    areasTipo: RegistroCatalogo[],
-    tiposParametro: RegistroCatalogo[],
-    parametros: RegistroCatalogo[],
-    codigoTipo: string,
-  ): OpcionCatalogo[] {
-    return this.obtenerOpcionesParametro(
-      areasTipo,
-      tiposParametro,
-      parametros,
-      codigoTipo,
-    ).map(opcion => {
-      if (typeof opcion.codigo !== 'string' || opcion.codigo.length === 0) {
-        throw new Error(
-          `El parámetro con Id ${opcion.id} del tipo "${codigoTipo}" no contiene CodigoAbreviacion.`,
-        );
-      }
-      return opcion;
-    });
-  }
-
-  private obtenerIdsTiposPorCodigo(
-    areasTipo: RegistroCatalogo[],
-    tiposParametro: RegistroCatalogo[],
-    codigoTipo: string,
-  ): Set<number> {
-    const idsAreasTributarias = this.obtenerIdsAreasPorCodigo(areasTipo, 'IT');
-    const tiposPorCodigo = tiposParametro.filter(
-      tipo => tipo.Activo === true && tipo.CodigoAbreviacion === codigoTipo,
-    );
-    for (const tipo of tiposPorCodigo) {
-      if (!tipo.AreaTipoId) {
-        console.error(
-          `Se omitió el tipo de parámetro "${codigoTipo}" (Id ${tipo.Id}) porque no contiene AreaTipoId.`,
-        );
-      }
-    }
-
-    return new Set(
-      tiposPorCodigo
-        .filter(
-          tipo => tipo.AreaTipoId && idsAreasTributarias.has(tipo.AreaTipoId.Id),
-        )
-        .map(tipo => tipo.Id),
-    );
-  }
-
-  private obtenerIdsTiposPorNombre(
-    areasTipo: RegistroCatalogo[],
-    tiposParametro: RegistroCatalogo[],
-    aliases: string[],
-  ): Set<number> {
-    const idsAreasTributarias = this.obtenerIdsAreasPorCodigo(areasTipo, 'IT');
-    return new Set(
-      tiposParametro
-        .filter(
-          tipo =>
-            tipo.Activo === true
-            && tipo.AreaTipoId
-            && idsAreasTributarias.has(tipo.AreaTipoId.Id)
-            && this.coincideCategoria(tipo, aliases),
-        )
-        .map(tipo => tipo.Id),
-    );
-  }
-
-  private obtenerIdsAreasPorCodigo(
-    areasTipo: RegistroCatalogo[],
-    codigoArea: string,
-  ): Set<number> {
-    return new Set(
-      areasTipo
-        .filter(area => area.Activo === true && area.CodigoAbreviacion === codigoArea)
-        .map(area => area.Id),
-    );
-  }
-
-  private opcionesDeIdsTipo(
-    parametros: RegistroCatalogo[],
-    idsTipos: Set<number>,
-  ): OpcionCatalogo[] {
-    return this.aOpciones(
-      parametros.filter(parametro =>
-        parametro.TipoParametroId
-        && idsTipos.has(parametro.TipoParametroId.Id),
-      ),
-      true,
-    );
-  }
-
-  private obtenerOpcionesParametroPorAreaYTipo(
-    areasTipo: RegistroCatalogo[],
-    tiposParametro: RegistroCatalogo[],
-    parametros: RegistroCatalogo[],
-    codigoTipo: 'EB' | 'TCB',
-  ): OpcionCatalogo[] {
-    const idsAreasFinancieras = new Set(
-      areasTipo
-        .filter(area => area.Activo === true && area.CodigoAbreviacion === 'SF')
-        .map(area => area.Id),
-    );
-    const idsTiposParametro = new Set(
-      tiposParametro
-        .filter(tipo =>
-          tipo.Activo === true
-          && tipo.CodigoAbreviacion === codigoTipo
-          && tipo.AreaTipoId
-          && idsAreasFinancieras.has(tipo.AreaTipoId.Id),
-        )
-        .map(tipo => tipo.Id),
-    );
-
-    return this.aOpciones(
-      parametros.filter(parametro =>
-        parametro.Activo === true
-        && (
-          parametro.ParametroPadreId === null
-          || parametro.ParametroPadreId === undefined
-        )
-        && parametro.TipoParametroId
-        && idsTiposParametro.has(parametro.TipoParametroId.Id),
-      ),
-    );
-  }
-
+  // Se excluyen solo los registros que el servicio marca explícitamente como inactivos.
   private aOpciones(registros: RegistroCatalogo[], incluirJerarquia = false): OpcionCatalogo[] {
-    const activos = registros.filter(registro => registro.Activo === true);
-
-    const opciones = activos
+    const opciones = registros
+      .filter(registro => registro.Activo !== false)
       .map(registro => ({
         id: registro.Id,
         nombre: this.nombreRequerido(registro.Nombre),
@@ -652,19 +489,5 @@ export class RegistroPersonaJuridicaCatalogosService {
       throw new Error('La respuesta contiene una opción activa sin Nombre descriptivo.');
     }
     return nombre;
-  }
-
-  private coincideCategoria(registro: RegistroCatalogo, aliases: string[]): boolean {
-    const nombre = this.normalizar(registro.Nombre ?? '');
-    return aliases.some(alias => nombre === this.normalizar(alias));
-  }
-
-  private normalizar(valor: string): string {
-    return valor
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[_-]+/g, ' ')
-      .toLowerCase()
-      .trim();
   }
 }

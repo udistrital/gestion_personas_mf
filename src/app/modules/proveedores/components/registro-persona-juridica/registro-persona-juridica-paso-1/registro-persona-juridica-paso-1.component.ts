@@ -23,8 +23,6 @@ export class RegistroPersonaJuridicaPaso1Component {
 
   @Input() formulario: FormGroup = new FormGroup({});
   @Input() catalogos: CatalogosPersonaJuridica | null = null;
-  @Input() cargandoCatalogos = false;
-  @Input() errorCatalogos: string | null = null;
   @Input() pais: OpcionLugar | null = null;
   @Input() departamentos: OpcionLugar[] = [];
   @Input() ciudades: OpcionLugar[] = [];
@@ -33,7 +31,6 @@ export class RegistroPersonaJuridicaPaso1Component {
   @Input() errorDepartamentos: string | null = null;
   @Input() errorCiudades: string | null = null;
   @Output() formularioChange = new EventEmitter<FormGroup>();
-  @Output() reintentarCatalogos = new EventEmitter<void>();
   @Output() reintentarDepartamentos = new EventEmitter<void>();
   @Output() reintentarCiudades = new EventEmitter<void>();
 
@@ -90,33 +87,33 @@ export class RegistroPersonaJuridicaPaso1Component {
     { label: 'Sí, requiere autorización previa de Junta Directiva / Asamblea de Accionistas', value: true }
   ];
 
-  opcionesTipoVia: Opcion<string>[] = [
-    { label: 'Calle', value: 'cl' },
-    { label: 'Carrera', value: 'cr' },
-    { label: 'Avenida', value: 'av' },
-    { label: 'Transversal', value: 'tv' },
-    { label: 'Diagonal', value: 'dg' }
-  ];
+  get opcionesTipoVia(): OpcionCatalogo[] {
+    return this.catalogos?.tipoVia ?? [];
+  }
 
-  opcionesTipoInterior: Opcion<string>[] = [
-    { label: 'Oficina', value: 'of' },
-    { label: 'Local', value: 'lc' },
-    { label: 'Piso', value: 'p' },
-    { label: 'Edificio', value: 'ed' }
-  ];
+  get opcionesTipoInterior(): OpcionCatalogo[] {
+    return this.catalogos?.tipoInterior ?? [];
+  }
 
   get direccionGenerada(): string {
-    const tipoVia = this.formulario.get('tipoVia')?.value ?? '';
+    const tipoVia = this.nombreOpcion(this.opcionesTipoVia, this.formulario.get('tipoVia')?.value);
     const detalleVia = this.formulario.get('detalleVia')?.value ?? '';
     const numeroCruce = this.formulario.get('numeroCruce')?.value ?? '';
     const placaPuerta = this.formulario.get('placaPuerta')?.value ?? '';
-    const interiorTipo = this.formulario.get('interiorTipo')?.value ?? '';
+    const interiorTipo = this.nombreOpcion(
+      this.opcionesTipoInterior,
+      this.formulario.get('interiorTipo')?.value,
+    );
     const detalleInterior = this.formulario.get('detalleInterior')?.value ?? '';
     const via = [tipoVia, detalleVia].filter(Boolean).join(' ').toUpperCase();
     const cruce = [numeroCruce, placaPuerta].filter(Boolean).join(' - ');
     const interior = [interiorTipo, detalleInterior].filter(Boolean).join(' ').toUpperCase();
 
     return [via, cruce ? `# ${cruce}` : '', interior].filter(Boolean).join(' ');
+  }
+
+  private nombreOpcion(opciones: OpcionCatalogo[], id: unknown): string {
+    return opciones.find(opcion => opcion.id === id)?.nombre ?? '';
   }
 
   cambiarResponsabilidad(valor: number, seleccionado: boolean): void {

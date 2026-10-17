@@ -1,10 +1,4 @@
 <form [formGroup]="formulario" (input)="emitirCambio()" (change)="emitirCambio()">
-  @if (cargandoCatalogos) {
-    <p aria-live="polite">Cargando catálogos...</p>
-  } @else if (errorCatalogos) {
-    <p role="alert">{{ errorCatalogos }}</p>
-    <button type="button" (click)="reintentarCatalogos.emit()">Reintentar carga de catálogos</button>
-  }
   <plantilla-tarjeta-contenedora
     [icon]="'storefront'"
     [title]="'1. Actividades Económicas y Clasificación de Bienes y Servicios (CIIU y UNSPSC)'"
@@ -80,7 +74,7 @@
       <p aria-live="polite">Cargando catálogo UNSPSC...</p>
     } @else if (errorUnspsc) {
       <p role="alert">{{ errorUnspsc }}</p>
-      <button type="button" (click)="reintentarUnspsc.emit()">Reintentar carga UNSPSC</button>
+      <button class="boton boton--secundario" type="button" (click)="reintentarUnspsc.emit()">Reintentar carga UNSPSC</button>
     } @else {
       <div class="campo-grid campo-grid--three">
         <label class="campo"><span>Buscar código o descripción UNSPSC</span>

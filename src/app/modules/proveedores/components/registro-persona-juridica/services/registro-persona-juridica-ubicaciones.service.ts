@@ -1,7 +1,8 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { map, Observable, switchMap } from 'rxjs';
+import { catchError, map, Observable, shareReplay, switchMap, throwError } from 'rxjs';
 import { environment } from 'src/environments/environment';
+import { descartarRegistrosVacios, obtenerTodasLasPaginas } from './registro-persona-juridica-paginacion';
 
 interface TipoLugar {
   Id: number;
@@ -21,14 +22,21 @@ interface ReferenciaLugar {
   Id: number;
   Nombre: string;
   Activo?: boolean;
-  TipoLugarId: TipoLugar;
+  CodigoTipoLugar: string;
+}
+
+interface TipoRelacionLugar {
+  Id: number;
+  CodigoAbreviacion: string;
+  Activo?: boolean;
 }
 
 interface RelacionLugares {
   Id: number;
   Activo: boolean;
-  LugarPadre: ReferenciaLugar;
-  LugarHijo: ReferenciaLugar;
+  LugarPadreId: ReferenciaLugar;
+  LugarHijoId: ReferenciaLugar;
+  TipoRelacionLugarId: TipoRelacionLugar;
 }
 
 export interface OpcionLugar {
@@ -44,16 +52,13 @@ export interface CatalogosUbicacionesPersonaJuridica {
 @Injectable({ providedIn: 'root' })
 export class RegistroPersonaJuridicaUbicacionesService {
   private readonly ubicacionesUrl = environment.UBICACIONES_SERVICE.replace(/\/+$/, '');
+  private readonly lugaresPorTipo = new Map<string, Observable<Lugar[]>>();
+  private readonly relacionesPorPadre = new Map<number, Observable<RelacionLugares[]>>();
 
   constructor(private readonly http: HttpClient) {}
 
   obtenerDepartamentos(): Observable<CatalogosUbicacionesPersonaJuridica> {
-    const params = new HttpParams()
-      .set('query', 'TipoLugarId.CodigoAbreviacion:P')
-      .set('limit', '200');
-
-    return this.http.get<unknown>(`${this.ubicacionesUrl}/lugar`, { params }).pipe(
-      map(respuesta => this.validarLugares(respuesta, '/lugar')),
+    return this.obtenerLugaresPorTipo('P').pipe(
       map(lugares => {
         const colombia = lugares.find(
           lugar =>
@@ -67,20 +72,10 @@ export class RegistroPersonaJuridicaUbicacionesService {
         return colombia;
       }),
       switchMap(colombia =>
-        this.obtenerRelaciones(colombia.Nombre, 100).pipe(
+        this.obtenerRelacionesDePadre(colombia.Id).pipe(
           map(relaciones => ({
             pais: this.aOpcion(colombia),
-            departamentos: relaciones
-              .filter(
-                relacion =>
-                  relacion.Activo
-                  && relacion.LugarPadre.Activo !== false
-                  && relacion.LugarPadre.Id === colombia.Id
-                  && relacion.LugarPadre.TipoLugarId.CodigoAbreviacion === 'P'
-                  && relacion.LugarHijo.Activo !== false
-                  && relacion.LugarHijo.TipoLugarId.CodigoAbreviacion === 'D',
-              )
-              .map(relacion => this.aOpcion(relacion.LugarHijo)),
+            departamentos: this.hijosDe(relaciones, colombia.Id, 'D'),
           })),
         ),
       ),
@@ -88,38 +83,124 @@ export class RegistroPersonaJuridicaUbicacionesService {
   }
 
   obtenerCiudades(departamento: OpcionLugar): Observable<OpcionLugar[]> {
-    return this.obtenerRelaciones(departamento.nombre, 200).pipe(
-      map(relaciones =>
-        relaciones
+    return this.obtenerRelacionesDePadre(departamento.id).pipe(
+      map(relaciones => this.hijosDe(relaciones, departamento.id, 'C')),
+    );
+  }
+
+  private hijosDe(
+    relaciones: RelacionLugares[],
+    idPadre: number,
+    codigoTipoHijo: string,
+  ): OpcionLugar[] {
+    const hijos = new Map<number, OpcionLugar>();
+    for (const relacion of relaciones) {
+      const padre = relacion.LugarPadreId;
+      const hijo = relacion.LugarHijoId;
+      if (
+        relacion.Activo
+        && relacion.TipoRelacionLugarId.CodigoAbreviacion === 'CON'
+        && padre.Activo !== false
+        && padre.Id === idPadre
+        && hijo.Activo !== false
+        && hijo.CodigoTipoLugar === codigoTipoHijo
+      ) {
+        hijos.set(hijo.Id, { id: hijo.Id, nombre: hijo.Nombre });
+      }
+    }
+    return [...hijos.values()];
+  }
+
+  obtenerProcedencias(): Observable<OpcionLugar[]> {
+    return this.obtenerOpcionesPorTipo('C');
+  }
+
+  obtenerTiposVia(): Observable<OpcionLugar[]> {
+    return this.obtenerOpcionesPorTipo('DIRECCIONES');
+  }
+
+  obtenerTiposInterior(): Observable<OpcionLugar[]> {
+    return this.obtenerOpcionesPorTipo('INTERIORES');
+  }
+
+  private obtenerOpcionesPorTipo(codigoTipoLugar: string): Observable<OpcionLugar[]> {
+    return this.obtenerLugaresPorTipo(codigoTipoLugar).pipe(
+      map(lugares =>
+        lugares
           .filter(
-            relacion =>
-              relacion.Activo
-              && relacion.LugarPadre.Activo !== false
-              && relacion.LugarPadre.Id === departamento.id
-              && relacion.LugarPadre.TipoLugarId.CodigoAbreviacion === 'D'
-              && relacion.LugarHijo.Activo !== false
-              && relacion.LugarHijo.TipoLugarId.CodigoAbreviacion === 'C',
+            lugar =>
+              lugar.Activo !== false && lugar.TipoLugarId.CodigoAbreviacion === codigoTipoLugar,
           )
-          .map(relacion => this.aOpcion(relacion.LugarHijo)),
+          .map(lugar => this.aOpcion(lugar)),
       ),
     );
   }
 
-  private obtenerRelaciones(nombrePadre: string, limite: number): Observable<RelacionLugares[]> {
-    const params = new HttpParams()
-      .set('query', `LugarPadreId.Nombre:${nombrePadre}`)
-      .set('limit', String(limite));
+  private obtenerLugaresPorTipo(codigoTipoLugar: string): Observable<Lugar[]> {
+    const existente = this.lugaresPorTipo.get(codigoTipoLugar);
+    if (existente) {
+      return existente;
+    }
+    const query = `TipoLugarId.CodigoAbreviacion:${codigoTipoLugar}`;
+    const solicitud = obtenerTodasLasPaginas<Lugar>(
+      (limit, offset) => {
+        const params = new HttpParams()
+          .set('query', query)
+          .set('limit', String(limit))
+          .set('offset', String(offset));
+        return this.http
+          .get<unknown>(`${this.ubicacionesUrl}/lugar`, { params })
+          .pipe(map(respuesta => this.validarLugares(respuesta, '/lugar')));
+      },
+      lugar => lugar.Id,
+      '/lugar',
+    ).pipe(
+      catchError(error => {
+        this.lugaresPorTipo.delete(codigoTipoLugar);
+        console.error(`No fue posible cargar /lugar (query "${query}").`, error);
+        return throwError(() => error);
+      }),
+      shareReplay(1),
+    );
+    this.lugaresPorTipo.set(codigoTipoLugar, solicitud);
+    return solicitud;
+  }
 
-    return this.http
-      .get<unknown>(`${this.ubicacionesUrl}/relacion_lugares`, { params })
-      .pipe(map(respuesta => this.validarRelaciones(respuesta)));
+  private obtenerRelacionesDePadre(idPadre: number): Observable<RelacionLugares[]> {
+    const existente = this.relacionesPorPadre.get(idPadre);
+    if (existente) {
+      return existente;
+    }
+    const query = `LugarPadreId.Id:${idPadre}`;
+    const solicitud = obtenerTodasLasPaginas<RelacionLugares>(
+      (limit, offset) => {
+        const params = new HttpParams()
+          .set('query', query)
+          .set('limit', String(limit))
+          .set('offset', String(offset));
+        return this.http
+          .get<unknown>(`${this.ubicacionesUrl}/relacion_lugares`, { params })
+          .pipe(map(respuesta => this.validarRelaciones(respuesta)));
+      },
+      relacion => relacion.Id,
+      '/relacion_lugares',
+    ).pipe(
+      catchError(error => {
+        this.relacionesPorPadre.delete(idPadre);
+        console.error(`No fue posible cargar /relacion_lugares (query "${query}").`, error);
+        return throwError(() => error);
+      }),
+      shareReplay(1),
+    );
+    this.relacionesPorPadre.set(idPadre, solicitud);
+    return solicitud;
   }
 
   private validarLugares(respuesta: unknown, recurso: string): Lugar[] {
     if (!Array.isArray(respuesta)) {
       throw new Error(`La respuesta de ${recurso} no es un arreglo directo.`);
     }
-    return respuesta.map((registro, indice) => {
+    return descartarRegistrosVacios(respuesta).map((registro, indice) => {
       const lugar = this.objetoRequerido(registro, `${recurso}[${indice}]`);
       return {
         Id: this.idRequerido(lugar['Id'], `${recurso}[${indice}].Id`),
@@ -137,62 +218,28 @@ export class RegistroPersonaJuridicaUbicacionesService {
     if (!Array.isArray(respuesta)) {
       throw new Error('La respuesta de /relacion_lugares no es un arreglo directo.');
     }
-    return respuesta.map((registro, indice) => {
+    return descartarRegistrosVacios(respuesta).map((registro, indice) => {
       const relacion = this.objetoRequerido(registro, `/relacion_lugares[${indice}]`);
-      const padre = this.obtenerReferenciaRelacion(
-        relacion,
-        'LugarPadreId',
-        'LugarPadre',
-        `/relacion_lugares[${indice}]`,
-      );
-      const hijo = this.obtenerReferenciaRelacion(
-        relacion,
-        'LugarHijoId',
-        'LugarHijo',
-        `/relacion_lugares[${indice}]`,
-      );
-
       return {
         Id: this.idRequerido(relacion['Id'], `/relacion_lugares[${indice}].Id`),
         Activo: this.booleanoRequerido(
           relacion['Activo'],
           `/relacion_lugares[${indice}].Activo`,
         ),
-        LugarPadre: this.validarReferenciaLugar(
-          padre,
-          `/relacion_lugares[${indice}].LugarPadre`,
+        LugarPadreId: this.validarReferenciaLugar(
+          relacion['LugarPadreId'],
+          `/relacion_lugares[${indice}].LugarPadreId`,
         ),
-        LugarHijo: this.validarReferenciaLugar(
-          hijo,
-          `/relacion_lugares[${indice}].LugarHijo`,
+        LugarHijoId: this.validarReferenciaLugar(
+          relacion['LugarHijoId'],
+          `/relacion_lugares[${indice}].LugarHijoId`,
+        ),
+        TipoRelacionLugarId: this.validarTipoRelacionLugar(
+          relacion['TipoRelacionLugarId'],
+          `/relacion_lugares[${indice}].TipoRelacionLugarId`,
         ),
       };
     });
-  }
-
-  private obtenerReferenciaRelacion(
-    relacion: Record<string, unknown>,
-    idKey: 'LugarPadreId' | 'LugarHijoId',
-    expandedKey: 'LugarPadre' | 'LugarHijo',
-    campo: string,
-  ): unknown {
-    const referenciaId = relacion[idKey];
-    if (this.esObjeto(referenciaId)) {
-      return referenciaId;
-    }
-    const referenciaExpandida = relacion[expandedKey];
-    if (this.esObjeto(referenciaExpandida)) {
-      return referenciaExpandida;
-    }
-    if (Object.prototype.hasOwnProperty.call(relacion, idKey)) {
-      return relacion[idKey];
-    }
-    if (Object.prototype.hasOwnProperty.call(relacion, expandedKey)) {
-      return relacion[expandedKey];
-    }
-    throw new Error(
-      `La respuesta de ${campo} no contiene "${idKey}" ni "${expandedKey}".`,
-    );
   }
 
   private esObjeto(valor: unknown): valor is Record<string, unknown> {
@@ -201,11 +248,27 @@ export class RegistroPersonaJuridicaUbicacionesService {
 
   private validarReferenciaLugar(valor: unknown, campo: string): ReferenciaLugar {
     const lugar = this.objetoRequerido(valor, campo);
+    const tipoLugar = this.objetoRequerido(lugar['TipoLugarId'], `${campo}.TipoLugarId`);
     return {
       Id: this.idRequerido(lugar['Id'], `${campo}.Id`),
       Nombre: this.nombreRequerido(lugar['Nombre'], `${campo}.Nombre`),
       Activo: this.booleanoOpcional(lugar['Activo'], `${campo}.Activo`),
-      TipoLugarId: this.tipoLugarRequerido(lugar['TipoLugarId'], `${campo}.TipoLugarId`),
+      CodigoTipoLugar: this.nombreRequerido(
+        tipoLugar['CodigoAbreviacion'],
+        `${campo}.TipoLugarId.CodigoAbreviacion`,
+      ),
+    };
+  }
+
+  private validarTipoRelacionLugar(valor: unknown, campo: string): TipoRelacionLugar {
+    const tipo = this.objetoRequerido(valor, campo);
+    return {
+      Id: this.idRequerido(tipo['Id'], `${campo}.Id`),
+      CodigoAbreviacion: this.nombreRequerido(
+        tipo['CodigoAbreviacion'],
+        `${campo}.CodigoAbreviacion`,
+      ),
+      Activo: this.booleanoOpcional(tipo['Activo'], `${campo}.Activo`),
     };
   }
 
@@ -222,7 +285,7 @@ export class RegistroPersonaJuridicaUbicacionesService {
     };
   }
 
-  private aOpcion(lugar: ReferenciaLugar | Lugar): OpcionLugar {
+  private aOpcion(lugar: Lugar): OpcionLugar {
     return { id: lugar.Id, nombre: lugar.Nombre };
   }
 

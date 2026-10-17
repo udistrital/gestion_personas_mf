@@ -13,13 +13,17 @@
   ></stepper-visual>
 
   <section class="contenido-pasos" aria-label="Información del registro">
+    <registro-persona-juridica-estado-catalogos
+      [cargando]="cargandoCatalogos"
+      [error]="errorCatalogos"
+      [sinRegistros]="catalogosSinRegistros"
+      (reintentar)="reintentarCatalogos()"
+    ></registro-persona-juridica-estado-catalogos>
     @switch (pasoActual) {
       @case (1) {
         <registro-persona-juridica-paso-1
           [(formulario)]="formulario"
           [catalogos]="catalogos"
-          [cargandoCatalogos]="cargandoCatalogos"
-          [errorCatalogos]="errorCatalogos"
           [pais]="pais"
           [departamentos]="departamentos"
           [ciudades]="ciudadesDomicilio"
@@ -27,7 +31,6 @@
           [cargandoCiudades]="cargandoCiudadesDomicilio"
           [errorDepartamentos]="errorDepartamentos"
           [errorCiudades]="errorCiudadesDomicilio"
-          (reintentarCatalogos)="reintentarCatalogos()"
           (reintentarDepartamentos)="reintentarCargaDepartamentos()"
           (reintentarCiudades)="reintentarCiudadesDomicilio()"
         ></registro-persona-juridica-paso-1>
@@ -36,8 +39,6 @@
         <registro-persona-juridica-paso-2
           [(formulario)]="formulario"
           [catalogos]="catalogos"
-          [cargandoCatalogos]="cargandoCatalogos"
-          [errorCatalogos]="errorCatalogos"
           [pais]="pais"
           [departamentos]="departamentos"
           [ciudades]="ciudadesApertura"
@@ -45,7 +46,6 @@
           [cargandoCiudades]="cargandoCiudadesApertura"
           [errorDepartamentos]="errorDepartamentos"
           [errorCiudades]="errorCiudadesApertura"
-          (reintentarCatalogos)="reintentarCatalogos()"
           (reintentarDepartamentos)="reintentarCargaDepartamentos()"
           (reintentarCiudades)="reintentarCiudadesApertura()"
         ></registro-persona-juridica-paso-2>
@@ -54,9 +54,6 @@
         <registro-persona-juridica-paso-3
           [(formulario)]="formulario"
           [catalogos]="catalogos"
-          [cargandoCatalogos]="cargandoCatalogos"
-          [errorCatalogos]="errorCatalogos"
-          (reintentarCatalogos)="reintentarCatalogos()"
         ></registro-persona-juridica-paso-3>
       }
       @case (4) {
@@ -68,7 +65,6 @@
           [catalogoUnspsc]="catalogoUnspsc"
           [cargandoUnspsc]="cargandoUnspsc"
           [errorUnspsc]="errorUnspsc"
-          (reintentarCatalogos)="reintentarCatalogos()"
           (reintentarUnspsc)="reintentarUnspsc()"
         ></registro-persona-juridica-paso-4>
       }
