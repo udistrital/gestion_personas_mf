@@ -2,7 +2,7 @@ import { Component, DestroyRef, OnInit } from "@angular/core";
 import { FormControl, FormGroup, Validators } from "@angular/forms";
 import { Router } from "@angular/router";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { forkJoin, map, Subscription } from "rxjs";
+import { asapScheduler, forkJoin, map, observeOn, Subscription } from "rxjs";
 import { PasoStepperVisual } from "src/app/shared/components/stepper-visual/stepper-visual.component";
 import { camposPorPaso } from "./registro-persona-juridica.component.utils";
 import {
@@ -243,8 +243,10 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
       this.cargandoCiudadesApertura = true;
     }
 
+    // La caché del servicio reemite de forma síncrona; observeOn evita mutar
+    // ciudades durante el mismo ciclo de detección de cambios (NG0100).
     this.ubicacionesService.obtenerCiudades(departamento)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(observeOn(asapScheduler), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: ciudades => {
           if (
