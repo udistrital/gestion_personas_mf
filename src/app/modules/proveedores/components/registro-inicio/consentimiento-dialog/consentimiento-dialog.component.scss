@@ -14,7 +14,7 @@
 
 .rp-consentimiento--primario {
   --estado-tono: var(--agora-primary);
-  --estado-superficie: var(--agora-surface-highlight);
+  --estado-superficie: color-mix(in srgb, var(--agora-text-muted) 5%, var(--agora-surface));
   --estado-borde: color-mix(in srgb, var(--agora-border-strong) 40%, transparent);
 }
 
@@ -125,7 +125,7 @@
 }
 
 .rp-consentimiento-boton:hover {
-  background-color: var(--agora-surface-highlight);
+  background-color: color-mix(in srgb, var(--agora-text-muted) 5%, var(--agora-surface));
   border-color: color-mix(in srgb, var(--agora-primary) 60%, transparent);
 }
 
