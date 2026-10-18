@@ -29,7 +29,7 @@
   width: 100%;
   margin: 0;
   padding: 0 0 1rem;
-  border-bottom: 1px solid var(--agora-border);
+  border-bottom: 1px solid color-mix(in srgb, var(--agora-text-muted) 10%, var(--agora-surface));;
 }
 
 .encabezado__contenido {
@@ -42,15 +42,15 @@
 
 .icono {
   display: flex;
-  flex: 0 0 3.5rem;
+  flex: 0 0 3rem;
   align-items: center;
   justify-content: center;
-  width: 3.5rem;
-  height: 3.5rem;
+  width: 3rem;
+  height: 3rem;
   aspect-ratio: 1;
   border-radius: 0.75rem;
-  background: var(--agora-border);
-  color: var(--agora-primary);
+  background: var(--agora-primary);
+  color: var(--agora-surface);
 }
 
 .icono mat-icon {

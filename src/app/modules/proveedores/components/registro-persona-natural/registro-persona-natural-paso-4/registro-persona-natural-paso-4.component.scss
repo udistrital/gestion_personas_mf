@@ -58,7 +58,7 @@
   border: 1px solid color-mix(in srgb, var(--agora-primary) 6%, transparent);
   border-radius: 0.5rem;
 
-  background: var(--agora-surface-soft);
+  background-color: color-mix(in srgb, var(--agora-text-muted) 5%, var(--agora-surface));
 
   display: flex;
   flex-direction: column;
@@ -72,9 +72,9 @@
   align-items: center;
 
   padding: 0.25rem 0.6rem;
-  border-radius: 0.15rem;
+  border-radius: 0.5rem;
 
-  background: var(--agora-surface-highlight);
+  background-color: var(--agora-surface);
   color: var(--agora-text-muted);
 
   font-size: 0.6875rem;
@@ -164,7 +164,7 @@
   border: 1px solid color-mix(in srgb, var(--agora-primary) 8%, transparent);
   border-radius: 0.75rem;
 
-  background: var(--agora-surface);
+  background-color: color-mix(in srgb, var(--agora-text-muted) 5%, var(--agora-surface));
 }
 
 
@@ -180,7 +180,7 @@
 
   box-sizing: border-box;
 
-  background: var(--agora-surface-soft);
+  background-color: color-mix(in srgb, var(--agora-text-muted) 5%, var(--agora-surface));
   border-bottom: 1px solid color-mix(in srgb, var(--agora-primary) 8%, transparent);
 }
 
@@ -240,7 +240,7 @@
   border-radius: 0.5rem;
   resize: vertical;
 
-  background: var(--agora-background);
+  background: var(--agora-surface);
   color: var(--agora-text);
 
   font-family: inherit;
@@ -274,7 +274,7 @@
 
   box-sizing: border-box;
 
-  background: var(--agora-surface-soft);
+  background-color: color-mix(in srgb, var(--agora-text-muted) 5%, var(--agora-surface));
   color: var(--agora-text-muted);
 
   font-size: 0.6875rem;
@@ -362,7 +362,7 @@
 }
 
 .paso4-declaraciones__leyes {
-  background: var(--agora-surface-highlight);
+  background-color: color-mix(in srgb, var(--agora-text-muted) 5%, var(--agora-surface));
   color: var(--agora-text-muted);
 }
 
@@ -376,7 +376,7 @@
   margin-bottom: 1rem;
   border: 1px solid color-mix(in srgb, var(--agora-primary) 18%, transparent);
   border-radius: 0.5rem;
-  background: var(--agora-surface-highlight);
+  background-color: color-mix(in srgb, var(--agora-text-muted) 5%, var(--agora-surface));
   box-sizing: border-box;
 }
 
@@ -387,8 +387,8 @@
   width: 2rem;
   height: 2rem;
   border-radius: 50%;
-  background: var(--agora-border-strong);
-  color: var(--agora-primary);
+  background: var(--agora-primary);
+  color: var(--agora-surface);
 }
 
 .paso4-consentimiento__icono mat-icon {
@@ -662,9 +662,9 @@
   gap: 16px;
   margin-bottom: 28px;
   padding: 22px 24px;
-  border: 1px solid var(--agora-border);
+  border: 2px solid color-mix(in srgb, var(--agora-border-strong) 40%, var(--agora-surface));
   border-radius: 12px;
-  background: var(--agora-surface-soft);
+  background: var(--agora-surface);
 }
 
 .step-banner__icon {
@@ -675,14 +675,14 @@
   height: 46px;
   flex: 0 0 46px;
   border-radius: 10px;
-  background: var(--agora-surface-highlight);
-  color: var(--agora-primary);
+  background-color: var(--agora-primary);
+  color: var(--agora-surface);
 }
 
 .step-banner h2 {
   margin: 0 0 7px;
-  color: var(--agora-text);
-  font-size: 19px;
+  color: var(--agora-primary);
+  font-size: 22px;
   font-weight: 700;
   line-height: 1.35;
 }

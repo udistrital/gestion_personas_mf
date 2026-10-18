@@ -60,7 +60,7 @@
 		padding: 0.625rem 0.75rem;
 		border: 1px solid transparent;
 		border-radius: t.$radio-md;
-		background: var(--agora-background);
+		background-color: color-mix(in srgb, var(--agora-text-muted) 5%, var(--agora-surface));
 		color: var(--agora-text);
 		font: inherit;
 		font-size: t.$fuente-lg;
@@ -75,7 +75,7 @@
 	}
 
 	.campo input[readonly] {
-		background: var(--agora-surface-highlight);
+		background-color: color-mix(in srgb, var(--agora-text-muted) 5%, var(--agora-surface));
 		text-align: center;
 	}
 
@@ -106,9 +106,9 @@
 	:is(.vinculacion, .direccion, .responsabilidades, .opciones) {
 		margin-bottom: 1rem;
 		padding: 1rem;
-		border: 1px solid var(--agora-border);
+		border: 2px solid color-mix(in srgb, var(--agora-border-strong) 40%, var(--agora-surface));
 		border-radius: t.$radio-lg;
-		background: var(--agora-surface-soft);
+		background-color: var(--agora-surface);
 	}
 
 	:is(.vinculacion h3, .direccion h3, .subtitulo) {
@@ -160,9 +160,9 @@
 	.documento-card,
 	.soporte-rup {
 		padding: 1rem;
-		border: 1px solid var(--agora-border);
+		border: 2px solid color-mix(in srgb, var(--agora-border-strong) 40%, var(--agora-surface));
 		border-radius: t.$radio-lg;
-		background: var(--agora-surface-soft);
+		background-color: var(--agora-surface);
 	}
 
 	.documento-card {
@@ -191,8 +191,8 @@
 		width: 2.5rem;
 		height: 2.5rem;
 		border-radius: t.$radio-lg;
-		background: var(--agora-error-surface);
-		color: var(--agora-error);
+		background: var(--agora-primary);
+		color: var(--agora-surface);
 	}
 
 	.documento-acciones,
@@ -211,16 +211,22 @@
 
 	.boton mat-icon {
 		font-size: 1rem;
-		vertical-align: middle;
+    padding-top: 4px;
 	}
 
 	.boton--secundario {
+    display: flex;
+    align-items: center;
+    gap: 2px;
 		background: var(--agora-primary);
 		color: var(--agora-on-primary);
 	}
 
 	.boton--ligero {
-		background: var(--agora-surface-highlight);
+    display: flex;
+    align-items: center;
+    gap: 2px;
+		background-color: color-mix(in srgb, var(--agora-text-muted) 5%, var(--agora-surface));
 		color: var(--agora-primary);
 	}
 
@@ -301,7 +307,7 @@
 		font-weight: 400;
 	}
 
-	.subtitulo { margin: 1.5rem 0 0.75rem; }
+	.subtitulo { margin: 0.75rem; }
 
 	@media (min-width: t.$bp-sm) {
 		.campo-grid--two { --columnas: 2; }
