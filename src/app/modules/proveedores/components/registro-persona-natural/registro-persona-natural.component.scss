@@ -48,8 +48,8 @@
   padding: 0.5rem 0.875rem;
   border: 0;
   border-radius: 0.5rem;
-  background: var(--agora-surface-soft);
-  color: var(--agora-primary-dark);
+  background: var(--agora-primary);
+  color: var(--agora-surface);
   font: inherit;
   font-size: 0.8125rem;
   font-weight: 700;
@@ -58,7 +58,7 @@
 
 .aviso-borrador__descartar:hover,
 .aviso-borrador__descartar:focus-visible {
-  background: var(--agora-surface-highlight);
+  background-color: var(--agora-primary-dark);
 }
 
 @media (max-width: t.$bp-sm) {

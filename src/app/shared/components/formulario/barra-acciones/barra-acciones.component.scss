@@ -89,12 +89,14 @@
 
 .boton-borrador {
   color: var(--agora-primary-dark);
-  background: var(--agora-surface-soft);
+  background-color: var(--agora-surface);
+  border: 2px solid color-mix(in srgb, var(--agora-border-strong) 40%, var(--agora-surface));
 }
 
 .boton-borrador:hover,
 .boton-borrador:focus-visible {
-  background: var(--agora-surface-highlight);
+  background-color: color-mix(in srgb, var(--agora-text-muted) 5%, var(--agora-surface));
+  border-color: color-mix(in srgb, var(--agora-primary) 60%, transparent);
 }
 
 .boton-acento {
