@@ -9,7 +9,8 @@
   <stepper-visual
     [label]="'Progreso del registro de persona jurídica'"
     [pasos]="pasos"
-    [(pasoActual)]="pasoActual"
+    [pasoActual]="pasoActual"
+    (pasoActualChange)="irAlPaso($event)"
   ></stepper-visual>
 
   <section class="contenido-pasos" aria-label="Información del registro">

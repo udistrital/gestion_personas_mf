@@ -313,6 +313,26 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
     }
   }
 
+  irAlPaso(paso: number): void {
+    if (paso < 1 || paso > this.pasos.length) {
+      return;
+    }
+
+    if (paso < this.pasoActual) {
+      this.pasoActual = paso;
+      return;
+    }
+
+    // Avanzar solo es posible validando cada paso intermedio, igual que el botón Continuar.
+    while (this.pasoActual < paso) {
+      const pasoPrevio = this.pasoActual;
+      this.continuar();
+      if (this.pasoActual === pasoPrevio) {
+        break;
+      }
+    }
+  }
+
   private validarFormulario(): boolean {
     const nombresControles = camposPorPaso[this.pasoActual] ?? [];
     const camposConError = nombresControles

@@ -756,8 +756,20 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    this.currentStep = paso;
-    this.persistirBorrador(true);
+    if (paso < this.currentStep) {
+      this.currentStep = paso;
+      this.persistirBorrador(true);
+      return;
+    }
+
+    // Avanzar solo es posible validando cada paso intermedio, igual que el botón Continuar.
+    while (this.currentStep < paso) {
+      const pasoPrevio = this.currentStep;
+      this.continuar();
+      if (this.currentStep === pasoPrevio) {
+        break;
+      }
+    }
   }
 
   guardarBorrador(): void {
