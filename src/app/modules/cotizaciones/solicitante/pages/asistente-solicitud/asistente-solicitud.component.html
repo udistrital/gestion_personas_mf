@@ -1,0 +1,70 @@
+<plantilla-pagina-contenedora
+  [breadcrumb]="breadcrumb"
+  title="Nueva solicitud de cotización"
+  [mostrarBotonRegresar]="true"
+  (regresar)="regresar()"
+>
+  <div class="asistente">
+    @if (borradorRestaurado()) {
+      <section class="aviso-borrador" role="status" aria-live="polite">
+        <div class="aviso-borrador__texto">
+          <strong>Se restauró un borrador anterior.</strong>
+          <span>
+            Los criterios del paso 1 se recuperan; el cruce con SICAPITAL se
+            vuelve a ejecutar con la necesidad seleccionada.
+          </span>
+        </div>
+        <button
+          class="aviso-borrador__descartar"
+          type="button"
+          (click)="descartarBorrador()"
+        >
+          Descartar borrador
+        </button>
+      </section>
+    }
+
+    <p class="asistente__descripcion">
+      Diligencie los requisitos técnicos, presupuestales y contractuales para
+      iniciar el proceso de cotización institucional.
+    </p>
+
+    <div class="asistente__progreso">
+      <asistente-pasos
+        [pasos]="pasos"
+        [pasoActual]="pasoActual"
+        [pasoAlcanzado]="pasoAlcanzado"
+        [pasoConError]="pasoConError"
+        (pasoActualChange)="irAlPaso($event)"
+      ></asistente-pasos>
+    </div>
+
+    <form class="asistente__formulario" [formGroup]="asistenteForm" novalidate>
+      @if (pasoActual === 1) {
+        <paso-necesidad
+          [form]="necesidadForm"
+          (cambioEstado)="alCambiarEstadoCruce($event)"
+          (cambioAcuerdo)="alCambiarAcuerdo($event)"
+        ></paso-necesidad>
+      } @else {
+        <paso-pendiente
+          [numero]="pasoActual"
+          [nombre]="nombrePasoActual"
+        ></paso-pendiente>
+      }
+    </form>
+
+    <barra-acciones-formulario
+      [mostrarRegreso]="pasoActual > 1"
+      [esUltimoPaso]="pasoActual === 7"
+      [estadoMensaje]="estadoMensaje"
+      [estadoDetalle]="estadoDetalle"
+      [deshabilitarContinuar]="!pasoValido"
+      [ayudaContinuar]="ayudaContinuar"
+      (regreso)="regresar()"
+      (guardar)="guardarBorrador()"
+      (continuar)="continuar()"
+      (finalizar)="continuar()"
+    ></barra-acciones-formulario>
+  </div>
+</plantilla-pagina-contenedora>

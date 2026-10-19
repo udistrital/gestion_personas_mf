@@ -1,0 +1,368 @@
+@use 'src/app/shared/styles/tokens' as t;
+
+:host {
+  display: block;
+}
+
+.dialogo {
+  display: flex;
+  flex-direction: column;
+  min-width: min(100vw - 2rem, 26rem);
+}
+
+/* ── Cabecera ────────────────────────────────────────────────────────────── */
+.dialogo__cabecera {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.5rem 1.5rem 1rem;
+}
+
+.dialogo__icono {
+  display: flex;
+  flex: 0 0 3rem;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: 999px;
+  background: var(--agora-primary);
+  color: var(--agora-surface);
+}
+
+.dialogo__icono mat-icon {
+  width: 1.625rem;
+  height: 1.625rem;
+  font-size: 1.625rem;
+}
+
+.dialogo__textos {
+  min-width: 0;
+  padding-right: 2.5rem;
+}
+
+.dialogo__antetitulo {
+  display: block;
+  color: var(--agora-texto-neutro);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Mayor especificidad que el `mat-dialog-title` global. */
+.dialogo .dialogo__titulo {
+  margin: 0.3rem 0;
+  padding: 0;
+  color: var(--agora-primary);
+  font-family: inherit;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.dialogo__descripcion {
+  color: var(--agora-texto-neutro);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.dialogo__cerrar {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  color: var(--agora-texto-neutro);
+}
+
+/* ── Cuerpo ──────────────────────────────────────────────────────────────── */
+.dialogo__cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0 1.5rem 1.25rem;
+  overflow-y: auto;
+  max-height: min(60vh, 30rem);
+}
+
+.dialogo__datos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 1rem;
+  margin: 0;
+  padding: 1rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: 0.75rem;
+  background: var(--agora-superficie-neutra);
+}
+
+.dato {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+  margin: 0;
+}
+
+.dato--ancho {
+  grid-column: 1 / -1;
+}
+
+.dato__etiqueta {
+  color: var(--agora-texto-neutro);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dato__valor {
+  margin: 0;
+  color: var(--agora-primary);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.dato__valor--codigo {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.dato__valor--neutro {
+  color: var(--agora-text);
+}
+
+.dato__renglon {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  color: var(--agora-text);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.dato__renglon mat-icon {
+  color: var(--agora-texto-neutro);
+}
+
+.dato__icono {
+  color: var(--agora-primary) !important;
+}
+
+.dato__moneda {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 0.375rem;
+  background: var(--agora-primary);
+  color: var(--agora-on-primary);
+  font-size: 1rem;
+  font-weight: 700;
+  box-shadow: var(--agora-sombra-tarjeta);
+}
+
+.dato__moneda mat-icon {
+  width: 1rem;
+  height: 1rem;
+  font-size: 1rem;
+  color: inherit !important;
+}
+
+.dato__sello {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--agora-success-border);
+  border-radius: 0.25rem;
+  background: var(--agora-success-surface);
+  color: var(--agora-success);
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.dialogo__explicacion {
+  padding: 1rem;
+  border-left: 3px solid var(--agora-primary);
+  border-radius: 0.5rem;
+  background: var(--agora-superficie-neutra);
+}
+
+.dialogo__explicacion-titulo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.5rem;
+  color: var(--agora-primary);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.dialogo__explicacion-titulo mat-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  font-size: 1.125rem;
+}
+
+.dialogo__explicacion p {
+  margin: 0;
+  color: var(--agora-texto-neutro);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  text-align: justify;
+}
+
+.dialogo__condicion {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--agora-warning-border);
+  border-radius: 0.5rem;
+  background: var(--agora-warning-surface);
+}
+
+.dialogo__condicion > mat-icon {
+  flex: 0 0 auto;
+  margin-top: 0.125rem;
+  color: var(--agora-warning-text);
+}
+
+.dialogo__condicion-etiqueta {
+  display: block;
+  color: var(--agora-warning-text);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dialogo__condicion p {
+  margin: 0.25rem 0 0;
+  color: var(--agora-warning-text);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+/* ── Pie de acciones ─────────────────────────────────────────────────────── */
+.dialogo__pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem 1.5rem;
+  border-top: 1px solid var(--agora-borde-tarjeta);
+  background: var(--agora-superficie-neutra);
+}
+
+.dialogo__validez {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  color: var(--agora-texto-neutro);
+  font-size: 0.6875rem;
+}
+
+.dialogo__validez mat-icon {
+  width: 1rem;
+  height: 1rem;
+  font-size: 1rem;
+  color: var(--agora-primary);
+}
+
+.dialogo__acciones {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.boton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  box-sizing: border-box;
+  min-height: 42px;
+  padding: 0.625rem 1.25rem;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+}
+
+.boton mat-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  font-size: 1.125rem;
+}
+
+.boton--secundario {
+  border-color: var(--agora-border-strong);
+  background-color: var(--agora-surface);
+  color: var(--agora-text);
+}
+
+.boton--secundario:hover:not(:disabled) {
+  background: var(--agora-surface-soft);
+}
+
+.boton--primario {
+  background-color: var(--agora-primary);
+  color: var(--agora-on-primary);
+  box-shadow: var(--agora-sombra-xs);
+  font-weight: 700;
+}
+
+.boton--primario:hover:not(:disabled) {
+  background-color: var(--agora-primary-dark);
+  border-color: var(--agora-primary-dark);
+}
+
+.boton:disabled {
+  cursor: progress;
+  opacity: 0.75;
+}
+
+.boton:focus-visible {
+  outline: 2px solid var(--agora-primary);
+  outline-offset: 2px;
+}
+
+.dialogo__girar {
+  animation: dialogo-girar 900ms linear infinite;
+}
+
+@keyframes dialogo-girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialogo__girar {
+    animation: none;
+  }
+
+  .boton {
+    transition: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .dialogo__datos {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dialogo__acciones {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .boton {
+    flex: 1 1 auto;
+  }
+}

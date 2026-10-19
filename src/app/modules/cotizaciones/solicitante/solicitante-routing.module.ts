@@ -1,6 +1,7 @@
 import { NgModule } from "@angular/core";
 import { Routes, RouterModule } from "@angular/router";
 import { ListadoSolicitudesComponent } from "./pages/listado-solicitudes/listado-solicitudes.component";
+import { AsistenteSolicitudComponent } from "./pages/asistente-solicitud/asistente-solicitud.component";
 
 const routes: Routes = [
   {
@@ -8,13 +9,14 @@ const routes: Routes = [
     component: ListadoSolicitudesComponent,
     title: "Ágora · Mis solicitudes",
   },
-  // Destinos provisionales (NO implementados aún):
-  // 'nueva' → S-02 Asistente; ':id' → S-03 Detalle.
   {
     path: "nueva",
-    component: ListadoSolicitudesComponent,
+    component: AsistenteSolicitudComponent,
+    title: "Ágora · Nueva solicitud de cotización",
     data: { titulo: "Nueva solicitud de cotización", pantalla: "S-02" },
   },
+  // Destino provisional (NO implementado aún):
+  // ':id' → S-03 Detalle.
   {
     path: ":id",
     component: ListadoSolicitudesComponent,

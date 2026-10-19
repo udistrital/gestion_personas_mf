@@ -44,7 +44,7 @@ export class ListadoSolicitudesComponent implements OnInit {
   readonly ACCIONES = ACCIONES_SOLICITUD;
 
   readonly breadcrumb =
-    "<p>Gestión Proveedor › Cotizaciones › <b>Mis solicitudes</b></p>";
+    "<p>Gestión Proveedor › Cotizaciones › <b>Mis Solicitudes de Cotización</b></p>";
 
   readonly camposFiltro: readonly CampoFiltro[] = [
     {
