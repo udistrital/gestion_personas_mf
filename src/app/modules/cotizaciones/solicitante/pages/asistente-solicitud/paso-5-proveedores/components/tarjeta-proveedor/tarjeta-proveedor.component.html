@@ -1,0 +1,31 @@
+<article class="tarjeta-proveedor">
+  <div class="tarjeta-proveedor__cabecera">
+    <span class="tarjeta-proveedor__icono" aria-hidden="true">
+      <mat-icon>{{ proveedor.icono }}</mat-icon>
+    </span>
+    <span class="chip chip--exito">
+      <span class="chip__punto" aria-hidden="true"></span>
+      <span>Habilitado RUP</span>
+    </span>
+  </div>
+
+  <div class="tarjeta-proveedor__identidad">
+    <h4 class="tarjeta-proveedor__nombre">{{ proveedor.nombre }}</h4>
+    <p class="tarjeta-proveedor__nit">NIT: {{ proveedor.nit }}</p>
+  </div>
+
+  <div class="tarjeta-proveedor__datos">
+    <p class="tarjeta-proveedor__linea">
+      <mat-icon aria-hidden="true">verified</mat-icon>
+      <span>CIIU: {{ codigos }}</span>
+    </p>
+    <p class="tarjeta-proveedor__linea">
+      <mat-icon aria-hidden="true">school</mat-icon>
+      <span>{{ nucleo }}</span>
+    </p>
+    <p class="tarjeta-proveedor__linea tarjeta-proveedor__linea--ciudad">
+      <mat-icon aria-hidden="true">location_on</mat-icon>
+      <span>{{ proveedor.ciudad }}</span>
+    </p>
+  </div>
+</article>

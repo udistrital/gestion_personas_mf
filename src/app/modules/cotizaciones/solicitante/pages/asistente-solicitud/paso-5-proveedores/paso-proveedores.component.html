@@ -1,0 +1,530 @@
+<!-- ─────────────────────────── BANNER DEL PASO ─────────────────────────── -->
+<banner-paso
+  icono="groups"
+  titulo="Paso 5: Proveedores objetivo"
+  descripcion="Seleccione las actividades económicas (CIIU) y el núcleo de conocimiento (SNIES) para identificar los proveedores que recibirán la solicitud."
+>
+  <ng-container acciones>
+    <span class="chip chip--recto">
+      <mat-icon aria-hidden="true">category</mat-icon>
+      <span>CIIU</span>
+    </span>
+    <span class="chip chip--recto">
+      <mat-icon aria-hidden="true">school</mat-icon>
+      <span>SNIES</span>
+    </span>
+    <span class="chip chip--recto">
+      <mat-icon aria-hidden="true">policy</mat-icon>
+      <span>RF-013 Segmentación de Mercado</span>
+    </span>
+  </ng-container>
+</banner-paso>
+
+<!-- ────────────── TARJETA 1: RESUMEN DE LA SOLICITUD (FILA) ────────────── -->
+<plantilla-tarjeta-contenedora
+  icon="feed"
+  title="1. Resumen de la solicitud"
+  description="Expediente de contratación activo (solo lectura)."
+>
+  <ng-container acciones>
+    <span class="chip chip--neutro">
+      <mat-icon aria-hidden="true">lock</mat-icon>
+      <span>Solo lectura</span>
+    </span>
+    <span class="chip chip--vino">
+      <mat-icon aria-hidden="true">work_outline</mat-icon>
+      <span>Tipo de necesidad: {{ etiquetaNecesidad }}</span>
+    </span>
+  </ng-container>
+
+  <div class="resumen-objeto">
+    <span class="resumen-objeto__etiqueta">
+      Objeto / Título de la cotización
+    </span>
+    <p class="resumen-objeto__texto">{{ resumen?.objeto || "—" }}</p>
+  </div>
+
+  <div class="resumen-grid">
+    <div class="resumen-item">
+      <span class="resumen-item__etiqueta">
+        <mat-icon aria-hidden="true">tag</mat-icon>
+        <span>N.° de cotización / Vigencia</span>
+      </span>
+      <p class="resumen-item__valor">
+        <span>{{ resumen?.numeroCotizacion || "—" }}</span>
+        @if (resumen?.vigencia) {
+          <span class="chip chip--neutro">{{ resumen?.vigencia }}</span>
+        }
+      </p>
+    </div>
+
+    <div class="resumen-item">
+      <span class="resumen-item__etiqueta">
+        <mat-icon aria-hidden="true">account_balance</mat-icon>
+        <span>Unidad ejecutora y responsable</span>
+      </span>
+      <p class="resumen-item__valor">
+        {{ resumen?.unidadEjecutora || "—" }}
+        @if (resumen?.responsable) {
+          <span class="resumen-item__separador" aria-hidden="true">|</span>
+          {{ resumen?.responsable }}
+        }
+      </p>
+    </div>
+
+    <div class="resumen-item">
+      <span class="resumen-item__etiqueta">
+        <mat-icon aria-hidden="true">corporate_fare</mat-icon>
+        <span>Dependencia solicitante</span>
+      </span>
+      <p class="resumen-item__valor">
+        {{ resumen?.dependenciaSolicitante || "—" }}
+      </p>
+    </div>
+
+    <div class="resumen-item">
+      <span class="resumen-item__etiqueta">
+        <mat-icon aria-hidden="true">gavel</mat-icon>
+        <span>Ordenador del gasto</span>
+      </span>
+      <p class="resumen-item__valor">
+        {{ resumen?.ordenadorGasto || "—" }}
+      </p>
+    </div>
+
+    <div class="resumen-item">
+      <span class="resumen-item__etiqueta">
+        <mat-icon aria-hidden="true">event_available</mat-icon>
+        <span>Fecha de apertura</span>
+      </span>
+      <p class="resumen-item__valor resumen-item__valor--fecha">
+        {{ fechaAperturaTexto }}
+      </p>
+    </div>
+
+    <div class="resumen-item">
+      <span class="resumen-item__etiqueta">
+        <mat-icon aria-hidden="true">event_busy</mat-icon>
+        <span>Fecha de cierre</span>
+      </span>
+      <p class="resumen-item__valor resumen-item__valor--fecha">
+        {{ fechaCierreTexto }}
+      </p>
+    </div>
+  </div>
+</plantilla-tarjeta-contenedora>
+
+<!-- ───────── FILA: CIIU (7/12) + SNIES (5/12) ───────── -->
+<div class="rejilla-config">
+  <!-- ──────────────────────── TARJETA 2: CIIU ─────────────────────────── -->
+  <plantilla-tarjeta-contenedora
+    icon="category"
+    title="2. Actividades económicas (CIIU)"
+    description="Clasificación Industrial Internacional Uniforme DANE"
+  >
+    <ng-container acciones>
+      <span class="chip chip--vino">
+        <mat-icon aria-hidden="true">list_alt</mat-icon>
+        <span>{{ formatoVinculadas(actividades().length) }}</span>
+      </span>
+    </ng-container>
+
+    <div class="campo caja-buscador">
+      <label class="campo__etiqueta" for="ciiu-input">
+        Código o palabra clave CIIU <b aria-hidden="true">*</b>
+      </label>
+      <div class="buscador">
+        <span class="selector buscador__entrada">
+          <mat-icon class="selector__icono" aria-hidden="true">search</mat-icon>
+          <input
+            id="ciiu-input"
+            type="text"
+            [value]="busqueda()"
+            (input)="alBuscar($event)"
+            (keyup.enter)="agregarActividad()"
+            placeholder="Buscar por código (ej. 6201) o actividad tecnológica…"
+          />
+        </span>
+        <button
+          class="boton-recto boton-recto--vino"
+          type="button"
+          (click)="agregarActividad()"
+        >
+          <mat-icon aria-hidden="true">add_circle</mat-icon>
+          <span>Agregar</span>
+        </button>
+      </div>
+      <span class="campo__ayuda">Revisión 4 A.C. · Catálogo DANE</span>
+    </div>
+
+    <div class="tabla-bloque">
+      <span class="tabla-bloque__titulo">Actividades económicas vinculadas</span>
+      <div class="tabla-scroll">
+        <table class="tabla-paso">
+          <thead>
+            <tr>
+              <th scope="col" class="tabla-paso__codigo">Código</th>
+              <th scope="col">Descripción</th>
+              <th scope="col" class="tabla-paso__clase">Clase</th>
+              <th scope="col" class="tabla-paso__fin">Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (actividad of actividades(); track actividad.id) {
+              <tr>
+                <td class="tabla-paso__codigo">
+                  <span class="chip-codigo">{{ actividad.codigo }}</span>
+                </td>
+                <td class="tabla-paso__fuerte">{{ actividad.descripcion }}</td>
+                <td class="tabla-paso__clase">
+                  <span class="chip chip--neutro">{{ actividad.clase }}</span>
+                </td>
+                <td class="tabla-paso__fin">
+                  <button
+                    class="boton-icono boton-icono--peligro"
+                    type="button"
+                    title="Eliminar actividad"
+                    aria-label="Eliminar actividad económica"
+                    (click)="eliminarActividad(actividad.id)"
+                  >
+                    <mat-icon aria-hidden="true">delete</mat-icon>
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="4" class="tabla-paso__vacio">
+                  <mat-icon aria-hidden="true">category</mat-icon>
+                  <span>
+                    Todavía no hay actividades vinculadas. Busque un código CIIU
+                    para iniciar la segmentación de proveedores.
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="nota-concurrencia" role="note">
+      <mat-icon aria-hidden="true">info</mat-icon>
+      <p>
+        <strong>Nota de concurrencia:</strong> Se pueden vincular múltiples
+        códigos CIIU para ampliar la concurrencia de cotizantes conforme a los
+        principios de pluralidad de oferentes y transparencia institucional.
+      </p>
+    </div>
+  </plantilla-tarjeta-contenedora>
+
+  <!-- ──────────────────────── TARJETA 3: SNIES ────────────────────────── -->
+  <plantilla-tarjeta-contenedora
+    icon="school"
+    title="3. Núcleo de conocimiento (SNIES)"
+    description="Sistema Nacional de Información de la Educación Superior"
+  >
+    <ng-container acciones>
+      @if (sniesAplica) {
+        <span class="chip chip--pendiente">
+          <span class="chip__punto" aria-hidden="true"></span>
+          <span>Requerido ({{ etiquetaNecesidad }})</span>
+        </span>
+      } @else {
+        <span class="chip chip--bloqueo">
+          <mat-icon aria-hidden="true">block</mat-icon>
+          <span>NO APLICA</span>
+        </span>
+      }
+    </ng-container>
+
+    @if (sniesAplica) {
+      <div class="campo" [formGroup]="form">
+        <label class="campo__etiqueta" for="snies-area">
+          Área de conocimiento (SNIES) <b aria-hidden="true">*</b>
+        </label>
+        <span class="selector">
+          <mat-icon class="selector__icono" aria-hidden="true">
+            account_balance
+          </mat-icon>
+          <select id="snies-area" formControlName="areaSnies">
+            <option value="">Seleccione el área de conocimiento</option>
+            @for (opcion of areasSnies; track opcion.valor) {
+              <option [value]="opcion.valor">{{ opcion.etiqueta }}</option>
+            }
+          </select>
+          <mat-icon class="selector__flecha" aria-hidden="true">
+            arrow_drop_down
+          </mat-icon>
+        </span>
+        @if (mostrarErrorSnies("areaSnies")) {
+          <span class="mensaje-error-formulario">
+            Seleccione el área de conocimiento del SNIES.
+          </span>
+        }
+      </div>
+
+      <div class="campo" [formGroup]="form">
+        <label class="campo__etiqueta" for="snies-nbc">
+          Núcleo básico de conocimiento NBC <b aria-hidden="true">*</b>
+        </label>
+        <span class="selector">
+          <mat-icon class="selector__icono" aria-hidden="true">school</mat-icon>
+          <select id="snies-nbc" formControlName="nucleoSnies">
+            <option value="">Seleccione el núcleo básico (NBC)</option>
+            @for (opcion of nucleosSnies; track opcion.valor) {
+              <option [value]="opcion.valor">{{ opcion.etiqueta }}</option>
+            }
+          </select>
+          <mat-icon class="selector__flecha" aria-hidden="true">
+            arrow_drop_down
+          </mat-icon>
+        </span>
+        @if (mostrarErrorSnies("nucleoSnies")) {
+          <span class="mensaje-error-formulario">
+            Seleccione el núcleo básico de conocimiento (NBC).
+          </span>
+        }
+      </div>
+
+      <div class="perfil">
+        <span class="perfil__etiqueta">Perfil técnico inferido</span>
+        <div class="perfil__cuerpo">
+          <span class="perfil__icono" aria-hidden="true">
+            <mat-icon>{{ perfil().icono }}</mat-icon>
+          </span>
+          <div>
+            <p class="perfil__titulo">{{ perfil().titulo }}</p>
+            <p class="perfil__texto">{{ perfil().descripcion }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="nota-ayuda" role="note">
+        <mat-icon aria-hidden="true">help_outline</mat-icon>
+        <p>
+          Si la contratación no exige idoneidad técnica certificada en un área
+          académica específica, puede seleccionar
+          <strong>SIN CLASIFICAR</strong> en el área y
+          <strong>NO APLICA</strong> en el núcleo básico.
+        </p>
+      </div>
+    } @else {
+      <div class="bloqueo-snies" role="note">
+        <span class="bloqueo-snies__icono" aria-hidden="true">
+          <mat-icon>info</mat-icon>
+        </span>
+        <div>
+          <span class="bloqueo-snies__titulo">
+            Para bienes solo se registran actividades económicas
+          </span>
+          <p class="bloqueo-snies__texto">
+            El núcleo básico de conocimiento (SNIES) aplica de forma exclusiva a
+            requerimientos de prestación de servicios profesionales, técnicos o
+            de consultoría especializada. Para el suministro de bienes, la
+            identificación de cotizantes se realiza únicamente mediante la
+            clasificación CIIU.
+          </p>
+          <span class="bloqueo-snies__norma">
+            <mat-icon aria-hidden="true">policy</mat-icon>
+            <span>Resolución de Contratación Pública UD 042 / Estatuto General</span>
+          </span>
+        </div>
+      </div>
+    }
+  </plantilla-tarjeta-contenedora>
+</div>
+
+<!-- ────────── TARJETA 4: PROVEEDORES QUE CUMPLEN (FILA) ────────── -->
+<plantilla-tarjeta-contenedora
+  icon="groups"
+  title="Proveedores cumplen las características de su solicitud"
+  description="Registrados y habilitados en el Registro Único de Proveedores de la Universidad Distrital."
+>
+  <ng-container acciones>
+    @if (!sinCoincidencias()) {
+      <span class="chip chip--exito">
+        <span class="chip__punto" aria-hidden="true"></span>
+        <span>Cruce verificado</span>
+      </span>
+    } @else {
+      <span class="chip chip--error">
+        <span class="chip__punto" aria-hidden="true"></span>
+        <span>Sin coincidencias</span>
+      </span>
+    }
+  </ng-container>
+
+  <!-- Panel métrico -->
+  <div class="metrica" [class.metrica--vacia]="sinCoincidencias()">
+    <div class="metrica__numero">{{ proveedores().length }}</div>
+    <div class="metrica__textos">
+      <span class="metrica__titulo">
+        {{
+          sinCoincidencias()
+            ? "Sin proveedores objetivo identificados"
+            : "Proveedores identificados"
+        }}
+      </span>
+      <p class="metrica__texto">
+        @if (sinCoincidencias()) {
+          Ningún proveedor habilitado reúne la combinación actual de actividades
+          CIIU y núcleo de conocimiento SNIES.
+        } @else {
+          Cruce activo CIIU
+          @if (codigosVinculados) {
+            ({{ codigosVinculados }})
+          }
+          {{ sniesAplica ? " y NBC SNIES" : " (sin filtro SNIES)" }}.
+        }
+      </p>
+    </div>
+  </div>
+
+  @if (sinCoincidencias()) {
+    <div class="alerta-cero" role="note">
+      <span class="alerta-cero__icono" aria-hidden="true">
+        <mat-icon>warning</mat-icon>
+      </span>
+      <div>
+        <span class="alerta-cero__titulo">Sin coincidencias registrales</span>
+        <p class="alerta-cero__texto">
+          No se encontraron proveedores con estas características. Ajuste las
+          actividades económicas o el núcleo de conocimiento.
+        </p>
+      </div>
+    </div>
+
+    <div class="recomendacion" role="note">
+      <span class="recomendacion__titulo">
+        <mat-icon aria-hidden="true">lightbulb</mat-icon>
+        <span>Recomendación de gestión precontractual:</span>
+      </span>
+      <p>
+        La combinación actual de
+        @if (codigosVinculados) {
+          <strong>CIIU ({{ codigosVinculados }})</strong>
+        } @else {
+          <strong>actividades CIIU</strong>
+        }
+        y núcleo SNIES no coincide con ningún proveedor activo en el Banco de
+        Proveedores de la Universidad Distrital. Le sugerimos agregar códigos
+        CIIU afines o configurar el NBC como
+        <strong>"SIN CLASIFICAR / NO APLICA"</strong> para ampliar el espectro
+        de búsqueda.
+      </p>
+    </div>
+
+    <button class="boton-recto boton-recto--bloque" type="button" disabled>
+      <mat-icon aria-hidden="true">visibility_off</mat-icon>
+      <span>Ver proveedores (0 disponibles)</span>
+    </button>
+
+    <div class="etiqueta-rf">
+      <span class="etiqueta-rf__marca">Por definir</span>
+      <span class="etiqueta-rf__texto">
+        Alcance de la búsqueda por actividad económica y estudios de mercado
+        (RF-013)
+      </span>
+      <mat-icon aria-hidden="true">help_outline</mat-icon>
+    </div>
+
+    <div class="nota-normativa" role="note">
+      <mat-icon aria-hidden="true">policy</mat-icon>
+      <span>
+        Acuerdo 003 de 2015 del Consejo Superior Universitario: toda convocatoria
+        requiere un mínimo de oferentes invitados idóneos.
+      </span>
+    </div>
+  } @else {
+    <div class="alcance">
+      <div class="alcance__info">
+        <span class="alcance__marca">Alcance</span>
+        <span class="alcance__texto">
+          Búsqueda por actividad económica y estudios de mercado (RF-013)
+        </span>
+      </div>
+      <span class="alcance__meta">Concurrencia óptima (≥ 3 requeridos)</span>
+    </div>
+
+    <div class="muestra">
+      <div class="muestra__cabecera">
+        <span class="muestra__titulo">
+          Muestra de proponentes habilitados para notificación automática
+        </span>
+        <span class="muestra__meta">
+          Mostrando {{ muestraProveedores().length }} de
+          {{ proveedores().length }} empresas registradas
+        </span>
+      </div>
+
+      <button
+        class="boton-recto boton-recto--bloque"
+        type="button"
+        [attr.aria-expanded]="mostrarProveedores()"
+        (click)="alternarProveedores()"
+      >
+        <mat-icon aria-hidden="true">group</mat-icon>
+        <span>
+          {{
+            mostrarProveedores()
+              ? "Ocultar proveedores"
+              : "Ver proveedores identificados"
+          }}
+        </span>
+        <mat-icon
+          class="boton-recto__chevron"
+          [class.boton-recto__chevron--abierto]="mostrarProveedores()"
+          aria-hidden="true"
+        >
+          expand_more
+        </mat-icon>
+      </button>
+
+      @if (mostrarProveedores()) {
+        <div class="proveedores-grid">
+          @for (proveedor of muestraProveedores(); track proveedor.id) {
+            <tarjeta-proveedor [proveedor]="proveedor"></tarjeta-proveedor>
+          }
+        </div>
+      }
+    </div>
+  }
+</plantilla-tarjeta-contenedora>
+
+<!-- ─────────────── PIE DEL PASO (SEGÚN EL ESTADO) ─────────────── -->
+@if (!sinCoincidencias()) {
+  <div class="recordatorio" role="note">
+    <mat-icon aria-hidden="true">verified_user</mat-icon>
+    <p>
+      Al hacer clic en <strong>Continuar</strong>, el sistema guardará la
+      configuración del grupo objetivo y avanzará al
+      <strong>Paso 6: Documentos soporte</strong> (Estudios previos, Anexo
+      técnico y CDP).
+    </p>
+    <span class="recordatorio__sello">PROV-MATCH v3.2</span>
+  </div>
+} @else if (actividades().length > 0) {
+  <div class="barra-contextual" role="status" aria-live="polite">
+    <span class="barra-contextual__info">
+      <mat-icon aria-hidden="true">info</mat-icon>
+      <span>
+        Para habilitar el envío formal en el Paso 7, debe seleccionar al menos 1
+        proveedor objetivo o abrir el proceso a convocatoria abierta.
+      </span>
+    </span>
+    <div class="barra-contextual__acciones">
+      <button class="boton-recto" type="button" (click)="restablecerFiltros()">
+        <mat-icon aria-hidden="true">refresh</mat-icon>
+        <span>Restablecer filtros</span>
+      </button>
+      <button
+        class="boton-recto boton-recto--vino"
+        type="button"
+        (click)="usarPerfilGeneral()"
+      >
+        <mat-icon aria-hidden="true">tune</mat-icon>
+        <span>Usar perfil general</span>
+      </button>
+    </div>
+  </div>
+}

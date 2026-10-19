@@ -56,6 +56,11 @@
         <paso-items [form]="itemsForm"></paso-items>
       } @else if (pasoActual === 4) {
         <paso-contratacion [form]="contratacionForm"></paso-contratacion>
+      } @else if (pasoActual === 5) {
+        <paso-proveedores
+          [form]="proveedoresForm"
+          [resumen]="resumenProveedores"
+        ></paso-proveedores>
       } @else {
         <paso-pendiente
           [numero]="pasoActual"

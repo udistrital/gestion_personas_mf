@@ -9,7 +9,13 @@ import {
   BorradorSolicitudService,
 } from "../../../services/borrador-solicitud.service";
 import { ResultadoCruce } from "../../../models/necesidad.model";
-import { MIN_CARACTERES_CRITERIO, MIN_CARACTERES_PLAN } from "../../../models/datos-generales.model";
+import {
+  DEPENDENCIAS_SOLICITANTES,
+  MIN_CARACTERES_CRITERIO,
+  MIN_CARACTERES_PLAN,
+} from "../../../models/datos-generales.model";
+import { ItemSolicitud, resumirItems } from "../../../models/items.model";
+import { ResumenSolicitudProveedores } from "../../../models/proveedores.model";
 import { PASOS_SOLICITUD } from "./asistente-solicitud.const";
 import { EstadoCruce } from "./paso-1-necesidad/paso-necesidad.component";
 import {
@@ -18,11 +24,13 @@ import {
 } from "./paso-2-datos-generales/paso-datos-generales.component";
 import { alMenosUnItem } from "./paso-3-items/paso-items.component";
 import { sumaPorcentajes } from "./paso-4-contratacion/paso-contratacion.component";
+import { criteriosProveedores } from "./paso-5-proveedores/paso-proveedores.component";
 
 const PRIMER_PASO = 1;
 const SEGUNDO_PASO = 2;
 const TERCER_PASO = 3;
 const CUARTO_PASO = 4;
+const QUINTO_PASO = 5;
 const ULTIMO_PASO = 7;
 
 /**
@@ -30,10 +38,10 @@ const ULTIMO_PASO = 7;
  *
  * Posee el `FormGroup` raíz —un subgrupo por paso—, el borrador automático y
  * la barra de acciones. Los pasos 1 (necesidad y presupuesto), 2 (datos
- * generales), 3 (bienes y servicios a cotizar) y 4 (tipo de contratación e
- * información de pago) están implementados en esta fase: el resto se muestra
- * como `paso-pendiente` y el avance queda bloqueado hasta que cada paso exija
- * sus validaciones.
+ * generales), 3 (bienes y servicios a cotizar), 4 (tipo de contratación e
+ * información de pago) y 5 (proveedores objetivo) están implementados en esta
+ * fase: el resto se muestra como `paso-pendiente` y el avance queda bloqueado
+ * hasta que cada paso exija sus validaciones.
  */
 @Component({
   selector: "asistente-solicitud",
@@ -120,7 +128,17 @@ export class AsistenteSolicitudComponent implements OnInit {
         },
         { validators: sumaPorcentajes() },
       ),
-      proveedores: fb.group({}),
+      proveedores: fb.group(
+        {
+          // Arreglo plano de actividades CIIU vinculadas; el validador de
+          // grupo exige al menos una. El SNIES obligatorio se evalúa en el
+          // asistente porque depende del tipo de necesidad del paso 3.
+          actividades: [[]],
+          areaSnies: [""],
+          nucleoSnies: [""],
+        },
+        { validators: criteriosProveedores() },
+      ),
       documentos: fb.group({}),
       revision: fb.group({}),
     });
@@ -150,6 +168,52 @@ export class AsistenteSolicitudComponent implements OnInit {
 
   get contratacionForm(): FormGroup {
     return this.asistenteForm.get("contratacion") as FormGroup;
+  }
+
+  get proveedoresForm(): FormGroup {
+    return this.asistenteForm.get("proveedores") as FormGroup;
+  }
+
+  /**
+   * Resumen de solo lectura que alimenta la tarjeta 1 del paso 5.
+   *
+   * Mezcla el cruce de SICAPITAL (objeto y responsable), los datos generales
+   * del paso 2 (dependencias y cronograma) y el tipo de necesidad calculado en
+   * el paso 3. Cada dato faltante cae a una cadena vacía y la tarjeta lo
+   * muestra como guion.
+   */
+  get resumenProveedores(): ResumenSolicitudProveedores {
+    const cruce = this.resultadoCruce();
+    const datos = this.datosGeneralesForm.getRawValue() as {
+      dependenciaSolicitante?: string;
+      fechaApertura?: string;
+      fechaCierre?: string;
+    };
+    const registros = (this.itemsForm.get("registros")?.value ??
+      []) as readonly ItemSolicitud[];
+    const dependencia =
+      DEPENDENCIAS_SOLICITANTES.find(
+        (opcion) => opcion.valor === datos.dependenciaSolicitante,
+      )?.etiqueta ??
+      datos.dependenciaSolicitante ??
+      "";
+
+    return {
+      objeto: cruce?.solicitud.objeto ?? "",
+      numeroCotizacion: cruce?.necesidad.valor ?? "",
+      vigencia: cruce?.necesidad.vigencia
+        ? String(cruce.necesidad.vigencia)
+        : "",
+      unidadEjecutora: cruce?.responsable.unidadEjecutora ?? "",
+      responsable: cruce
+        ? `${cruce.responsable.nombres} ${cruce.responsable.apellidos}`
+        : "",
+      dependenciaSolicitante: dependencia,
+      ordenadorGasto: cruce?.responsable.ordenadorGasto ?? "",
+      fechaApertura: datos.fechaApertura ?? "",
+      fechaCierre: datos.fechaCierre ?? "",
+      tipoNecesidad: resumirItems(registros).tipo,
+    };
   }
 
   /** Siguiente componente según el paso activo. */
@@ -188,7 +252,33 @@ export class AsistenteSolicitudComponent implements OnInit {
     if (this.pasoActual === CUARTO_PASO) {
       return !!this.contratacionForm.valid;
     }
+    if (this.pasoActual === QUINTO_PASO) {
+      return this.proveedoresCompleto;
+    }
     return false;
+  }
+
+  /**
+   * Valida el paso 5: al menos una actividad CIIU y, cuando la solicitud exige
+   * idoneidad técnica (servicios o mixta), el área y el núcleo SNIES.
+   */
+  private get proveedoresCompleto(): boolean {
+    if (!this.proveedoresForm.valid) {
+      return false;
+    }
+    if (!this.sniesAplicaProveedores) {
+      return true;
+    }
+    return (
+      !!this.proveedoresForm.get("areaSnies")?.value &&
+      !!this.proveedoresForm.get("nucleoSnies")?.value
+    );
+  }
+
+  /** true cuando el tipo de necesidad del paso 3 exige idoneidad (SNIES). */
+  private get sniesAplicaProveedores(): boolean {
+    const tipo = this.resumenProveedores.tipoNecesidad;
+    return tipo === "servicios" || tipo === "mixta";
   }
 
   /** Motivo por el que "Continuar" está deshabilitado (título del botón). */
@@ -201,6 +291,9 @@ export class AsistenteSolicitudComponent implements OnInit {
     }
     if (this.pasoActual === CUARTO_PASO) {
       return this.ayudaPaso4();
+    }
+    if (this.pasoActual === QUINTO_PASO) {
+      return this.ayudaPaso5();
     }
     if (this.pasoActual !== PRIMER_PASO) {
       return "Este paso aún no está implementado en esta fase del desarrollo.";
@@ -274,6 +367,23 @@ export class AsistenteSolicitudComponent implements OnInit {
     if (form.hasError("sumaPorcentajes")) {
       const error = form.getError("sumaPorcentajes") as { total: number };
       return `Los porcentajes deben sumar exactamente 100 % (actual: ${error.total} %).`;
+    }
+    return "";
+  }
+
+  /** Explica el bloqueo del paso 5 según el primer criterio faltante. */
+  private ayudaPaso5(): string {
+    const form = this.proveedoresForm;
+    if (form.hasError("sinActividades")) {
+      return "Vincule al menos una actividad económica (CIIU).";
+    }
+    if (this.sniesAplicaProveedores) {
+      if (!form.get("areaSnies")?.value) {
+        return "Seleccione el área de conocimiento del SNIES.";
+      }
+      if (!form.get("nucleoSnies")?.value) {
+        return "Seleccione el núcleo básico de conocimiento (NBC).";
+      }
     }
     return "";
   }
@@ -375,7 +485,7 @@ export class AsistenteSolicitudComponent implements OnInit {
         formaPago: "",
         parametros: [],
       },
-      proveedores: {},
+      proveedores: { actividades: [], areaSnies: "", nucleoSnies: "" },
       documentos: {},
       revision: {},
     });
