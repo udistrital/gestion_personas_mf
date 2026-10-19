@@ -292,6 +292,24 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
       : solicitud === this.solicitudCiudadesApertura;
   }
 
+  // Los controles de ciudad deshabilitados se omiten en Angular, por lo que se validan explícitamente.
+  // Las listas se vacían al cambiar el departamento y solo se llenan para el departamento vigente.
+  private ciudadValida(destino: 'domicilio' | 'apertura'): boolean {
+    const domicilio = destino === 'domicilio';
+    const idDepartamento = this.formulario.get(domicilio ? 'departamento' : 'departamentoApertura')?.value;
+    const idCiudad = this.formulario.get(domicilio ? 'ciudad' : 'ciudadApertura')?.value;
+    const cargando = domicilio ? this.cargandoCiudadesDomicilio : this.cargandoCiudadesApertura;
+    const error = domicilio ? this.errorCiudadesDomicilio : this.errorCiudadesApertura;
+    const ciudades = domicilio ? this.ciudadesDomicilio : this.ciudadesApertura;
+
+    return !cargando
+      && !error
+      && typeof idDepartamento === 'number'
+      && this.departamentos.some(opcion => opcion.id === idDepartamento)
+      && typeof idCiudad === 'number'
+      && ciudades.some(ciudad => ciudad.id === idCiudad);
+  }
+
   pasos: PasoStepperVisual[] = [
     { numero: 1, icono: "person", nombre: "Datos Societarios y Representación" },
     { numero: 2, icono: "account_balance", nombre: "Información Financiera" },
@@ -300,7 +318,8 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
   ];
 
   finalizar() {
-    if (!this.validarFormulario() || this.formulario.invalid) {
+    const ciudadesValidas = this.ciudadValida('domicilio') && this.ciudadValida('apertura');
+    if (!this.validarFormulario() || !ciudadesValidas || this.formulario.invalid) {
       this.formulario.markAllAsTouched();
       console.error('No se puede finalizar el registro porque el formulario contiene campos inválidos.');
       return;
@@ -336,7 +355,9 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
   private validarFormulario(): boolean {
     const nombresControles = camposPorPaso[this.pasoActual] ?? [];
     const camposConError = nombresControles
-      .filter(controlName => this.formulario.get(controlName)?.invalid);
+      .filter(controlName => this.formulario.get(controlName)?.invalid
+        || (controlName === 'ciudad' && !this.ciudadValida('domicilio'))
+        || (controlName === 'ciudadApertura' && !this.ciudadValida('apertura')));
 
     if (camposConError.length === 0) {
       return true;
