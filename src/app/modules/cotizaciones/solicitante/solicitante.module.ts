@@ -9,6 +9,7 @@ import { ListadoSolicitudesComponent } from "./pages/listado-solicitudes/listado
 import { AsistenteSolicitudComponent } from "./pages/asistente-solicitud/asistente-solicitud.component";
 import { DialogoAcuerdoComponent } from "./pages/asistente-solicitud/paso-1-necesidad/components/dialogo-acuerdo/dialogo-acuerdo.component";
 import { PasoNecesidadComponent } from "./pages/asistente-solicitud/paso-1-necesidad/paso-necesidad.component";
+import { PasoDatosGeneralesComponent } from "./pages/asistente-solicitud/paso-2-datos-generales/paso-datos-generales.component";
 import { PasoPendienteComponent } from "./pages/asistente-solicitud/paso-pendiente/paso-pendiente.component";
 import { paginadorEnEspanol } from "./mat-paginator-intl-es";
 
@@ -18,6 +19,7 @@ import { paginadorEnEspanol } from "./mat-paginator-intl-es";
     AsistenteSolicitudComponent,
     DialogoAcuerdoComponent,
     PasoNecesidadComponent,
+    PasoDatosGeneralesComponent,
     PasoPendienteComponent,
   ],
   imports: [CommonModule, SharedModule, SolicitanteRoutingModule],

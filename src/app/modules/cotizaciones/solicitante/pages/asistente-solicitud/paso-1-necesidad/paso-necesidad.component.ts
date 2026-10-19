@@ -37,7 +37,6 @@ export type EstadoCruce =
   | "cargando"
   | "cargado"
   | "error";
-
 /**
  * Paso 1 del asistente: "Necesidad y presupuesto".
  *
@@ -65,6 +64,12 @@ export class PasoNecesidadComponent implements OnInit {
 
   /** Notifica si el acuerdo marco ya fue aceptado (o si no hace falta). */
   @Output() cambioAcuerdo = new EventEmitter<boolean>();
+
+  /**
+   * Resultado del cruce (o `null` si se reinició). El shell lo retransmite al
+   * paso 2 para precargar responsable y características de SICAPITAL.
+   */
+  @Output() cambioResultado = new EventEmitter<ResultadoCruce | null>();
 
   private readonly destroyRef = inject(DestroyRef);
   private readonly sicapital = inject(SicapitalService);
@@ -334,6 +339,7 @@ export class PasoNecesidadComponent implements OnInit {
     this.resultado.set(null);
     this.fallo.set(null);
     this.cambioEstado.emit("inicial");
+    this.cambioResultado.emit(null);
   }
 
   private aplicarExito(resultado: ResultadoCruce): void {
@@ -341,6 +347,7 @@ export class PasoNecesidadComponent implements OnInit {
     this.fallo.set(null);
     this.vista.set("cargado");
     this.cambioEstado.emit("cargado");
+    this.cambioResultado.emit(resultado);
 
     if (resultado.acuerdoMarco && !this.acuerdoAceptado()) {
       this.cambioAcuerdo.emit(false);
@@ -371,6 +378,7 @@ export class PasoNecesidadComponent implements OnInit {
     this.acuerdoAceptado.set(false);
     this.cambioEstado.emit("error");
     this.cambioAcuerdo.emit(false);
+    this.cambioResultado.emit(null);
   }
 
   private abrirDialogo(acuerdo: AcuerdoMarco): void {

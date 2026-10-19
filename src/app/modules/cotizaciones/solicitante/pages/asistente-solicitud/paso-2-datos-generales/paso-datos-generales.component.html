@@ -1,0 +1,450 @@
+<!-- ─────────────────────────── BANNER DEL PASO ─────────────────────────── -->
+<banner-paso
+  icono="verified_user"
+  titulo="Paso 2: Datos generales, cronograma y plan de acción"
+  descripcion="Defina las dependencias participantes, establezca el cronograma con los plazos normativos mínimos y especifique los criterios de selección y planeación institucional."
+>
+  <ng-container acciones>
+    <span class="chip chip--recto">
+      <span class="chip__punto" aria-hidden="true"></span>
+      <span>Resolución Rectoría 035 / UD</span>
+    </span>
+    <span class="chip chip--recto">
+      <mat-icon aria-hidden="true">event_repeat</mat-icon>
+      <span>Regla 3 días hábiles</span>
+    </span>
+  </ng-container>
+</banner-paso>
+
+<!-- ──────────────────────────── TARJETA 1 ───────────────────────────────── -->
+<plantilla-tarjeta-contenedora
+  icon="person"
+  title="1. Responsable de la solicitud"
+  description="Datos del funcionario radicador y dependencias intervinientes en el proceso de cotización."
+>
+  <ng-container acciones>
+    @if (responsable) {
+      <span class="chip chip--exito">
+        <mat-icon aria-hidden="true">check_circle</mat-icon>
+        <span>Sincronizado con SICAPITAL</span>
+      </span>
+    } @else {
+      <span class="chip chip--bloqueo">
+        <mat-icon aria-hidden="true">lock</mat-icon>
+        <span>Sin cruce con SICAPITAL</span>
+      </span>
+    }
+  </ng-container>
+
+  <!-- Fila 1: datos de solo lectura de SICAPITAL -->
+  <div class="campo-grid grid-cuatro">
+    <div class="campo">
+      <label class="campo__etiqueta" for="resp-nombres">
+        Nombres
+        <mat-icon class="campo__candado" aria-hidden="true">lock</mat-icon>
+      </label>
+      <span class="solo-lectura">
+        <input
+          id="resp-nombres"
+          type="text"
+          class="px-3"
+          readonly
+          [value]="responsable?.nombres || '—'"
+        />
+      </span>
+    </div>
+
+    <div class="campo">
+      <label class="campo__etiqueta" for="resp-apellidos">
+        Apellidos
+        <mat-icon class="campo__candado" aria-hidden="true">lock</mat-icon>
+      </label>
+      <span class="solo-lectura">
+        <input
+          id="resp-apellidos"
+          type="text"
+          class="px-3"
+          readonly
+          [value]="responsable?.apellidos || '—'"
+        />
+      </span>
+    </div>
+
+    <div class="campo">
+      <label class="campo__etiqueta" for="resp-identificacion">
+        Identificación
+        <mat-icon class="campo__candado" aria-hidden="true">lock</mat-icon>
+      </label>
+      <span class="solo-lectura">
+        <input
+          id="resp-identificacion"
+          type="text"
+          class="px-3"
+          readonly
+          [value]="responsable?.identificacion || '—'"
+        />
+      </span>
+    </div>
+
+    <div class="campo">
+      <label class="campo__etiqueta" for="resp-unidad">
+        Unidad Ejecutora
+        <mat-icon class="campo__candado" aria-hidden="true">lock</mat-icon>
+      </label>
+      <span class="solo-lectura">
+        <input
+          id="resp-unidad"
+          type="text"
+          class="px-3"
+          readonly
+          [value]="responsable?.unidadEjecutora || '—'"
+        />
+      </span>
+    </div>
+  </div>
+
+  <!-- Fila 2: ordenador del gasto y nota "Por definir" -->
+  <div class="campo-grid grid-doce-8-4">
+    <div class="campo">
+      <label class="campo__etiqueta" for="resp-ordenador">
+        Ordenador del Gasto (Código y Nombre)
+        <mat-icon class="campo__candado" aria-hidden="true">lock</mat-icon>
+      </label>
+      <span class="solo-lectura">
+        <mat-icon class="solo-lectura__icono" aria-hidden="true">
+          account_circle
+        </mat-icon>
+        <input
+          id="resp-ordenador"
+          type="text"
+          readonly
+          [value]="responsable?.ordenadorGasto || '—'"
+        />
+      </span>
+    </div>
+
+    <div class="nota-por-definir" role="note">
+      <span class="nota-por-definir__etiqueta">Por definir</span>
+      <p class="nota-por-definir__texto">
+        Si falla el cruce SICAPITAL: lista editable solo para el Jefe de
+        Dependencia autorizada.
+      </p>
+    </div>
+  </div>
+
+  <!-- Fila 3: dependencias intervinientes -->
+  <div class="campo-grid campo-grid--two pt-sm" [formGroup]="form">
+    <div class="campo">
+      <label class="campo__etiqueta" for="dep-solicitante">
+        Dependencia Solicitante <b aria-hidden="true">*</b>
+      </label>
+      <span class="selector">
+        <mat-icon class="selector__icono" aria-hidden="true">domain</mat-icon>
+        <select
+          id="dep-solicitante"
+          formControlName="dependenciaSolicitante"
+        >
+          <option value="">Seleccione la dependencia solicitante</option>
+          @for (dependencia of dependenciasSolicitantes; track dependencia.valor) {
+            <option [value]="dependencia.valor">
+              {{ dependencia.etiqueta }}
+            </option>
+          }
+        </select>
+        <mat-icon class="selector__flecha" aria-hidden="true">
+          arrow_drop_down
+        </mat-icon>
+      </span>
+      <span class="campo__ayuda">Dependencia que formula la solicitud.</span>
+    </div>
+
+    <div class="campo">
+      <label class="campo__etiqueta" for="dep-destino">
+        Dependencia Destino <b aria-hidden="true">*</b>
+      </label>
+      <span class="selector">
+        <mat-icon class="selector__icono" aria-hidden="true">
+          location_city
+        </mat-icon>
+        <select id="dep-destino" formControlName="dependenciaDestino">
+          <option value="">Seleccione la dependencia destino</option>
+          @for (dependencia of dependenciasDestino; track dependencia.valor) {
+            <option [value]="dependencia.valor">
+              {{ dependencia.etiqueta }}
+            </option>
+          }
+        </select>
+        <mat-icon class="selector__flecha" aria-hidden="true">
+          arrow_drop_down
+        </mat-icon>
+      </span>
+      <span class="campo__ayuda">Dependencia que recibe la cotización.</span>
+    </div>
+  </div>
+</plantilla-tarjeta-contenedora>
+
+<!-- ──────────────────────────── TARJETA 2 ───────────────────────────────── -->
+<plantilla-tarjeta-contenedora
+  icon="event"
+  title="2. Cronograma de la solicitud"
+  description="Fechas de vigencia del proceso de cotización conforme a la normativa de contratación institucional."
+>
+  <!-- Fechas de apertura y cierre -->
+  <div class="campo-grid campo-grid--two" [formGroup]="form">
+    <div class="campo">
+      <label class="campo__etiqueta" for="fecha-apertura">
+        Fecha de Apertura <b aria-hidden="true">*</b>
+      </label>
+      <span class="selector">
+        <mat-icon class="selector__icono" aria-hidden="true">
+          calendar_today
+        </mat-icon>
+        <input
+          id="fecha-apertura"
+          type="date"
+          formControlName="fechaApertura"
+        />
+      </span>
+      @if (cronograma().aperturaLarga) {
+        <span class="campo__ayuda">{{ cronograma().aperturaLarga }}</span>
+      } @else {
+        <span class="campo__ayuda">Fecha de publicación del proceso.</span>
+      }
+    </div>
+
+    <div class="campo">
+      <label class="campo__etiqueta" for="fecha-cierre">
+        Fecha de Cierre <b aria-hidden="true">*</b>
+      </label>
+      <span class="selector">
+        <mat-icon class="selector__icono" aria-hidden="true">
+          calendar_today
+        </mat-icon>
+        <input id="fecha-cierre" type="date" formControlName="fechaCierre" />
+      </span>
+
+      @if (cronograma().completo) {
+        <span
+          class="validacion-dias"
+          [class.validacion-dias--fallo]="!cronograma().cumple"
+        >
+          <mat-icon aria-hidden="true">
+            {{ cronograma().cumple ? "check_circle" : "warning" }}
+          </mat-icon>
+          <span>
+            @if (cronograma().cumple) {
+              Cumple con el mínimo de {{ minimoDiasHabiles }} días hábiles
+              posteriores a la apertura.
+            } @else {
+              Solo hay {{ cronograma().dias }} días hábiles; se requieren al
+              menos {{ minimoDiasHabiles }}.
+            }
+          </span>
+        </span>
+      } @else {
+        <span class="campo__ayuda">
+          El cierre se calcula desde la fecha de apertura.
+        </span>
+      }
+    </div>
+  </div>
+
+  <!-- Validación legal informativa -->
+  <p class="nota-legal">
+    <span class="nota-legal__titulo">Validación del sistema:</span>
+    La fecha de cierre debe ser al menos {{ minimoDiasHabiles }} días hábiles
+    después de la apertura según la directriz institucional de compras públicas.
+  </p>
+
+  <!-- Banner de horario de participación -->
+  <div class="nota-icono" role="note">
+    <mat-icon aria-hidden="true">schedule</mat-icon>
+    <p>
+      Los proveedores podrán participar desde las
+      <strong>0:00 del día de apertura</strong> hasta las
+      <strong>11:59 p. m. del día anterior a la fecha de cierre</strong>
+      formal establecida.
+    </p>
+  </div>
+</plantilla-tarjeta-contenedora>
+
+<!-- ──────────────────────────── TARJETA 3 ───────────────────────────────── -->
+<plantilla-tarjeta-contenedora
+  icon="description"
+  title="3. Características de la solicitud"
+  description="Condiciones técnicas y operativas precargadas de SICAPITAL y especificación del criterio de selección."
+>
+  <ng-container acciones>
+    @if (caracteristicas) {
+      <span class="chip chip--neutro">
+        <mat-icon aria-hidden="true">cached</mat-icon>
+        <span>Datos de SICAPITAL</span>
+      </span>
+    }
+  </ng-container>
+
+  <!-- Campos técnicos de solo lectura -->
+  <div class="campo-grid campo-grid--two mb-0">
+    <div class="campo">
+      <label class="campo__etiqueta" for="car-objetivo">
+        Objetivo / Tema
+        <span class="origen-dato">
+          <mat-icon aria-hidden="true">cached</mat-icon>
+          SICAPITAL
+          <mat-icon aria-hidden="true">lock</mat-icon>
+        </span>
+      </label>
+      <div class="bloque-lectura" id="car-objetivo">
+        {{ caracteristicas?.objetivo || "Sin información de SICAPITAL." }}
+      </div>
+    </div>
+
+    <div class="campo">
+      <label class="campo__etiqueta" for="car-requisitos">
+        Requisitos
+        <span class="origen-dato">
+          <mat-icon aria-hidden="true">cached</mat-icon>
+          SICAPITAL
+          <mat-icon aria-hidden="true">lock</mat-icon>
+        </span>
+      </label>
+      <div class="bloque-lectura" id="car-requisitos">
+        {{ caracteristicas?.requisitos || "Sin información de SICAPITAL." }}
+      </div>
+    </div>
+
+    <div class="campo">
+      <label class="campo__etiqueta" for="car-observaciones">
+        Observaciones Adicionales
+        <mat-icon class="campo__candado" aria-hidden="true">lock</mat-icon>
+      </label>
+      <div class="bloque-lectura" id="car-observaciones">
+        {{ caracteristicas?.observaciones || "-" }}
+      </div>
+    </div>
+
+    <div class="campo">
+      <label class="campo__etiqueta" for="car-plazo">
+        Plazo de Ejecución
+        <mat-icon class="campo__candado" aria-hidden="true">lock</mat-icon>
+      </label>
+      <div class="bloque-lectura" id="car-plazo">
+        {{ caracteristicas?.plazoEjecucion || "-" }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Criterio de selección (editor enriquecido) -->
+  <div class="campo pt-0" [formGroup]="form">
+    <label
+      id="criterio-seleccion-etiqueta"
+      class="campo__etiqueta"
+      for="criterio-seleccion"
+    >
+      Criterio de Selección <b aria-hidden="true">*</b>
+    </label>
+    <editor-enriquecido
+      id="criterio-seleccion"
+      idEtiqueta="criterio-seleccion-etiqueta"
+      formControlName="criterioSeleccion"
+      [minCaracteres]="minCriterio"
+      [rows]="4"
+      pista="Describa el criterio jurídico y económico con el que se evaluarán las cotizaciones."
+      nota="Parámetro de calificación jurídica y económica"
+    ></editor-enriquecido>
+    @if (mostrarErrorCriterio()) {
+      <span class="mensaje-error-formulario">
+        El criterio de selección debe tener al menos {{ minCriterio }} caracteres.
+      </span>
+    }
+
+    <div class="nota-icono nota-icono--compacta" role="note">
+      <mat-icon aria-hidden="true">info</mat-icon>
+      <p>
+        Si SICAPITAL tiene información, se carga aquí; si no, el sistema se lo
+        indicará para redacción manual.
+      </p>
+    </div>
+  </div>
+</plantilla-tarjeta-contenedora>
+
+<!-- ──────────────────────────── TARJETA 4 ───────────────────────────────── -->
+<plantilla-tarjeta-contenedora
+  icon="checklist"
+  title="4. Plan de acción relacionado"
+  description="Articulación con los instrumentos de planeación y mejoramiento institucional de la Universidad."
+>
+  <div class="campo" [formGroup]="form">
+    <label
+      id="plan-accion-etiqueta"
+      class="campo__etiqueta"
+      for="plan-accion"
+    >
+      Plan de Acción <b aria-hidden="true">*</b>
+    </label>
+    <editor-enriquecido
+      id="plan-accion"
+      idEtiqueta="plan-accion-etiqueta"
+      formControlName="planAccion"
+      [minCaracteres]="minPlan"
+      [rows]="4"
+      pista="Indique la planeación institucional que respalda esta solicitud."
+      nota="Articulación con metas OAP (Oficina Asesora de Planeación)"
+    ></editor-enriquecido>
+    @if (mostrarErrorPlan()) {
+      <span class="mensaje-error-formulario">
+        El plan de acción debe tener al menos {{ minPlan }} caracteres.
+      </span>
+    }
+
+    <div class="nota-icono nota-icono--compacta" role="note">
+      <mat-icon aria-hidden="true">help_outline</mat-icon>
+      <p>
+        Indique la planeación que respalda esta solicitud (plan anual de
+        adquisiciones, plan de mejoramiento, plan de acreditación, etc.).
+      </p>
+    </div>
+  </div>
+</plantilla-tarjeta-contenedora>
+
+<!-- ──────────────────────── RESUMEN INFORMATIVO ─────────────────────────── -->
+<div class="resumen-paso">
+  <article class="tile">
+    <span class="tile__icono" aria-hidden="true">
+      <mat-icon>security</mat-icon>
+    </span>
+    <div class="tile__textos">
+      <span class="tile__titulo">Validación Automática</span>
+      <p class="tile__texto">
+        El sistema previene traslapes en fechas y valida el cumplimiento
+        estricto del régimen de contratación institucional.
+      </p>
+    </div>
+  </article>
+
+  <article class="tile">
+    <span class="tile__icono" aria-hidden="true">
+      <mat-icon>dataset</mat-icon>
+    </span>
+    <div class="tile__textos">
+      <span class="tile__titulo">Cruce con SICAPITAL</span>
+      <p class="tile__texto">
+        Los datos presupuestales y de responsable se encuentran enlazados de
+        manera sincrónica con el ERP de la Universidad.
+      </p>
+    </div>
+  </article>
+
+  <article class="tile">
+    <span class="tile__icono" aria-hidden="true">
+      <mat-icon>history_edu</mat-icon>
+    </span>
+    <div class="tile__textos">
+      <span class="tile__titulo">Trazabilidad Registrada</span>
+      <p class="tile__texto">
+        Cada modificación queda asentada en el libro digital de auditoría con
+        sello de tiempo institucional.
+      </p>
+    </div>
+  </article>
+</div>

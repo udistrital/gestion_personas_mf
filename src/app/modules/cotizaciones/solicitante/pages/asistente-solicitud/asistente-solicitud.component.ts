@@ -8,10 +8,17 @@ import {
   BorradorSolicitudNueva,
   BorradorSolicitudService,
 } from "../../../services/borrador-solicitud.service";
+import { ResultadoCruce } from "../../../models/necesidad.model";
+import { MIN_CARACTERES_CRITERIO, MIN_CARACTERES_PLAN } from "../../../models/datos-generales.model";
 import { PASOS_SOLICITUD } from "./asistente-solicitud.const";
 import { EstadoCruce } from "./paso-1-necesidad/paso-necesidad.component";
+import {
+  minCaracteres,
+  validadorCronograma,
+} from "./paso-2-datos-generales/paso-datos-generales.component";
 
 const PRIMER_PASO = 1;
+const SEGUNDO_PASO = 2;
 const ULTIMO_PASO = 7;
 
 /**
@@ -48,6 +55,9 @@ export class AsistenteSolicitudComponent implements OnInit {
   /** true cuando el acuerdo marco (si lo hay) ya fue aceptado. */
   readonly acuerdoAceptado = signal(false);
 
+  /** Resultado del cruce del paso 1; alimenta las tarjetas de solo lectura del paso 2. */
+  readonly resultadoCruce = signal<ResultadoCruce | null>(null);
+
   /** true cuando al entrar había un borrador persistido en el equipo. */
   readonly borradorRestaurado = signal(false);
 
@@ -70,8 +80,19 @@ export class AsistenteSolicitudComponent implements OnInit {
         vigencia: ["", Validators.required],
         numeroNecesidad: ["", Validators.required],
       }),
-      // Pasos 2 a 7: creados por el diseño; se habilitan con su implementación.
-      datosGenerales: fb.group({}),
+      // Paso 2 (implementado)
+      datosGenerales: fb.group(
+        {
+          dependenciaSolicitante: ["", Validators.required],
+          dependenciaDestino: ["", Validators.required],
+          fechaApertura: ["", Validators.required],
+          fechaCierre: ["", Validators.required],
+          criterioSeleccion: ["", minCaracteres(MIN_CARACTERES_CRITERIO)],
+          planAccion: ["", minCaracteres(MIN_CARACTERES_PLAN)],
+        },
+        { validators: validadorCronograma() },
+      ),
+      // Pasos 3 a 7: creados por el diseño; se habilitan con su implementación.
       items: fb.group({}),
       contratacion: fb.group({}),
       proveedores: fb.group({}),
@@ -94,6 +115,10 @@ export class AsistenteSolicitudComponent implements OnInit {
     return this.asistenteForm.get("necesidad") as FormGroup;
   }
 
+  get datosGeneralesForm(): FormGroup {
+    return this.asistenteForm.get("datosGenerales") as FormGroup;
+  }
+
   /** Siguiente componente según el paso activo. */
   get nombrePasoActual(): string {
     return (
@@ -109,23 +134,29 @@ export class AsistenteSolicitudComponent implements OnInit {
   }
 
   /**
-   * Habilita "Continuar": solo el paso 1 puede avanzar y únicamente cuando la
-   * necesidad es válida, el cruce terminó bien y el acuerdo marco está
-   * aceptado (cuando aplica).
+   * Habilita "Continuar": el paso 1 avanza cuando la necesidad es válida, el
+   * cruce terminó bien y el acuerdo marco está aceptado (cuando aplica); el
+   * paso 2, cuando su formulario (dependencias, cronograma y editores) es válido.
    */
   get pasoValido(): boolean {
-    if (this.pasoActual !== PRIMER_PASO) {
-      return false;
+    if (this.pasoActual === PRIMER_PASO) {
+      return (
+        !!this.necesidadForm.valid &&
+        this.estadoCruce() === "cargado" &&
+        this.acuerdoAceptado()
+      );
     }
-    return (
-      !!this.necesidadForm.valid &&
-      this.estadoCruce() === "cargado" &&
-      this.acuerdoAceptado()
-    );
+    if (this.pasoActual === SEGUNDO_PASO) {
+      return !!this.datosGeneralesForm.valid;
+    }
+    return false;
   }
 
   /** Motivo por el que "Continuar" está deshabilitado (título del botón). */
   get ayudaContinuar(): string {
+    if (this.pasoActual === SEGUNDO_PASO) {
+      return this.ayudaPaso2();
+    }
     if (this.pasoActual !== PRIMER_PASO) {
       return "Este paso aún no está implementado en esta fase del desarrollo.";
     }
@@ -144,6 +175,33 @@ export class AsistenteSolicitudComponent implements OnInit {
     }
     if (!this.acuerdoAceptado()) {
       return "Debe aceptar el acuerdo marco para continuar.";
+    }
+    return "";
+  }
+
+  /** Explica el bloqueo del paso 2 según el primer error encontrado. */
+  private ayudaPaso2(): string {
+    const form = this.datosGeneralesForm;
+    if (form.get("dependenciaSolicitante")?.invalid) {
+      return "Seleccione la dependencia solicitante.";
+    }
+    if (form.get("dependenciaDestino")?.invalid) {
+      return "Seleccione la dependencia destino.";
+    }
+    if (!form.get("fechaApertura")?.value) {
+      return "Indique la fecha de apertura del proceso.";
+    }
+    if (!form.get("fechaCierre")?.value) {
+      return "Indique la fecha de cierre del proceso.";
+    }
+    if (form.hasError("cronogramaInsuficiente")) {
+      return "El cierre debe estar al menos 3 días hábiles después de la apertura.";
+    }
+    if (form.get("criterioSeleccion")?.invalid) {
+      return `El criterio de selección requiere al menos ${MIN_CARACTERES_CRITERIO} caracteres.`;
+    }
+    if (form.get("planAccion")?.invalid) {
+      return `El plan de acción requiere al menos ${MIN_CARACTERES_PLAN} caracteres.`;
     }
     return "";
   }
@@ -184,6 +242,10 @@ export class AsistenteSolicitudComponent implements OnInit {
     this.acuerdoAceptado.set(aceptado);
   }
 
+  alCambiarResultadoCruce(resultado: ResultadoCruce | null): void {
+    this.resultadoCruce.set(resultado);
+  }
+
   guardarBorrador(automatico = false): void {
     const borrador: BorradorSolicitudNueva = {
       version: 1,
@@ -211,7 +273,7 @@ export class AsistenteSolicitudComponent implements OnInit {
     if (!automatico) {
       void this.alerta.showAlert(
         "Borrador guardado",
-        "Puede cerrar el asistente y retomarlo más tarde: el avance y los criterios del paso 1 quedan guardados en este equipo.",
+        "Puede cerrar el asistente y retomarlo más tarde: el avance y los datos diligenciados quedan guardados en este equipo.",
       );
     }
   }
@@ -221,7 +283,14 @@ export class AsistenteSolicitudComponent implements OnInit {
     this.borrador.eliminar();
     this.asistenteForm.reset({
       necesidad: { unidadEjecutora: "", vigencia: "", numeroNecesidad: "" },
-      datosGenerales: {},
+      datosGenerales: {
+        dependenciaSolicitante: "",
+        dependenciaDestino: "",
+        fechaApertura: "",
+        fechaCierre: "",
+        criterioSeleccion: "",
+        planAccion: "",
+      },
       items: {},
       contratacion: {},
       proveedores: {},
@@ -233,6 +302,7 @@ export class AsistenteSolicitudComponent implements OnInit {
     this.pasoAlcanzado = PRIMER_PASO;
     this.estadoCruce.set("inicial");
     this.acuerdoAceptado.set(false);
+    this.resultadoCruce.set(null);
     this.borradorRestaurado.set(false);
     this.estadoMensaje = "Borrador de solicitud autoguardado";
     this.estadoDetalle =

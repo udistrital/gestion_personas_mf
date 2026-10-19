@@ -1,0 +1,357 @@
+@use "src/app/shared/styles/tokens" as t;
+@use "src/app/shared/styles/registro-formulario" as registro-formulario;
+@use "src/app/shared/styles/paso-asistente" as paso-asistente;
+
+@include registro-formulario.styles;
+@include paso-asistente.styles;
+
+:host {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ajuste propio del paso 2 sobre el metadato de las tarjetas. */
+:host ::ng-deep .metadato {
+  text-transform: none;
+}
+
+/* ── Rejillas propias de las tarjetas ────────────────────────────────────── */
+.grid-cuatro {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+/* Ordenador del gasto (8) + nota "Por definir" (4). */
+.grid-doce-8-4 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.pt-sm {
+  padding-top: 0.5rem;
+}
+
+@media (min-width: t.$bp-sm) {
+  .grid-cuatro {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: t.$bp-xl) {
+  .grid-cuatro {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .grid-doce-8-4 {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    align-items: end;
+  }
+}
+
+/* ── Candado de los campos de solo lectura ───────────────────────────────── */
+.campo__candado {
+  width: 0.875rem;
+  height: 0.875rem;
+  margin-left: auto;
+  color: var(--agora-texto-deshabilitado);
+  font-size: 0.875rem;
+}
+
+/* ── Nota amarilla "Por definir" ─────────────────────────────────────────── */
+.nota-por-definir {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  padding: 0.625rem;
+  border: 1px dashed var(--agora-warning-border);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-warning-surface);
+}
+
+.nota-por-definir__etiqueta {
+  flex: 0 0 auto;
+  margin-top: 0.0625rem;
+  padding: 0.125rem 0.375rem;
+  border: 1px solid var(--agora-warning-border);
+  border-radius: 0.25rem;
+  background: color-mix(in srgb, var(--agora-warning) 22%, var(--agora-surface));
+  color: var(--agora-warning-text);
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.nota-por-definir__texto {
+  margin: 0;
+  color: var(--agora-warning-text);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* ── Validación de días hábiles ──────────────────────────────────────────── */
+.validacion-dias {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--agora-success);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.4;
+  text-transform: none;
+}
+
+.validacion-dias mat-icon {
+  width: 0.9375rem;
+  height: 0.9375rem;
+  font-size: 0.9375rem;
+}
+
+.validacion-dias--fallo {
+  color: var(--agora-error);
+}
+
+/* ── Notas informativas con borde vino ───────────────────────────────────── */
+.nota-legal {
+  margin: 0;
+  padding: 0.75rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-left: 3px solid var(--agora-primary);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-text);
+  font-size: 0.6875rem;
+  font-weight: 400;
+  line-height: 1.5;
+  text-transform: none;
+}
+
+.nota-legal__titulo {
+  color: var(--agora-primary);
+  font-weight: 700;
+}
+
+.nota-icono {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.875rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-left: 3px solid var(--agora-primary);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-superficie-neutra);
+}
+
+.nota-icono mat-icon {
+  flex: 0 0 auto;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 0.0625rem;
+  color: var(--agora-primary);
+  font-size: 1.25rem;
+}
+
+.nota-icono p {
+  margin: 0;
+  color: var(--agora-text);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.5;
+  text-transform: none;
+}
+
+.nota-icono--compacta {
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem;
+}
+
+.nota-icono--compacta mat-icon {
+  width: 1rem;
+  height: 1rem;
+  font-size: 1rem;
+}
+
+.nota-icono--compacta p {
+  font-size: 0.6875rem;
+  color: var(--agora-texto-neutro);
+}
+
+/* ── Bloque de solo lectura multilínea (objetivo / requisitos) ───────────── */
+.bloque-lectura {
+  box-sizing: border-box;
+  min-height: 5.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-texto-neutro);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.55;
+  text-transform: none;
+}
+
+/* Marca "SICAPITAL" del encabezado de los campos. */
+.origen-dato {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: auto;
+  color: var(--agora-texto-deshabilitado);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.origen-dato mat-icon {
+  width: 0.8125rem;
+  height: 0.8125rem;
+  font-size: 0.8125rem;
+}
+
+.hito {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.75rem;
+  border: 1px dashed var(--agora-borde-control);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-surface);
+  text-align: center;
+}
+
+.hito--definido {
+  border-style: solid;
+  border-color: var(--agora-borde-tarjeta);
+  background: var(--agora-superficie-neutra);
+}
+
+.hito__numero {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-bottom: 0.25rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: 999px;
+  background: var(--agora-surface);
+  color: var(--agora-texto-neutro);
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.hito--definido .hito__numero {
+  border-color: var(--agora-primary);
+  background: var(--agora-primary);
+  color: var(--agora-on-primary);
+}
+
+.hito__nombre {
+  color: var(--agora-texto-neutro);
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.hito--definido .hito__nombre {
+  color: var(--agora-primary);
+  font-weight: 700;
+}
+
+.hito__fecha {
+  color: var(--agora-texto-deshabilitado);
+  font-size: 0.6875rem;
+}
+
+.hito--definido .hito__fecha {
+  color: var(--agora-text);
+  font-weight: 500;
+}
+
+.hito__categoria {
+  margin-top: 0.25rem;
+  padding: 0.125rem 0.375rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: 0.25rem;
+  background: var(--agora-surface);
+  color: var(--agora-texto-neutro);
+  font-size: 0.625rem;
+  font-weight: 500;
+}
+
+.hito--definido .hito__categoria {
+  color: var(--agora-primary);
+}
+
+.hito__categoria--pendiente {
+  border-style: dashed;
+  border-color: var(--agora-warning-border);
+  background: var(--agora-warning-surface);
+  color: var(--agora-warning-text);
+}
+
+/* ── Resumen informativo inferior ────────────────────────────────────────── */
+.resumen-paso {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media (min-width: t.$bp-md) {
+  .resumen-paso {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.tile {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-surface);
+  box-shadow: var(--agora-sombra-tarjeta);
+}
+
+.tile__icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 2.25rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.5rem;
+  background: var(--agora-primary);
+  color: var(--agora-surface);
+}
+
+.tile__icono mat-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  font-size: 1.25rem;
+}
+
+.tile__textos {
+  min-width: 0;
+}
+
+.tile__titulo {
+  color: var(--agora-primary-dark);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.tile__texto {
+  margin: 0.125rem 0 0;
+  color: var(--agora-texto-neutro);
+  font-size: 0.6875rem;
+  line-height: 1.45;
+  text-transform: none;
+}

@@ -2,12 +2,14 @@ import { Injectable } from "@angular/core";
 import { Observable, delay, of, throwError } from "rxjs";
 import {
   AcuerdoMarco,
+  CaracteristicasSolicitud,
   CriterioNecesidad,
   ErrorCruceSicapital,
   InformacionPresupuestal,
   InformacionSolicitud,
   NecesidadOpcion,
   ResultadoCruce,
+  ResponsableSolicitud,
 } from "../models/necesidad.model";
 
 /** Criterios para listar las necesidades disponibles de una unidad/vigencia. */
@@ -57,6 +59,10 @@ interface RegistroSic {
   readonly opcion: NecesidadOpcion;
   readonly presupuesto: InformacionPresupuestal;
   readonly solicitud: InformacionSolicitud;
+  /** Radicador precargado por SICAPITAL (tarjeta 1 del paso 2). */
+  readonly responsable: ResponsableSolicitud;
+  /** Condiciones precargadas por SICAPITAL (tarjeta 3 del paso 2). */
+  readonly caracteristicas: CaracteristicasSolicitud;
   readonly acuerdoMarco?: AcuerdoMarco;
 }
 
@@ -69,6 +75,72 @@ const DISPONIBILIDAD_412 = {
   rubro: "2.3.1.01.02",
   rubroNombre: "Adquisición de Bienes TIC",
   estado: "Vigente / Aprobado",
+};
+
+/** Radicadores por unidad ejecutora (mock del cruce del paso 1). */
+const RESPONSABLES: Readonly<Record<string, ResponsableSolicitud>> = {
+  "1": {
+    nombres: "Andrés Felipe",
+    apellidos: "Rincón Bayona",
+    identificacion: "C.C. 1.018.452.981",
+    unidadEjecutora: "1 - Rectoría",
+    ordenadorGasto: "ORD-0042 - Dr. Ricardo Gómez Morales (Rector)",
+  },
+  "2": {
+    nombres: "Claudia Marcela",
+    apellidos: "Pardo Cifuentes",
+    identificacion: "C.C. 52.884.117",
+    unidadEjecutora: "2 - Facultad Tecnológica",
+    ordenadorGasto: "ORD-0061 - Ing. Gloria Esperanza Useche (Decana)",
+  },
+  "3": {
+    nombres: "Julián Esteban",
+    apellidos: "Ospina Rojas",
+    identificacion: "C.C. 79.554.302",
+    unidadEjecutora: "3 - Facultad de Ingeniería",
+    ordenadorGasto: "ORD-0058 - Ing. Jaime Alberto Rodríguez (Decano)",
+  },
+};
+
+/** Condiciones técnicas precargadas por SICAPITAL (tarjeta 3 del paso 2). */
+const CARACTERISTICAS_412: CaracteristicasSolicitud = {
+  objetivo:
+    "Adquisición, instalación, configuración y puesta en marcha de infraestructura de cómputo y servidores para la modernización de los centros de cómputo de la Universidad Distrital Francisco José de Caldas.",
+  requisitos:
+    "Los equipos ofertados deben ser de última generación, con soporte técnico especializado mínimo de 36 meses y certificaciones vigentes del fabricante.",
+  observaciones:
+    "Las condiciones ambientales de los centros de cómputo se ajustan al Estándar TIER II. Se requiere garantía de repuestos por al menos 5 años.",
+  plazoEjecucion: "Entrega e instalación en un plazo máximo de 60 días calendario.",
+};
+
+const CARACTERISTICAS_388: CaracteristicasSolicitud = {
+  objetivo:
+    "Mantenimiento preventivo y correctivo de los laboratorios de ensayo, prueba y calibración de la sede Aduanilla de Paiba.",
+  requisitos:
+    "El proveedor debe acreditar personal calificado y trazabilidad metrológica certificada por un organismo acreditado.",
+  observaciones:
+    "Los trabajos se ejecutan sin interrumpir la jornada académica; la programación se acuerda con la coordinación de laboratorios.",
+  plazoEjecucion: "Ejecución por vigencias trimestrales durante 120 días calendario.",
+};
+
+const CARACTERISTICAS_105: CaracteristicasSolicitud = {
+  objetivo:
+    "Renovación del licenciamiento anual de la plataforma de simulación y análisis para la red campus.",
+  requisitos:
+    "El licenciamiento debe cubrir a estudiantes y docentes en modalidad concurrente y ofrecer actualizaciones durante la vigencia.",
+  observaciones:
+    "Se requiere integración con el directorio institucional mediante protocolo SAML 2.0.",
+  plazoEjecucion: "Activación de licencias dentro de los 15 días calendario siguientes a la firma.",
+};
+
+const CARACTERISTICAS_977: CaracteristicasSolicitud = {
+  objetivo:
+    "Suministro y montaje de mobiliario institucional para las salas de estudio y aulas de la sede central.",
+  requisitos:
+    "Los muebles deben cumplir la normativa de ergonomía y resistencia para mobiliario educativo.",
+  observaciones:
+    "El mobiliario se entrega y monta por lotes según la programación de la División Administrativa.",
+  plazoEjecucion: "Suministro y montaje en un plazo máximo de 30 días calendario.",
 };
 
 const DATOS_SICAPITAL: readonly RegistroSic[] = [
@@ -96,6 +168,8 @@ const DATOS_SICAPITAL: readonly RegistroSic[] = [
       plazo: "45 Días Calendario",
       controlPresupuestal: "100% Amparado",
     },
+    responsable: RESPONSABLES["1"],
+    caracteristicas: CARACTERISTICAS_412,
     acuerdoMarco: {
       numero: "ACU-2026-CS-014",
       vigencia: 2026,
@@ -140,6 +214,8 @@ const DATOS_SICAPITAL: readonly RegistroSic[] = [
       plazo: "120 Días Calendario",
       controlPresupuestal: "100% Amparado",
     },
+    responsable: RESPONSABLES["2"],
+    caracteristicas: CARACTERISTICAS_388,
   },
   {
     opcion: {
@@ -176,6 +252,8 @@ const DATOS_SICAPITAL: readonly RegistroSic[] = [
       plazo: "30 Días Calendario",
       controlPresupuestal: "100% Amparado",
     },
+    responsable: RESPONSABLES["3"],
+    caracteristicas: CARACTERISTICAS_105,
   },
   {
     opcion: {
@@ -212,6 +290,8 @@ const DATOS_SICAPITAL: readonly RegistroSic[] = [
       plazo: "30 Días Calendario",
       controlPresupuestal: "Cierre fiscal 2025",
     },
+    responsable: RESPONSABLES["1"],
+    caracteristicas: CARACTERISTICAS_977,
   },
 ];
 
@@ -271,6 +351,8 @@ export class SicapitalServiceMock extends SicapitalService {
       necesidad: registro.opcion,
       presupuesto: registro.presupuesto,
       solicitud: registro.solicitud,
+      responsable: registro.responsable,
+      caracteristicas: registro.caracteristicas,
       ...(registro.acuerdoMarco && !sinAcuerdo
         ? { acuerdoMarco: registro.acuerdoMarco }
         : {}),

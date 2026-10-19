@@ -6,6 +6,10 @@
  * número de necesidad) y el resto se cruza en el sistema financiero.
  */
 
+import { CaracteristicasSolicitud, ResponsableSolicitud } from "./datos-generales.model";
+
+export type { CaracteristicasSolicitud, ResponsableSolicitud };
+
 /** Criterios con los que se consulta el cruce en SICAPITAL. */
 export interface CriterioNecesidad {
   readonly unidadEjecutora: string;
@@ -70,6 +74,10 @@ export interface ResultadoCruce {
   readonly necesidad: NecesidadOpcion;
   readonly presupuesto: InformacionPresupuestal;
   readonly solicitud: InformacionSolicitud;
+  /** Responsable radicador precargado (alimenta la tarjeta 1 del paso 2). */
+  readonly responsable: ResponsableSolicitud;
+  /** Condiciones precargadas (alimentan la tarjeta 3 del paso 2). */
+  readonly caracteristicas: CaracteristicasSolicitud;
   /** Presente ⇒ el asistente exige aceptar el acuerdo antes de continuar. */
   readonly acuerdoMarco?: AcuerdoMarco;
 }

@@ -10,7 +10,7 @@
         <div class="aviso-borrador__texto">
           <strong>Se restauró un borrador anterior.</strong>
           <span>
-            Los criterios del paso 1 se recuperan; el cruce con SICAPITAL se
+            Se recuperan los datos diligenciados; el cruce con SICAPITAL se
             vuelve a ejecutar con la necesidad seleccionada.
           </span>
         </div>
@@ -45,7 +45,13 @@
           [form]="necesidadForm"
           (cambioEstado)="alCambiarEstadoCruce($event)"
           (cambioAcuerdo)="alCambiarAcuerdo($event)"
+          (cambioResultado)="alCambiarResultadoCruce($event)"
         ></paso-necesidad>
+      } @else if (pasoActual === 2) {
+        <paso-datos-generales
+          [form]="datosGeneralesForm"
+          [resultado]="resultadoCruce()"
+        ></paso-datos-generales>
       } @else {
         <paso-pendiente
           [numero]="pasoActual"
