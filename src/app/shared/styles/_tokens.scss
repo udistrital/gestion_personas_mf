@@ -1,32 +1,41 @@
 /* ── Paleta ─────────────────────────────────────────────────────────────── */
-$primario: #69101b;
+$primario: #731514;
 $primario-oscuro: #47000b;
-$primario-claro: #ffdad9;
+$primario-claro: #e7e5e6; /* halo/selección suave (antes rosado saturado) */
 $on-primario: #ffffff;
 
-$fondo: #fff8f7;
+$fondo: #fff8f7; /* único tinte rosado permitido */
 $superficie: #ffffff;
-$superficie-suave: #fff0f0;
-$superficie-resalte: #ffe0e0;
+$superficie-suave: #f7f6f6;
+$superficie-resalte: #edebec;
 
-$borde: #fce2e3;
-$borde-fuerte: #ddc0bf;
+$borde: #e8e6e6;
+$borde-fuerte: #c7c3c4;
 
 $texto: #251819;
-$texto-suave: #665252;
+$texto-suave: #5f5d5e;
 
-$error: #ba1a1a;
-$error-superficie: #fff1f1;
-$error-borde: #f2b8b5;
+/* Danger — main para bordes/texto, superficie derivada de base */
+$error: #b03d3f;
+$error-superficie: #faf0f0;
+$error-borde: #ecc8c8;
 
-$exito: #166534;
-$exito-superficie: #f0fdf4;
-$exito-borde: #bbf7d0;
+/* Success — main como tono visible */
+$exito: #218b22;
+$exito-superficie: #eff7ea;
+$exito-borde: #c9e0c1;
 
-$advertencia: #a96d00;
-$advertencia-texto: #6d4700;
-$advertencia-superficie: #fff8e1;
-$advertencia-borde: #fcd17e;
+/* Warning — accent como tono visible (main es muy claro sobre superficies
+   claras); texto derivado en tono oscuro para contraste AA */
+$advertencia: #ff9311;
+$advertencia-texto: #a35400;
+$advertencia-superficie: #fff7ed;
+$advertencia-borde: #ffe3c2;
+
+/* Info (others) */
+$info: #4867a3;
+$info-superficie: #f1f4f9;
+$info-borde: #d2daeb;
 
 /* ── Radios ─────────────────────────────────────────────────────────────── */
 $radio-sm: 0.375rem;
@@ -35,10 +44,10 @@ $radio-lg: 0.75rem;
 $radio-xl: 1rem;
 
 /* ── Sombras ────────────────────────────────────────────────────────────── */
-$sombra-xs: 0 1px 3px rgb(37 24 25 / 8%);
+$sombra-xs: 0 1px 3px rgb(18 16 17 / 8%);
 $sombra-sm: 0 1px 3px rgb(0 0 0 / 8%);
 $sombra-md: 0 4px 6px -1px rgb(0 0 0 / 10%), 0 2px 4px -1px rgb(0 0 0 / 10%);
-$sombra-tarjeta: 0 0.125rem 0.5rem rgb(37 24 25 / 8%);
+$sombra-tarjeta: 0 0.125rem 0.5rem rgb(18 16 17 / 8%);
 $sombra-alta: 0 10px 15px -3px rgb(0 0 0 / 10%), 0 4px 6px -4px rgb(0 0 0 / 10%);
 
 /* ── Breakpoints (mobile-first, únicos en toda la app) ──────────────────── */
@@ -85,6 +94,10 @@ $fuente-xl: 1rem; /* 16px — títulos de tarjeta */
     --agora-warning-text: #{$advertencia-texto};
     --agora-warning-surface: #{$advertencia-superficie};
     --agora-warning-border: #{$advertencia-borde};
+
+    --agora-info: #{$info};
+    --agora-info-surface: #{$info-superficie};
+    --agora-info-border: #{$info-borde};
 
     --agora-font-xs: #{$fuente-xs};
     --agora-font-sm: #{$fuente-sm};
