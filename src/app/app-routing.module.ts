@@ -11,6 +11,13 @@ const routes: Routes = [
       ),
   },
   {
+    path: "cotizaciones",
+    loadChildren: () =>
+      import("./modules/cotizaciones/cotizaciones.module").then(
+        (m) => m.CotizacionesModule
+      ),
+  },
+  {
     path: "",
     redirectTo: "proveedores",
     pathMatch: "full",
