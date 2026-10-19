@@ -1,4 +1,10 @@
 <div class="paso-2-card-wrapper">
+  <registro-persona-juridica-estado-catalogos
+    [cargando]="estadoCatalogos.cargando"
+    [error]="estadoCatalogos.error"
+    (reintentar)="reintentarCatalogos.emit()"
+  ></registro-persona-juridica-estado-catalogos>
+
   <mat-card class="paso-2-card">
 
     <!-- BANNER DEL PASO 2 -->
@@ -156,8 +162,8 @@
 
                 <select id="eps" formControlName="eps">
             <option value="">Seleccione una EPS</option>
-            @for (opcion of opcionesEps; track opcion.value) {
-              <option [value]="opcion.value">{{ opcion.label }}</option>
+            @for (opcion of opcionesEps; track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
             }
           </select>
               </div>
@@ -186,8 +192,8 @@
 
                 <select id="afp" formControlName="afp">
             <option value="">Seleccione una AFP</option>
-            @for (opcion of opcionesAfp; track opcion.value) {
-              <option [value]="opcion.value">{{ opcion.label }}</option>
+            @for (opcion of opcionesAfp; track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
             }
           </select>
               </div>
@@ -216,8 +222,8 @@
 
                 <select id="ccf" formControlName="ccf">
             <option value="">Seleccione una Caja de Compensación</option>
-            @for (opcion of opcionesCcf; track opcion.value) {
-              <option [value]="opcion.value">{{ opcion.label }}</option>
+            @for (opcion of opcionesCcf; track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
             }
           </select>
               </div>
@@ -269,8 +275,8 @@
 
                 <select id="entidadBancaria" formControlName="entidadBancaria">
             <option value="">Seleccione una entidad bancaria</option>
-            @for (opcion of opcionesEntidadesBancarias; track opcion.value) {
-              <option [value]="opcion.value">{{ opcion.label }}</option>
+            @for (opcion of opcionesEntidadesBancarias; track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
             }
           </select>
               </div>
@@ -296,8 +302,8 @@
 
                 <select id="tipoCuenta" formControlName="tipoCuenta">
             <option value="">Seleccione un tipo de cuenta</option>
-            @for (opcion of opcionesTipoCuenta; track opcion.value) {
-              <option [value]="opcion.value">{{ opcion.label }}</option>
+            @for (opcion of opcionesTipoCuenta; track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
             }
           </select>
               </div>

@@ -1,5 +1,14 @@
-import { Component, Input } from "@angular/core";
+import { Component, EventEmitter, Input, Output } from "@angular/core";
 import { FormGroup } from "@angular/forms";
+import {
+  CatalogosPersonaNaturalPaso1,
+  OpcionNatural,
+} from "../registro-persona-natural-catalogos.service";
+import {
+  ClaveGeografiaNatural,
+  EstadoCatalogoNatural,
+  EstadoListaNatural,
+} from "../registro-persona-natural.component";
 
 @Component({
   selector: "app-registro-persona-natural-paso-1",
@@ -14,6 +23,34 @@ export class RegistroPersonaNaturalPaso1Component {
   @Input({ required: true }) tributarioForm!: FormGroup;
   @Input({ required: true }) residenciaForm!: FormGroup;
   @Input({ required: true }) contactoForm!: FormGroup;
+  @Input() catalogos: CatalogosPersonaNaturalPaso1 | null = null;
+  @Input() estadoCatalogos: EstadoCatalogoNatural = { cargando: false, error: null };
+  @Input() geografia!: Record<ClaveGeografiaNatural, EstadoListaNatural>;
+  @Output() reintentarCatalogos = new EventEmitter<void>();
+  @Output() reintentarGeografia = new EventEmitter<ClaveGeografiaNatural>();
+
+  opciones(clave: keyof CatalogosPersonaNaturalPaso1): OpcionNatural[] {
+    return this.catalogos?.[clave] ?? [];
+  }
+
+  get paisResidenciaNombre(): string {
+    return (
+      this.opciones("paises").find(
+        (pais) =>
+          pais.nombre.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase() ===
+          "colombia",
+      )?.nombre ?? ""
+    );
+  }
+
+  get tieneHijosAfirmativo(): boolean {
+    const id = this.caracterizacionForm.get("tieneHijos")?.value;
+    const nombre = this.opciones("tieneHijos").find((o) => o.id === id)?.nombre;
+    return (
+      typeof nombre === "string" &&
+      nombre.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase() === "si"
+    );
+  }
 
   incrementarMeses(
     controlName: "experienciaLaboralTotal" | "experienciaProfesional"

@@ -1,0 +1,8 @@
+@if (cargando) {
+  <p aria-live="polite">Cargando catálogos...</p>
+} @else if (error) {
+  <p role="alert">{{ error }}</p>
+  <button class="boton boton--secundario" type="button" (click)="reintentar.emit()">Reintentar carga de catálogos</button>
+} @else if (sinRegistros) {
+  <p role="status">La carga terminó correctamente, pero uno o más catálogos documentados no tienen opciones disponibles.</p>
+}

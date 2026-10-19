@@ -45,55 +45,66 @@
   </div>
 
 
-  <!-- ========================================================= -->
-  <!-- PASO 1                                                    -->
-  <!-- ========================================================= -->
+  <section class="contenido-pasos" aria-label="Información del registro">
 
-  @if (currentStep === 1) {
+    <!-- ========================================================= -->
+    <!-- PASO 1                                                    -->
+    <!-- ========================================================= -->
 
-    <app-registro-persona-natural-paso-1
-      [identificacionForm]="identificacionForm"
-      [caracterizacionForm]="caracterizacionForm"
-      [experienciaForm]="experienciaForm"
-      [tributarioForm]="tributarioForm"
-      [residenciaForm]="residenciaForm"
-      [contactoForm]="contactoForm"
-    ></app-registro-persona-natural-paso-1>
+    @if (currentStep === 1) {
 
-  }
+      <app-registro-persona-natural-paso-1
+        [identificacionForm]="identificacionForm"
+        [caracterizacionForm]="caracterizacionForm"
+        [experienciaForm]="experienciaForm"
+        [tributarioForm]="tributarioForm"
+        [residenciaForm]="residenciaForm"
+        [contactoForm]="contactoForm"
+        [catalogos]="catalogosPaso1"
+        [estadoCatalogos]="estadoPaso1"
+        [geografia]="geografia"
+        (reintentarCatalogos)="cargarCatalogosPaso1()"
+        (reintentarGeografia)="reintentarGeografia($event)"
+      ></app-registro-persona-natural-paso-1>
 
-
-  <!-- ========================================================= -->
-  <!-- PASO 2                                                    -->
-  <!-- ========================================================= -->
-
-  @if (currentStep === 2) {
-
-    <app-registro-persona-natural-paso-2
-      [afiliacionesFinanzasForm]="afiliacionesFinanzasForm"
-    ></app-registro-persona-natural-paso-2>
-
-  }
+    }
 
 
+    <!-- ========================================================= -->
+    <!-- PASO 2                                                    -->
+    <!-- ========================================================= -->
 
-  <!-- ========================================================= -->
-  <!-- PASO 3                                                    -->
-  <!-- ========================================================= -->
+    @if (currentStep === 2) {
 
-  @if (currentStep === 3) {
-  <app-registro-persona-natural-paso-3
-    [documentosForm]="documentosForm"
-    (estadoCambio)="estadoMensaje = $event.mensaje; estadoDetalle = $event.detalle"
-    (solicitarPersistencia)="persistirBorrador($event)"
-  ></app-registro-persona-natural-paso-3>
-}
+      <app-registro-persona-natural-paso-2
+        [afiliacionesFinanzasForm]="afiliacionesFinanzasForm"
+        [catalogos]="catalogosPaso2"
+        [estadoCatalogos]="estadoPaso2"
+        (reintentarCatalogos)="cargarCatalogosPaso2()"
+      ></app-registro-persona-natural-paso-2>
 
-@if (currentStep === 4) {
-  <app-registro-persona-natural-paso-4
-    [actividadDeclaracionForm]="actividadDeclaracionForm"
-  ></app-registro-persona-natural-paso-4>
-}
+    }
+
+
+    <!-- ========================================================= -->
+    <!-- PASO 3                                                    -->
+    <!-- ========================================================= -->
+
+    @if (currentStep === 3) {
+      <app-registro-persona-natural-paso-3
+        [documentosForm]="documentosForm"
+        (estadoCambio)="estadoMensaje = $event.mensaje; estadoDetalle = $event.detalle"
+        (solicitarPersistencia)="persistirBorrador($event)"
+      ></app-registro-persona-natural-paso-3>
+    }
+
+    @if (currentStep === 4) {
+      <app-registro-persona-natural-paso-4
+        [actividadDeclaracionForm]="actividadDeclaracionForm"
+      ></app-registro-persona-natural-paso-4>
+    }
+
+  </section>
 
 <barra-acciones-formulario
     [mostrarRegreso]="currentStep > 1"

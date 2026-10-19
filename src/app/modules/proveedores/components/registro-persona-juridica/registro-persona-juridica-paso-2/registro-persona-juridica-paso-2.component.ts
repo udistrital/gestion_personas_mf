@@ -1,10 +1,12 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormGroup } from '@angular/forms';
-
-interface Opcion<T> {
-  label: string;
-  value: T;
-}
+import {
+  CatalogosPersonaJuridica,
+  OpcionCatalogo,
+} from '../services/registro-persona-juridica-catalogos.service';
+import {
+  OpcionLugar,
+} from '../services/registro-persona-juridica-ubicaciones.service';
 
 @Component({
   selector: 'registro-persona-juridica-paso-2',
@@ -14,42 +16,37 @@ interface Opcion<T> {
 })
 export class RegistroPersonaJuridicaPaso2Component {
   @Input() formulario: FormGroup = new FormGroup({});
+  @Input() catalogos: CatalogosPersonaJuridica | null = null;
+  @Input() pais: OpcionLugar | null = null;
+  @Input() departamentos: OpcionLugar[] = [];
+  @Input() ciudades: OpcionLugar[] = [];
+  @Input() cargandoDepartamentos = false;
+  @Input() cargandoCiudades = false;
+  @Input() errorDepartamentos: string | null = null;
+  @Input() errorCiudades: string | null = null;
   @Output() formularioChange = new EventEmitter<FormGroup>();
+  @Output() reintentarDepartamentos = new EventEmitter<void>();
+  @Output() reintentarCiudades = new EventEmitter<void>();
 
-  opcionesTipoConstitucion: Opcion<string>[] = [
-    { label: 'Capital Privado Nacional (100%)', value: 'capital_privado_nacional' },
-    { label: 'Economía Mixta con aporte estatal', value: 'economia_mixta' },
-    { label: 'Capital Privado con Inversión Extranjera', value: 'capital_extranjero' },
-    { label: 'Entidad Sin Ánimo de Lucro (Patrimonio Institucional)', value: 'sin_animo_lucro' },
-  ];
+  get opcionesTipoConstitucion(): OpcionCatalogo[] {
+    return this.catalogos?.tipoCapital ?? [];
+  }
 
-  opcionesBanco: Opcion<string>[] = [
-    { label: '001 - BANCO DE BOGOTÁ', value: 'banco_bogota' },
-    { label: '007 - BANCOLOMBIA S.A.', value: 'bancolombia' },
-    { label: '051 - BANCO DAVIVIENDA', value: 'davivienda' },
-    { label: '013 - BBVA COLOMBIA', value: 'bbva' },
-    { label: '023 - BANCO DE OCCIDENTE', value: 'occidente' },
-    { label: '002 - BANCO POPULAR', value: 'popular' },
-    { label: '040 - BANCO AGRARIO DE COLOMBIA', value: 'agrario' },
-  ];
+  get opcionesBanco(): OpcionCatalogo[] {
+    return this.catalogos?.entidadesBancarias ?? [];
+  }
 
-  opcionesTipoCuenta: Opcion<string>[] = [
-    { label: 'Cuenta Corriente Empresarial', value: 'corriente' },
-    { label: 'Cuenta de Ahorros Empresarial', value: 'ahorros' },
-  ];
+  get opcionesTipoCuenta(): OpcionCatalogo[] {
+    return this.catalogos?.tiposCuentaBancaria ?? [];
+  }
 
-  opcionesCiudadApertura: Opcion<string>[] = [
-    { label: 'Bogotá D.C. (Cundinamarca)', value: 'bogota' },
-    { label: 'Medellín (Antioquia)', value: 'medellin' },
-    { label: 'Cali (Valle del Cauca)', value: 'cali' },
-    { label: 'Barranquilla (Atlántico)', value: 'barranquilla' },
-    { label: 'Bucaramanga (Santander)', value: 'bucaramanga' },
-  ];
+  get opcionesObligadoFacturar(): OpcionCatalogo[] {
+    return this.catalogos?.obligadoFacturar ?? [];
+  }
 
-  opcionesSiNo: Opcion<string>[] = [
-    { label: 'Sí', value: 'si' },
-    { label: 'No', value: 'no' },
-  ];
+  get opcionesMonedaExtranjera(): OpcionCatalogo[] {
+    return this.catalogos?.monedaExtranjera ?? [];
+  }
 
   umbralMinimo = 1.50;
 

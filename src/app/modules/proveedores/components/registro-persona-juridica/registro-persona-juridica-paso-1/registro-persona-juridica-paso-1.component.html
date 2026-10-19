@@ -20,8 +20,9 @@
       <label class="campo">
         <span>Procedencia de la Empresa <b>*</b></span>
         <select formControlName="procedencia">
-          @for (opcion of opcionesProcedencia; track opcion.value) {
-            <option [value]="opcion.value">{{ opcion.label }}</option>
+          <option [ngValue]="null">Seleccione...</option>
+          @for (opcion of opcionesProcedencia; track opcion.id) {
+            <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
           }
         </select>
       </label>
@@ -44,8 +45,9 @@
       <label class="campo">
         <span>Cámara de Comercio <b>*</b></span>
         <select formControlName="camaraComercio">
-          @for (opcion of opcionesCamaraComercio; track opcion.value) {
-            <option [value]="opcion.value">{{ opcion.label }}</option>
+          <option [ngValue]="null">Seleccione...</option>
+          @for (opcion of opcionesCamaraComercio; track opcion.id) {
+            <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
           }
         </select>
       </label>
@@ -60,16 +62,18 @@
       <label class="campo campo--wide">
         <span>Tipo de Organización / Figura Jurídica <b>*</b></span>
         <select formControlName="tipoOrganizacion">
-          @for (opcion of opcionesTipoOrganizacion; track opcion.value) {
-            <option [value]="opcion.value">{{ opcion.label }}</option>
+          <option [ngValue]="null">Seleccione...</option>
+          @for (opcion of opcionesTipoOrganizacion; track opcion.id) {
+            <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
           }
         </select>
       </label>
       <label class="campo campo--wide">
         <span>Tamaño Empresarial (Decreto 957/2019) <b>*</b></span>
         <select formControlName="tamanoEmpresarial">
-          @for (opcion of opcionesTamanoEmpresarial; track opcion.value) {
-            <option [value]="opcion.value">{{ opcion.label }}</option>
+          <option [ngValue]="null">Seleccione...</option>
+          @for (opcion of opcionesTamanoEmpresarial; track opcion.id) {
+            <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
           }
         </select>
       </label>
@@ -92,7 +96,12 @@
       <p>Cotejo con Censo Ciudadano</p>
       <div class="campo-grid campo-grid--three">
         <label class="campo"><span>Documento Identificación <b>*</b></span><input formControlName="documentoRepresentante" type="text"></label>
-        <label class="campo"><span>Cargo Representante <b>*</b></span><input formControlName="cargoRepresentante" type="text"></label>
+        <label class="campo"><span>Cargo Representante <b>*</b></span><select formControlName="cargoRepresentante">
+          <option [ngValue]="null">Seleccione...</option>
+          @for (opcion of opcionesCargo; track opcion.id) {
+            <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+          }
+        </select></label>
         <button class="boton boton--primary" type="button">Relacionar</button>
       </div>
     </div>
@@ -120,46 +129,52 @@
   >
     <div class="campo-grid campo-grid--three">
       <label class="campo campo--question"><span>¿Cuenta con Beneficiarios Finales reportados en el RUB? <b>*</b></span><select formControlName="beneficiariosFinales">
-        @for (opcion of opcionesBeneficiariosFinales; track opcion.value) {
-          <option [value]="opcion.value">{{ opcion.label }}</option>
+        <option [ngValue]="null">Seleccione...</option>
+        @for (opcion of opcionesBeneficiariosFinales; track opcion.id) {
+          <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
         }
       </select></label>
       <label class="campo campo--question"><span>¿Cotiza en la Bolsa de Valores de Colombia (BVC)? <b>*</b></span><select formControlName="cotizaBolsa">
-        @for (opcion of opcionesCotizaBolsa; track opcion.value) {
-          <option [value]="opcion.value">{{ opcion.label }}</option>
+        <option [ngValue]="null">Seleccione...</option>
+        @for (opcion of opcionesCotizaBolsa; track opcion.id) {
+          <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
         }
       </select></label>
       <label class="campo campo--question"><span>¿Obligada a contar con Revisor Fiscal? <b>*</b></span><select formControlName="revisorFiscal">
-        @for (opcion of opcionesRevisorFiscal; track opcion.value) {
-          <option [value]="opcion.value">{{ opcion.label }}</option>
+        <option [ngValue]="null">Seleccione...</option>
+        @for (opcion of opcionesRevisorFiscal; track opcion.id) {
+          <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
         }
       </select></label>
       <label class="campo campo--question"><span>¿Gran Contribuyente DIAN? <b>*</b></span><select formControlName="granContribuyente">
-        @for (opcion of opcionesGranContribuyente; track opcion.value) {
-          <option [value]="opcion.value">{{ opcion.label }}</option>
+        <option [ngValue]="null">Seleccione...</option>
+        @for (opcion of opcionesGranContribuyente; track opcion.id) {
+          <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
         }
       </select></label>
       <label class="campo campo--question"><span>¿Es Autorretenedor en Renta? <b>*</b></span><select formControlName="autorretenedor">
-        @for (opcion of opcionesAutorretenedor; track opcion.value) {
-          <option [value]="opcion.value">{{ opcion.label }}</option>
+        <option [ngValue]="null">Seleccione...</option>
+        @for (opcion of opcionesAutorretenedor; track opcion.id) {
+          <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
         }
       </select></label>
       <label class="campo campo--question"><span>¿Aplica Exención ICA Bogotá? <b>*</b></span><select formControlName="exencionIca">
-        @for (opcion of opcionesExencionIca; track opcion.value) {
-          <option [value]="opcion.value">{{ opcion.label }}</option>
+        <option [ngValue]="null">Seleccione...</option>
+        @for (opcion of opcionesExencionIca; track opcion.id) {
+          <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
         }
       </select></label>
     </div>
     <fieldset class="responsabilidades">
       <legend>Responsabilidades Fiscales en Casilla 53 del RUT vigente: <b>*</b></legend>
-      @for (opcion of opcionesResponsabilidadesFiscales; track opcion.value) {
+      @for (opcion of opcionesResponsabilidadesFiscales; track opcion.id) {
         <label>
           <input
-            [checked]="formulario.get('responsabilidades')?.value?.includes(opcion.value)"
-            (change)="cambiarResponsabilidad(opcion.value, $any($event.target).checked)"
+            [checked]="formulario.get('responsabilidades')?.value?.includes(opcion.id)"
+            (change)="cambiarResponsabilidad(opcion.id, $any($event.target).checked)"
             type="checkbox"
           >
-          {{ opcion.label }}
+          {{ opcion.nombre }}
         </label>
       }
     </fieldset>
@@ -171,35 +186,70 @@
     [description]="'Diligencie la nomenclatura oficial para notificaciones judiciales y administrativas de la Universidad.'"
   >
     <div class="campo-grid campo-grid--two">
-      <label class="campo"><span>Departamento de Sede Principal <b>*</b></span><select formControlName="departamento" (change)="onDepartamentoChange($any($event.target).value)">
-        @for (opcion of opcionesDepartamento; track opcion.value) {
-          <option [value]="opcion.value">{{ opcion.label }}</option>
+      <label class="campo"><span>País</span><input [value]="pais?.nombre ?? ''" type="text" readonly></label>
+      <label class="campo"><span>Departamento de Sede Principal <b>*</b></span><select formControlName="departamento">
+        <option [ngValue]="null">Seleccione...</option>
+        @for (opcion of departamentos; track opcion.id) {
+          <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
         }
-      </select></label>
+      </select>
+        @if (cargandoDepartamentos) {
+          <small>Cargando departamentos...</small>
+        } @else if (errorDepartamentos) {
+          <small role="alert">{{ errorDepartamentos }}</small>
+          <button class="boton boton--secundario" type="button" (click)="reintentarDepartamentos.emit()">Reintentar</button>
+        } @else if (departamentos.length === 0) {
+          <small>No hay departamentos disponibles.</small>
+        }
+      </label>
       <label class="campo"><span>Ciudad / Municipio <b>*</b></span><select formControlName="ciudad">
-        @for (opcion of opcionesCiudad; track opcion.value) {
-          <option [value]="opcion.value">{{ opcion.label }}</option>
+        <option [ngValue]="null">Seleccione...</option>
+        @for (opcion of ciudades; track opcion.id) {
+          <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
         }
-      </select></label>
+      </select>
+        @if (cargandoCiudades) {
+          <small>Cargando ciudades...</small>
+        } @else if (errorCiudades) {
+          <small role="alert">{{ errorCiudades }}</small>
+          <button class="boton boton--secundario" type="button" (click)="reintentarCiudades.emit()">Reintentar</button>
+        } @else if (formulario.get('departamento')?.value && ciudades.length === 0) {
+          <small>No hay ciudades disponibles para este departamento.</small>
+        }
+      </label>
     </div>
     <div class="direccion">
       <h3><mat-icon>signpost</mat-icon> Generador de Nomenclatura Estándar DIAN (RUT)</h3>
       <div class="campo-grid campo-grid--direccion">
-        <label class="campo"><span>Vía *</span><select formControlName="tipoVia">
-          @for (opcion of opcionesTipoVia; track opcion.value) {
-            <option [value]="opcion.value">{{ opcion.label }}</option>
+        <label class="campo">
+          <span>Vía *</span>
+          <select formControlName="tipoVia">
+            <option [ngValue]="null">Seleccione...</option>
+            @for (opcion of opcionesTipoVia; track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+            }
+          </select>
+          @if (catalogos && opcionesTipoVia.length === 0) {
+            <small>No hay opciones de vía disponibles en Ubicaciones.</small>
           }
-        </select></label>
+        </label>
         <label class="campo"><span>Detalle Vía *</span><input formControlName="detalleVia" type="text"></label>
         <span class="separador-direccion" aria-hidden="true">#</span>
         <label class="campo"><span>Número Cruce *</span><input formControlName="numeroCruce" type="text"></label>
         <span class="separador-direccion" aria-hidden="true">-</span>
         <label class="campo"><span>Placa Puerta *</span><input formControlName="placaPuerta" type="text"></label>
-        <label class="campo"><span>Interior 1</span><select formControlName="interiorTipo">
-          @for (opcion of opcionesTipoInterior; track opcion.value) {
-            <option [value]="opcion.value">{{ opcion.label }}</option>
+        <label class="campo">
+          <span>Interior 1</span>
+          <select formControlName="interiorTipo">
+            <option [ngValue]="null">Seleccione...</option>
+            @for (opcion of opcionesTipoInterior; track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+            }
+          </select>
+          @if (catalogos && opcionesTipoInterior.length === 0) {
+            <small>No hay opciones de interior disponibles en Ubicaciones.</small>
           }
-        </select></label>
+        </label>
         <label class="campo"><span>Det. Interior</span><input formControlName="detalleInterior" type="text"></label>
       </div>
       <direccion-generada
