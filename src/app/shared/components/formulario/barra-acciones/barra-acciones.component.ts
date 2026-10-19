@@ -13,6 +13,16 @@ export class BarraAccionesComponent {
     "[mock] Borrador societario autoguardado con éxito";
   @Input() estadoDetalle =
     "Hoy a las 11:45 AM · Sesión cifrada SSL 256-bit Universidad Distrital";
+  /** Etiqueta del botón de regreso. */
+  @Input() tituloRegresar = 'Regresar';
+  /** Etiqueta del botón de avance. */
+  @Input() tituloContinuar = 'Continuar';
+  /**
+   * Bloquea el avance (también lo deshabilita visualmente) cuando el paso
+   * todavía no cumple sus validaciones. Se muestra como `title` del botón.
+   */
+  @Input() deshabilitarContinuar = false;
+  @Input() ayudaContinuar?: string;
   @Output() regreso = new EventEmitter<void>();
   @Output() guardar = new EventEmitter<void>();
   @Output() continuar = new EventEmitter<void>();

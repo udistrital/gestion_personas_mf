@@ -15,7 +15,7 @@
       (click)="regreso.emit()"
     >
       <mat-icon aria-hidden="true">arrow_back</mat-icon>
-      <span>Regresar</span>
+      <span>{{ tituloRegresar }}</span>
     </button>
 
     <button class="boton-borrador" type="button" (click)="guardar.emit()">
@@ -27,9 +27,11 @@
       *ngIf="!esUltimoPaso"
       class="boton-acento"
       type="button"
+      [disabled]="deshabilitarContinuar"
+      [attr.title]="deshabilitarContinuar ? ayudaContinuar : null"
       (click)="continuar.emit()"
     >
-      <span>Continuar</span>
+      <span>{{ tituloContinuar }}</span>
       <mat-icon aria-hidden="true">arrow_forward</mat-icon>
     </button>
 
@@ -37,6 +39,8 @@
       *ngIf="esUltimoPaso"
       class="boton-acento"
       type="button"
+      [disabled]="deshabilitarContinuar"
+      [attr.title]="deshabilitarContinuar ? ayudaContinuar : null"
       (click)="finalizar.emit()"
     >
       <span>Finalizar</span>

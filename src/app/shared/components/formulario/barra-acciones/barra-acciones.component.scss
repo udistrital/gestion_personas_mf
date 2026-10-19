@@ -115,6 +115,13 @@
   outline-offset: 0.125rem;
 }
 
+/* Estado deshabilitado (paso sin validar / bloqueado por error de cruce). */
+:is(.boton-borrador, .boton-acento):disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  box-shadow: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .boton-borrador,
   .boton-acento {

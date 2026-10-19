@@ -14,6 +14,8 @@ import { CampoDineroComponent } from "./components/formulario/campo-dinero/campo
 import { ValidacionCampoDirective } from "./directives/validacion-campo.directive";
 import { ChipEstadoComponent } from "./components/chip-estado/chip-estado.component";
 import { ListadoFiltrosComponent } from "./components/listado-filtros/listado-filtros.component";
+import { AsistentePasosComponent } from "./components/asistente-pasos/asistente-pasos.component";
+import { BannerPasoComponent } from "./components/banner-paso/banner-paso.component";
 
 @NgModule({
   declarations: [
@@ -27,6 +29,8 @@ import { ListadoFiltrosComponent } from "./components/listado-filtros/listado-fi
     ValidacionCampoDirective,
     ChipEstadoComponent,
     ListadoFiltrosComponent,
+    AsistentePasosComponent,
+    BannerPasoComponent,
   ],
   imports: [
     CommonModule,
@@ -52,6 +56,8 @@ import { ListadoFiltrosComponent } from "./components/listado-filtros/listado-fi
     ValidacionCampoDirective,
     ChipEstadoComponent,
     ListadoFiltrosComponent,
+    AsistentePasosComponent,
+    BannerPasoComponent,
   ],
 })
 export class SharedModule {}
