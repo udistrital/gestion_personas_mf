@@ -16,18 +16,21 @@ import {
   minCaracteres,
   validadorCronograma,
 } from "./paso-2-datos-generales/paso-datos-generales.component";
+import { alMenosUnItem } from "./paso-3-items/paso-items.component";
 
 const PRIMER_PASO = 1;
 const SEGUNDO_PASO = 2;
+const TERCER_PASO = 3;
 const ULTIMO_PASO = 7;
 
 /**
  * Asistente de nueva solicitud de cotización (S-02).
  *
  * Posee el `FormGroup` raíz —un subgrupo por paso—, el borrador automático y
- * la barra de acciones. Solo el paso 1 (necesidad y presupuesto) está
- * implementado en esta fase: el resto se muestra como `paso-pendiente` y el
- * avance queda bloqueado hasta que cada paso exija sus validaciones.
+ * la barra de acciones. Solo los pasos 1 (necesidad y presupuesto), 2 (datos
+ * generales) y 3 (bienes y servicios a cotizar) están implementados en esta
+ * fase: el resto se muestra como `paso-pendiente` y el avance queda bloqueado
+ * hasta que cada paso exija sus validaciones.
  */
 @Component({
   selector: "asistente-solicitud",
@@ -92,8 +95,16 @@ export class AsistenteSolicitudComponent implements OnInit {
         },
         { validators: validadorCronograma() },
       ),
-      // Pasos 3 a 7: creados por el diseño; se habilitan con su implementación.
-      items: fb.group({}),
+      // Pasos 3 en adelante: se habilitan con su implementación.
+      items: fb.group(
+        {
+          modo: ["individual", Validators.required],
+          archivo: [""],
+          procesado: [false],
+          registros: [[]],
+        },
+        { validators: alMenosUnItem() },
+      ),
       contratacion: fb.group({}),
       proveedores: fb.group({}),
       documentos: fb.group({}),
@@ -117,6 +128,10 @@ export class AsistenteSolicitudComponent implements OnInit {
 
   get datosGeneralesForm(): FormGroup {
     return this.asistenteForm.get("datosGenerales") as FormGroup;
+  }
+
+  get itemsForm(): FormGroup {
+    return this.asistenteForm.get("items") as FormGroup;
   }
 
   /** Siguiente componente según el paso activo. */
@@ -149,6 +164,9 @@ export class AsistenteSolicitudComponent implements OnInit {
     if (this.pasoActual === SEGUNDO_PASO) {
       return !!this.datosGeneralesForm.valid;
     }
+    if (this.pasoActual === TERCER_PASO) {
+      return !!this.itemsForm.valid;
+    }
     return false;
   }
 
@@ -156,6 +174,9 @@ export class AsistenteSolicitudComponent implements OnInit {
   get ayudaContinuar(): string {
     if (this.pasoActual === SEGUNDO_PASO) {
       return this.ayudaPaso2();
+    }
+    if (this.pasoActual === TERCER_PASO) {
+      return this.ayudaPaso3();
     }
     if (this.pasoActual !== PRIMER_PASO) {
       return "Este paso aún no está implementado en esta fase del desarrollo.";
@@ -204,6 +225,11 @@ export class AsistenteSolicitudComponent implements OnInit {
       return `El plan de acción requiere al menos ${MIN_CARACTERES_PLAN} caracteres.`;
     }
     return "";
+  }
+
+  /** Explica el bloqueo del paso 3 (siempre: falta al menos un ítem). */
+  private ayudaPaso3(): string {
+    return "Agregue al menos un ítem al pliego de cotización para continuar.";
   }
 
   /** El stepper delega en este método; solo se llega a pasos alcanzados. */
@@ -291,7 +317,12 @@ export class AsistenteSolicitudComponent implements OnInit {
         criterioSeleccion: "",
         planAccion: "",
       },
-      items: {},
+      items: {
+        modo: "individual",
+        archivo: "",
+        procesado: false,
+        registros: [],
+      },
       contratacion: {},
       proveedores: {},
       documentos: {},

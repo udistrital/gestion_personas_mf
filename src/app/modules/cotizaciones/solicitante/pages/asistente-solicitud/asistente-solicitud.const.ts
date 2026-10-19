@@ -13,7 +13,7 @@ export const PASOS_SOLICITUD: PasoStepperVisual[] = [
     subtitulo: "Cruce SICAPITAL",
   },
   { numero: 2, nombre: "Datos generales", subtitulo: "Cronograma y plan" },
-  { numero: 3, nombre: "Ítems", subtitulo: "Especificaciones" },
+  { numero: 3, nombre: "Ítems", subtitulo: "Ficha técnica" },
   {
     numero: 4,
     nombre: "Contratación y pago",

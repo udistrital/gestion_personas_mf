@@ -52,6 +52,8 @@
           [form]="datosGeneralesForm"
           [resultado]="resultadoCruce()"
         ></paso-datos-generales>
+      } @else if (pasoActual === 3) {
+        <paso-items [form]="itemsForm"></paso-items>
       } @else {
         <paso-pendiente
           [numero]="pasoActual"
