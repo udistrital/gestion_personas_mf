@@ -16,6 +16,7 @@ import { ChipEstadoComponent } from "./components/chip-estado/chip-estado.compon
 import { ListadoFiltrosComponent } from "./components/listado-filtros/listado-filtros.component";
 import { AsistentePasosComponent } from "./components/asistente-pasos/asistente-pasos.component";
 import { BannerPasoComponent } from "./components/banner-paso/banner-paso.component";
+import { EditorEnriquecidoComponent } from "./components/editor-enriquecido/editor-enriquecido.component";
 
 @NgModule({
   declarations: [
@@ -31,6 +32,7 @@ import { BannerPasoComponent } from "./components/banner-paso/banner-paso.compon
     ListadoFiltrosComponent,
     AsistentePasosComponent,
     BannerPasoComponent,
+    EditorEnriquecidoComponent,
   ],
   imports: [
     CommonModule,
@@ -58,6 +60,7 @@ import { BannerPasoComponent } from "./components/banner-paso/banner-paso.compon
     ListadoFiltrosComponent,
     AsistentePasosComponent,
     BannerPasoComponent,
+    EditorEnriquecidoComponent,
   ],
 })
 export class SharedModule {}
