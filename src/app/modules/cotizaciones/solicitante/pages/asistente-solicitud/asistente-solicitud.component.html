@@ -61,6 +61,8 @@
           [form]="proveedoresForm"
           [resumen]="resumenProveedores"
         ></paso-proveedores>
+      } @else if (pasoActual === 6) {
+        <paso-documentos [form]="documentosForm"></paso-documentos>
       } @else {
         <paso-pendiente
           [numero]="pasoActual"

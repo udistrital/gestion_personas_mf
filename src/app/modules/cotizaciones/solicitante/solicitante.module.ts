@@ -14,6 +14,8 @@ import { PasoItemsComponent } from "./pages/asistente-solicitud/paso-3-items/pas
 import { PasoContratacionComponent } from "./pages/asistente-solicitud/paso-4-contratacion/paso-contratacion.component";
 import { PasoProveedoresComponent } from "./pages/asistente-solicitud/paso-5-proveedores/paso-proveedores.component";
 import { TarjetaProveedorComponent } from "./pages/asistente-solicitud/paso-5-proveedores/components/tarjeta-proveedor/tarjeta-proveedor.component";
+import { PasoDocumentosComponent } from "./pages/asistente-solicitud/paso-6-documentos/paso-documentos.component";
+import { FilaAnexoComponent } from "./pages/asistente-solicitud/paso-6-documentos/components/fila-anexo/fila-anexo.component";
 import { PasoPendienteComponent } from "./pages/asistente-solicitud/paso-pendiente/paso-pendiente.component";
 import { paginadorEnEspanol } from "./mat-paginator-intl-es";
 
@@ -28,6 +30,8 @@ import { paginadorEnEspanol } from "./mat-paginator-intl-es";
     PasoContratacionComponent,
     PasoProveedoresComponent,
     TarjetaProveedorComponent,
+    PasoDocumentosComponent,
+    FilaAnexoComponent,
     PasoPendienteComponent,
   ],
   imports: [CommonModule, SharedModule, SolicitanteRoutingModule],

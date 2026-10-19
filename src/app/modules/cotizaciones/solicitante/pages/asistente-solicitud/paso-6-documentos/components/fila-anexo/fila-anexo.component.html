@@ -1,0 +1,122 @@
+@if (cargado) {
+  <!-- ── Estado: cargado con éxito ── -->
+  <div class="anexo anexo--cargado">
+    <div class="anexo__info">
+      <span class="anexo__icono" aria-hidden="true">
+        <mat-icon>{{ anexo.icono }}</mat-icon>
+      </span>
+      <div class="anexo__textos">
+        <div class="anexo__cabecera">
+          <span class="anexo__nombre">{{ anexo.nombre }}</span>
+          <span class="chip chip--exito">
+            <mat-icon aria-hidden="true">check_circle</mat-icon>
+            <span>{{ etiquetaEstado || "Cargado" }}</span>
+          </span>
+        </div>
+        <p class="anexo__meta">
+          {{ peso }} • {{ anexo.subidoEl }} por {{ anexo.autor }}
+        </p>
+      </div>
+    </div>
+
+    <div class="anexo__acciones">
+      <button
+        class="boton-icono"
+        type="button"
+        title="Previsualizar archivo"
+        aria-label="Previsualizar archivo"
+        (click)="previsualizar.emit()"
+      >
+        <mat-icon aria-hidden="true">visibility</mat-icon>
+      </button>
+      <button
+        class="boton-icono"
+        type="button"
+        title="Reemplazar archivo"
+        aria-label="Reemplazar archivo"
+        (click)="reemplazar.emit()"
+      >
+        <mat-icon aria-hidden="true">sync</mat-icon>
+      </button>
+      <button
+        class="boton-icono boton-icono--peligro"
+        type="button"
+        title="Eliminar anexo"
+        aria-label="Eliminar anexo"
+        (click)="eliminar.emit()"
+      >
+        <mat-icon aria-hidden="true">delete</mat-icon>
+      </button>
+    </div>
+  </div>
+} @else if (subiendo) {
+  <!-- ── Estado: subiendo ── -->
+  <div class="anexo anexo--subiendo">
+    <div class="anexo__fila">
+      <div class="anexo__info">
+        <span class="anexo__icono anexo__icono--girando" aria-hidden="true">
+          <mat-icon>refresh</mat-icon>
+        </span>
+        <div class="anexo__textos">
+          <div class="anexo__cabecera">
+            <span class="anexo__nombre">{{ anexo.nombre }}</span>
+            <span class="chip chip--progreso">
+              <span class="chip__punto" aria-hidden="true"></span>
+              <span>Subiendo {{ anexo.progreso }}%</span>
+            </span>
+          </div>
+          <p class="anexo__meta">
+            {{ peso }} • {{ anexo.subidoEl }}
+          </p>
+        </div>
+      </div>
+      <button class="anexo__cancelar" type="button" (click)="descartar.emit()">
+        Cancelar
+      </button>
+    </div>
+
+    <div
+      class="barra-subida"
+      role="progressbar"
+      [attr.aria-valuenow]="anexo.progreso"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      [attr.aria-label]="'Subida de ' + anexo.nombre"
+    >
+      <span class="barra-subida__relleno" [style.width.%]="anexo.progreso"></span>
+    </div>
+  </div>
+} @else {
+  <!-- ── Estado: error de validación ── -->
+  <div class="anexo anexo--error">
+    <div class="anexo__info">
+      <span class="anexo__icono anexo__icono--error" aria-hidden="true">
+        <mat-icon>{{ anexo.error === "tamano" ? "folder_off" : "warning" }}</mat-icon>
+      </span>
+      <div class="anexo__textos">
+        <div class="anexo__cabecera">
+          <span class="anexo__nombre">{{ anexo.nombre }}</span>
+          <span class="anexo__marca-error">
+            {{ anexo.error === "tamano" ? "Exceso de Tamaño" : "Formato Inválido" }}
+          </span>
+        </div>
+        <p class="anexo__detalle">{{ anexo.detalle }}</p>
+      </div>
+    </div>
+
+    <div class="anexo__acciones">
+      <button class="boton-recto" type="button" (click)="descartar.emit()">
+        <span>Descartar</span>
+      </button>
+      @if (anexo.error === "formato") {
+        <button
+          class="boton-recto boton-recto--peligro"
+          type="button"
+          (click)="reintentar.emit()"
+        >
+          <span>Reintentar otro</span>
+        </button>
+      }
+    </div>
+  </div>
+}

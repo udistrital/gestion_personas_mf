@@ -31,6 +31,7 @@ const SEGUNDO_PASO = 2;
 const TERCER_PASO = 3;
 const CUARTO_PASO = 4;
 const QUINTO_PASO = 5;
+const SEXTO_PASO = 6;
 const ULTIMO_PASO = 7;
 
 /**
@@ -39,9 +40,10 @@ const ULTIMO_PASO = 7;
  * Posee el `FormGroup` raíz —un subgrupo por paso—, el borrador automático y
  * la barra de acciones. Los pasos 1 (necesidad y presupuesto), 2 (datos
  * generales), 3 (bienes y servicios a cotizar), 4 (tipo de contratación e
- * información de pago) y 5 (proveedores objetivo) están implementados en esta
- * fase: el resto se muestra como `paso-pendiente` y el avance queda bloqueado
- * hasta que cada paso exija sus validaciones.
+ * información de pago), 5 (proveedores objetivo) y 6 (anexos y documentos
+ * requeridos) están implementados en esta fase: el resto se muestra como
+ * `paso-pendiente` y el avance queda bloqueado hasta que cada paso exija sus
+ * validaciones.
  */
 @Component({
   selector: "asistente-solicitud",
@@ -139,7 +141,13 @@ export class AsistenteSolicitudComponent implements OnInit {
         },
         { validators: criteriosProveedores() },
       ),
-      documentos: fb.group({}),
+      // Paso 6 (implementado): los anexos y la matriz documental se guardan
+      // como arreglos planos para que el borrador los restaure con un
+      // `patchValue` simple.
+      documentos: fb.group({
+        anexos: [[]],
+        requeridos: [[]],
+      }),
       revision: fb.group({}),
     });
 
@@ -172,6 +180,10 @@ export class AsistenteSolicitudComponent implements OnInit {
 
   get proveedoresForm(): FormGroup {
     return this.asistenteForm.get("proveedores") as FormGroup;
+  }
+
+  get documentosForm(): FormGroup {
+    return this.asistenteForm.get("documentos") as FormGroup;
   }
 
   /**
@@ -255,6 +267,11 @@ export class AsistenteSolicitudComponent implements OnInit {
     if (this.pasoActual === QUINTO_PASO) {
       return this.proveedoresCompleto;
     }
+    if (this.pasoActual === SEXTO_PASO) {
+      // El paso 6 no exige validaciones: el diseño no marca documentos
+      // obligatorios en la solicitud (ambos bloques figuran "Por definir").
+      return true;
+    }
     return false;
   }
 
@@ -294,6 +311,9 @@ export class AsistenteSolicitudComponent implements OnInit {
     }
     if (this.pasoActual === QUINTO_PASO) {
       return this.ayudaPaso5();
+    }
+    if (this.pasoActual === SEXTO_PASO) {
+      return this.ayudaPaso6();
     }
     if (this.pasoActual !== PRIMER_PASO) {
       return "Este paso aún no está implementado en esta fase del desarrollo.";
@@ -384,6 +404,16 @@ export class AsistenteSolicitudComponent implements OnInit {
       if (!form.get("nucleoSnies")?.value) {
         return "Seleccione el núcleo básico de conocimiento (NBC).";
       }
+    }
+    return "";
+  }
+
+  /** El paso 6 no bloquea el avance: informa el estado de la carga. */
+  private ayudaPaso6(): string {
+    const anexos = (this.documentosForm.get("anexos")?.value ??
+      []) as readonly { estado: string }[];
+    if (anexos.some((anexo) => anexo.estado === "subiendo")) {
+      return "Espere a que finalice la indexación de los anexos en curso.";
     }
     return "";
   }
@@ -486,7 +516,7 @@ export class AsistenteSolicitudComponent implements OnInit {
         parametros: [],
       },
       proveedores: { actividades: [], areaSnies: "", nucleoSnies: "" },
-      documentos: {},
+      documentos: { anexos: [], requeridos: [] },
       revision: {},
     });
 

@@ -1,0 +1,303 @@
+<!-- ─────────────────────────── BANNER DEL PASO ─────────────────────────── -->
+<banner-paso
+  icono="upload_file"
+  titulo="Paso 6: Anexos y documentos requeridos"
+  descripcion="Adjunte los documentos de la solicitud e indique cuáles debe presentar cada oferente en la plataforma."
+>
+  <ng-container acciones>
+    <span class="chip chip--recto">
+      <mat-icon aria-hidden="true">gavel</mat-icon>
+      <span>RF-010 · Soportes Requeridos UD</span>
+    </span>
+    <span class="chip chip--recto">
+      <mat-icon aria-hidden="true">verified_user</mat-icon>
+      <span>RF-011 · Obligatoriedad Oferentes</span>
+    </span>
+  </ng-container>
+</banner-paso>
+
+<!-- ═══════════════ SECCIÓN 1: ANEXOS DE LA SOLICITUD ═══════════════════ -->
+<plantilla-tarjeta-contenedora
+  icon="upload_file"
+  title="1. Anexos de la solicitud"
+  description="Documentación técnica, estudios previos y autorizaciones presupuestales institucionales."
+>
+  <ng-container acciones>
+    <span class="chip chip--pendiente">
+      <mat-icon aria-hidden="true">sync</mat-icon>
+      <span>Por definir: Formatos permitidos y tamaño máximo por archivo</span>
+    </span>
+  </ng-container>
+
+  <!-- Zona de carga multicarga -->
+  <div class="dropzone" [class.dropzone--listo]="cantidadAnexos() > 0">
+    <input
+      #entradaArchivos
+      class="dropzone__entrada"
+      type="file"
+      multiple
+      [attr.accept]="'.pdf,.docx,.xlsx,.zip'"
+      aria-label="Anexos de la solicitud"
+      (change)="alElegirArchivos($event)"
+    />
+    <span class="dropzone__icono" aria-hidden="true">
+      <mat-icon>cloud_upload</mat-icon>
+    </span>
+    <div class="dropzone__textos">
+      <span class="dropzone__titulo">
+        Arrastre sus archivos o haga clic para seleccionar
+      </span>
+      <span class="dropzone__pista">
+        Puede adjuntar varios documentos simultáneamente; no es necesario
+        comprimirlos en carpetas zip.
+      </span>
+    </div>
+    <button
+      class="dropzone__boton"
+      type="button"
+      (click)="seleccionarArchivos()"
+    >
+      <mat-icon aria-hidden="true">add_circle</mat-icon>
+      <span>Seleccionar archivos desde el equipo</span>
+    </button>
+    <div class="dropzone__pistas">
+      <span class="dropzone__pista-item">
+        <mat-icon aria-hidden="true">info</mat-icon>
+        {{ etiquetaFormatos }} (Hasta {{ tamanoMaxMb }} MB por archivo)
+      </span>
+      <span class="dropzone__separador" aria-hidden="true">•</span>
+      <span class="dropzone__pista-item">
+        <mat-icon aria-hidden="true">shield</mat-icon>
+        Indexación Criptográfica SHA-256 UD
+      </span>
+    </div>
+  </div>
+
+  <!-- Lista de archivos vinculados -->
+  <div class="anexos">
+    <h3 class="anexos__cabecera">
+      <span>
+        Archivos vinculados al proceso ({{ cantidadAnexos() }})
+      </span>
+      <span class="anexos__total">Total: {{ pesoTotal() }}</span>
+    </h3>
+
+    <div class="anexos__lista">
+      @for (anexo of anexos(); track anexo.id) {
+        <fila-anexo
+          [anexo]="anexo"
+          (previsualizar)="previsualizarAnexo(anexo)"
+          (reemplazar)="reemplazarAnexo(anexo.id)"
+          (eliminar)="eliminarAnexo(anexo.id)"
+          (descartar)="descartarAnexo(anexo.id)"
+          (reintentar)="reintentarAnexo(anexo.id)"
+        ></fila-anexo>
+      } @empty {
+        <div class="anexos__vacio">
+          <mat-icon aria-hidden="true">file_present</mat-icon>
+          <span>
+            Todavía no hay anexos vinculados. Arrastre los documentos técnicos,
+            los estudios previos y las autorizaciones presupuestales.
+          </span>
+        </div>
+      }
+    </div>
+  </div>
+</plantilla-tarjeta-contenedora>
+
+<!-- ═══════════ SECCIÓN 2: DOCUMENTOS QUE DEBE PRESENTAR EL OFERENTE ═══════════ -->
+<plantilla-tarjeta-contenedora
+  icon="assignment_turned_in"
+  title="2. Documentos que debe presentar el oferente"
+  description="Matriz de documentos jurídicos, técnicos y financieros exigidos para evaluar la oferta."
+>
+  <!-- Leyenda explicativa de clasificación -->
+  <div class="leyenda">
+    <div class="leyenda__item">
+      <span class="leyenda__marca leyenda__marca--obligatorio">
+        Obligatorio
+      </span>
+      <p class="leyenda__texto">
+        Requisito habilitante insubsanable o excluyente. El oferente no puede
+        avanzar ni radicar la oferta en ÁGORA sin cargarlo formalmente.
+      </p>
+    </div>
+    <div class="leyenda__item">
+      <span class="leyenda__marca leyenda__marca--complementario">
+        Complementario
+      </span>
+      <p class="leyenda__texto">
+        Documento de soporte técnico adicional o aclaratorio. No bloquea la
+        postulación ni invalida la oferta económica del contratista.
+      </p>
+    </div>
+  </div>
+
+  <!-- Tabla editable de requerimientos documentales -->
+  <div class="tabla-scroll">
+    <table class="tabla-paso matriz">
+      <thead>
+        <tr>
+          <th scope="col">Documento</th>
+          <th scope="col" class="matriz__clasificacion">Clasificación</th>
+          <th scope="col">Descripción / Instrucción para el oferente</th>
+          <th scope="col" class="tabla-paso__fin">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (documento of documentos(); track documento.id) {
+          <tr [class.matriz__fila--fija]="documento.fijo">
+            <td class="matriz__documento">
+              @if (documento.fijo) {
+                <div class="matriz__fijo">
+                  <div class="matriz__fijo-cabecera">
+                    <span class="matriz__nombre">{{ documento.nombre }}</span>
+                    <mat-icon
+                      class="matriz__candado"
+                      aria-hidden="true"
+                      title="Requisito bloqueado por sistema"
+                    >
+                      lock
+                    </mat-icon>
+                  </div>
+                  <div class="matriz__marcas">
+                    @if (documento.norma) {
+                      <span class="matriz__norma">
+                        <mat-icon aria-hidden="true">verified</mat-icon>
+                        <span>{{ documento.norma }}</span>
+                      </span>
+                    }
+                  </div>
+                </div>
+              } @else {
+                <div class="matriz__campo">
+                  <mat-icon aria-hidden="true">{{ documento.icono }}</mat-icon>
+                  <input
+                    type="text"
+                    [value]="documento.nombre"
+                    aria-label="Nombre del documento requerido"
+                    placeholder="Nombre del documento requerido..."
+                    (input)="cambiarNombre(documento.id, $event)"
+                  />
+                </div>
+              }
+            </td>
+
+            <td class="matriz__clasificacion">
+              @if (documento.fijo) {
+                <span class="matriz__sello">
+                  <mat-icon aria-hidden="true">lock</mat-icon>
+                  <span>{{ etiquetaClasificacion(documento.clasificacion) }}</span>
+                </span>
+              } @else {
+                <span class="selector matriz__selector">
+                  <select
+                    [value]="documento.clasificacion"
+                    [attr.aria-label]="
+                      'Clasificación de ' + documento.nombre
+                    "
+                    (change)="cambiarClasificacion(documento.id, $event)"
+                  >
+                    @for (opcion of formatosClasificacion; track opcion) {
+                      <option [value]="opcion">
+                        {{ etiquetaClasificacion(opcion) }}
+                      </option>
+                    }
+                  </select>
+                  <mat-icon class="selector__flecha" aria-hidden="true">
+                    expand_more
+                  </mat-icon>
+                </span>
+              }
+            </td>
+
+            <td class="matriz__instruccion">
+              @if (documento.fijo) {
+                <p class="matriz__instruccion-texto">
+                  {{ documento.instruccion }}
+                </p>
+              } @else {
+                <textarea
+                  class="matriz__area"
+                  rows="2"
+                  [value]="documento.instruccion"
+                  aria-label="Instrucción para el oferente"
+                  placeholder="Instrucción detallada para el proponente..."
+                  (input)="cambiarInstruccion(documento.id, $event)"
+                ></textarea>
+              }
+            </td>
+
+            <td class="tabla-paso__fin">
+              @if (documento.fijo) {
+                <button
+                  class="boton-icono boton-icono--bloqueado"
+                  type="button"
+                  disabled
+                  title="No es posible eliminar un requisito obligatorio legal"
+                  aria-label="Requisito bloqueado por norma"
+                >
+                  <mat-icon aria-hidden="true">delete_forever</mat-icon>
+                </button>
+              } @else {
+                <button
+                  class="boton-icono boton-icono--peligro"
+                  type="button"
+                  title="Eliminar documento"
+                  aria-label="Eliminar documento requerido"
+                  (click)="eliminarRequerido(documento.id)"
+                >
+                  <mat-icon aria-hidden="true">delete</mat-icon>
+                </button>
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="4" class="tabla-paso__vacio">
+              <mat-icon aria-hidden="true">assignment_turned_in</mat-icon>
+              <span>
+                Aún no hay documentos exigidos al oferente. Agregue el primer
+                requisito de la matriz documental.
+              </span>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="matriz__acciones">
+    <button class="boton-recto" type="button" (click)="agregarRequerido()">
+      <mat-icon aria-hidden="true">add</mat-icon>
+      <span>Agregar documento requerido</span>
+    </button>
+    <span class="matriz__resumen">
+      {{ resumenMatriz().obligatorios }} obligatorios ·
+      {{ resumenMatriz().complementarios }} complementarios
+    </span>
+  </div>
+</plantilla-tarjeta-contenedora>
+
+<!-- ─────────── NOTA DE RESPONSABILIDAD INSTITUCIONAL ─────────── -->
+<div class="nota-responsabilidad" role="note">
+  <mat-icon aria-hidden="true">info</mat-icon>
+  <p>
+    <strong>Atención normativa:</strong> De acuerdo con el Estatuto de
+    Contratación de la Universidad Distrital Francisco José de Caldas, toda
+    solicitud con anexos técnicos quedará formalizada e inmutable una vez
+    enviada a la Secretaría General en el Paso 7. Verifique la nitidez y
+    completitud de los archivos adjuntos.
+  </p>
+</div>
+
+<!-- ─────────── RECORDATORIO DEL PIE DEL PASO ─────────── -->
+<div class="recordatorio" role="note">
+  <mat-icon aria-hidden="true">cloud_done</mat-icon>
+  <p>
+    Los anexos se indexan con SHA-256 y quedan asociados a la solicitud. Al
+    hacer clic en <strong>Continuar</strong>, avanzará al
+    <strong>Paso 7: Revisión y procesar</strong> para el envío formal.
+  </p>
+  <span class="recordatorio__sello">DOC-INDEX v2.1</span>
+</div>
