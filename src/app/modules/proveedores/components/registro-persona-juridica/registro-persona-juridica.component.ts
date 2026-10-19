@@ -27,7 +27,7 @@ export class RegistroPersonaJuridicaComponent {
   constructor(private readonly router: Router) {}
 
   regresarARegistroInicial(): void {
-    void this.router.navigateByUrl("/proveedores");
+    void this.router.navigateByUrl("/proveedores/registro-inicio-persona");
   }
 
   pasos: PasoStepperVisual[] = [
