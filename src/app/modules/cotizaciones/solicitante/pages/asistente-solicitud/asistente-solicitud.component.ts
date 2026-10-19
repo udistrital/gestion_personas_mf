@@ -17,20 +17,23 @@ import {
   validadorCronograma,
 } from "./paso-2-datos-generales/paso-datos-generales.component";
 import { alMenosUnItem } from "./paso-3-items/paso-items.component";
+import { sumaPorcentajes } from "./paso-4-contratacion/paso-contratacion.component";
 
 const PRIMER_PASO = 1;
 const SEGUNDO_PASO = 2;
 const TERCER_PASO = 3;
+const CUARTO_PASO = 4;
 const ULTIMO_PASO = 7;
 
 /**
  * Asistente de nueva solicitud de cotización (S-02).
  *
  * Posee el `FormGroup` raíz —un subgrupo por paso—, el borrador automático y
- * la barra de acciones. Solo los pasos 1 (necesidad y presupuesto), 2 (datos
- * generales) y 3 (bienes y servicios a cotizar) están implementados en esta
- * fase: el resto se muestra como `paso-pendiente` y el avance queda bloqueado
- * hasta que cada paso exija sus validaciones.
+ * la barra de acciones. Los pasos 1 (necesidad y presupuesto), 2 (datos
+ * generales), 3 (bienes y servicios a cotizar) y 4 (tipo de contratación e
+ * información de pago) están implementados en esta fase: el resto se muestra
+ * como `paso-pendiente` y el avance queda bloqueado hasta que cada paso exija
+ * sus validaciones.
  */
 @Component({
   selector: "asistente-solicitud",
@@ -105,7 +108,18 @@ export class AsistenteSolicitudComponent implements OnInit {
         },
         { validators: alMenosUnItem() },
       ),
-      contratacion: fb.group({}),
+      // Paso 4 (implementado)
+      contratacion: fb.group(
+        {
+          tipoContrato: ["", Validators.required],
+          medioPago: ["", Validators.required],
+          formaPago: ["", Validators.required],
+          // Arreglo plano de parámetros de pago; el validador de grupo exige
+          // que sumen exactamente 100 %.
+          parametros: [[]],
+        },
+        { validators: sumaPorcentajes() },
+      ),
       proveedores: fb.group({}),
       documentos: fb.group({}),
       revision: fb.group({}),
@@ -132,6 +146,10 @@ export class AsistenteSolicitudComponent implements OnInit {
 
   get itemsForm(): FormGroup {
     return this.asistenteForm.get("items") as FormGroup;
+  }
+
+  get contratacionForm(): FormGroup {
+    return this.asistenteForm.get("contratacion") as FormGroup;
   }
 
   /** Siguiente componente según el paso activo. */
@@ -167,6 +185,9 @@ export class AsistenteSolicitudComponent implements OnInit {
     if (this.pasoActual === TERCER_PASO) {
       return !!this.itemsForm.valid;
     }
+    if (this.pasoActual === CUARTO_PASO) {
+      return !!this.contratacionForm.valid;
+    }
     return false;
   }
 
@@ -177,6 +198,9 @@ export class AsistenteSolicitudComponent implements OnInit {
     }
     if (this.pasoActual === TERCER_PASO) {
       return this.ayudaPaso3();
+    }
+    if (this.pasoActual === CUARTO_PASO) {
+      return this.ayudaPaso4();
     }
     if (this.pasoActual !== PRIMER_PASO) {
       return "Este paso aún no está implementado en esta fase del desarrollo.";
@@ -230,6 +254,28 @@ export class AsistenteSolicitudComponent implements OnInit {
   /** Explica el bloqueo del paso 3 (siempre: falta al menos un ítem). */
   private ayudaPaso3(): string {
     return "Agregue al menos un ítem al pliego de cotización para continuar.";
+  }
+
+  /** Explica el bloqueo del paso 4 según el primer error encontrado. */
+  private ayudaPaso4(): string {
+    const form = this.contratacionForm;
+    if (form.get("tipoContrato")?.invalid) {
+      return "Seleccione el tipo de contratación asociada.";
+    }
+    if (form.get("medioPago")?.invalid) {
+      return "Seleccione el medio de pago autorizado por la Tesorería.";
+    }
+    if (form.get("formaPago")?.invalid) {
+      return "Seleccione la forma de pago del contrato.";
+    }
+    if (form.hasError("sinParametros")) {
+      return "Agregue al menos un parámetro de la forma de pago.";
+    }
+    if (form.hasError("sumaPorcentajes")) {
+      const error = form.getError("sumaPorcentajes") as { total: number };
+      return `Los porcentajes deben sumar exactamente 100 % (actual: ${error.total} %).`;
+    }
+    return "";
   }
 
   /** El stepper delega en este método; solo se llega a pasos alcanzados. */
@@ -323,7 +369,12 @@ export class AsistenteSolicitudComponent implements OnInit {
         procesado: false,
         registros: [],
       },
-      contratacion: {},
+      contratacion: {
+        tipoContrato: "",
+        medioPago: "",
+        formaPago: "",
+        parametros: [],
+      },
       proveedores: {},
       documentos: {},
       revision: {},

@@ -1,0 +1,765 @@
+@use "src/app/shared/styles/tokens" as t;
+@use "src/app/shared/styles/registro-formulario" as registro-formulario;
+@use "src/app/shared/styles/paso-asistente" as paso-asistente;
+
+@include registro-formulario.styles;
+@include paso-asistente.styles;
+
+:host {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ajuste propio del paso 4 sobre el metadato de las tarjetas. */
+:host ::ng-deep .metadato {
+  text-transform: none;
+}
+
+/* ── Rejilla de las tarjetas 1 y 2 (fila superior) ───────────────────────── */
+.rejilla-doble {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+  box-sizing: border-box;
+  width: min(100% - 3rem, 86.25rem);
+  margin: 0 auto;
+}
+
+/* Las tarjetas comparten el ancho de la rejilla en vez de centrarse solas. */
+.rejilla-doble ::ng-deep .contenedor-tarjeta {
+  width: 100%;
+}
+
+@media (min-width: t.$bp-lg) {
+  .rejilla-doble {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ── Chips propios del paso ──────────────────────────────────────────────── */
+.chip--neutro {
+  border-color: var(--agora-borde-tarjeta);
+  background: var(--agora-resalte-neutro);
+  color: var(--agora-primary);
+}
+
+.chip--pendiente {
+  border-color: var(--agora-warning-border);
+  background: var(--agora-surface);
+  color: var(--agora-warning-text);
+}
+
+/* ── Botones de icono (tabla de parámetros) ──────────────────────────────── */
+.boton-icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: var(--agora-radio-md);
+  background: transparent;
+  color: var(--agora-texto-neutro);
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.boton-icono mat-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  font-size: 1.125rem;
+}
+
+.boton-icono:hover {
+  background: var(--agora-resalte-neutro);
+  color: var(--agora-text);
+}
+
+.boton-icono:focus-visible {
+  outline: 2px solid var(--agora-primary);
+  outline-offset: 2px;
+}
+
+.boton-icono--peligro:hover {
+  background: var(--agora-error-surface);
+  color: var(--agora-error);
+}
+
+/* ── Caja normativa (aviso de medio de pago y regla de desembolso) ───────── */
+.caja-normativa {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+  padding: 1rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-left: 3px solid var(--agora-primary);
+  border-radius: 0 var(--agora-radio-lg) var(--agora-radio-lg) 0;
+  background: var(--agora-superficie-neutra);
+}
+
+.caja-normativa mat-icon {
+  flex: 0 0 auto;
+  width: 1.375rem;
+  height: 1.375rem;
+  color: var(--agora-primary);
+  font-size: 1.375rem;
+}
+
+.caja-normativa__titulo {
+  display: block;
+  color: var(--agora-primary);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.caja-normativa__texto {
+  margin: 0.25rem 0 0;
+  color: var(--agora-texto-neutro);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.caja-normativa__texto strong {
+  color: var(--agora-primary);
+}
+
+.caja-normativa__referencia {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ── Panel de captura del parámetro (tarjeta 3) ──────────────────────────── */
+.panel-formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.5rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-superficie-neutra);
+}
+
+.panel-formulario .campo__etiqueta {
+  color: var(--agora-text);
+}
+
+.area-icono {
+  position: relative;
+  display: block;
+}
+
+.area-icono mat-icon {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  width: 1.125rem;
+  height: 1.125rem;
+  color: var(--agora-texto-neutro);
+  font-size: 1.125rem;
+  pointer-events: none;
+}
+
+.area-icono .campo__area {
+  padding-left: 2.5rem;
+}
+
+.campo__area {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 5rem;
+  padding: 0.75rem;
+  border: 1px solid var(--agora-borde-control);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-surface);
+  color: var(--agora-text);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.55;
+  resize: vertical;
+}
+
+.campo__area:focus {
+  border-color: var(--agora-primary);
+  outline: 2px solid color-mix(in srgb, var(--agora-primary) 14%, transparent);
+}
+
+.campo__area:read-only {
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-texto-deshabilitado);
+  cursor: not-allowed;
+}
+
+/* Campo numérico con sufijo (%) */
+.campo--porcentaje {
+  max-width: 14rem;
+}
+
+.numero-unidad {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.numero-unidad__icono {
+  position: absolute;
+  left: 0.75rem;
+  width: 1.125rem;
+  height: 1.125rem;
+  color: var(--agora-texto-neutro);
+  font-size: 1.125rem;
+  pointer-events: none;
+}
+
+.numero-unidad input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.625rem 2rem 0.625rem 2.5rem;
+  border: 1px solid var(--agora-borde-control);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-surface);
+  color: var(--agora-text);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 700;
+  box-shadow: var(--agora-sombra-xs);
+}
+
+.numero-unidad input:focus {
+  border-color: var(--agora-primary);
+  outline: 2px solid color-mix(in srgb, var(--agora-primary) 14%, transparent);
+}
+
+.numero-unidad input:read-only {
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-texto-deshabilitado);
+  cursor: not-allowed;
+}
+
+.numero-unidad__sufijo {
+  position: absolute;
+  right: 0.875rem;
+  color: var(--agora-texto-neutro);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.panel-formulario__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+}
+
+/* La ayuda con icono de los campos del paso. */
+.campo__ayuda {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.campo__ayuda--bloque {
+  align-items: flex-start;
+}
+
+.campo__ayuda mat-icon {
+  flex: 0 0 auto;
+  width: 0.875rem;
+  height: 0.875rem;
+  font-size: 0.875rem;
+}
+
+/* ── Banner de cumplimiento (tarjeta 3, estado completo) ─────────────────── */
+.aviso-cupo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1rem;
+  border: 1px solid var(--agora-success-border);
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-success-surface);
+}
+
+.aviso-cupo__icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 2.25rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  background: var(--agora-success);
+  color: var(--agora-surface);
+}
+
+.aviso-cupo__icono mat-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  font-size: 1.25rem;
+}
+
+.aviso-cupo__textos {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.aviso-cupo__titulo {
+  display: block;
+  color: var(--agora-success);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.aviso-cupo__texto {
+  margin: 0.125rem 0 0;
+  color: var(--agora-success);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.aviso-cupo__sello {
+  padding: 0.25rem 0.75rem;
+  border: 1px solid var(--agora-success-border);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-surface);
+  color: var(--agora-success);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ── Tabla de parámetros (tarjeta 4) ─────────────────────────────────────── */
+.tabla-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-lg);
+}
+
+.tabla-paso {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.tabla-paso th {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--agora-borde-tarjeta);
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-primary-dark);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tabla-paso td {
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid var(--agora-borde-tarjeta);
+  color: var(--agora-texto-neutro);
+  font-size: 0.8125rem;
+  vertical-align: top;
+}
+
+.tabla-paso tbody tr:hover {
+  background: color-mix(in srgb, var(--agora-superficie-neutra) 60%, transparent);
+}
+
+.tabla-paso tfoot td {
+  padding: 0.75rem 1rem;
+  border-bottom: 0;
+  background: var(--agora-superficie-neutra);
+}
+
+.tabla-paso__num {
+  width: 3rem;
+  text-align: center;
+  color: var(--agora-texto-deshabilitado);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.tabla-paso__centro {
+  text-align: center;
+}
+
+.tabla-paso__fin {
+  text-align: right;
+}
+
+.tabla-paso__fuerte {
+  color: var(--agora-text);
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.tabla-paso__cantidad {
+  color: var(--agora-text);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tabla-paso__total-etiqueta {
+  color: var(--agora-text);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-align: right;
+}
+
+.tabla-paso__total-valor {
+  color: var(--agora-primary);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.tabla-paso__vacio {
+  padding: 2.5rem 1rem;
+  color: var(--agora-texto-neutro);
+  text-align: center;
+}
+
+.tabla-paso__vacio mat-icon {
+  display: block;
+  margin: 0 auto 0.5rem;
+  color: var(--agora-texto-deshabilitado);
+}
+
+/* ── Medidor porcentual (tarjeta 4) ──────────────────────────────────────── */
+.barra-progreso {
+  display: flex;
+  align-items: stretch;
+  gap: 0.15rem;
+  width: 100%;
+  height: 0.75rem;
+  padding: 0.125rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--agora-warning-border) 55%, transparent);
+  overflow: hidden;
+}
+
+.barra-progreso__relleno {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--agora-warning-text);
+  transition: width 0.5s ease;
+}
+
+.barra-progreso--completa {
+  background: var(--agora-success-border);
+}
+
+.barra-progreso__segmento {
+  min-width: 0.25rem;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--agora-success);
+}
+
+.progreso {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--agora-warning-border);
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-warning-surface);
+}
+
+.progreso__cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.progreso__titulo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--agora-warning-text);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.progreso__titulo mat-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  font-size: 1.125rem;
+}
+
+.progreso__valor {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  color: var(--agora-warning-text);
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.progreso__valor strong {
+  font-size: 1.25rem;
+}
+
+.progreso__total {
+  margin-left: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.progreso__pie {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.progreso__falta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--agora-warning-text);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.progreso__falta mat-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  font-size: 1.25rem;
+}
+
+.progreso__limite {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--agora-warning-text);
+  font-size: 0.75rem;
+  opacity: 0.85;
+}
+
+.progreso__limite mat-icon {
+  width: 1rem;
+  height: 1rem;
+  font-size: 1rem;
+}
+
+.consolidado {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--agora-success-border);
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-success-surface);
+}
+
+.consolidado__cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.consolidado__titulo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--agora-success);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.consolidado__titulo mat-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  font-size: 1.125rem;
+}
+
+.consolidado__valor {
+  color: var(--agora-success);
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.consolidado__pie {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.consolidado__mensaje {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--agora-success);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.consolidado__mensaje mat-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  font-size: 1.125rem;
+}
+
+.consolidado__limite {
+  color: var(--agora-success);
+  font-size: 0.6875rem;
+  opacity: 0.85;
+}
+
+/* Regla normativa al pie de la tarjeta 4 */
+.regla-sistema {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-texto-neutro);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.regla-sistema mat-icon {
+  flex: 0 0 auto;
+  width: 1.125rem;
+  height: 1.125rem;
+  color: var(--agora-primary);
+  font-size: 1.125rem;
+}
+
+.regla-sistema strong {
+  color: var(--agora-text);
+}
+
+/* ── Rejilla informativa (estado completo) ───────────────────────────────── */
+.info-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  box-sizing: border-box;
+  width: min(100% - 3rem, 86.25rem);
+  margin: 1rem auto;
+}
+
+.info-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-surface);
+  box-shadow: var(--agora-sombra-tarjeta);
+}
+
+.info-card__icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 2.25rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-primary);
+  color: var(--agora-surface);
+}
+
+.info-card__icono mat-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  font-size: 1.25rem;
+}
+
+.info-card__titulo {
+  display: block;
+  color: var(--agora-primary);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.info-card__texto {
+  margin: 0.25rem 0 0;
+  color: var(--agora-texto-neutro);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+@media (min-width: t.$bp-md) {
+  .info-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* ── Franja de estado (estado incompleto) ────────────────────────────────── */
+.estado-paso {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  box-sizing: border-box;
+  width: min(100% - 3rem, 86.25rem);
+  margin: 1rem auto;
+  padding: 1rem;
+  border: 1px solid var(--agora-warning-border);
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-warning-surface);
+  box-shadow: var(--agora-sombra-tarjeta);
+}
+
+.estado-paso__info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.estado-paso__icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 2.5rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  background: color-mix(
+    in srgb,
+    var(--agora-warning-border) 65%,
+    var(--agora-surface)
+  );
+  color: var(--agora-warning-text);
+}
+
+.estado-paso__icono mat-icon {
+  width: 1.375rem;
+  height: 1.375rem;
+  font-size: 1.375rem;
+}
+
+.estado-paso__titulo {
+  display: block;
+  color: var(--agora-warning-text);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.estado-paso__texto {
+  margin: 0.125rem 0 0;
+  color: var(--agora-warning-text);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}

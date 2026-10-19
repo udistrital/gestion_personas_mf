@@ -11,6 +11,7 @@ import { DialogoAcuerdoComponent } from "./pages/asistente-solicitud/paso-1-nece
 import { PasoNecesidadComponent } from "./pages/asistente-solicitud/paso-1-necesidad/paso-necesidad.component";
 import { PasoDatosGeneralesComponent } from "./pages/asistente-solicitud/paso-2-datos-generales/paso-datos-generales.component";
 import { PasoItemsComponent } from "./pages/asistente-solicitud/paso-3-items/paso-items.component";
+import { PasoContratacionComponent } from "./pages/asistente-solicitud/paso-4-contratacion/paso-contratacion.component";
 import { PasoPendienteComponent } from "./pages/asistente-solicitud/paso-pendiente/paso-pendiente.component";
 import { paginadorEnEspanol } from "./mat-paginator-intl-es";
 
@@ -22,6 +23,7 @@ import { paginadorEnEspanol } from "./mat-paginator-intl-es";
     PasoNecesidadComponent,
     PasoDatosGeneralesComponent,
     PasoItemsComponent,
+    PasoContratacionComponent,
     PasoPendienteComponent,
   ],
   imports: [CommonModule, SharedModule, SolicitanteRoutingModule],

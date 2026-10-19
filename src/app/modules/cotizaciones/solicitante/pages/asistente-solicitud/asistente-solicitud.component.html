@@ -54,6 +54,8 @@
         ></paso-datos-generales>
       } @else if (pasoActual === 3) {
         <paso-items [form]="itemsForm"></paso-items>
+      } @else if (pasoActual === 4) {
+        <paso-contratacion [form]="contratacionForm"></paso-contratacion>
       } @else {
         <paso-pendiente
           [numero]="pasoActual"
