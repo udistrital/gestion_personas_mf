@@ -1,0 +1,52 @@
+<section class="verificacion" aria-labelledby="verificacion-titulo">
+  <header class="verificacion__cabecera">
+    <mat-icon class="verificacion__icono" aria-hidden="true">fact_check</mat-icon>
+    <h2 id="verificacion-titulo" class="verificacion__titulo">
+      Lista de verificación
+    </h2>
+  </header>
+
+  <p class="verificacion__descripcion">
+    Validaciones de completitud y consistencia previas a la radicación oficial.
+  </p>
+
+  <ul class="verificacion__lista">
+    @for (item of items; track item.titulo) {
+      <li class="verificacion__item">
+        <mat-icon
+          class="verificacion__marca"
+          [class.verificacion__marca--pendiente]="!item.cumple"
+          aria-hidden="true"
+        >
+          {{ item.cumple ? "check_circle" : "error_outline" }}
+        </mat-icon>
+        <span class="verificacion__textos">
+          <span class="verificacion__item-titulo">{{ item.titulo }}</span>
+          <span class="verificacion__item-detalle">{{ item.detalle }}</span>
+        </span>
+      </li>
+    }
+  </ul>
+
+  @if (completo) {
+    <div class="verificacion__listo" role="status" aria-live="polite">
+      <mat-icon aria-hidden="true">verified_user</mat-icon>
+      <div>
+        <span class="verificacion__listo-titulo">Todo listo para procesar</span>
+        <p class="verificacion__listo-texto">
+          Todos los criterios normativos e institucionales han sido validados por
+          el motor de reglas de ÁGORA.
+        </p>
+      </div>
+    </div>
+  }
+
+  <div class="verificacion__nota" role="note">
+    <mat-icon aria-hidden="true">info</mat-icon>
+    <p>
+      <strong>Estatuto de Contratación UD:</strong> el envío formal genera un
+      consecutivo de radicación vinculante e inmodificable en el Libro Único
+      Digital.
+    </p>
+  </div>
+</section>

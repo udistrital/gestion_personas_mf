@@ -2,9 +2,6 @@ import { PasoStepperVisual } from "src/app/shared/components/stepper-visual/step
 
 /**
  * Pasos canónicos del asistente de solicitud de cotización (S-02).
- *
- * Los nombres provienen de `docs/propuesta.md`; los subtítulos replican el
- * mockup aprobado del paso 1. Los pasos 1 a 6 ya replican sus mockups.
  */
 export const PASOS_SOLICITUD: PasoStepperVisual[] = [
   {

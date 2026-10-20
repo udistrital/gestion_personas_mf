@@ -43,8 +43,13 @@
       [attr.title]="deshabilitarContinuar ? ayudaContinuar : null"
       (click)="finalizar.emit()"
     >
-      <span>Finalizar</span>
-      <mat-icon aria-hidden="true">check_circle</mat-icon>
+      <mat-icon aria-hidden="true">{{ iconoFinal }}</mat-icon>
+      <span class="boton-acento__textos">
+        <span>{{ tituloFinal }}</span>
+        <span *ngIf="subtituloFinal" class="boton-acento__subtitulo">
+          {{ subtituloFinal }}
+        </span>
+      </span>
     </button>
   </div>
 </section>

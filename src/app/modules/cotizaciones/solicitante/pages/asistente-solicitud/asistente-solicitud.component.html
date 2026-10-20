@@ -63,25 +63,42 @@
         ></paso-proveedores>
       } @else if (pasoActual === 6) {
         <paso-documentos [form]="documentosForm"></paso-documentos>
-      } @else {
-        <paso-pendiente
-          [numero]="pasoActual"
-          [nombre]="nombrePasoActual"
-        ></paso-pendiente>
+      } @else if (pasoActual === 7) {
+        <paso-revision
+          [resumen]="resumenProveedores"
+          [items]="itemsRegistrados"
+          [resumenItems]="resumenItems"
+          [parametrosPago]="parametrosPago"
+          [actividades]="actividadesVinculadas"
+          [anexos]="anexosCargados"
+          [documentos]="documentosRequeridos"
+          [datosRevision]="datosRevision"
+          [yaRadicada]="vistaExitosa()"
+          (editarPaso)="irAlPaso($event)"
+          (radicada)="alRadicar($event)"
+          (vistaExitosa)="alCambiarVistaExitosa($event)"
+          (irAMisSolicitudes)="irAMisSolicitudes()"
+        ></paso-revision>
       }
     </form>
 
-    <barra-acciones-formulario
-      [mostrarRegreso]="pasoActual > 1"
-      [esUltimoPaso]="pasoActual === 7"
-      [estadoMensaje]="estadoMensaje"
-      [estadoDetalle]="estadoDetalle"
-      [deshabilitarContinuar]="!pasoValido"
-      [ayudaContinuar]="ayudaContinuar"
-      (regreso)="regresar()"
-      (guardar)="guardarBorrador()"
-      (continuar)="continuar()"
-      (finalizar)="continuar()"
-    ></barra-acciones-formulario>
+    @if (!(pasoActual === 7 && vistaExitosa())) {
+      <barra-acciones-formulario
+        [mostrarRegreso]="pasoActual > 1"
+        [esUltimoPaso]="pasoActual === 7"
+        [tituloRegresar]="pasoActual === 7 ? 'Regresar al Paso 6' : 'Regresar'"
+        [tituloFinal]="pasoActual === 7 ? 'Procesar solicitud' : 'Finalizar'"
+        [subtituloFinal]="pasoActual === 7 ? subtituloProcesar : ''"
+        [iconoFinal]="pasoActual === 7 ? 'send' : 'check_circle'"
+        [estadoMensaje]="estadoMensaje"
+        [estadoDetalle]="estadoDetalle"
+        [deshabilitarContinuar]="!pasoValido"
+        [ayudaContinuar]="ayudaContinuar"
+        (regreso)="regresar()"
+        (guardar)="guardarBorrador()"
+        (continuar)="continuar()"
+        (finalizar)="finalizarPaso()"
+      ></barra-acciones-formulario>
+    }
   </div>
 </plantilla-pagina-contenedora>

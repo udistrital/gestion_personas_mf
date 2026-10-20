@@ -105,6 +105,20 @@
   box-shadow: 0 0.25rem 0.5rem color-mix(in srgb, var(--agora-primary) 20%, transparent);
 }
 
+.boton-acento__textos {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.0625rem;
+  line-height: 1.1;
+}
+
+.boton-acento__subtitulo {
+  font-size: 0.75rem;
+  font-weight: 400;
+  opacity: 0.9;
+}
+
 .boton-acento:hover,
 .boton-acento:focus-visible {
   background: var(--agora-primary);

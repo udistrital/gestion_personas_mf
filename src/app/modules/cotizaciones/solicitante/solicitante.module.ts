@@ -16,7 +16,10 @@ import { PasoProveedoresComponent } from "./pages/asistente-solicitud/paso-5-pro
 import { TarjetaProveedorComponent } from "./pages/asistente-solicitud/paso-5-proveedores/components/tarjeta-proveedor/tarjeta-proveedor.component";
 import { PasoDocumentosComponent } from "./pages/asistente-solicitud/paso-6-documentos/paso-documentos.component";
 import { FilaAnexoComponent } from "./pages/asistente-solicitud/paso-6-documentos/components/fila-anexo/fila-anexo.component";
-import { PasoPendienteComponent } from "./pages/asistente-solicitud/paso-pendiente/paso-pendiente.component";
+import { PasoRevisionComponent } from "./pages/asistente-solicitud/paso-7-revision/paso-revision.component";
+import { AcordeonPasoComponent } from "./pages/asistente-solicitud/paso-7-revision/components/acordeon-paso/acordeon-paso.component";
+import { ListaVerificacionComponent } from "./pages/asistente-solicitud/paso-7-revision/components/lista-verificacion/lista-verificacion.component";
+import { DialogoProcesarComponent } from "./pages/asistente-solicitud/paso-7-revision/components/dialogo-procesar/dialogo-procesar.component";
 import { paginadorEnEspanol } from "./mat-paginator-intl-es";
 
 @NgModule({
@@ -32,7 +35,10 @@ import { paginadorEnEspanol } from "./mat-paginator-intl-es";
     TarjetaProveedorComponent,
     PasoDocumentosComponent,
     FilaAnexoComponent,
-    PasoPendienteComponent,
+    PasoRevisionComponent,
+    AcordeonPasoComponent,
+    ListaVerificacionComponent,
+    DialogoProcesarComponent,
   ],
   imports: [CommonModule, SharedModule, SolicitanteRoutingModule],
   providers: [

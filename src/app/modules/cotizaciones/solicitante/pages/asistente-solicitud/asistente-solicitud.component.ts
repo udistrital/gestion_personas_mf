@@ -1,22 +1,46 @@
-import { Component, DestroyRef, OnInit, inject, signal } from "@angular/core";
+import { Component, DestroyRef, OnInit, ViewChild, inject, signal } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { FormBuilder, FormGroup, Validators } from "@angular/forms";
 import { Router } from "@angular/router";
 import { debounceTime } from "rxjs";
 import { AlertService } from "src/app/shared/services/alert.service";
+import { textoPlanoDesdeHtml } from "src/app/shared/components/editor-enriquecido/texto-plano";
 import {
   BorradorSolicitudNueva,
   BorradorSolicitudService,
 } from "../../../services/borrador-solicitud.service";
-import { ResultadoCruce } from "../../../models/necesidad.model";
+import { ResultadoCruce, formatoCop } from "../../../models/necesidad.model";
 import {
+  DEPENDENCIAS_DESTINO,
   DEPENDENCIAS_SOLICITANTES,
   MIN_CARACTERES_CRITERIO,
   MIN_CARACTERES_PLAN,
+  diasHabilesEntre,
+  formatoFechaLarga,
 } from "../../../models/datos-generales.model";
 import { ItemSolicitud, resumirItems } from "../../../models/items.model";
-import { ResumenSolicitudProveedores } from "../../../models/proveedores.model";
+import {
+  ActividadVinculada,
+  ResumenSolicitudProveedores,
+} from "../../../models/proveedores.model";
+import {
+  MEDIOS_PAGO,
+  ParametroPago,
+  TIPOS_CONTRATO,
+  etiquetaCorta,
+} from "../../../models/contratacion.model";
+import {
+  ANEXOS_SEMILLA,
+  AnexoSolicitud,
+  DOCUMENTOS_OFERENTE_SEMILLA,
+  DocumentoOferente,
+} from "../../../models/documentos.model";
 import { PASOS_SOLICITUD } from "./asistente-solicitud.const";
+import {
+  ResumenRadicacion,
+  contarProveedoresNotificados,
+  pluralizarProveedores,
+} from "../../../models/revision.model";
 import { EstadoCruce } from "./paso-1-necesidad/paso-necesidad.component";
 import {
   minCaracteres,
@@ -25,6 +49,10 @@ import {
 import { alMenosUnItem } from "./paso-3-items/paso-items.component";
 import { sumaPorcentajes } from "./paso-4-contratacion/paso-contratacion.component";
 import { criteriosProveedores } from "./paso-5-proveedores/paso-proveedores.component";
+import {
+  DatosRevision,
+  PasoRevisionComponent,
+} from "./paso-7-revision/paso-revision.component";
 
 const PRIMER_PASO = 1;
 const SEGUNDO_PASO = 2;
@@ -32,18 +60,11 @@ const TERCER_PASO = 3;
 const CUARTO_PASO = 4;
 const QUINTO_PASO = 5;
 const SEXTO_PASO = 6;
+const SEPTIMO_PASO = 7;
 const ULTIMO_PASO = 7;
 
 /**
  * Asistente de nueva solicitud de cotización (S-02).
- *
- * Posee el `FormGroup` raíz —un subgrupo por paso—, el borrador automático y
- * la barra de acciones. Los pasos 1 (necesidad y presupuesto), 2 (datos
- * generales), 3 (bienes y servicios a cotizar), 4 (tipo de contratación e
- * información de pago), 5 (proveedores objetivo) y 6 (anexos y documentos
- * requeridos) están implementados en esta fase: el resto se muestra como
- * `paso-pendiente` y el avance queda bloqueado hasta que cada paso exija sus
- * validaciones.
  */
 @Component({
   selector: "asistente-solicitud",
@@ -76,6 +97,27 @@ export class AsistenteSolicitudComponent implements OnInit {
 
   /** true cuando al entrar había un borrador persistido en el equipo. */
   readonly borradorRestaurado = signal(false);
+
+  /**
+   * true cuando la solicitud ya quedó radicada. Se deriva del formulario para
+   * que el estado sobreviva a la navegación entre pasos y a un borrador
+   * restaurado (la radicación es definitiva).
+   */
+  get solicitudRadicada(): boolean {
+    return this.revisionForm.get("radicada")?.value === true;
+  }
+
+  /**
+   * true cuando el paso 7 muestra la vista de éxito.
+   *
+   * La vista de éxito sustituye la barra de acciones (el expediente ya está
+   * radicado), así que el paso 7 notifica el cambio de vista.
+   */
+  readonly vistaExitosa = signal(false);
+
+  /** Componente del paso 7; el asistente le delega el procesamiento. */
+  @ViewChild(PasoRevisionComponent)
+  private pasoRevision?: PasoRevisionComponent;
 
   /** Textos del bloque de estado de la barra de acciones. */
   estadoMensaje = "Borrador de solicitud autoguardado";
@@ -148,7 +190,12 @@ export class AsistenteSolicitudComponent implements OnInit {
         anexos: [[]],
         requeridos: [[]],
       }),
-      revision: fb.group({}),
+      // Paso 7 (implementado): la revisión no captura datos nuevos; el
+      // subgrupo solo guarda el radicado cuando la solicitud se procesa.
+      revision: fb.group({
+        radicado: [""],
+        radicada: [false],
+      }),
     });
 
     // Se restaura en el constructor para que los valores ya estén puestos
@@ -160,6 +207,10 @@ export class AsistenteSolicitudComponent implements OnInit {
     this.asistenteForm.valueChanges
       .pipe(debounceTime(800), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.guardarBorrador(true));
+
+    // Un borrador restaurado con la solicitud ya radicada abre el paso 7 en
+    // la vista de éxito.
+    this.vistaExitosa.set(this.solicitudRadicada);
   }
 
   get necesidadForm(): FormGroup {
@@ -184,6 +235,10 @@ export class AsistenteSolicitudComponent implements OnInit {
 
   get documentosForm(): FormGroup {
     return this.asistenteForm.get("documentos") as FormGroup;
+  }
+
+  get revisionForm(): FormGroup {
+    return this.asistenteForm.get("revision") as FormGroup;
   }
 
   /**
@@ -272,6 +327,11 @@ export class AsistenteSolicitudComponent implements OnInit {
       // obligatorios en la solicitud (ambos bloques figuran "Por definir").
       return true;
     }
+    if (this.pasoActual === SEPTIMO_PASO) {
+      // El paso 7 no valida campos: el botón habilita la confirmación del
+      // procesamiento (el propio diálogo advierte su carácter vinculante).
+      return true;
+    }
     return false;
   }
 
@@ -314,6 +374,9 @@ export class AsistenteSolicitudComponent implements OnInit {
     }
     if (this.pasoActual === SEXTO_PASO) {
       return this.ayudaPaso6();
+    }
+    if (this.pasoActual === SEPTIMO_PASO) {
+      return this.ayudaPaso7();
     }
     if (this.pasoActual !== PRIMER_PASO) {
       return "Este paso aún no está implementado en esta fase del desarrollo.";
@@ -418,6 +481,141 @@ export class AsistenteSolicitudComponent implements OnInit {
     return "";
   }
 
+  /** El paso 7 no bloquea el avance: la confirmación la hace el diálogo. */
+  private ayudaPaso7(): string {
+    return "";
+  }
+
+  // ── Datos del paso 7 (revisión y procesar) ───────────────────────────────
+
+  /** Ítems cargados en el paso 3 (acordeón y lista de verificación). */
+  get itemsRegistrados(): readonly ItemSolicitud[] {
+    return (this.itemsForm.get("registros")?.value ??
+      []) as readonly ItemSolicitud[];
+  }
+
+  /** Resumen numérico de los ítems del paso 3. */
+  get resumenItems(): ReturnType<typeof resumirItems> {
+    return resumirItems(this.itemsRegistrados);
+  }
+
+  /** Parámetros de pago del paso 4 (distribución porcentual). */
+  get parametrosPago(): readonly ParametroPago[] {
+    return (this.contratacionForm.get("parametros")?.value ??
+      []) as readonly ParametroPago[];
+  }
+
+  /** Actividades CIIU vinculadas en el paso 5. */
+  get actividadesVinculadas(): readonly ActividadVinculada[] {
+    return (this.proveedoresForm.get("actividades")?.value ??
+      []) as readonly ActividadVinculada[];
+  }
+
+  /** Anexos cargados en el paso 6. */
+  get anexosCargados(): readonly AnexoSolicitud[] {
+    const anexos = this.documentosForm.get("anexos")?.value as
+      | readonly AnexoSolicitud[]
+      | null
+      | undefined;
+    return anexos?.length ? anexos : ANEXOS_SEMILLA;
+  }
+
+  /** Matriz de documentos del oferente del paso 6. */
+  get documentosRequeridos(): readonly DocumentoOferente[] {
+    const requeridos = this.documentosForm.get("requeridos")?.value as
+      | readonly DocumentoOferente[]
+      | null
+      | undefined;
+    return requeridos?.length ? requeridos : DOCUMENTOS_OFERENTE_SEMILLA;
+  }
+
+  /**
+   * Datos crudos de los pasos 1, 2, 4 y 5 que el acordeón del paso 7 muestra.
+   *
+   * El acordeón no depende de los catálogos: aquí se resuelven de una vez las
+   * etiquetas legibles (medio de pago, tipo de contrato, área y núcleo SNIES) y
+   * los formatos de fecha que necesita la vista de revisión.
+   */
+  get datosRevision(): DatosRevision {
+    const contratacion = this.contratacionForm.getRawValue() as {
+      tipoContrato?: string;
+      medioPago?: string;
+    };
+    const proveedores = this.proveedoresForm.getRawValue() as {
+      areaSnies?: string;
+      nucleoSnies?: string;
+    };
+    const datosGenerales = this.datosGeneralesForm.getRawValue() as {
+      dependenciaDestino?: string;
+      fechaApertura?: string;
+      fechaCierre?: string;
+      criterioSeleccion?: string;
+      planAccion?: string;
+    };
+    const necesidad = this.necesidadForm.getRawValue() as {
+      numeroNecesidad?: string;
+    };
+    const cruce = this.resultadoCruce();
+
+    const tipo = TIPOS_CONTRATO.find(
+      (opcion) => opcion.valor === contratacion.tipoContrato,
+    );
+    // El CDP vigente es la primera disponibilidad del cruce; el valor oficial
+    // lo reporta el resumen presupuestal de SICAPITAL.
+    const disponibilidad = cruce?.presupuesto.disponibilidades[0];
+
+    return {
+      numeroNecesidad: cruce?.necesidad.valor ?? necesidad.numeroNecesidad ?? "",
+      numeroCdp: disponibilidad?.numeroDisponibilidad ?? "",
+      rubro: disponibilidad
+        ? `${disponibilidad.rubro} - ${disponibilidad.rubroNombre}`
+        : "",
+      unidadEjecutora: cruce?.responsable.unidadEjecutora ?? "",
+      valorCdp: cruce?.presupuesto.valorCdp
+        ? formatoCop(cruce.presupuesto.valorCdp)
+        : "",
+      sede: cruce?.solicitud.sede ?? "",
+      dependenciaDestino: this.etiquetaDependenciaDestino(
+        datosGenerales.dependenciaDestino ?? "",
+      ),
+      fechaAperturaLarga: datosGenerales.fechaApertura
+        ? formatoFechaLarga(datosGenerales.fechaApertura)
+        : "",
+      fechaCierreLarga: datosGenerales.fechaCierre
+        ? formatoFechaLarga(datosGenerales.fechaCierre)
+        : "",
+      diasPlazo:
+        datosGenerales.fechaApertura && datosGenerales.fechaCierre
+          ? diasHabilesEntre(
+              datosGenerales.fechaApertura,
+              datosGenerales.fechaCierre,
+            )
+          : 0,
+      // Los dos campos del paso 2 son editores de texto enriquecido: su valor
+      // es HTML, así que se convierte a texto plano para la vista de revisión.
+      criterioSeleccion: textoPlanoDesdeHtml(
+        datosGenerales.criterioSeleccion ?? "",
+      ),
+      planAccion: textoPlanoDesdeHtml(datosGenerales.planAccion ?? ""),
+      tipoContrato: tipo?.etiqueta ?? contratacion.tipoContrato ?? "",
+      medioPago: etiquetaCorta(MEDIOS_PAGO, contratacion.medioPago ?? ""),
+      areaSnies: proveedores.areaSnies ?? "",
+      nucleoSnies: proveedores.nucleoSnies ?? "",
+      archivoMatriz: (this.itemsForm.get("archivo")?.value as string) ?? "",
+    };
+  }
+
+  /** Etiqueta de la dependencia destino (guion cuando falta el dato). */
+  private etiquetaDependenciaDestino(valor: string): string {
+    if (!valor) {
+      return "";
+    }
+    return (
+      DEPENDENCIAS_DESTINO.find((opcion) => opcion.valor === valor)?.etiqueta ??
+      valor
+    );
+  }
+
   /** El stepper delega en este método; solo se llega a pasos alcanzados. */
   irAlPaso(paso: number): void {
     if (paso < PRIMER_PASO || paso > ULTIMO_PASO || paso > this.pasoAlcanzado) {
@@ -443,6 +641,47 @@ export class AsistenteSolicitudComponent implements OnInit {
       this.pasoActual -= 1;
       return;
     }
+    void this.router.navigate(["cotizaciones", "solicitudes"]);
+  }
+
+  /**
+   * Acción del botón principal. En los pasos 1 a 6 avanza; en el paso 7 delega
+   * en el componente de revisión, que abre el diálogo de confirmación.
+   */
+  finalizarPaso(): void {
+    if (this.pasoActual === SEPTIMO_PASO) {
+      this.pasoRevision?.procesar();
+      return;
+    }
+    this.continuar();
+  }
+
+  /** Subtítulo del botón "Procesar solicitud" (proveedores a notificar). */
+  get subtituloProcesar(): string {
+    const proveedores = contarProveedoresNotificados(
+      this.actividadesVinculadas.length,
+    );
+    return proveedores
+      ? `Enviar a ${pluralizarProveedores(proveedores)}`
+      : "";
+  }
+
+  /** Marca la solicitud como radicada tras la confirmación del paso 7. */
+  alRadicar(radicacion: ResumenRadicacion): void {
+    this.revisionForm.patchValue({
+      radicado: radicacion.numeroCotizacion,
+      radicada: true,
+    });
+    this.guardarBorrador(true);
+  }
+
+  /** Sincroniza la vista del paso 7 (revisión ↔ éxito). */
+  alCambiarVistaExitosa(exitosa: boolean): void {
+    this.vistaExitosa.set(exitosa);
+  }
+
+  /** Navega al listado de solicitudes de cotización. */
+  irAMisSolicitudes(): void {
     void this.router.navigate(["cotizaciones", "solicitudes"]);
   }
 
@@ -517,7 +756,7 @@ export class AsistenteSolicitudComponent implements OnInit {
       },
       proveedores: { actividades: [], areaSnies: "", nucleoSnies: "" },
       documentos: { anexos: [], requeridos: [] },
-      revision: {},
+      revision: { radicado: "", radicada: false },
     });
 
     this.pasoActual = PRIMER_PASO;

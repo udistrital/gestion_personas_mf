@@ -1,0 +1,216 @@
+@if (completado()) {
+  <!-- ════════════════ VISTA: SOLICITUD PROCESADA CON ÉXITO ════════════════ -->
+  <section class="exito" aria-labelledby="exito-titulo">
+    <div class="exito__principal">
+      <div class="exito__halo" aria-hidden="true"></div>
+      <span class="exito__sello" aria-hidden="true">
+        <mat-icon>check</mat-icon>
+      </span>
+
+      <h2 id="exito-titulo" class="exito__titulo">
+        Solicitud procesada correctamente
+      </h2>
+      <p class="exito__subtitulo">
+        La solicitud de cotización ha sido formalizada, radicada en el libro
+        digital de contratación y notificada a los oferentes seleccionados.
+      </p>
+
+      <div class="exito__radicado">
+        <mat-icon aria-hidden="true">verified</mat-icon>
+        <span>Radicado oficial: {{ radicacion().numeroCotizacion }}</span>
+        <span class="exito__separador" aria-hidden="true"></span>
+        <button
+          class="exito__copiar"
+          type="button"
+          (click)="copiarRadicado()"
+          aria-label="Copiar el número de radicado"
+        >
+          <mat-icon aria-hidden="true">content_copy</mat-icon>
+          <span>Copiar</span>
+        </button>
+      </div>
+
+      @if (copiado()) {
+        <span class="exito__aviso-copia" role="status" aria-live="polite">
+          ¡Número de radicado copiado al portapapeles!
+        </span>
+      }
+
+      <div class="exito__timeline">
+        <div class="exito__timeline-bloque">
+          <mat-icon class="exito__timeline-icono" aria-hidden="true">
+            how_to_reg
+          </mat-icon>
+          <div>
+            <span class="exito__timeline-etiqueta">Libro Digital Oficial</span>
+            <span class="exito__timeline-valor">{{ libroOficial }}</span>
+          </div>
+        </div>
+        <span class="exito__timeline-divisor" aria-hidden="true"></span>
+        <div class="exito__timeline-bloque">
+          <mat-icon class="exito__timeline-icono" aria-hidden="true">
+            security
+          </mat-icon>
+          <div>
+            <span class="exito__timeline-etiqueta">
+              Hash criptográfico SHA-256
+            </span>
+            <span class="exito__timeline-valor exito__timeline-valor--codigo">
+              {{ hashAbreviado() }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tarjeta de resumen de la radicación -->
+    <div class="exito__resumen">
+      <header class="exito__resumen-cabecera">
+        <span class="exito__resumen-titulo-grupo">
+          <span class="exito__resumen-icono" aria-hidden="true">
+            <mat-icon>receipt_long</mat-icon>
+          </span>
+          <h3 class="exito__resumen-titulo">
+            Resumen de radicación institucional
+          </h3>
+        </span>
+        <span class="chip chip--pendiente">Estado: En convocatoria</span>
+      </header>
+
+      <dl class="exito__datos">
+        <div class="exito__dato">
+          <dt class="exito__dato-etiqueta">N.° de cotización</dt>
+          <dd class="exito__dato-valor exito__dato-valor--vino">
+            {{ radicacion().numeroCotizacion }}
+          </dd>
+        </div>
+        <div class="exito__dato">
+          <dt class="exito__dato-etiqueta">Fecha y hora de radicación</dt>
+          <dd class="exito__dato-valor">{{ fechaRadicacionTexto() }}</dd>
+        </div>
+        <div class="exito__dato">
+          <dt class="exito__dato-etiqueta">Presupuesto oficial</dt>
+          <dd class="exito__dato-valor">
+            {{ radicacion().presupuesto }}
+            <span class="exito__dato-nota">
+              ({{ radicacion().numeroCdp }})
+            </span>
+          </dd>
+        </div>
+        <div class="exito__dato exito__dato--ancho">
+          <dt class="exito__dato-etiqueta">Objeto contractual</dt>
+          <dd class="exito__dato-valor exito__dato-valor--parrafo">
+            {{ radicacion().objeto }}
+          </dd>
+        </div>
+        <div class="exito__dato exito__dato--ancho">
+          <dt class="exito__dato-etiqueta">Proveedores notificados</dt>
+          <dd class="exito__dato-valor">
+            <span class="exito__dato-valor--vino">
+              {{ oferentesTexto() }}
+            </span>
+            <span class="exito__dato-nota">(Habilitados ÁGORA)</span>
+          </dd>
+        </div>        <div class="exito__dato exito__dato--ancho exito__plazo">
+          <span class="exito__plazo-texto">
+            <mat-icon aria-hidden="true">hourglass_top</mat-icon>
+            <span>
+              <strong>Plazo de recepción de ofertas:</strong>
+              {{ radicacion().plazoRecepcion }}
+            </span>
+          </span>
+          <span class="exito__plazo-chip">
+            {{ radicacion().diasHabilesRestantes }} días hábiles restantes
+          </span>
+        </div>
+      </dl>
+    </div>
+
+    <!-- Tarjeta de notificaciones despachadas -->
+    <div class="exito__notificaciones">
+      <span class="exito__notificaciones-icono" aria-hidden="true">
+        <mat-icon>forward_to_inbox</mat-icon>
+      </span>
+      <div class="exito__notificaciones-cuerpo">
+        <h3 class="exito__notificaciones-titulo">
+          Notificaciones despachadas con éxito
+        </h3>
+        <p class="exito__notificaciones-texto">
+          Se han enviado correos electrónicos con los pliegos técnicos y el
+          enlace de postulación a los {{ proveedoresTexto() }} que coincidieron
+          con las actividades CIIU y el núcleo SNIES.
+        </p>
+        <div class="exito__etiquetas">
+          @for (etiqueta of etiquetasNotificacion(); track etiqueta) {
+            <span class="exito__etiqueta">
+              <mat-icon aria-hidden="true">check</mat-icon>
+              <span>{{ etiqueta }}</span>
+            </span>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Acciones de la vista de éxito -->
+    <div class="exito__acciones">
+      <button class="boton-recto boton-recto--vino" type="button" (click)="descargarSolicitud()">
+        <mat-icon aria-hidden="true">picture_as_pdf</mat-icon>
+        <span>Descargar solicitud de cotización (PDF)</span>
+      </button>
+      <button class="boton-recto" type="button" (click)="irAMisSolicitudes.emit()">
+        <mat-icon aria-hidden="true">list_alt</mat-icon>
+        <span>Ir a mis solicitudes</span>
+      </button>
+      <button class="boton-recto boton-recto--plano" type="button" (click)="reiniciarVista()">
+        <span>Ver expediente completo</span>
+        <mat-icon aria-hidden="true">open_in_new</mat-icon>
+      </button>
+    </div>
+
+    <div class="exito__aviso-tecnico" role="note">
+      <mat-icon aria-hidden="true">browser_updated</mat-icon>
+      <p>
+        Si su navegador bloquea la descarga, permita las ventanas emergentes de
+        este sitio.
+      </p>
+    </div>
+  </section>
+} @else {
+  <!-- ═══════════════════════ VISTA: REVISIÓN Y PROCESAR ═══════════════════ -->
+  <banner-paso
+    icono="task_alt"
+    titulo="Paso 7: Revise la información antes de procesar"
+    descripcion="Al procesar, la solicitud se enviará a los proveedores que cumplan las características y quedará radicada formalmente ante la Universidad Distrital Francisco José de Caldas."
+  >
+    <ng-container acciones>
+      <span class="chip chip--recto">
+        <mat-icon aria-hidden="true">verified</mat-icon>
+        <span>RF-015 Cierre y Radicación</span>
+      </span>
+      <span class="chip chip--recto">
+        <mat-icon aria-hidden="true">school</mat-icon>
+        <span>Convocatoria Docente &amp; Administrativa</span>
+      </span>
+    </ng-container>
+  </banner-paso>
+
+  <div class="rejilla-revision">
+    <!-- Columna izquierda: acordeones por paso -->
+    <div class="revision__acordeones">
+      @for (acordeon of acordeones(); track acordeon.numero) {
+        <acordeon-paso
+          [resumen]="acordeon"
+          (editar)="alEditar($event)"
+        ></acordeon-paso>
+      }
+    </div>
+
+    <!-- Columna derecha: lista de verificación institucional -->
+    <div class="revision__lateral">
+      <lista-verificacion
+        [items]="verificacion()"
+        [completo]="verificacionCompleta()"
+      ></lista-verificacion>
+    </div>
+  </div>
+}
