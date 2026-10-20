@@ -4,7 +4,7 @@ import { FormBuilder, FormGroup, Validators } from "@angular/forms";
 import { Router } from "@angular/router";
 import { debounceTime } from "rxjs";
 import { AlertService } from "src/app/shared/services/alert.service";
-import { textoPlanoDesdeHtml } from "src/app/shared/components/editor-enriquecido/texto-plano";
+import { textoPlanoDesdeHtml } from "src/app/shared/utils/texto-plano";
 import {
   BorradorSolicitudNueva,
   BorradorSolicitudService,

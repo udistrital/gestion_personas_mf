@@ -17,6 +17,7 @@ import { ListadoFiltrosComponent } from "./components/listado-filtros/listado-fi
 import { AsistentePasosComponent } from "./components/asistente-pasos/asistente-pasos.component";
 import { BannerPasoComponent } from "./components/banner-paso/banner-paso.component";
 import { EditorEnriquecidoComponent } from "./components/editor-enriquecido/editor-enriquecido.component";
+import { QuillModule } from "ngx-quill";
 
 @NgModule({
   declarations: [
@@ -40,6 +41,7 @@ import { EditorEnriquecidoComponent } from "./components/editor-enriquecido/edit
     ReactiveFormsModule,
     MaterialModule,
     IconosModule,
+    QuillModule.forRoot(),
   ],
   exports: [
     CommonModule,
@@ -61,6 +63,7 @@ import { EditorEnriquecidoComponent } from "./components/editor-enriquecido/edit
     AsistentePasosComponent,
     BannerPasoComponent,
     EditorEnriquecidoComponent,
+    QuillModule,
   ],
 })
 export class SharedModule {}

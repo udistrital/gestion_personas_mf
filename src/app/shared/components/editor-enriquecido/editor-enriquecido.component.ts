@@ -1,50 +1,24 @@
 import {
+  AfterViewInit,
   Component,
-  ElementRef,
   EventEmitter,
   Input,
   Output,
   ViewChild,
   forwardRef,
-  signal,
 } from "@angular/core";
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from "@angular/forms";
+import { QuillEditorComponent } from "ngx-quill";
+import { textoPlanoDesdeHtml } from "../../utils/texto-plano";
 
 /**
- * Etiquetas permitidas en el HTML del editor.
- *
- * Todo lo que no esté en esta lista se descarta al normalizar: el valor del
- * control es siempre HTML seguro y renderizable con `[innerHTML]`.
- */
-const ETIQUETAS_PERMITIDAS = new Set([
-  "b",
-  "strong",
-  "i",
-  "em",
-  "u",
-  "br",
-  "div",
-  "p",
-  "ul",
-  "ol",
-  "li",
-]);
-
-/** Acción de la barra de herramientas (delegada a `document.execCommand`). */
-interface AccionFormato {
-  readonly comando: string;
-  readonly etiqueta: string;
-}
-
-/**
- * Editor de texto enriquecido del asistente (paso 2).
+ * Editor de texto enriquecido del asistente, basado en `ngx-quill`.
  *
  * Implementa `ControlValueAccessor`, así que se usa con `formControlName` y su
- * valor es un `string` **HTML** (texto plano con `<b>`, `<i>`, `<u>` y listas).
- * El HTML se normaliza por lista blanca al escribir y al leer: el usuario no
- * puede inyectar etiquetas ni atributos peligrosos. El área editable se
- * actualiza directamente sobre el DOM (no con `[innerHTML]`) para no perder la
- * posición del cursor en cada pulsación.
+ * valor es un `string` **HTML** (el que produce Quill). Delega el control del
+ * valor en el `QuillEditorComponent` de `ngx-quill`: así no hay dos
+ * `ControlValueAccessor` en juego y el ciclo `writeValue`/`onChange`/`disabled`
+ * queda en manos de la librería.
  */
 @Component({
   selector: "editor-enriquecido",
@@ -59,7 +33,9 @@ interface AccionFormato {
     },
   ],
 })
-export class EditorEnriquecidoComponent implements ControlValueAccessor {
+export class EditorEnriquecidoComponent
+  implements ControlValueAccessor, AfterViewInit
+{
   /** Etiqueta visible del campo. */
   @Input() etiqueta = "";
 
@@ -78,7 +54,11 @@ export class EditorEnriquecidoComponent implements ControlValueAccessor {
   /** Mínimo de caracteres exigido (solo se anuncia; la valida el formulario). */
   @Input() minCaracteres = 0;
 
-  /** Máximo de caracteres admitidos (0 = sin límite). */
+  /**
+   * Máximo de caracteres admitidos (0 = sin límite).
+   *
+   * Solo se anuncia en el contador: el recorte se delega en el formulario.
+   */
   @Input() maxCaracteres = 0;
 
   /** Altura mínima del área editable, en filas. */
@@ -87,35 +67,47 @@ export class EditorEnriquecidoComponent implements ControlValueAccessor {
   /** Se emite al ganar o perder el foco, para marcar el control como tocado. */
   @Output() blur = new EventEmitter<void>();
 
-  @ViewChild("area", { static: true })
-  private area!: ElementRef<HTMLElement>;
+  /** Editor de Quill; gestiona el valor, el estado y los eventos. */
+  @ViewChild(QuillEditorComponent)
+  private quill?: QuillEditorComponent;
 
-  /** Acciones de la barra de herramientas (comandos nativos del navegador). */
-  readonly acciones: readonly AccionFormato[] = [
-    { comando: "bold", etiqueta: "Negrita" },
-    { comando: "italic", etiqueta: "Cursiva" },
-    { comando: "underline", etiqueta: "Subrayado" },
-    { comando: "insertUnorderedList", etiqueta: "Lista con viñetas" },
-    { comando: "insertOrderedList", etiqueta: "Lista numerada" },
-  ];
-
-  /** Estado de los botones con conmutador (`aria-pressed`). */
-  readonly activos = signal<Record<string, boolean>>({});
-
-  /** Valor normalizado actual (HTML). */
+  /** Contenido HTML actual, para el contador de caracteres. */
   private valor = "";
 
   protected deshabilitado = false;
   private onChange: (valor: string) => void = () => {};
   private onTouched: () => void = () => {};
 
+  /** Acciones de la barra de herramientas (agrupadas como en Quill). */
+  readonly editorModules = {
+    toolbar: [
+      ["bold", "italic", "underline", "strike"], // Botones de formato
+      ["blockquote", "code-block"],
+      [{ list: "ordered" }, { list: "bullet" }], // Listas
+      [{ header: [1, 2, 3, false] }], // Encabezados
+      [{ color: [] }, { background: [] }], // Colores
+      ["link", "image"], // Enlace e imágenes
+      ["clean"], // Eliminar formato
+    ],
+  };
+
+  /** Sufijo único para los ids accesibles del editor. */
+  private static secuencia = 0;
+  private readonly sufijo = `editor-${EditorEnriquecidoComponent.secuencia++}`;
+  protected readonly idAyuda = `${this.sufijo}-ayuda`;
+  protected readonly idNota = `${this.sufijo}-nota`;
+  protected readonly idContador = `${this.sufijo}-contador`;
+
   /** Contador de caracteres visibles (sin etiquetas). */
   get contador(): number {
     return this.textoPlano().trim().length;
   }
 
+  /** true si se supera el máximo admitido. */
   get excedeMaximo(): boolean {
-    return this.maxCaracteres > 0 && this.textoPlano().length > this.maxCaracteres;
+    return (
+      this.maxCaracteres > 0 && this.textoPlano().length > this.maxCaracteres
+    );
   }
 
   /** `aria-describedby` del área editable, solo con los textos presentes. */
@@ -133,212 +125,70 @@ export class EditorEnriquecidoComponent implements ControlValueAccessor {
     return ids.length ? ids.join(" ") : null;
   }
 
-  /** Sufijo único para los ids accesibles del editor. */
-  private static secuencia = 0;
-  private readonly sufijo = `editor-${EditorEnriquecidoComponent.secuencia++}`;
-  protected readonly idAyuda = `${this.sufijo}-ayuda`;
-  protected readonly idNota = `${this.sufijo}-nota`;
-  protected readonly idContador = `${this.sufijo}-contador`;
+  // ── ControlValueAccessor (delegado en ngx-quill) ─────────────────────────
 
-  // ── ControlValueAccessor ─────────────────────────────────────────────────
-
-  /** Escribe el valor externo (borrador, restauración) sin reemitir cambios. */
+  /**
+   * Escribe el valor externo (borrador, restauración) sin reemitir cambios.
+   *
+   * El `QuillEditorComponent` puede no existir todavía cuando el formulario
+   * llama a este método (ocurre antes de `ngAfterViewInit`), por eso además de
+   * reenviarlo se guarda para volcarlo en cuanto la vista esté lista.
+   */
   writeValue(valor: string | null): void {
-    this.valor = this.normalizar(valor ?? "");
-    if (this.area) {
-      this.area.nativeElement.innerHTML = this.valor;
-    }
+    this.valor = valor ?? "";
+    this.quill?.writeValue(this.valor);
   }
 
   registerOnChange(fn: (valor: string) => void): void {
     this.onChange = fn;
+    this.quill?.registerOnChange(fn);
   }
 
   registerOnTouched(fn: () => void): void {
     this.onTouched = fn;
+    this.quill?.registerOnTouched(fn);
   }
 
   setDisabledState(deshabilitado: boolean): void {
     this.deshabilitado = deshabilitado;
+    this.quill?.setDisabledState(deshabilitado);
+  }
+
+  /**
+   * Vuelca en Quill el estado que el formulario ya había notificado antes de
+   * que el editor existiera (valor inicial, callbacks y estado deshabilitado).
+   */
+  ngAfterViewInit(): void {
+    if (!this.quill) {
+      return;
+    }
+    this.quill.registerOnChange(this.onChange);
+    this.quill.registerOnTouched(this.onTouched);
+    this.quill.writeValue(this.valor);
+    this.quill.setDisabledState(this.deshabilitado);
   }
 
   // ── Interacción ──────────────────────────────────────────────────────────
 
-  /** Aplica un comando de formato nativo sobre la selección del área. */
-  aplicar(accion: AccionFormato, evento: MouseEvent): void {
-    evento.preventDefault();
-    if (this.deshabilitado) {
-      return;
-    }
-    this.area.nativeElement.focus();
-    document.execCommand(accion.comando);
-    this.sincronizar();
-    this.activos.update((estado: Record<string, boolean>) => ({
-      ...estado,
-      [accion.comando]: document.queryCommandState(accion.comando),
-    }));
+  /** Relee el HTML de Quill para refrescar el contador de caracteres. */
+  alCambiarContenido(html: string | null): void {
+    this.valor = html ?? "";
+    // El control de formulario ya recibió el cambio por su cuenta; aquí solo se
+    // recalcula el contador, por eso no se vuelve a llamar a `onChange`.
   }
 
-  /** Quita todo el formato enriquecido de la selección o de todo el campo. */
-  limpiarFormato(evento: MouseEvent): void {
-    evento.preventDefault();
-    if (this.deshabilitado) {
-      return;
-    }
-    this.area.nativeElement.focus();
-    document.execCommand("removeFormat");
-    this.sincronizar();
-  }
-
-  /** Relee el HTML del área, lo normaliza y emite el cambio. */
-  sincronizar(): void {
-    const crudo = this.area.nativeElement.innerHTML;
-    const normalizado = this.normalizar(
-      this.maxCaracteres > 0
-        ? this.recortar(crudo)
-        : crudo,
-    );
-    this.valor = normalizado;
-    if (normalizado !== this.area.nativeElement.innerHTML) {
-      this.area.nativeElement.innerHTML = normalizado;
-    }
-    this.onChange(normalizado);
-  }
-
-  /** Marca el control como tocado al salir del área editable. */
+  /**
+   * Marca el control como tocado al salir del área editable.
+   *
+   * El `onTouched` del formulario lo dispara `ngx-quill` por su cuenta (ya está
+   * registrado); aquí solo se reemite el evento público.
+   */
   alSalir(): void {
-    this.onTouched();
     this.blur.emit();
-  }
-
-  /** Refresca el estado de los conmutadores tras escribir o mover el cursor. */
-  alTeclaIr(): void {
-    this.activos.update((estado: Record<string, boolean>) => ({
-      ...estado,
-      bold: document.queryCommandState("bold"),
-      italic: document.queryCommandState("italic"),
-      underline: document.queryCommandState("underline"),
-      insertUnorderedList: document.queryCommandState("insertUnorderedList"),
-      insertOrderedList: document.queryCommandState("insertOrderedList"),
-    }));
   }
 
   /** `text-plain` del editor, sin etiquetas (para el contador y los mínimos). */
   textoPlano(): string {
-    const nodo = document.createElement("div");
-    nodo.innerHTML = this.valor;
-    return nodo.textContent ?? "";
-  }
-
-  // ── Normalización ────────────────────────────────────────────────────────
-
-  /**
-   * Deja solo las etiquetas de la lista blanca, sin atributos.
-   *
-   * Se hace con el parser del navegador (no con expresiones regulares), de modo
-   * que el resultado sea siempre HTML bien formado.
-   */
-  private normalizar(html: string): string {
-    if (!html) {
-      return "";
-    }
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(`<div>${html}</div>`, "text/html");
-    const raiz = doc.body.firstElementChild;
-    if (!raiz) {
-      return "";
-    }
-
-    this.limpiarNodo(raiz);
-    const resultado = raiz.innerHTML;
-    // Un contenedor sin contenido real se trata como vacío.
-    return this.textoDe(resultado).trim() ? resultado : "";
-  }
-
-  /** Recorre el árbol y elimina nodos y atributos no permitidos. */
-  private limpiarNodo(nodo: Node): void {
-    // Copia de los hijos: el recorrido elimina nodos sobre la marcha.
-    for (const hijo of Array.from(nodo.childNodes)) {
-      if (hijo.nodeType === Node.COMMENT_NODE) {
-        hijo.parentNode?.removeChild(hijo);
-        continue;
-      }
-      if (hijo.nodeType !== Node.ELEMENT_NODE) {
-        continue;
-      }
-
-      const elemento = hijo as HTMLElement;
-      if (!ETIQUETAS_PERMITIDAS.has(elemento.tagName.toLowerCase())) {
-        // Se conserva el texto y se descarta la etiqueta (script/style se borran).
-        const descartar =
-          elemento.tagName === "SCRIPT" || elemento.tagName === "STYLE";
-        if (descartar) {
-          elemento.remove();
-        } else {
-          this.reemplazarPorTexto(elemento);
-        }
-        continue;
-      }
-
-      for (const atributo of Array.from(elemento.attributes)) {
-        elemento.removeAttribute(atributo.name);
-      }
-      this.limpiarNodo(elemento);
-    }
-  }
-
-  /** Sustituye un elemento no permitido por su contenido textual. */
-  private reemplazarPorTexto(elemento: HTMLElement): void {
-    const fragmento = document.createDocumentFragment();
-    while (elemento.firstChild) {
-      fragmento.appendChild(elemento.firstChild);
-    }
-    elemento.replaceWith(fragmento);
-    // Los hijos migrados pueden contener etiquetas permitidas anidadas.
-    this.limpiarNodo(fragmento as unknown as Node);
-  }
-
-  /** Limita el HTML a `maxCaracteres` caracteres visibles, respetando etiquetas. */
-  private recortar(html: string): string {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(`<div>${html}</div>`, "text/html");
-    const raiz = doc.body.firstElementChild;
-    if (!raiz) {
-      return "";
-    }
-
-    let restantes = this.maxCaracteres;
-    const truncar = (nodo: Node): void => {
-      if (restantes <= 0) {
-        nodo.parentNode?.removeChild(nodo);
-        return;
-      }
-      if (nodo.nodeType === Node.TEXT_NODE) {
-        const texto = nodo.textContent ?? "";
-        if (texto.length > restantes) {
-          nodo.textContent = texto.slice(0, restantes);
-          restantes = 0;
-        } else {
-          restantes -= texto.length;
-        }
-        return;
-      }
-      for (const hijo of Array.from(nodo.childNodes)) {
-        truncar(hijo);
-      }
-      if (nodo.nodeType === Node.ELEMENT_NODE && !(nodo as HTMLElement).innerHTML) {
-        nodo.parentNode?.removeChild(nodo);
-      }
-    };
-
-    truncar(raiz);
-    return raiz.innerHTML;
-  }
-
-  /** Texto plano de un fragmento HTML (para comprobar contenido real). */
-  private textoDe(html: string): string {
-    const nodo = document.createElement("div");
-    nodo.innerHTML = html;
-    return nodo.textContent ?? "";
+    return textoPlanoDesdeHtml(this.valor);
   }
 }

@@ -1,9 +1,3 @@
-@use "src/app/shared/styles/tokens" as t;
-
-/* Editor de texto enriquecido (paso 2 del asistente).
-   Replica el patrón visual de `.paso4-editor` del registro de proveedores,
-   pero como componente reutilizable con validación por `ControlValueAccessor`. */
-
 :host {
   display: flex;
   flex-direction: column;
@@ -24,117 +18,105 @@
   outline-offset: 0;
 }
 
-/* ── Barra de herramientas ────────────────────────────────────────────────── */
-.editor__barra {
+/* ── Contenedor y barra de herramientas de Quill ─────────────────────────── */
+.editor ::ng-deep .ql-container {
+  border: 0;
+  font-family: inherit;
+  font-size: 0.875rem;
+}
+
+.editor ::ng-deep .ql-toolbar {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 0.125rem;
 
   padding: 0.375rem 0.5rem;
+  border: 0;
   border-bottom: 1px solid var(--agora-borde-tarjeta);
   background-color: color-mix(in srgb, var(--agora-text-muted) 5%, var(--agora-surface));
 }
 
-.editor__boton {
+.editor ::ng-deep .ql-toolbar .ql-formats {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 0.25rem;
+}
+
+.editor ::ng-deep .ql-toolbar button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
 
   width: 2rem;
   height: 2rem;
-  padding: 0;
+  padding: 0.25rem;
 
-  border: 0;
   border-radius: 0.3rem;
-  background: transparent;
   color: var(--agora-texto-neutro);
-
-  font-family: inherit;
-  font-size: 0.875rem;
-  font-weight: 600;
-  line-height: 1;
-
-  cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-.editor__boton:hover:not(:disabled) {
+.editor ::ng-deep .ql-toolbar button:hover,
+.editor ::ng-deep .ql-toolbar button:focus-visible {
   background: var(--agora-resalte-neutro);
   color: var(--agora-text);
 }
 
-.editor__boton:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--agora-primary) 40%, transparent);
-  outline-offset: -2px;
-}
-
-.editor__boton[aria-pressed="true"] {
+.editor ::ng-deep .ql-toolbar button.ql-active,
+.editor ::ng-deep .ql-toolbar .ql-picker-label:hover,
+.editor ::ng-deep .ql-toolbar .ql-picker-label.ql-active {
   background: color-mix(in srgb, var(--agora-primary) 12%, transparent);
+  border-radius: 0.3rem;
   color: var(--agora-primary);
 }
 
-.editor__boton:disabled {
-  color: var(--agora-texto-deshabilitado);
-  cursor: not-allowed;
+/* Los iconos que pinta Quill heredan el color del botón. */
+.editor ::ng-deep .ql-toolbar button svg,
+.editor ::ng-deep .ql-toolbar .ql-picker-label svg {
+  stroke: currentColor;
 }
 
-.editor__boton mat-icon {
-  width: 1.125rem;
-  height: 1.125rem;
-  font-size: 1.125rem;
-}
-
-.editor__subrayado {
-  text-decoration: underline;
-}
-
-.editor__separador {
-  width: 1px;
-  height: 1.25rem;
-  margin: 0 0.25rem;
-  background: var(--agora-borde-tarjeta);
-}
-
-/* ── Área editable ────────────────────────────────────────────────────────── */
-.editor__area {
+/* ── Área editable ───────────────────────────────────────────────────────── */
+.editor ::ng-deep .ql-editor {
   box-sizing: border-box;
   padding: 0.75rem;
-  min-height: 7.5rem;
+  min-height: var(--editor-alto, 7.5rem);
 
   color: var(--agora-text);
   font-size: 0.875rem;
   font-weight: 500;
   line-height: 1.55;
-
-  outline: none;
-  overflow-y: auto;
 }
 
-.editor__area[contenteditable="false"] {
-  color: var(--agora-texto-deshabilitado);
-  cursor: not-allowed;
+.editor ::ng-deep .ql-editor.ql-blank::before {
+  color: var(--agora-text-muted);
+  font-style: normal;
+  font-weight: 500;
 }
 
-.editor__area p,
-.editor__area div {
+.editor ::ng-deep .ql-editor p,
+.editor ::ng-deep .ql-editor div {
   margin: 0 0 0.5rem;
 }
 
-.editor__area ul,
-.editor__area ol {
+.editor ::ng-deep .ql-editor ul,
+.editor ::ng-deep .ql-editor ol {
   margin: 0 0 0.5rem;
   padding-left: 1.25rem;
 }
 
-.editor__area li {
+.editor ::ng-deep .ql-editor li {
   margin-bottom: 0.25rem;
 }
 
-/* Placeholder cuando está vacío (el área no puede llevar el atributo nativo). */
-.editor__area:empty::before {
-  content: attr(data-pista);
-  color: var(--agora-text-muted);
+/* Estado deshabilitado (Quill agrega `ql-disabled` al contenedor). */
+.editor:has(::ng-deep .ql-disabled) {
+  background: var(--agora-superficie-neutra);
+}
+
+.editor ::ng-deep .ql-editor[contenteditable="false"] {
+  color: var(--agora-texto-deshabilitado);
+  cursor: not-allowed;
 }
 
 /* ── Pie: contador y nota ─────────────────────────────────────────────────── */
