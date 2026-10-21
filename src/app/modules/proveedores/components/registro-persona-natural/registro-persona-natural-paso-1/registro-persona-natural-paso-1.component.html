@@ -679,11 +679,11 @@
         <mat-form-field appearance="outline">
 <mat-select formControlName="esMigrante">
 
-          <mat-option value="">
+          <mat-option [value]="null">
             Seleccione...
           </mat-option>
 
-          @for (opcion of opciones("migrante"); track opcion.id) {
+          @for (opcion of opcionesSiNo; track opcion.id) {
             <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
           }
 
@@ -711,11 +711,11 @@
         <mat-form-field appearance="outline">
 <mat-select formControlName="victimaConflictoArmado">
 
-          <mat-option value="">
+          <mat-option [value]="null">
             Seleccione...
           </mat-option>
 
-          @for (opcion of opciones("victimaConflicto"); track opcion.id) {
+          @for (opcion of opcionesSiNo; track opcion.id) {
             <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
           }
 
@@ -745,11 +745,11 @@
           <mat-form-field appearance="outline">
             <mat-select formControlName="tieneHijos">
 
-              <mat-option value="">
+              <mat-option [value]="null">
                 Seleccione...
               </mat-option>
 
-              @for (opcion of opciones("tieneHijos"); track opcion.id) {
+              @for (opcion of opcionesSiNo; track opcion.id) {
                 <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
               }
 
@@ -823,11 +823,11 @@
         <mat-form-field appearance="outline">
 <mat-select formControlName="esCabezaFamilia">
 
-          <mat-option value="">
+          <mat-option [value]="null">
             Seleccione...
           </mat-option>
 
-          @for (opcion of opciones("cabezaFamilia"); track opcion.id) {
+          @for (opcion of opcionesSiNo; track opcion.id) {
             <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
           }
 
@@ -863,11 +863,11 @@
         <mat-form-field appearance="outline">
 <mat-select formControlName="esPep">
 
-          <mat-option value="">
+          <mat-option [value]="null">
             Seleccione...
           </mat-option>
 
-          @for (opcion of opciones("pep"); track opcion.id) {
+          @for (opcion of opcionesSiNo; track opcion.id) {
             <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
           }
 
@@ -895,11 +895,11 @@
         <mat-form-field appearance="outline">
 <mat-select formControlName="personasACargo">
 
-          <mat-option value="">
+          <mat-option [value]="null">
             Seleccione...
           </mat-option>
 
-          @for (opcion of opciones("personasACargo"); track opcion.id) {
+          @for (opcion of opcionesSiNo; track opcion.id) {
             <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
           }
 
@@ -1217,7 +1217,7 @@
         class="tributario-card__field"
       >
         <mat-select placeholder="Seleccione..." formControlName="declaranteRenta">
-          @for (opcion of opciones("declaranteRenta"); track opcion.id) {
+          @for (opcion of opcionesSiNo; track opcion.id) {
             <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
           }
         </mat-select>
@@ -1248,7 +1248,7 @@
         class="tributario-card__field"
       >
         <mat-select placeholder="Seleccione..." formControlName="medicinaPrepagada">
-          @for (opcion of opciones("medicinaPrepagada"); track opcion.id) {
+          @for (opcion of opcionesSiNo; track opcion.id) {
             <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
           }
         </mat-select>
@@ -1279,7 +1279,7 @@
         class="tributario-card__field"
       >
         <mat-select placeholder="Seleccione..." formControlName="cuentaAfc">
-          @for (opcion of opciones("cuentaAfc"); track opcion.id) {
+          @for (opcion of opcionesSiNo; track opcion.id) {
             <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
           }
         </mat-select>
@@ -1310,7 +1310,7 @@
         class="tributario-card__field"
       >
         <mat-select placeholder="Seleccione..." formControlName="responsableIva">
-          @for (opcion of opciones("responsableIva"); track opcion.id) {
+          @for (opcion of opcionesSiNo; track opcion.id) {
             <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
           }
         </mat-select>
@@ -1341,7 +1341,7 @@
         class="tributario-card__field"
       >
         <mat-select placeholder="Seleccione..." formControlName="resideFiscalmenteColombia">
-          @for (opcion of opciones("resideFiscalmenteColombia"); track opcion.id) {
+          @for (opcion of opcionesSiNo; track opcion.id) {
             <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
           }
         </mat-select>
@@ -1372,7 +1372,7 @@
         class="tributario-card__field"
       >
         <mat-select placeholder="Seleccione..." formControlName="aportesPensionVoluntaria">
-          @for (opcion of opciones("aportesPensionVoluntaria"); track opcion.id) {
+          @for (opcion of opcionesSiNo; track opcion.id) {
             <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
           }
         </mat-select>

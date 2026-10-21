@@ -15,6 +15,24 @@ export interface OpcionNatural {
   codigo?: string;
 }
 
+export const PREGUNTAS_BOOLEANAS_PERSONA_NATURAL = {
+  grupo: 'Grupo_9',
+  codigos: {
+    esMigrante: 'MIGRANTE',
+    victimaConflictoArmado: 'VICTIMA_CONFLICTO',
+    tieneHijos: 'HIJOS',
+    esCabezaFamilia: 'CABEZA_FAMILIA',
+    esPep: 'PERSONA_PEP',
+    personasACargo: 'PERSONAS_A_CARGO',
+    declaranteRenta: 'DECLARANTE_RENTA',
+    medicinaPrepagada: 'MED_PREPAGADA',
+    cuentaAfc: 'CUENTA_AFC',
+    responsableIva: 'RESPONSABLE_IVA',
+    resideFiscalmenteColombia: 'RESIDE_FIS_COL',
+    aportesPensionVoluntaria: 'PENSION_VOL',
+  },
+} as const;
+
 export interface CatalogosPersonaNaturalPaso1 {
   tiposDocumento: OpcionNatural[];
   paises: OpcionNatural[];
@@ -23,20 +41,8 @@ export interface CatalogosPersonaNaturalPaso1 {
   grupoEtnico: OpcionNatural[];
   seReconoceComo: OpcionNatural[];
   orientacionSexual: OpcionNatural[];
-  migrante: OpcionNatural[];
-  victimaConflicto: OpcionNatural[];
-  tieneHijos: OpcionNatural[];
-  cabezaFamilia: OpcionNatural[];
-  pep: OpcionNatural[];
-  personasACargo: OpcionNatural[];
   estadoCivil: OpcionNatural[];
   discapacidad: OpcionNatural[];
-  declaranteRenta: OpcionNatural[];
-  medicinaPrepagada: OpcionNatural[];
-  cuentaAfc: OpcionNatural[];
-  responsableIva: OpcionNatural[];
-  resideFiscalmenteColombia: OpcionNatural[];
-  aportesPensionVoluntaria: OpcionNatural[];
   tiposVia: OpcionNatural[];
   tiposInterior: OpcionNatural[];
 }
@@ -81,20 +87,8 @@ export class RegistroPersonaNaturalCatalogosService {
       grupoEtnico: this.complementaria('Grupo_3'),
       seReconoceComo: this.complementaria('IDENTIDAD_GENERO'),
       orientacionSexual: this.complementaria('ORIENTACION_SEXUAL'),
-      migrante: this.complementaria('MIGRANTE'),
-      victimaConflicto: this.complementaria('VICTIMA_CONFLICTO'),
-      tieneHijos: this.complementaria('TIENE_HIJOS'),
-      cabezaFamilia: this.complementaria('CABEZA_FAMILIA'),
-      pep: this.complementaria('PERSONA_EXPUESTA_POLITICAMENTE_PEP'),
-      personasACargo: this.complementaria('PERSONAS_A_CARGO'),
       estadoCivil: this.complementaria('Grupo_2'),
       discapacidad: this.complementaria('Grupo_1'),
-      declaranteRenta: this.complementaria('DECLARANTE_RENTA'),
-      medicinaPrepagada: this.complementaria('MEDICINA_PREPAGADA'),
-      cuentaAfc: this.complementaria('CUENTA_AFC'),
-      responsableIva: this.complementaria('RESPONSABLE_IVA'),
-      resideFiscalmenteColombia: this.complementaria('RESIDE_FISCALMENTE_COLOMBIA'),
-      aportesPensionVoluntaria: this.complementaria('APORTES_PENSION_VOLUNTARIA'),
     });
   }
 

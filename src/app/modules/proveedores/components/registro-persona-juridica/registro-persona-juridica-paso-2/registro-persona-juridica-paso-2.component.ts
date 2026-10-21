@@ -40,13 +40,10 @@ export class RegistroPersonaJuridicaPaso2Component {
     return this.catalogos?.tiposCuentaBancaria ?? [];
   }
 
-  get opcionesObligadoFacturar(): OpcionCatalogo[] {
-    return this.catalogos?.obligadoFacturar ?? [];
-  }
-
-  get opcionesMonedaExtranjera(): OpcionCatalogo[] {
-    return this.catalogos?.monedaExtranjera ?? [];
-  }
+  readonly opcionesSiNo = [
+    { label: 'Sí', value: true },
+    { label: 'No', value: false },
+  ];
 
   umbralMinimo = 1.50;
 

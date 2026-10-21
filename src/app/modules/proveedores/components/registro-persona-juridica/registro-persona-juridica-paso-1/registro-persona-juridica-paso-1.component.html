@@ -130,38 +130,38 @@
     <div class="campo-grid campo-grid--three">
       <label class="campo campo--question"><span>¿Cuenta con Beneficiarios Finales reportados en el RUB? <b>*</b></span><select formControlName="beneficiariosFinales">
         <option [ngValue]="null">Seleccione...</option>
-        @for (opcion of opcionesBeneficiariosFinales; track opcion.id) {
-          <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+        @for (opcion of opcionesSiNo; track opcion.value) {
+          <option [ngValue]="opcion.value">{{ opcion.label }}</option>
         }
       </select></label>
       <label class="campo campo--question"><span>¿Cotiza en la Bolsa de Valores de Colombia (BVC)? <b>*</b></span><select formControlName="cotizaBolsa">
         <option [ngValue]="null">Seleccione...</option>
-        @for (opcion of opcionesCotizaBolsa; track opcion.id) {
-          <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+        @for (opcion of opcionesSiNo; track opcion.value) {
+          <option [ngValue]="opcion.value">{{ opcion.label }}</option>
         }
       </select></label>
       <label class="campo campo--question"><span>¿Obligada a contar con Revisor Fiscal? <b>*</b></span><select formControlName="revisorFiscal">
         <option [ngValue]="null">Seleccione...</option>
-        @for (opcion of opcionesRevisorFiscal; track opcion.id) {
-          <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+        @for (opcion of opcionesSiNo; track opcion.value) {
+          <option [ngValue]="opcion.value">{{ opcion.label }}</option>
         }
       </select></label>
       <label class="campo campo--question"><span>¿Gran Contribuyente DIAN? <b>*</b></span><select formControlName="granContribuyente">
         <option [ngValue]="null">Seleccione...</option>
-        @for (opcion of opcionesGranContribuyente; track opcion.id) {
-          <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+        @for (opcion of opcionesSiNo; track opcion.value) {
+          <option [ngValue]="opcion.value">{{ opcion.label }}</option>
         }
       </select></label>
       <label class="campo campo--question"><span>¿Es Autorretenedor en Renta? <b>*</b></span><select formControlName="autorretenedor">
         <option [ngValue]="null">Seleccione...</option>
-        @for (opcion of opcionesAutorretenedor; track opcion.id) {
-          <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+        @for (opcion of opcionesSiNo; track opcion.value) {
+          <option [ngValue]="opcion.value">{{ opcion.label }}</option>
         }
       </select></label>
       <label class="campo campo--question"><span>¿Aplica Exención ICA Bogotá? <b>*</b></span><select formControlName="exencionIca">
         <option [ngValue]="null">Seleccione...</option>
-        @for (opcion of opcionesExencionIca; track opcion.id) {
-          <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+        @for (opcion of opcionesSiNo; track opcion.value) {
+          <option [ngValue]="opcion.value">{{ opcion.label }}</option>
         }
       </select></label>
     </div>

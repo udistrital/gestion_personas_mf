@@ -45,10 +45,6 @@ export class RegistroPersonaJuridicaPaso3Component {
     },
   ];
 
-  get estadosRup() {
-    return this.catalogos?.rupVigente ?? [];
-  }
-
   soportesParafiscales: DocumentoSoporte[] = [
     {
       control: 'certificadoParafiscales',
@@ -64,16 +60,18 @@ export class RegistroPersonaJuridicaPaso3Component {
   }
 
   tieneRupVigente(): boolean {
-    const idSeleccionado = this.formulario.get('tieneRup')?.value;
-    return this.estadosRup.some(
-      opcion => opcion.id === idSeleccionado && opcion.codigo === 'CUENTA_CON_RUP',
-    );
+    return this.formulario.get('tieneRup')?.value === true;
   }
 
-  actualizarEstadoRup(valor: number | null): void {
+  actualizarEstadoRup(valor: boolean | null): void {
     this.formulario.get('tieneRup')?.setValue(valor);
     this.formularioChange.emit(this.formulario);
   }
+
+  readonly opcionesSiNo = [
+    { label: 'Sí', value: true },
+    { label: 'No', value: false },
+  ];
 
   emitirCambio(): void {
     this.formularioChange.emit(this.formulario);

@@ -58,29 +58,10 @@ export class RegistroPersonaJuridicaPaso1Component {
     return this.catalogos?.responsabilidadFiscal ?? [];
   }
 
-  get opcionesBeneficiariosFinales(): OpcionCatalogo[] {
-    return this.catalogos?.beneficiariosFinalesRub ?? [];
-  }
-
-  get opcionesCotizaBolsa(): OpcionCatalogo[] {
-    return this.catalogos?.cotizaBvc ?? [];
-  }
-
-  get opcionesRevisorFiscal(): OpcionCatalogo[] {
-    return this.catalogos?.obligacionRevisorFiscal ?? [];
-  }
-
-  get opcionesGranContribuyente(): OpcionCatalogo[] {
-    return this.catalogos?.granContribuyenteDian ?? [];
-  }
-
-  get opcionesAutorretenedor(): OpcionCatalogo[] {
-    return this.catalogos?.autorretenedorRenta ?? [];
-  }
-
-  get opcionesExencionIca(): OpcionCatalogo[] {
-    return this.catalogos?.exencionIcaBogota ?? [];
-  }
+  readonly opcionesSiNo: Opcion<boolean>[] = [
+    { label: 'Sí', value: true },
+    { label: 'No', value: false },
+  ];
 
   opcionesLimitacionEstatutaria: Opcion<boolean>[] = [
     { label: 'No, facultades amplias y suficientes sin límite de cuantía (Estatutos tipo S.A.S.)', value: false },

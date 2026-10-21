@@ -256,15 +256,15 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
         seReconoceComo: [""],
         orientacionSexual: [""],
 
-        esMigrante: ["", Validators.required],
-        victimaConflictoArmado: ["", Validators.required],
+        esMigrante: this.fb.control<boolean | null>(null, Validators.required),
+        victimaConflictoArmado: this.fb.control<boolean | null>(null, Validators.required),
 
-        tieneHijos: ["", Validators.required],
+        tieneHijos: this.fb.control<boolean | null>(null, Validators.required),
         numeroHijos: ["", [Validators.min(1), Validators.max(10)]],
 
-        esCabezaFamilia: ["", Validators.required],
-        esPep: ["", Validators.required],
-        personasACargo: ["", Validators.required],
+        esCabezaFamilia: this.fb.control<boolean | null>(null, Validators.required),
+        esPep: this.fb.control<boolean | null>(null, Validators.required),
+        personasACargo: this.fb.control<boolean | null>(null, Validators.required),
 
         estadoCivil: ["", Validators.required],
         discapacidad: ["", Validators.required],
@@ -290,12 +290,12 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
       // =======================================================
 
       tributario: this.fb.group({
-        declaranteRenta: ["", Validators.required],
-        medicinaPrepagada: ["", Validators.required],
-        cuentaAfc: ["", Validators.required],
-        responsableIva: ["", Validators.required],
-        resideFiscalmenteColombia: ["", Validators.required],
-        aportesPensionVoluntaria: ["", Validators.required],
+        declaranteRenta: this.fb.control<boolean | null>(null, Validators.required),
+        medicinaPrepagada: this.fb.control<boolean | null>(null, Validators.required),
+        cuentaAfc: this.fb.control<boolean | null>(null, Validators.required),
+        responsableIva: this.fb.control<boolean | null>(null, Validators.required),
+        resideFiscalmenteColombia: this.fb.control<boolean | null>(null, Validators.required),
+        aportesPensionVoluntaria: this.fb.control<boolean | null>(null, Validators.required),
       }),
 
       // =======================================================
@@ -636,11 +636,8 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
   private catalogosPaso1Vacios(): CatalogosPersonaNaturalPaso1 {
     return {
       tiposDocumento: [], paises: [], genero: [], perfilRolPrincipal: [],
-      grupoEtnico: [], seReconoceComo: [], orientacionSexual: [], migrante: [],
-      victimaConflicto: [], tieneHijos: [], cabezaFamilia: [], pep: [],
-      personasACargo: [], estadoCivil: [], discapacidad: [], declaranteRenta: [],
-      medicinaPrepagada: [], cuentaAfc: [], responsableIva: [],
-      resideFiscalmenteColombia: [], aportesPensionVoluntaria: [],
+      grupoEtnico: [], seReconoceComo: [], orientacionSexual: [],
+      estadoCivil: [], discapacidad: [],
       tiposVia: [], tiposInterior: [],
     };
   }
@@ -702,9 +699,8 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
       : "";
   }
 
-  private esRespuestaAfirmativa(id: unknown): boolean {
-    const opcion = this.catalogosPaso1?.tieneHijos.find((o) => o.id === id);
-    return this.normalizar(opcion?.nombre) === "si";
+  private esRespuestaAfirmativa(valor: unknown): boolean {
+    return valor === true;
   }
 
   private codigoTipoDocumento(id: unknown): string | undefined {

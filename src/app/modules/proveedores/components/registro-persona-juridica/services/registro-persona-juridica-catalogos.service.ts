@@ -62,6 +62,22 @@ export interface OpcionCatalogo {
   numeroOrden?: number | null;
 }
 
+export const PREGUNTAS_BOOLEANAS_PERSONA_JURIDICA = {
+  tipoParametro: 'TRIBUTARIA_COMP',
+  area: 'IT',
+  codigos: {
+    beneficiariosFinales: 'BEN_FIN_RUB',
+    cotizaBolsa: 'COTIZA_BVC',
+    revisorFiscal: 'REV_FISCAL',
+    granContribuyente: 'CONTRIBUYENTE_DIAN',
+    autorretenedor: 'AUTO_RENTA',
+    exencionIca: 'ICA_BOG',
+    tieneRup: 'RUP_VIGENTE',
+    obligadoFacturar: 'FAC_ELEC',
+    monedaExtranjera: 'MONEDA_EXT',
+  },
+} as const;
+
 export interface CatalogosPersonaJuridica {
   procedencia: OpcionCatalogo[];
   tipoOrganizacion: OpcionCatalogo[];
@@ -75,15 +91,6 @@ export interface CatalogosPersonaJuridica {
   cargo: OpcionCatalogo[];
   entidadesBancarias: OpcionCatalogo[];
   tiposCuentaBancaria: OpcionCatalogo[];
-  beneficiariosFinalesRub: OpcionCatalogo[];
-  cotizaBvc: OpcionCatalogo[];
-  obligacionRevisorFiscal: OpcionCatalogo[];
-  granContribuyenteDian: OpcionCatalogo[];
-  autorretenedorRenta: OpcionCatalogo[];
-  exencionIcaBogota: OpcionCatalogo[];
-  rupVigente: OpcionCatalogo[];
-  obligadoFacturar: OpcionCatalogo[];
-  monedaExtranjera: OpcionCatalogo[];
   tipoVia: OpcionCatalogo[];
   tipoInterior: OpcionCatalogo[];
 }
@@ -144,17 +151,8 @@ export class RegistroPersonaJuridicaCatalogosService {
       tipoCapital: complementaria("TIPO_CAPITAL"),
       cargo: complementaria("Grupo_5"),
       camaraComercio: parametro("CAM_COM"),
-      beneficiariosFinalesRub: parametro("BENEFICIARIOS_FINALES_RUB"),
-      cotizaBvc: parametro("COTIZA_BVC"),
-      obligacionRevisorFiscal: parametro("OBLIGACIÓN_REVISOR_FISCAL"),
-      granContribuyenteDian: parametro("CONTRIBUYENTE_DIAN"),
-      autorretenedorRenta: parametro("AUTORRETENEDOR_RENTA"),
-      exencionIcaBogota: parametro("APLICA_EXENCIÓN_ICA_BOGOTÁ"),
       entidadesBancarias: parametro("EB"),
       tiposCuentaBancaria: parametro("TCB"),
-      obligadoFacturar: parametro("OBLIGACIÓN_FACTURA_ELECTRÓNICA"),
-      monedaExtranjera: parametro("OPERACIONES_MONEDA_EXTRANJERA"),
-      rupVigente: parametro("RUP_VIGENTE"),
       actividadEconomicaCiiu: parametro("CIIU", { exigirCodigo: true }),
       // Catálogos que usa el formulario y que no figuran en PERSONA_JURIDICA_CONSUMO.md.
       responsabilidadFiscal: parametro("RESP_FIS", { codigoArea: "IT" }),
