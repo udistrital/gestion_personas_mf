@@ -2,7 +2,15 @@ import { Component, DestroyRef, OnInit } from "@angular/core";
 import { FormControl, FormGroup, Validators } from "@angular/forms";
 import { Router } from "@angular/router";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { asapScheduler, forkJoin, map, observeOn, Subscription } from "rxjs";
+import {
+  asapScheduler,
+  catchError,
+  forkJoin,
+  map,
+  observeOn,
+  of,
+  Subscription,
+} from "rxjs";
 import { PasoStepperVisual } from "src/app/shared/components/stepper-visual/stepper-visual.component";
 import { camposPorPaso } from "./registro-persona-juridica.component.utils";
 import {
@@ -140,18 +148,36 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
     this.errorCatalogos = null;
     this.catalogosSinRegistros = false;
     this.catalogos = null;
+    const fallosUbicaciones: string[] = [];
     const aOpcionesCatalogo = map((lugares: { id: number; nombre: string }[]) =>
       lugares.map(lugar => ({ id: lugar.id, nombre: lugar.nombre })),
     );
     this.suscripcionCatalogos = forkJoin({
       catalogos: this.catalogosService.obtenerCatalogos(),
-      tipoVia: this.ubicacionesService.obtenerTiposVia().pipe(aOpcionesCatalogo),
-      tipoInterior: this.ubicacionesService.obtenerTiposInterior().pipe(aOpcionesCatalogo),
+      tipoVia: this.ubicacionesService.obtenerTiposVia().pipe(
+        aOpcionesCatalogo,
+        catchError(error => {
+          console.error('No fue posible cargar los tipos de vía de Ubicaciones.', error);
+          fallosUbicaciones.push('tipos de vía');
+          return of([]);
+        }),
+      ),
+      tipoInterior: this.ubicacionesService.obtenerTiposInterior().pipe(
+        aOpcionesCatalogo,
+        catchError(error => {
+          console.error('No fue posible cargar los tipos de interior de Ubicaciones.', error);
+          fallosUbicaciones.push('tipos de interior');
+          return of([]);
+        }),
+      ),
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: ({ catalogos, tipoVia, tipoInterior }) => {
           this.catalogos = { ...catalogos, tipoVia, tipoInterior };
+          this.errorCatalogos = fallosUbicaciones.length
+            ? `No fue posible cargar los catálogos de Ubicaciones: ${fallosUbicaciones.join(' y ')}.`
+            : null;
           this.catalogosSinRegistros = [
             catalogos.procedencia,
             tipoVia,
