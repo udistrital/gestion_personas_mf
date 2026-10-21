@@ -95,10 +95,10 @@ export interface CatalogosPersonaJuridica {
   tipoInterior: OpcionCatalogo[];
 }
 
-// Procedencia, vía e interior se obtienen de Ubicaciones; este servicio cubre Terceros y Parámetros.
+// Las vías e interiores se obtienen de Ubicaciones; este servicio cubre Terceros y Parámetros.
 export type CatalogosTercerosParametros = Omit<
   CatalogosPersonaJuridica,
-  "procedencia" | "tipoVia" | "tipoInterior"
+  "tipoVia" | "tipoInterior"
 >;
 
 interface OpcionesParametro {
@@ -146,6 +146,7 @@ export class RegistroPersonaJuridicaCatalogosService {
       this.obtenerParametrosPorTipo(codigoTipo, opciones, memorizar);
 
     return forkJoin({
+      procedencia: complementaria("PROCEDENCIA"),
       tipoOrganizacion: complementaria("TIPO_ORG"),
       tamanoEmpresa: complementaria("TAMAÑO_EMPRESA"),
       tipoCapital: complementaria("TIPO_CAPITAL"),

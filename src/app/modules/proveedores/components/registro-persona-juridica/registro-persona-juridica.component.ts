@@ -145,16 +145,15 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
     );
     this.suscripcionCatalogos = forkJoin({
       catalogos: this.catalogosService.obtenerCatalogos(),
-      procedencia: this.ubicacionesService.obtenerProcedencias().pipe(aOpcionesCatalogo),
       tipoVia: this.ubicacionesService.obtenerTiposVia().pipe(aOpcionesCatalogo),
       tipoInterior: this.ubicacionesService.obtenerTiposInterior().pipe(aOpcionesCatalogo),
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: ({ catalogos, procedencia, tipoVia, tipoInterior }) => {
-          this.catalogos = { ...catalogos, procedencia, tipoVia, tipoInterior };
+        next: ({ catalogos, tipoVia, tipoInterior }) => {
+          this.catalogos = { ...catalogos, tipoVia, tipoInterior };
           this.catalogosSinRegistros = [
-            procedencia,
+            catalogos.procedencia,
             tipoVia,
             tipoInterior,
             catalogos.tipoOrganizacion,
