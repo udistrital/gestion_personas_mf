@@ -11,6 +11,7 @@ import {
 import {
   CaracteristicasDetalle,
   ContadoresPestanas,
+  ContratacionDetalle,
   FirmaAval,
   GeneralDetalle,
   ImputacionPresupuestal,
@@ -21,6 +22,7 @@ import {
   TEXTO_NORMATIVO_PRESUPUESTO,
 } from "../models/detalle-solicitud.model";
 import { ItemSolicitud } from "../models/items.model";
+import { ParametroPago } from "../models/contratacion.model";
 
 /**
  * Capa de datos de solicitudes.
@@ -639,6 +641,112 @@ function itemsSolicitud(solicitud: Solicitud): readonly ItemSolicitud[] {
   return solicitud.estado === "borrador" ? [] : ITEMS_MOCK;
 }
 
+/* ── Contratación y pago (pestaña "Contratación y pago") ──────────────────── */
+
+/**
+ * Hitos contractuales del estudio previo (mockup de la pestaña 4).
+ *
+ * Reproduce los tres hitos 40 % / 40 % / 20 % con sus requisitos verificables.
+ * Los montos no se guardan aquí: la vista los deriva del valor total con
+ * `montoHito`, para no duplicar la cifra que muestra el presupuesto.
+ */
+const PARAMETROS_MOCK: readonly ParametroPago[] = [
+  {
+    id: "1",
+    condicion: "Parámetros del primer mes",
+    porcentaje: 40,
+    nota: "Entrega física, montaje en rack y pruebas de encendido de servidores en el datacenter institucional.",
+    requisitos: [
+      { icono: "inventory_2", etiqueta: "Entrega en sitio" },
+      { icono: "power", etiqueta: "Pruebas energéticas OK" },
+    ],
+  },
+  {
+    id: "2",
+    condicion: "Parámetros del segundo mes",
+    porcentaje: 40,
+    nota: "Configuración de virtualización, migración de máquinas virtuales y pruebas de carga y estrés en clúster.",
+    requisitos: [
+      { icono: "cloud_sync", etiqueta: "Migración completada" },
+      { icono: "speed", etiqueta: "Stress Test Superado" },
+    ],
+  },
+  {
+    id: "3",
+    condicion: "Culminar actividades finales",
+    porcentaje: 20,
+    nota: "Suscripción del acta de recibo a satisfacción final, capacitación técnica al equipo DIRTEI y entrega de pólizas de garantía de fábrica.",
+    requisitos: [
+      { icono: "assignment_turned_in", etiqueta: "Acta Final" },
+      { icono: "school", etiqueta: "Transferencia de conocimiento" },
+    ],
+  },
+];
+
+/**
+ * Contratación y pagos de una solicitud.
+ *
+ * Devuelve `null` cuando la solicitud todavía no tiene condiciones
+ * contractuales definidas (borrador): así la pestaña muestra su estado vacío.
+ * El tipo de contrato, el medio y la forma de pago guardan el `valor` del
+ * catálogo del asistente (S-02); la vista resuelve su etiqueta con
+ * `etiquetaCorta`.
+ */
+function contratacionDetalle(solicitud: Solicitud): ContratacionDetalle | null {
+  if (solicitud.estado === "borrador") {
+    return null;
+  }
+
+  return {
+    tipoContrato: "suministro",
+    tipoContratoNorma:
+      "Ley 80 de 1993 / Estatuto General UD (Acuerdo 003 de 2015)",
+    modalidadSeleccion:
+      "Convocatoria Pública para Solicitud de Cotizaciones / Estudio de Mercado",
+    modalidadNota:
+      "Etapa precontractual conducente a consolidación de presupuesto oficial",
+    plazoEjecucion: "4 meses calendario",
+    plazoDias: "120 días continuos",
+    plazoNota:
+      "Inicia a partir del perfeccionamiento, acta de inicio y aprobación de garantías",
+    lugarEjecucion: "Sede Aduanilla de Paiba - Sala de Servidores Datacenter",
+    lugarDireccion:
+      "Calle 13 N.° 31-75, Bloque de Infraestructura de TI, Bogotá D.C.",
+    medioPago: "transferencia_sebra",
+    medioPagoNota:
+      "A cuenta bancaria (Ahorros o Corriente) previamente validada, certificada e inscrita por el proveedor en el portal ÁGORA.",
+    formaPago: "pagos_parciales",
+    formaPagoNota:
+      "Reembolsos supeditados a la suscripción del acta de recibo a satisfacción expedida por la supervisión designada.",
+    reglamentacion: "Resolución 067 de 2017",
+    reglamentacionNota:
+      "Concordante con el Estatuto de Presupuesto de la Universidad Distrital Francisco José de Caldas y directrices PAC.",
+    notaTributaria:
+      "Cada desembolso estará sujeto a las retenciones tributarias nacionales y distritales vigentes (Retefuente, ReteICA y Estampillas Universidad Distrital 50 años y Pro-Cultura), liquidadas sobre el valor bruto facturado.",
+    parametros: PARAMETROS_MOCK,
+    supervisor: {
+      cargo:
+        "Director de la DIRTEI (División de Recursos Tecnológicos e Informáticos)",
+      parrafoHtml:
+        "La verificación del cumplimiento de los hitos y la autorización de cada desembolso estará a cargo exclusivo del <strong>Director de la DIRTEI (División de Recursos Tecnológicos e Informáticos)</strong>.",
+    },
+    garantias: [
+      {
+        icono: "verified_user",
+        titulo: "Póliza Única de Cumplimiento",
+        descripcion:
+          "Amparos de cumplimiento contractual (20%), calidad de bienes y servicios (20%) y salarios y prestaciones (5%) vigentes ante la aseguradora universitaria.",
+      },
+      {
+        icono: "health_and_safety",
+        titulo: "Aportes a Seguridad Social y Parafiscales (PILA)",
+        descripcion:
+          "Certificación mensual emitida por Revisor Fiscal o Representante Legal adjuntando planilla PILA cancelada de todo el personal asignado al proyecto.",
+      },
+    ],
+  };
+}
+
 /** Amplía una fila del listado con la información del detalle. */
 function comoDetalle(solicitud: Solicitud): SolicitudDetalle {
   return {
@@ -648,6 +756,7 @@ function comoDetalle(solicitud: Solicitud): SolicitudDetalle {
     presupuesto: presupuestoDetalle(solicitud),
     itemsDetalle: ITEMS_DETALLE_MOCK,
     items: itemsSolicitud(solicitud),
+    contratacion: contratacionDetalle(solicitud),
     contadores: CONTADORES_MOCK,
   };
 }

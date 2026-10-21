@@ -1,6 +1,7 @@
 import { EstadoSolicitud } from "src/app/core/constants/estados-solicitud.const";
 import {
   ContadoresPestanas,
+  ContratacionDetalle,
   GeneralDetalle,
   ItemsDetalle,
   PresupuestoDetalle,
@@ -63,6 +64,8 @@ export interface SolicitudDetalle extends Solicitud {
   readonly itemsDetalle: ItemsDetalle;
   /** Ítems del pliego de la pestaña 3; lista vacía ⇒ estado vacío. */
   readonly items: readonly ItemSolicitud[];
+  /** Contratación y pagos de la pestaña 4; `null` si aún no está definida. */
+  readonly contratacion: ContratacionDetalle | null;
   readonly contadores: ContadoresPestanas;
 }
 

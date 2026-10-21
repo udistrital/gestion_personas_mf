@@ -32,6 +32,14 @@ export interface OpcionContratacion {
   readonly corta?: string;
 }
 
+/** Requisito verificable de un hito de pago (chip de la tabla del detalle). */
+export interface EtapaRequisito {
+  /** Icono Material del chip ("inventory_2"). */
+  readonly icono: string;
+  /** Texto corto del requisito ("Entrega en sitio"). */
+  readonly etiqueta: string;
+}
+
 /** Parámetro de la forma de pago (una fila de la tarjeta 4). */
 export interface ParametroPago {
   /** Identificador interno (para el seguimiento de la tabla). */
@@ -40,6 +48,15 @@ export interface ParametroPago {
   readonly condicion: string;
   /** Porcentaje del valor pactado que se libera con la condición. */
   readonly porcentaje: number;
+  /**
+   * Nota explicativa del hito.
+   *
+   * La rellena el detalle (S-03, pestaña "Contratación y pago"); el asistente
+   * de creación (S-02) la deja sin usar.
+   */
+  readonly nota?: string;
+  /** Requisitos verificables que se pintan como chips en el detalle. */
+  readonly requisitos?: readonly EtapaRequisito[];
 }
 
 /** Resumen porcentual de los parámetros agregados. */

@@ -12,6 +12,12 @@
  */
 
 import { EstadoSolicitud } from "src/app/core/constants/estados-solicitud.const";
+import {
+  ParametroPago,
+  PORCENTAJE_TOTAL,
+  ResumenPagos,
+  calcularResumenPagos,
+} from "./contratacion.model";
 
 /* ── Tarjeta 1: responsable de la solicitud ───────────────────────────────── */
 
@@ -103,6 +109,109 @@ export interface ItemsDetalle {
   readonly codigoDependencia: string;
   /** Lugar de entrega ("Sede Aduanilla de Paiba - Bloque B Sala DataCenter"). */
   readonly sede: string;
+}
+
+/* ── Pestaña 4: contratación y pago (solo lectura) ────────────────────────── */
+
+/**
+ * Sub-tarjeta de una validación obligatoria de pago (póliza, aportes PILA…).
+ */
+export interface RequisitoGarantia {
+  /** Icono Material del bloque ("verified_user"). */
+  readonly icono: string;
+  /** Título de la validación ("Póliza Única de Cumplimiento"). */
+  readonly titulo: string;
+  /** Explicación de la validación (texto plano). */
+  readonly descripcion: string;
+}
+
+/** Supervisión técnica designada por la institución. */
+export interface SupervisorContrato {
+  /** Cargo del supervisor ("Director de la DIRTEI…"). */
+  readonly cargo: string;
+  /** Párrafo explicativo (HTML); se pinta con `htmlSeguro`. */
+  readonly parrafoHtml: string;
+}
+
+/**
+ * Contenido completo de la pestaña "Contratación y pago".
+ *
+ * Es un agregado independiente del de las demás pestañas. Cuando la solicitud
+ * aún no tiene condiciones contractuales definidas (p. ej. un borrador) el
+ * detalle trae `contratacion: null` y la pestaña muestra su estado vacío.
+ *
+ * `tipoContrato`, `medioPago` y `formaPago` guardan el `valor` del catálogo de
+ * `contratacion.model.ts` (el mismo del asistente); la vista resuelve la
+ * etiqueta legible con `etiquetaCorta`, igual que el paso 7 de S-02. El
+ * cronograma reutiliza `ParametroPago`, de modo que no hay un segundo modelo
+ * del mismo concepto.
+ */
+export interface ContratacionDetalle {
+  /** Valor del catálogo `TIPOS_CONTRATO`. */
+  readonly tipoContrato: string;
+  /** Referencia normativa del tipo de contrato. */
+  readonly tipoContratoNorma: string;
+  /** Modalidad de selección ("Convocatoria Pública …"). */
+  readonly modalidadSeleccion: string;
+  /** Nota de la modalidad. */
+  readonly modalidadNota: string;
+  /** Plazo destacado ("4 meses calendario"). */
+  readonly plazoEjecucion: string;
+  /** Plazo en días ("120 días continuos"). */
+  readonly plazoDias: string;
+  /** Nota del plazo. */
+  readonly plazoNota: string;
+  /** Lugar de ejecución. */
+  readonly lugarEjecucion: string;
+  /** Dirección del lugar de ejecución. */
+  readonly lugarDireccion: string;
+  /** Valor del catálogo `MEDIOS_PAGO`. */
+  readonly medioPago: string;
+  /** Nota del medio de pago. */
+  readonly medioPagoNota: string;
+  /** Valor del catálogo `FORMAS_PAGO`. */
+  readonly formaPago: string;
+  /** Nota de la forma de pago. */
+  readonly formaPagoNota: string;
+  /** Reglamentación aplicable ("Resolución 067 de 2017"). */
+  readonly reglamentacion: string;
+  /** Nota de la reglamentación. */
+  readonly reglamentacionNota: string;
+  /** Banner de retenciones tributarias (texto plano). */
+  readonly notaTributaria: string;
+  /** Hitos contractuales de desembolso (mismo modelo del asistente, S-02). */
+  readonly parametros: readonly ParametroPago[];
+  /** Supervisión técnica designada. */
+  readonly supervisor: SupervisorContrato;
+  /** Validaciones obligatorias de pago. */
+  readonly garantias: readonly RequisitoGarantia[];
+}
+
+/**
+ * Resumen porcentual del cronograma de pagos.
+ *
+ * Reutiliza el cálculo del asistente (S-02) para que la pestaña y el paso 4
+ * lleguen siempre al mismo resultado; no se reimplementa la suma.
+ */
+export function resumenPagos(
+  contratacion: ContratacionDetalle,
+): ResumenPagos {
+  return calcularResumenPagos(contratacion.parametros);
+}
+
+/**
+ * Monto estimado de un hito a partir del valor total.
+ *
+ * El valor total es el mismo que muestra la pestaña "Presupuesto"
+ * (`totalImputado`), así que los montos no se escriben a mano ni se duplican.
+ */
+export function montoHito(parametro: ParametroPago, valorTotal: number): number {
+  return Math.round((valorTotal * Number(parametro.porcentaje || 0)) / PORCENTAJE_TOTAL);
+}
+
+/** true cuando los porcentajes del cronograma suman exactamente el 100 %. */
+export function pagoCompleto(contratacion: ContratacionDetalle): boolean {
+  return resumenPagos(contratacion).completo;
 }
 
 /* ── Pestaña 2: presupuesto (SICAPITAL, solo lectura) ─────────────────────── */

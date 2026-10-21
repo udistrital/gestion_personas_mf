@@ -1,0 +1,295 @@
+@if (solicitud(); as s) {
+  <encabezado-pestana
+    icono="payments"
+    titulo="Contratación y pago"
+    descripcion="Condiciones jurídicas de la contratación, información financiera y cronograma de hitos de desembolso del estudio previo."
+  >
+    <ng-container acciones>
+      <button class="boton-recto" type="button" (click)="descargarResumen()">
+        <mat-icon aria-hidden="true">download</mat-icon>
+        <span>Descargar Resumen PDF</span>
+      </button>
+    </ng-container>
+  </encabezado-pestana>
+
+  @if (contratacion(); as c) {
+    <!-- ───────────── 1. Régimen y tipo de contratación ───────────── -->
+    <tarjeta-seccion
+      icono="account_balance"
+      titulo="1. Régimen y Tipo de Contratación Asociada"
+      subtitulo="Marco normativo, tipología contractual y condiciones espaciotemporales de ejecución institucional"
+    >
+      <ng-container acciones>
+        <span class="chip chip--recto">Normativa Universitaria Vigente</span>
+      </ng-container>
+
+      <div class="datos-grid datos-grid--dos">
+        <div class="dato">
+          <span class="dato__etiqueta">
+            <mat-icon aria-hidden="true">description</mat-icon>
+            <span>Tipo de contrato</span>
+          </span>
+          <span class="dato__valor">{{ tipoContrato() || "—" }}</span>
+          <span class="dato__nota">{{ c.tipoContratoNorma }}</span>
+        </div>
+
+        <div class="dato">
+          <span class="dato__etiqueta">
+            <mat-icon aria-hidden="true">travel_explore</mat-icon>
+            <span>Modalidad de selección</span>
+          </span>
+          <span class="dato__valor">{{ c.modalidadSeleccion }}</span>
+          <span class="dato__nota">{{ c.modalidadNota }}</span>
+        </div>
+
+        <div class="dato">
+          <span class="dato__etiqueta">
+            <mat-icon aria-hidden="true">timelapse</mat-icon>
+            <span>Plazo de ejecución contractual</span>
+          </span>
+          <span class="dato__valor dato__valor--cuerpo">
+            {{ c.plazoEjecucion }} · {{ c.plazoDias }}
+          </span>
+          <span class="dato__nota">{{ c.plazoNota }}</span>
+        </div>
+
+        <div class="dato">
+          <span class="dato__etiqueta">
+            <mat-icon aria-hidden="true">pin_drop</mat-icon>
+            <span>Lugar de ejecución</span>
+          </span>
+          <span class="dato__valor">{{ c.lugarEjecucion }}</span>
+          <span class="dato__nota">{{ c.lugarDireccion }}</span>
+        </div>
+      </div>
+    </tarjeta-seccion>
+
+    <!-- ───────────── 2. Información financiera y medio de pago ───────────── -->
+    <tarjeta-seccion
+      icono="account_balance_wallet"
+      titulo="2. Detalle de Información Financiera y Medio de Pago"
+      subtitulo="Instrucciones de dispersión bancaria, régimen de tesorería y lineamientos presupuestales"
+    >
+      <ng-container acciones>
+        <span class="chip chip--recto">Tesorería Central UD</span>
+      </ng-container>
+
+      <div class="datos-grid datos-grid--tres">
+        <div class="dato dato--ancho">
+          <span class="dato__etiqueta">
+            <mat-icon aria-hidden="true">contactless</mat-icon>
+            <span>Medio de pago</span>
+          </span>
+          <span class="dato__valor">{{ medioPago() || "—" }}</span>
+          <span class="dato__nota">{{ c.medioPagoNota }}</span>
+        </div>
+
+        <div class="dato">
+          <span class="dato__etiqueta">
+            <mat-icon aria-hidden="true">fact_check</mat-icon>
+            <span>Tipo de forma de pago</span>
+          </span>
+          <span class="dato__valor">{{ formaPago() || "—" }}</span>
+          <span class="dato__nota">{{ c.formaPagoNota }}</span>
+        </div>
+
+        <div class="dato">
+          <span class="dato__etiqueta">
+            <mat-icon aria-hidden="true">menu_book</mat-icon>
+            <span>Reglamentación aplicable</span>
+          </span>
+          <span class="dato__valor">{{ c.reglamentacion }}</span>
+          <span class="dato__nota">{{ c.reglamentacionNota }}</span>
+        </div>
+      </div>
+
+      <!-- Banner tributario -->
+      <div class="bloque-icono banner-tributario" role="note">
+        <mat-icon class="bloque-icono__icono" aria-hidden="true">info</mat-icon>
+        <div class="bloque-icono__texto">
+          <span class="banner-tributario__titulo">
+            Nota Institucional sobre Descuentos Tributarios de Ley
+          </span>
+          <span class="banner-tributario__texto">{{ c.notaTributaria }}</span>
+        </div>
+      </div>
+    </tarjeta-seccion>
+
+    <!-- ───────────── 3. Formas de pago agregadas (hitos) ───────────── -->
+    <tarjeta-seccion
+      icono="checklist_rtl"
+      titulo="3. Formas de Pago Agregadas (Hitos Contractuales)"
+      subtitulo="Desglose porcentual y montos proyectados en el estudio previo para la adquisición"
+    >
+      <div class="progreso">
+        <div class="progreso__datos">
+          <span class="progreso__rotulo">Progreso de distribución</span>
+          <span class="progreso__valor">
+            {{ parametros().length }} hitos ·
+            {{ porcentaje(resumen()?.total ?? 0) }} acumulado
+          </span>
+        </div>
+
+        <div
+          class="progreso__barra"
+          role="progressbar"
+          aria-label="Progreso de distribución de los pagos"
+          [attr.aria-valuenow]="resumen()?.total ?? 0"
+          aria-valuemin="0"
+          aria-valuemax="100"
+        >
+          <span
+            class="progreso__relleno"
+            [style.width.%]="(resumen()?.total ?? 0) > 100 ? 100 : (resumen()?.total ?? 0)"
+          ></span>
+        </div>
+
+        @if (resumen()?.completo) {
+          <span class="chip chip--exito">
+            <mat-icon aria-hidden="true">check_circle</mat-icon>
+            <span>Cumplimiento normativo validado</span>
+          </span>
+        } @else {
+          <span class="chip chip--advertencia">
+            <mat-icon aria-hidden="true">warning</mat-icon>
+            <span>
+              Inconsistencia: los porcentajes suman
+              {{ porcentaje(resumen()?.total ?? 0) }} (deben sumar 100 %)
+            </span>
+          </span>
+        }
+      </div>
+
+      <div class="tabla-detalle__scroll">
+        <table
+          class="tabla-detalle"
+          aria-label="Formas de pago agregadas por hito contractual"
+        >
+          <caption class="tabla-detalle__caption">
+            Cronograma de hitos contractuales y desembolsos proyectados
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col" class="tabla-detalle__th tabla-detalle__th--centro">
+                N.°
+              </th>
+              <th scope="col" class="tabla-detalle__th">
+                Condición o Hito de Desembolso
+              </th>
+              <th scope="col" class="tabla-detalle__th tabla-detalle__th--centro">
+                Porcentaje de Pago
+              </th>
+              <th scope="col" class="tabla-detalle__th tabla-detalle__th--numero">
+                Monto Estimado (COP)
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (hito of parametros(); track hito.id; let indice = $index) {
+              <tr class="tabla-detalle__fila">
+                <td
+                  class="tabla-detalle__td tabla-detalle__td--centro tabla-detalle__td--fuerte"
+                >
+                  {{ indice + 1 }}
+                </td>
+                <td class="tabla-detalle__td">
+                  <span class="hito__datos">
+                    <span class="tabla-detalle__celda-titulo">
+                      {{ hito.condicion }}
+                    </span>
+                    @if (hito.nota) {
+                      <span class="tabla-detalle__celda-nota">
+                        {{ hito.nota }}
+                      </span>
+                    }
+                  </span>
+                  @if (hito.requisitos?.length) {
+                    <span class="hito__etiquetas">
+                      @for (requisito of hito.requisitos; track requisito.etiqueta) {
+                        <span class="hito__etiqueta">
+                          <mat-icon aria-hidden="true">{{ requisito.icono }}</mat-icon>
+                          <span>{{ requisito.etiqueta }}</span>
+                        </span>
+                      }
+                    </span>
+                  }
+                </td>
+                <td class="tabla-detalle__td tabla-detalle__td--centro">
+                  <span class="chip chip--neutro">
+                    {{ porcentaje(hito.porcentaje) }}
+                  </span>
+                </td>
+                <td
+                  class="tabla-detalle__td tabla-detalle__td--numero tabla-detalle__td--fuerte"
+                >
+                  {{ moneda(monto(hito)) }}
+                </td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr class="tabla-detalle__fila tabla-detalle__fila--total">
+              <td class="tabla-detalle__td" colspan="2">
+                <span class="tabla-detalle__total-rotulo">
+                  Total Acumulado Contractual
+                </span>
+              </td>
+              <td
+                class="tabla-detalle__td tabla-detalle__td--centro tabla-detalle__td--fuerte"
+              >
+                {{ porcentaje(resumen()?.total ?? 0) }}
+              </td>
+              <td
+                class="tabla-detalle__td tabla-detalle__td--numero tabla-detalle__td--fuerte"
+              >
+                {{ moneda(valorTotal()) }}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </tarjeta-seccion>
+
+    <!-- ───────────── 4. Supervisión y validaciones de pago ───────────── -->
+    <tarjeta-seccion
+      icono="shield_person"
+      titulo="Supervisión Técnica Designada y Validaciones Obligatorias de Pago"
+      subtitulo="Responsabilidad de la verificación de hitos y de la autorización de cada desembolso"
+    >
+      <ng-container acciones>
+        <span class="chip chip--recto">Decreto 1082 / Estatuto UD</span>
+      </ng-container>
+
+      <p class="bloque-lectura" [innerHTML]="c.supervisor.parrafoHtml | htmlSeguro"></p>
+
+      <div class="datos-grid datos-grid--dos">
+        @for (garantia of garantias(); track garantia.titulo) {
+          <div class="bloque-icono">
+            <mat-icon class="bloque-icono__icono" aria-hidden="true">
+              {{ garantia.icono }}
+            </mat-icon>
+            <div class="garantia__textos">
+              <span class="bloque-icono__texto bloque-icono__texto--fuerte">
+                {{ garantia.titulo }}
+              </span>
+              <span class="bloque-icono__texto bloque-icono__texto--suave">
+                {{ garantia.descripcion }}
+              </span>
+            </div>
+          </div>
+        }
+      </div>
+    </tarjeta-seccion>
+  } @else {
+    <!-- ───────────── Estado: sin información de contratación ───────────── -->
+    <div class="estado-vacio">
+      <mat-icon class="estado-vacio__icono" aria-hidden="true">handshake</mat-icon>
+      <h2 class="estado-vacio__titulo">Sin información de contratación y pago</h2>
+      <p class="estado-vacio__texto">
+        Esta solicitud todavía no tiene definidas las condiciones contractuales ni
+        el cronograma de desembolsos. Cuando el proceso avance, aquí se mostrará
+        el régimen de contratación, el medio de pago y los hitos proyectados.
+      </p>
+    </div>
+  }
+}

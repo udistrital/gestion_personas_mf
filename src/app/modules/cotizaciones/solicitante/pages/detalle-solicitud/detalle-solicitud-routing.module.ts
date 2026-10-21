@@ -2,6 +2,7 @@ import { NgModule } from "@angular/core";
 import { RouterModule, Routes } from "@angular/router";
 import { solicitudResolver } from "../../../resolvers/solicitud.resolver";
 import { DetalleSolicitudComponent } from "./detalle-solicitud.component";
+import { PestanaContratacionPagoComponent } from "./pestanas/contratacion-pago/pestana-contratacion-pago.component";
 import { PestanaGeneralComponent } from "./pestanas/general/pestana-general.component";
 import { PestanaItemsComponent } from "./pestanas/items/pestana-items.component";
 import { PestanaPresupuestoComponent } from "./pestanas/presupuesto/pestana-presupuesto.component";
@@ -42,9 +43,8 @@ const routes: Routes = [
       },
       {
         path: "contratacion",
-        component: PestanaPlaceholderComponent,
+        component: PestanaContratacionPagoComponent,
         title: "ÁGORA · Detalle · Contratación y pago",
-        data: { pestanaTitulo: "Contratación y pago" },
       },
       {
         path: "proveedores",
