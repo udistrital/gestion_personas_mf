@@ -1,4 +1,8 @@
 import { EstadoSolicitud } from "src/app/core/constants/estados-solicitud.const";
+import {
+  ContadoresPestanas,
+  GeneralDetalle,
+} from "./detalle-solicitud.model";
 
 export type TipoCotizacion = "BIEN" | "SERVICIO" | "BIEN_Y_SERVICIO";
 
@@ -36,6 +40,21 @@ export interface ResultadoListado {
   readonly solicitudes: readonly Solicitud[];
   /** Total de filas que coinciden con el filtro (antes de paginar). */
   readonly total: number;
+}
+
+/**
+ * Solicitud con la información ampliada que consume el detalle (S-03).
+ *
+ * Extiende la fila del listado con los datos de cabecera que sólo necesita el
+ * detalle, el contenido de la pestaña "General" y los contadores de la barra
+ * de pestañas. Las seis pestañas pendientes de implementar leerán de aquí
+ * cuando se desarrollen.
+ */
+export interface SolicitudDetalle extends Solicitud {
+  /** Número de cotizaciones recibidas (tarjeta métrica de la cabecera). */
+  readonly cotizacionesRecibidas: number;
+  readonly general: GeneralDetalle;
+  readonly contadores: ContadoresPestanas;
 }
 
 export interface UnidadEjecutora {

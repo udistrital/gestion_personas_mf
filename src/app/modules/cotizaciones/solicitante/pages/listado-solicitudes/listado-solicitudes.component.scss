@@ -368,6 +368,10 @@
   background-color: var(--agora-surface);
 }
 
+.listado__menu-item--peligro {
+  color: var(--agora-error);
+}
+
 .listado__boton-acciones {
   box-sizing: border-box;
   width: 2rem;

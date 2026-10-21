@@ -5,8 +5,16 @@ import {
   FiltroSolicitudes,
   ResultadoListado,
   Solicitud,
+  SolicitudDetalle,
   TipoCotizacion,
 } from "../models/solicitud.model";
+import {
+  CaracteristicasDetalle,
+  ContadoresPestanas,
+  GeneralDetalle,
+  PlanAccionDetalle,
+  ResponsableDetalle,
+} from "../models/detalle-solicitud.model";
 
 /**
  * Capa de datos de solicitudes.
@@ -29,6 +37,14 @@ export abstract class SolicitudesService {
     pagina: number,
     porPagina: number,
   ): Observable<ResultadoListado>;
+
+  /**
+   * Detalle de una solicitud por su identificador.
+   *
+   * Devuelve `null` cuando la solicitud no existe; la pantalla de detalle
+   * traduce ese `null` al estado "solicitud no encontrada".
+   */
+  abstract obtenerPorId(id: string): Observable<SolicitudDetalle | null>;
 }
 
 const DATOS_MOCK: readonly Solicitud[] = [
@@ -210,6 +226,91 @@ const MAPA_TIPOS: Readonly<Record<string, TipoCotizacion>> = {
   mixto: "BIEN_Y_SERVICIO",
 };
 
+/* ── Detalle de la solicitud (S-03, pestaña "General") ────────────────────── */
+
+/** Textos largos con formato que el asistente guardó desde el editor. */
+const OBJETIVO_MOCK =
+  "<p>Suministro, puesta en marcha y soporte técnico de equipamiento para cómputo de alto rendimiento y clúster de virtualización institucional.</p>";
+
+const CRITERIO_MOCK =
+  "<p>Menor precio que cumpla la totalidad de especificaciones técnicas mínimas habilitantes.</p>";
+
+const PLAN_ACCION_MOCK =
+  "<p>Plan Estratégico Institucional de Transformación Digital 2024-2028: Modernización de la infraestructura central de procesamiento y almacenamiento para soportar sistemas académicos y administrativos de la Universidad Distrital Francisco José de Caldas.</p>";
+
+/** Responsable por defecto (mockup aprobado de S-03). */
+const RESPONSABLE_MOCK: ResponsableDetalle = {
+  nombres: "Raúl Andrés",
+  apellidos: "Quimbaya Puentes",
+  identificacion: "C.C. 79.845.120 de Bogotá D.C.",
+  unidadEjecutora: "1 - Rectoría (Sede Aduanilla de Paiba)",
+  ordenadorGasto: "ORD-0042 - Dr. Ricardo Gómez Morales",
+  ordenadorCargo: "(Vicerrector Administrativo)",
+  dependenciaSolicitante:
+    "División de Recursos Tecnológicos e Informáticos (DIRTEI)",
+  dependenciaDestino: "Vicerrectoría Administrativa y Financiera",
+};
+
+/**
+ * Contenido de la pestaña "General" para una solicitud.
+ *
+ * Los hitos de apertura y cierre se toman de la fila del listado; cuando la
+ * solicitud es un borrador (sin fechas) se muestra el texto de reserva.
+ */
+function generalDetalle(solicitud: Solicitud): GeneralDetalle {
+  const caracteristicas: CaracteristicasDetalle = {
+    apertura: {
+      fecha: solicitud.apertura || "Sin programar",
+      nota: solicitud.apertura
+        ? "08:00 COT (Hora legal colombiana)"
+        : "Pendiente de publicación del proceso",
+    },
+    cierre: {
+      fecha: solicitud.cierre || "Sin programar",
+      nota: solicitud.cierre
+        ? "17:00 COT (Hora de cierre de plataforma)"
+        : "Se calcula desde la fecha de apertura",
+    },
+    plazoEjecucion: "4 meses calendario",
+    plazoNota: "A partir de suscripción del acta de inicio",
+    objetivo: OBJETIVO_MOCK,
+    requisitos:
+      "Persona jurídica con certificación de fabricante categoría Gold o Platinum y mínimo 3 años de experiencia en entidades del Estado demostrable mediante actas de liquidación contractual.",
+    criterioSeleccion: CRITERIO_MOCK,
+    observaciones:
+      "Las entregas físicas deberán realizarse en el Centro de Cómputo de la sede Aduanilla de Paiba con póliza de transporte amparada y previo agendamiento con la jefatura de la DIRTEI.",
+  };
+
+  const planAccion: PlanAccionDetalle = {
+    codigo: "PAA-2026-META-14",
+    descripcion: PLAN_ACCION_MOCK,
+    eje: "Eje: Gobernanza Tecnológica y Conectividad",
+    aprobacion: "Aprobación Consejo Superior: Acuerdo 012 de 2024",
+  };
+
+  return { responsable: RESPONSABLE_MOCK, caracteristicas, planAccion };
+}
+
+/** Contadores de la barra de pestañas, derivados del modelo simulado. */
+const CONTADORES_MOCK: ContadoresPestanas = {
+  items: 18,
+  proveedores: 12,
+  documentos: 5,
+};
+
+/** Cotizaciones recibidas por defecto (tarjeta métrica de la cabecera). */
+const COTIZACIONES_RECIBIDAS_MOCK = 4;
+
+/** Amplía una fila del listado con la información del detalle. */
+function comoDetalle(solicitud: Solicitud): SolicitudDetalle {
+  return {
+    ...solicitud,
+    cotizacionesRecibidas: COTIZACIONES_RECIBIDAS_MOCK,
+    general: generalDetalle(solicitud),
+    contadores: CONTADORES_MOCK,
+  };
+}
+
 /**
  * Implementación simulada con retardo RxJS.
  *
@@ -217,6 +318,7 @@ const MAPA_TIPOS: Readonly<Record<string, TipoCotizacion>> = {
  * - `?mock=vacio` → devuelve 0 filas (estado vacío)
  * - `?mock=error` → falla la petición (estado de error)
  * - `?mockRetardo=3000` → retardo en ms (ver el skeleton más tiempo)
+ * - `?mockDetalle=error` → falla la carga del detalle (estado de error de S-03)
  */
 @Injectable()
 export class SolicitudesServiceMock extends SolicitudesService {
@@ -250,6 +352,20 @@ export class SolicitudesServiceMock extends SolicitudesService {
       solicitudes: filtradas.slice(desde, hasta),
       total: filtradas.length,
     }).pipe(delay(retardo));
+  }
+
+  obtenerPorId(id: string): Observable<SolicitudDetalle | null> {
+    const params = new URLSearchParams(window.location.search);
+    const retardo = Number(params.get("mockRetardo")) || 700;
+
+    if (params.get("mockDetalle") === "error") {
+      return throwError(
+        () => new Error("No fue posible consultar el detalle de la solicitud."),
+      ).pipe(delay(retardo));
+    }
+
+    const solicitud = DATOS_MOCK.find((fila) => fila.id === id);
+    return of(solicitud ? comoDetalle(solicitud) : null).pipe(delay(retardo));
   }
 
   private coincide(

@@ -7,20 +7,21 @@ const routes: Routes = [
   {
     path: "",
     component: ListadoSolicitudesComponent,
-    title: "Ágora · Mis solicitudes",
+    title: "ÁGORA · Mis solicitudes",
   },
   {
     path: "nueva",
     component: AsistenteSolicitudComponent,
-    title: "Ágora · Nueva solicitud de cotización",
+    title: "ÁGORA · Nueva solicitud de cotización",
     data: { titulo: "Nueva solicitud de cotización", pantalla: "S-02" },
   },
-  // Destino provisional (NO implementado aún):
-  // ':id' → S-03 Detalle.
+  // Detalle de la solicitud (S-03) — módulo perezoso.
   {
     path: ":id",
-    component: ListadoSolicitudesComponent,
-    data: { titulo: "Detalle de solicitud", pantalla: "S-03" },
+    loadChildren: () =>
+      import("./pages/detalle-solicitud/detalle-solicitud.module").then(
+        (m) => m.DetalleSolicitudModule,
+      ),
   },
 ];
 
