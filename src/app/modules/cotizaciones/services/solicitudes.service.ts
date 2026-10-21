@@ -11,9 +11,13 @@ import {
 import {
   CaracteristicasDetalle,
   ContadoresPestanas,
+  FirmaAval,
   GeneralDetalle,
+  ImputacionPresupuestal,
   PlanAccionDetalle,
+  PresupuestoDetalle,
   ResponsableDetalle,
+  TEXTO_NORMATIVO_PRESUPUESTO,
 } from "../models/detalle-solicitud.model";
 
 /**
@@ -301,12 +305,82 @@ const CONTADORES_MOCK: ContadoresPestanas = {
 /** Cotizaciones recibidas por defecto (tarjeta métrica de la cabecera). */
 const COTIZACIONES_RECIBIDAS_MOCK = 4;
 
+/* ── Presupuesto SICAPITAL (pestaña "Presupuesto") ────────────────────────── */
+
+/** Imputaciones oficiales del CDP (mockup aprobado de la pestaña 2). */
+const IMPUTACIONES_MOCK: readonly ImputacionPresupuestal[] = [
+  {
+    vigencia: "2026",
+    solicitudNecesidad: "NEC-2026-00892",
+    numeroCdp: "CDP-2026-00412",
+    valor: 184_500_000,
+    dependencia: "Rectoría",
+    dependenciaArea: "DIRTEI (Tecnología TIC)",
+    rubro: "2.1.2.02.02.008",
+    rubroNombre: "Equipamiento e Infraestructura Tecnológica TIC",
+    estado: "Vigente / Reservado",
+    tono: "exito",
+  },
+];
+
+/** Firmas de aval presupuestal electrónico (mockup aprobado de la pestaña 2). */
+const FIRMAS_MOCK: readonly FirmaAval[] = [
+  {
+    rol: "Ordenador del Gasto",
+    nombre: "Dr. Ricardo Gómez Morales",
+    cargo: "Vicerrector Administrativo y Financiero (Delegado)",
+    icono: "assignment_turned_in",
+    hash: "SHA-256: 8F2A...99C1",
+    fechaRefrendacion: "28/02/2026 - 15:42:10 COT",
+    aprobado: true,
+  },
+  {
+    rol: "División de Recursos Financieros",
+    nombre: "Dra. Martha Patricia Pulido",
+    cargo: "Jefe Sección de Presupuesto - SICAPITAL UD",
+    icono: "verified",
+    hash: "SHA-256: 310B...E54A",
+    fechaRefrendacion: "28/02/2026 - 16:15:32 COT",
+    aprobado: true,
+  },
+];
+
+/**
+ * Presupuesto de una solicitud.
+ *
+ * Devuelve `null` cuando la solicitud todavía no tiene CDP (borrador): así la
+ * pestaña muestra su estado vacío sin inventar cifras. En cualquier otro estado
+ * se replica el certificado del mockup.
+ */
+function presupuestoDetalle(solicitud: Solicitud): PresupuestoDetalle | null {
+  if (solicitud.estado === "borrador") {
+    return null;
+  }
+
+  return {
+    valorCdp: 184_500_000,
+    sincronizado: true,
+    mensajeSincronizacion: "SICAPITAL: Sincronizado y Aprobado",
+    descripcionCdp:
+      "Monto reservado exclusivamente para la contratación de infraestructura de servidores Sede Aduanilla de Paiba.",
+    saldo: {
+      numeroCdp: "CDP-2026-00412",
+      fechaExpedicion: "28 de Febrero de 2026",
+      saldoDisponible: 210_000_000,
+    },
+    imputaciones: IMPUTACIONES_MOCK,
+    firmas: FIRMAS_MOCK,
+    textoNormativo: TEXTO_NORMATIVO_PRESUPUESTO,
+  };
+}
+
 /** Amplía una fila del listado con la información del detalle. */
 function comoDetalle(solicitud: Solicitud): SolicitudDetalle {
   return {
     ...solicitud,
     cotizacionesRecibidas: COTIZACIONES_RECIBIDAS_MOCK,
     general: generalDetalle(solicitud),
+    presupuesto: presupuestoDetalle(solicitud),
     contadores: CONTADORES_MOCK,
   };
 }

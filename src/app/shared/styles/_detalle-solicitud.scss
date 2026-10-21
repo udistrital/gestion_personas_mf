@@ -304,4 +304,119 @@
   .bloque-icono__texto--suave {
     color: var(--agora-text-muted);
   }
+
+  /* ── Tabla de datos del detalle ─────────────────────────────────────────── */
+  /* Se usa en "Presupuesto" (imputación) y la reutilizará "Contratación y
+     pago". El contenedor es el único que desplaza en horizontal; la página
+     nunca desborda. */
+  .tabla-detalle__scroll {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .tabla-detalle {
+    width: 100%;
+    border-collapse: collapse;
+    color: var(--agora-text);
+    font-size: 0.875rem;
+  }
+
+  .tabla-detalle__th {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--agora-borde-tarjeta);
+    background: var(--agora-superficie-neutra);
+    color: var(--agora-primary-dark);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-align: left;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  /* Cifras monetarias y columnas numéricas: alineadas a la derecha. */
+  .tabla-detalle__th--numero,
+  .tabla-detalle__td--numero {
+    text-align: right;
+  }
+
+  .tabla-detalle__td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--agora-borde-tarjeta);
+    vertical-align: top;
+  }
+
+  .tabla-detalle__fila:last-child .tabla-detalle__td {
+    border-bottom: none;
+  }
+
+  .tabla-detalle__td--fuerte {
+    color: var(--agora-primary);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .tabla-detalle__celda-titulo {
+    color: var(--agora-text);
+    font-weight: 600;
+  }
+
+  .tabla-detalle__celda-nota {
+    color: var(--agora-text-muted);
+    font-size: 0.75rem;
+    line-height: 1.35;
+  }
+
+  .tabla-detalle__pie {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-top: 1px solid var(--agora-borde-tarjeta);
+    background: var(--agora-superficie-neutra);
+    color: var(--agora-texto-neutro);
+    font-size: 0.875rem;
+  }
+
+  .tabla-detalle__total {
+    color: var(--agora-primary);
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  /* ── Bloque de cifra destacada ──────────────────────────────────────────── */
+  .bloque-cifra {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+  }
+
+  .bloque-cifra__rotulo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    color: var(--agora-texto-neutro);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .bloque-cifra__rotulo mat-icon {
+    width: 1.125rem;
+    height: 1.125rem;
+    color: var(--agora-primary);
+    font-size: 1.125rem;
+  }
+
+  .bloque-cifra__valor {
+    color: var(--agora-primary);
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+  }
 }

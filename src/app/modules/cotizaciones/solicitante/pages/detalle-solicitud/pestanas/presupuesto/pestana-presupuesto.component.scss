@@ -1,0 +1,274 @@
+@use "src/app/shared/styles/tokens" as t;
+@use "src/app/shared/styles/detalle-solicitud" as detalle;
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Clases compartidas del detalle (chips, botones, tabla, cifra destacada). */
+@include detalle.styles;
+
+/* ── Cifra destacada del CDP ─────────────────────────────────────────────── */
+.spotlight {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+@media (min-width: t.$bp-lg) {
+  .spotlight {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.spotlight__principal {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.spotlight__descripcion {
+  margin: 0;
+  color: var(--agora-texto-neutro);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.panel-metadatos {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  width: 100%;
+  margin: 0;
+  padding: 1rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-superficie-neutra);
+}
+
+@media (min-width: t.$bp-sm) {
+  .panel-metadatos {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: t.$bp-lg) {
+  .panel-metadatos {
+    width: auto;
+  }
+}
+
+.panel-metadatos__item {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.panel-metadatos__valor {
+  margin: 0;
+  color: var(--agora-text);
+  font-size: 1rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.panel-metadatos__valor--saldo {
+  color: var(--agora-success);
+}
+
+/* ── Banner normativo ────────────────────────────────────────────────────── */
+.banner-normativo {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.25rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-left: 4px solid var(--agora-primary);
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-superficie-neutra);
+}
+
+.banner-normativo__icono {
+  flex: 0 0 auto;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-top: 0.125rem;
+  color: var(--agora-primary);
+  font-size: 1.5rem;
+}
+
+.banner-normativo__textos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.banner-normativo__titulo {
+  color: var(--agora-text);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.banner-normativo__texto {
+  margin: 0;
+  color: var(--agora-text);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+/* ── Firmas y aval presupuestal ──────────────────────────────────────────── */
+.panel-firmas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.5rem;
+}
+
+@media (min-width: t.$bp-md) {
+  .panel-firmas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.firma {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-superficie-neutra);
+}
+
+.firma__cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.firma__datos {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.firma__nombre {
+  color: var(--agora-text);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.firma__cargo {
+  color: var(--agora-texto-neutro);
+  font-size: 0.875rem;
+}
+
+.firma__icono {
+  flex: 0 0 auto;
+  width: 2rem;
+  height: 2rem;
+  color: var(--agora-primary);
+  font-size: 2rem;
+  opacity: 0.8;
+}
+
+.firma__sello {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-surface);
+}
+
+.firma__sello-estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--agora-success);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.firma__sello-estado mat-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  font-size: 1.125rem;
+}
+
+.firma__sello-estado--rechazado {
+  color: var(--agora-error);
+}
+
+.firma__hash {
+  color: var(--agora-texto-neutro);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.6875rem;
+  overflow-wrap: anywhere;
+}
+
+.firma__pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: var(--agora-texto-neutro);
+  font-size: 0.6875rem;
+}
+
+.firma__resultado {
+  color: var(--agora-success);
+  font-weight: 600;
+}
+
+.firma__resultado--rechazado {
+  color: var(--agora-error);
+}
+
+/* ── Estado vacío: sin información presupuestal ──────────────────────────── */
+.estado-vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2.5rem 1.5rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-surface);
+  text-align: center;
+}
+
+.estado-vacio__icono {
+  width: 2.5rem;
+  height: 2.5rem;
+  color: var(--agora-texto-deshabilitado);
+  font-size: 2.5rem;
+}
+
+.estado-vacio__titulo {
+  margin: 0.25rem 0 0;
+  color: var(--agora-text);
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.estado-vacio__texto {
+  max-width: 40rem;
+  margin: 0;
+  color: var(--agora-text-muted);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}

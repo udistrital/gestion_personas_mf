@@ -87,6 +87,97 @@ export interface GeneralDetalle {
   readonly planAccion: PlanAccionDetalle;
 }
 
+/* ── Pestaña 2: presupuesto (SICAPITAL, solo lectura) ─────────────────────── */
+
+/** Tono con el que se pinta el estado de una fila de imputación. */
+export type TonoEstadoPresupuesto = "exito" | "neutro" | "info";
+
+/** Fila de la tabla "Imputación y Desagregación Presupuestal". */
+export interface ImputacionPresupuestal {
+  /** Año de la vigencia ("2026"). */
+  readonly vigencia: string;
+  /** Necesidad que originó el CDP ("NEC-2026-00892"). */
+  readonly solicitudNecesidad: string;
+  /** Número del certificado ("CDP-2026-00412"). */
+  readonly numeroCdp: string;
+  /** Valor imputado en pesos; se formatea con `formatoCop`. */
+  readonly valor: number;
+  /** Dependencia responsable ("Rectoría"). */
+  readonly dependencia: string;
+  /** Área interna de la dependencia ("DIRTEI (Tecnología TIC)"). */
+  readonly dependenciaArea: string;
+  /** Código del rubro ("2.1.2.02.02.008"). */
+  readonly rubro: string;
+  /** Nombre del rubro ("Equipamiento e Infraestructura Tecnológica TIC"). */
+  readonly rubroNombre: string;
+  /** Estado de la reserva ("Vigente / Reservado"). */
+  readonly estado: string;
+  readonly tono: TonoEstadoPresupuesto;
+}
+
+/** Firma electrónica de aval presupuestal (PKI institucional). */
+export interface FirmaAval {
+  /** Rol del firmante ("Ordenador del Gasto"). */
+  readonly rol: string;
+  readonly nombre: string;
+  readonly cargo: string;
+  /** Icono Material del bloque. */
+  readonly icono: string;
+  /** Hash abreviado del sello ("SHA-256: 8F2A...99C1"). */
+  readonly hash: string;
+  /** Fecha de refrendación ("28/02/2026 - 15:42:10 COT"). */
+  readonly fechaRefrendacion: string;
+  readonly aprobado: boolean;
+}
+
+/** Metadatos del saldo del rubro que acompañan al valor del CDP. */
+export interface SaldoRubro {
+  /** Número del certificado ("CDP-2026-00412"). */
+  readonly numeroCdp: string;
+  /** Fecha de expedición ("28 de Febrero de 2026"). */
+  readonly fechaExpedicion: string;
+  /** Saldo disponible del rubro en pesos ("$ 210.000.000"). */
+  readonly saldoDisponible: number;
+}
+
+/**
+ * Contenido completo de la pestaña "Presupuesto".
+ *
+ * Es un agregado independiente del de la pestaña "General": ambas cuelgan de
+ * `SolicitudDetalle`. Cuando la solicitud no tiene información presupuestal
+ * (p. ej. un borrador sin CDP) el detalle trae `presupuesto: null` y la pestaña
+ * muestra su estado vacío.
+ */
+export interface PresupuestoDetalle {
+  /** Valor del CDP en pesos (cifra destacada). */
+  readonly valorCdp: number;
+  /** true si SICAPITAL confirmó el certificado (badge de sincronización). */
+  readonly sincronizado: boolean;
+  /** Texto del badge de sincronización ("SICAPITAL: Sincronizado y Aprobado"). */
+  readonly mensajeSincronizacion: string;
+  /** Texto de apoyo bajo el valor del CDP. */
+  readonly descripcionCdp: string;
+  readonly saldo: SaldoRubro;
+  readonly imputaciones: readonly ImputacionPresupuestal[];
+  readonly firmas: readonly FirmaAval[];
+  /** Texto del banner normativo (constante institucional). */
+  readonly textoNormativo: string;
+}
+
+/** Suma los valores imputados de la tabla de presupuesto. */
+export function totalImputado(
+  imputaciones: readonly ImputacionPresupuestal[],
+): number {
+  return imputaciones.reduce(
+    (acumulado, imputacion) => acumulado + imputacion.valor,
+    0,
+  );
+}
+
+/** Texto legal fijo del banner normativo de la pestaña "Presupuesto". */
+export const TEXTO_NORMATIVO_PRESUPUESTO =
+  "De conformidad con el Estatuto de Contratación de la Universidad Distrital (Acuerdo 003 de 2015) y el Régimen Presupuestal de Entidades Autónomas (Ley 30 de 1992), ningún compromiso u ordenación de gasto podrá contraerse sin el correspondiente Certificado de Disponibilidad Presupuestal que ampare la totalidad de la vigencia estimada.";
+
 /* ── Contadores compartidos por la barra de pestañas ──────────────────────── */
 
 /**

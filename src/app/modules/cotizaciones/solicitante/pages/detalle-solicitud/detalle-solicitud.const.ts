@@ -38,7 +38,7 @@ export interface PestanaDetalleMeta {
  */
 export const PESTANAS_DETALLE: readonly PestanaDetalleMeta[] = [
   { id: "general", etiqueta: "General", icono: "info", contador: null, implementada: true },
-  { id: "presupuesto", etiqueta: "Presupuesto", icono: "payments", contador: null, implementada: false },
+  { id: "presupuesto", etiqueta: "Presupuesto", icono: "payments", contador: null, implementada: true },
   { id: "items", etiqueta: "Ítems", icono: "list_alt", contador: "items", implementada: false },
   { id: "contratacion", etiqueta: "Contratación y pago", icono: "handshake", contador: null, implementada: false },
   { id: "proveedores", etiqueta: "Proveedores objetivo", icono: "store", contador: "proveedores", implementada: false },

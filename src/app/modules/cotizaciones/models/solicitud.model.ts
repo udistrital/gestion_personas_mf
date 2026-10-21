@@ -2,6 +2,7 @@ import { EstadoSolicitud } from "src/app/core/constants/estados-solicitud.const"
 import {
   ContadoresPestanas,
   GeneralDetalle,
+  PresupuestoDetalle,
 } from "./detalle-solicitud.model";
 
 export type TipoCotizacion = "BIEN" | "SERVICIO" | "BIEN_Y_SERVICIO";
@@ -54,6 +55,8 @@ export interface SolicitudDetalle extends Solicitud {
   /** Número de cotizaciones recibidas (tarjeta métrica de la cabecera). */
   readonly cotizacionesRecibidas: number;
   readonly general: GeneralDetalle;
+  /** Presupuesto SICAPITAL de la pestaña 2; `null` si aún no hay CDP. */
+  readonly presupuesto: PresupuestoDetalle | null;
   readonly contadores: ContadoresPestanas;
 }
 
