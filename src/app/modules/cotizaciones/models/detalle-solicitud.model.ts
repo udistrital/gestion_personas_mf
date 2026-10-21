@@ -20,6 +20,7 @@ import {
 } from "./contratacion.model";
 import { SegmentacionProveedores } from "./proveedores.model";
 import { AnexoSolicitud, DocumentoOferente } from "./documentos.model";
+import { EventoHistorial } from "./historial.model";
 
 /* ── Tarjeta 1: responsable de la solicitud ───────────────────────────────── */
 
@@ -383,6 +384,29 @@ export interface DocumentosDetalle {
   readonly ultimaModificacion: string;
   /** Versión del sistema que generó el expediente. */
   readonly versionSistema: string;
+}
+
+/* ── Pestaña 7: historial (bitácora de eventos, solo lectura) ─────────────── */
+
+/**
+ * Bitácora de eventos de la solicitud.
+ *
+ * Registro inmutable de lo que le pasó al expediente, del evento más reciente
+ * al inicial. Los eventos y sus estados están definidos en
+ * `historial.model.ts`; aquí solo se agrupan con los textos institucionales
+ * que acompañan la bitácora.
+ */
+export interface HistorialDetalle {
+  /** Eventos del expediente, del más reciente al más antiguo. */
+  readonly eventos: readonly EventoHistorial[];
+  /** Nota institucional sobre la confidencialidad de la bitácora. */
+  readonly notaConfidencialidad: string;
+  /** Etiqueta de la matriz normativa que falta por definir. */
+  readonly matrizNormativa: string;
+  /** Sello de tiempo certificado que respalda la bitácora. */
+  readonly selloTiempo: string;
+  /** Nota de integridad del pie de la bitácora. */
+  readonly notaIntegridad: string;
 }
 
 /* ── Contadores compartidos por la barra de pestañas ──────────────────────── */

@@ -13,7 +13,7 @@ export type FormatoValor = "texto" | "cuerpo" | "destacado";
  * Uso desde cualquier pestaña:
  * ```html
  * <div class="datos-grid datos-grid--tres">
- *   <par-etiqueta-valor etiqueta="Nombres" valor="Carlos Julio" />
+ *   <par-etiqueta-valor etiqueta="Nombres" valor="Raul Andres" />
  *   <par-etiqueta-valor
  *     etiqueta="Identificación"
  *     valor="C.C. 79.845.120"

@@ -13,6 +13,7 @@ import { DireccionGeneradaComponent } from "./components/formulario/direccion-ge
 import { CampoDineroComponent } from "./components/formulario/campo-dinero/campo-dinero.component";
 import { ValidacionCampoDirective } from "./directives/validacion-campo.directive";
 import { ChipEstadoComponent } from "./components/chip-estado/chip-estado.component";
+import { LineaTiempoComponent } from "./components/linea-tiempo/linea-tiempo.component";
 import { ListadoFiltrosComponent } from "./components/listado-filtros/listado-filtros.component";
 import { AsistentePasosComponent } from "./components/asistente-pasos/asistente-pasos.component";
 import { BannerPasoComponent } from "./components/banner-paso/banner-paso.component";
@@ -31,6 +32,7 @@ import { QuillModule } from "ngx-quill";
     CampoDineroComponent,
     ValidacionCampoDirective,
     ChipEstadoComponent,
+    LineaTiempoComponent,
     ListadoFiltrosComponent,
     AsistentePasosComponent,
     BannerPasoComponent,
@@ -61,6 +63,7 @@ import { QuillModule } from "ngx-quill";
     CampoDineroComponent,
     ValidacionCampoDirective,
     ChipEstadoComponent,
+    LineaTiempoComponent,
     ListadoFiltrosComponent,
     AsistentePasosComponent,
     BannerPasoComponent,

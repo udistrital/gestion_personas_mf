@@ -5,10 +5,10 @@ import { DetalleSolicitudComponent } from "./detalle-solicitud.component";
 import { PestanaContratacionPagoComponent } from "./pestanas/contratacion-pago/pestana-contratacion-pago.component";
 import { PestanaDocumentosComponent } from "./pestanas/documentos/pestana-documentos.component";
 import { PestanaGeneralComponent } from "./pestanas/general/pestana-general.component";
+import { PestanaHistorialComponent } from "./pestanas/historial/pestana-historial.component";
 import { PestanaItemsComponent } from "./pestanas/items/pestana-items.component";
 import { PestanaPresupuestoComponent } from "./pestanas/presupuesto/pestana-presupuesto.component";
 import { PestanaProveedoresObjetivoComponent } from "./pestanas/proveedores-objetivo/pestana-proveedores-objetivo.component";
-import { PestanaPlaceholderComponent } from "./pestanas/pestana-placeholder/pestana-placeholder.component";
 
 /**
  * Rutas del detalle de una solicitud (S-03).
@@ -17,9 +17,9 @@ import { PestanaPlaceholderComponent } from "./pestanas/pestana-placeholder/pest
  * pestañas hijas comparten la misma instancia sin volver a pedirla. La pestaña
  * activa vive en la URL (segmento de ruta), así que se conserva al recargar.
  *
- * Cada pestaña tiene su propia ruta hija desde el inicio para poder implementar
- * su contenido sin tocar el armazón. Las seis pendientes apuntan hoy al
- * placeholder, que toma el nombre de la pestaña desde `data`.
+ * Cada pestaña tiene su propia ruta hija desde el inicio, para poder implementar
+ * su contenido sin tocar el armazón. La pestaña activa vive en la URL
+ * (segmento de ruta), así que se conserva al recargar.
  */
 const routes: Routes = [
   {
@@ -60,9 +60,8 @@ const routes: Routes = [
       },
       {
         path: "historial",
-        component: PestanaPlaceholderComponent,
+        component: PestanaHistorialComponent,
         title: "ÁGORA · Detalle · Historial",
-        data: { pestanaTitulo: "Historial" },
       },
     ],
   },

@@ -4,6 +4,7 @@ import {
   ContratacionDetalle,
   DocumentosDetalle,
   GeneralDetalle,
+  HistorialDetalle,
   ItemsDetalle,
   PresupuestoDetalle,
   ProveedoresObjetivoDetalle,
@@ -52,9 +53,9 @@ export interface ResultadoListado {
  * Solicitud con la información ampliada que consume el detalle (S-03).
  *
  * Extiende la fila del listado con los datos de cabecera que sólo necesita el
- * detalle, el contenido de la pestaña "General" y los contadores de la barra
- * de pestañas. Las seis pestañas pendientes de implementar leerán de aquí
- * cuando se desarrollen.
+ * detalle, el contenido de cada pestaña y los contadores de la barra de
+ * pestañas. Las siete pestañas leen de aquí, de modo que el armazón hace una
+ * sola petición por solicitud.
  */
 export interface SolicitudDetalle extends Solicitud {
   /** Número de cotizaciones recibidas (tarjeta métrica de la cabecera). */
@@ -72,6 +73,8 @@ export interface SolicitudDetalle extends Solicitud {
   readonly proveedores: ProveedoresObjetivoDetalle | null;
   /** Documentos de la pestaña 6; `null` si aún no hay expediente documental. */
   readonly documentos: DocumentosDetalle | null;
+  /** Bitácora de la pestaña 7; `null` si la solicitud aún no tiene eventos. */
+  readonly historial: HistorialDetalle | null;
   readonly contadores: ContadoresPestanas;
 }
 

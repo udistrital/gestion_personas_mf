@@ -16,6 +16,7 @@ import {
   DocumentosDetalle,
   FirmaAval,
   GeneralDetalle,
+  HistorialDetalle,
   ImputacionPresupuestal,
   ItemsDetalle,
   PlanAccionDetalle,
@@ -24,8 +25,15 @@ import {
   ResponsableDetalle,
   TEXTO_NORMATIVO_PRESUPUESTO,
 } from "../models/detalle-solicitud.model";
+import {
+  EventoHistorial,
+  EvidenciaHistorial,
+  TipoEventoHistorial,
+  TonoNodoHistorial,
+} from "../models/historial.model";
 import { ItemSolicitud, TipoNecesidadSolicitud } from "../models/items.model";
 import { ParametroPago } from "../models/contratacion.model";
+import { formatoCop } from "../models/necesidad.model";
 import {
   AnexoSolicitud,
   DOCUMENTOS_OFERENTE_SEMILLA,
@@ -345,13 +353,24 @@ const COTIZACIONES_RECIBIDAS_MOCK = 4;
 
 /* ── Presupuesto SICAPITAL (pestaña "Presupuesto") ────────────────────────── */
 
+/**
+ * Número del certificado de disponibilidad presupuestal del expediente.
+ *
+ * Es la fuente única del número: lo usan la imputación, el saldo y la
+ * bitácora de la pestaña "Historial".
+ */
+const NUMERO_CDP_MOCK = "CDP-2026-00412";
+
+/** Valor del certificado de disponibilidad presupuestal, en pesos. */
+const VALOR_CDP_MOCK = 184_500_000;
+
 /** Imputaciones oficiales del CDP (mockup aprobado de la pestaña 2). */
 const IMPUTACIONES_MOCK: readonly ImputacionPresupuestal[] = [
   {
     vigencia: "2026",
     solicitudNecesidad: "NEC-2026-00892",
-    numeroCdp: "CDP-2026-00412",
-    valor: 184_500_000,
+    numeroCdp: NUMERO_CDP_MOCK,
+    valor: VALOR_CDP_MOCK,
     dependencia: "Rectoría",
     dependenciaArea: "DIRTEI (Tecnología TIC)",
     rubro: "2.1.2.02.02.008",
@@ -396,13 +415,13 @@ function presupuestoDetalle(solicitud: Solicitud): PresupuestoDetalle | null {
   }
 
   return {
-    valorCdp: 184_500_000,
+    valorCdp: VALOR_CDP_MOCK,
     sincronizado: true,
     mensajeSincronizacion: "SICAPITAL: Sincronizado y Aprobado",
     descripcionCdp:
       "Monto reservado exclusivamente para la contratación de infraestructura de servidores Sede Aduanilla de Paiba.",
     saldo: {
-      numeroCdp: "CDP-2026-00412",
+      numeroCdp: NUMERO_CDP_MOCK,
       fechaExpedicion: "28 de Febrero de 2026",
       saldoDisponible: 210_000_000,
     },
@@ -1105,10 +1124,512 @@ function documentosDetalle(solicitud: Solicitud): DocumentosDetalle | null {
   };
 }
 
+/* ── Historial (pestaña "Historial") ───────────────────────────────────────── */
+
+/**
+ * Nota institucional del banner de la bitácora.
+ *
+ * Reproduce el texto del mockup: la bitácora está sujeta a confidencialidad y
+ * a visualización diferencial según privilegios de usuario.
+ */
+const NOTA_CONFIDENCIALIDAD_HISTORIAL =
+  "Esta bitácora se encuentra sujeta a los protocolos de confidencialidad institucional y visualización diferencial según privilegios de usuario.";
+
+/** Encabezado del banner: qué falta por definir (RF-016, RF-017). */
+const TITULO_MATRIZ_HISTORIAL =
+  "Por definir: Eventos que se registran y su visibilidad por rol (RF-016, RF-017)";
+
+/** Etiqueta de la matriz normativa que acompaña al banner. */
+const MATRIZ_NORMATIVA_HISTORIAL = "Matriz RF-016 / RF-017";
+
+/** Sello de tiempo certificado que respalda la bitácora. */
+const SELLO_TIEMPO_HISTORIAL = "Sello de Tiempo Certificado NTP UD";
+
+/** Nota de integridad del pie de la bitácora. */
+const NOTA_INTEGRIDAD_HISTORIAL =
+  "Integridad de bitácora garantizada mediante Ledger Institucional";
+
+/** Solicitudes sin bitácora (expediente sin apertura). */
+const SIN_HISTORIAL: readonly string[] = ["SOL-2026-0008"];
+
+/** Meses en español para formatear la fecha de los eventos. */
+const MESES_HISTORIAL = [
+  "Enero",
+  "Febrero",
+  "Marzo",
+  "Abril",
+  "Mayo",
+  "Junio",
+  "Julio",
+  "Agosto",
+  "Septiembre",
+  "Octubre",
+  "Noviembre",
+  "Diciembre",
+];
+
+/** Desfase de Colombia (COT) frente a UTC: no aplica horario de verano. */
+const DESFASE_COT = "-05:00";
+
+/** Datos del evento antes de formatearlos para pantalla. */
+interface EventoHistorialSemilla {
+  readonly id: string;
+  /** Fecha en formato dd/MM/yyyy ("15/02/2026"). */
+  readonly fecha: string;
+  /** Hora en formato 24 h ("09:20"). */
+  readonly hora: string;
+  readonly tipo: TipoEventoHistorial;
+  readonly titulo: string;
+  readonly detalle?: string;
+  readonly usuario: string;
+  readonly nombreUsuario?: string;
+  readonly rol: string;
+  readonly estadoAnterior: EstadoSolicitud;
+  readonly estadoNuevo: EstadoSolicitud;
+  readonly icono: string;
+  readonly tono: TonoNodoHistorial;
+  readonly resultado?: string;
+  readonly tonoResultado?: "neutro" | "exito" | "advertencia" | "primario";
+  readonly sello?: string;
+  readonly evidencia?: EvidenciaHistorial;
+}
+
+/** Fecha y hora legibles ("15 de Febrero de 2026 - 09:20 COT"). */
+function fechaLegibleHistorial(fecha: string, hora: string): string {
+  const [dia, mes, anio] = fecha.split("/").map(Number);
+  if (!dia || !mes || !anio) {
+    return `${fecha} - ${hora} COT`;
+  }
+  return `${dia} de ${MESES_HISTORIAL[mes - 1]} de ${anio} - ${hora} COT`;
+}
+
+/** Fecha y hora en ISO-8601 con desfase de Colombia. */
+function fechaIsoHistorial(fecha: string, hora: string): string {
+  const [dia, mes, anio] = fecha.split("/").map(Number);
+  if (!dia || !mes || !anio) {
+    return "";
+  }
+  const iso = `${anio}-${String(mes).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
+  return `${iso}T${hora}:00${DESFASE_COT}`;
+}
+
+/** Construye un evento de la bitácora con la fecha ya formateada. */
+function eventoHistorial(semilla: EventoHistorialSemilla): EventoHistorial {
+  return {
+    id: semilla.id,
+    tipo: semilla.tipo,
+    titulo: semilla.titulo,
+    fecha: fechaLegibleHistorial(semilla.fecha, semilla.hora),
+    fechaIso: fechaIsoHistorial(semilla.fecha, semilla.hora),
+    detalle: semilla.detalle,
+    usuario: semilla.usuario,
+    nombreUsuario: semilla.nombreUsuario,
+    rol: semilla.rol,
+    estadoAnterior: semilla.estadoAnterior,
+    estadoNuevo: semilla.estadoNuevo,
+    icono: semilla.icono,
+    tono: semilla.tono,
+    resultado: semilla.resultado,
+    tonoResultado: semilla.tonoResultado,
+    sello: semilla.sello,
+    evidencia: semilla.evidencia,
+  };
+}
+
+/** Evento de creación del expediente. */
+function eventoCreacion(
+  id: string,
+  fecha: string,
+  hora: string,
+  usuario: string,
+  nombreUsuario: string,
+): EventoHistorial {
+  return eventoHistorial({
+    id,
+    fecha,
+    hora,
+    tipo: "creacion",
+    titulo: "Solicitud creada en borrador",
+    detalle:
+      "Registro preliminar de necesidad técnica y estructuración del pliego preliminar en ÁGORA.",
+    usuario,
+    nombreUsuario,
+    rol: "Solicitante",
+    estadoAnterior: "borrador",
+    estadoNuevo: "borrador",
+    icono: "drafts",
+    tono: "neutro",
+    evidencia: {
+      icono: "source",
+      texto: "Origen: Módulo de Necesidades DIRTEI v3.4",
+    },
+  });
+}
+
+/** Evento de vinculación del certificado de disponibilidad presupuestal. */
+function eventoCdp(id: string, fecha: string, hora: string): EventoHistorial {
+  return eventoHistorial({
+    id,
+    fecha,
+    hora,
+    tipo: "estado",
+    titulo: "Aprobación y vinculación de CDP presupuestal",
+    detalle: `Certificado <strong>${NUMERO_CDP_MOCK}</strong> vinculado por valor de <strong>${formatoCop(VALOR_CDP_MOCK)} COP</strong> con firma digital PKI validada.`,
+    usuario: "mpulido",
+    nombreUsuario: "Dra. Martha Patricia Pulido",
+    rol: "Jefe Sección de Presupuesto - SICAPITAL",
+    estadoAnterior: "borrador",
+    estadoNuevo: "publicada",
+    icono: "account_balance_wallet",
+    tono: "primario",
+    resultado: "Aprobación presupuestal",
+    tonoResultado: "exito",
+    sello: "SICAPITAL OK",
+    evidencia: {
+      icono: "key",
+      texto: "Hash PKI: e7c2..49a1 (Validación CA Institucional)",
+    },
+  });
+}
+
+/** Evento de radicación formal y despacho de invitaciones. */
+function eventoRadicacion(
+  id: string,
+  fecha: string,
+  hora: string,
+  radicado: string,
+  totalProveedores: number,
+): EventoHistorial {
+  return eventoHistorial({
+    id,
+    fecha,
+    hora,
+    tipo: "notificacion",
+    titulo: "Solicitud procesada y radicada formalmente",
+    detalle: `Radicado oficial generado: <strong>${radicado}</strong>. Despacho automático de invitaciones por correo electrónico institucional a ${totalProveedores} empresas habilitadas.`,
+    usuario: "raquimbayap",
+    nombreUsuario: "Raúl Quimbaya",
+    rol: "Solicitante",
+    estadoAnterior: "publicada",
+    estadoNuevo: "abierta",
+    icono: "send",
+    tono: "destacado",
+    resultado: "Despacho Conforme",
+    tonoResultado: "exito",
+    evidencia: {
+      icono: "mail",
+      texto: `Servidor SMTP Institucional UD: ${totalProveedores} Entregas Exitosas`,
+    },
+  });
+}
+
+/** Evento de publicación del proceso en el portal institucional. */
+function eventoPublicacion(
+  id: string,
+  fecha: string,
+  hora: string,
+): EventoHistorial {
+  return eventoHistorial({
+    id,
+    fecha,
+    hora,
+    tipo: "estado",
+    titulo: "Publicación del proceso en el portal institucional",
+    usuario: "sistema",
+    nombreUsuario: "Sistema ÁGORA",
+    rol: "Automatización institucional",
+    estadoAnterior: "abierta",
+    estadoNuevo: "abierta",
+    icono: "campaign",
+    tono: "primario",
+    evidencia: {
+      icono: "public",
+      texto: "Portal de Contratación UD: Proceso publicado",
+    },
+  });
+}
+
+/** Evento de solicitud de modificación del pliego. */
+function eventoModificacion(
+  id: string,
+  fecha: string,
+  hora: string,
+): EventoHistorial {
+  return eventoHistorial({
+    id,
+    fecha,
+    hora,
+    tipo: "modificacion",
+    titulo: "Modificación solicitada: ampliación de fecha de cierre",
+    detalle:
+      "Se solicitó prórroga de 2 días hábiles en el plazo de recepción de ofertas para permitir mayor concurrencia de proponentes mayoristas.",
+    usuario: "raquimbayap",
+    nombreUsuario: "Raúl Quimbaya",
+    rol: "Solicitante / Contratista Registrado",
+    estadoAnterior: "abierta",
+    estadoNuevo: "abierta",
+    icono: "edit_calendar",
+    tono: "destacado",
+    resultado: "En revisión por Ordenador del Gasto",
+    tonoResultado: "advertencia",
+    evidencia: {
+      icono: "fingerprint",
+      texto: "ID Transacción: TXN-894102-DIRTEI",
+    },
+  });
+}
+
+/** Evento de apertura de la evaluación técnica y económica. */
+function eventoEvaluacion(
+  id: string,
+  fecha: string,
+  hora: string,
+): EventoHistorial {
+  return eventoHistorial({
+    id,
+    fecha,
+    hora,
+    tipo: "estado",
+    titulo: "Evaluación técnica de las propuestas recibidas",
+    detalle: `Se abrió el cuadro comparativo de las <strong>${COTIZACIONES_RECIBIDAS_MOCK} cotizaciones</strong> recibidas para evaluación técnica y económica.`,
+    usuario: "rgomez",
+    nombreUsuario: "Dr. Ricardo Gómez Morales",
+    rol: "Vicerrector Administrativo (Ordenador del Gasto)",
+    estadoAnterior: "abierta",
+    estadoNuevo: "en-evaluacion",
+    icono: "rate_review",
+    tono: "primario",
+    resultado: "Comparador de ofertas activo",
+    tonoResultado: "primario",
+    evidencia: {
+      icono: "assessment",
+      texto: `Cotizaciones evaluadas: ${COTIZACIONES_RECIBIDAS_MOCK}`,
+    },
+  });
+}
+
+/** Evento de cierre del proceso. */
+function eventoCierre(
+  id: string,
+  fecha: string,
+  hora: string,
+): EventoHistorial {
+  return eventoHistorial({
+    id,
+    fecha,
+    hora,
+    tipo: "estado",
+    titulo: "Cierre del proceso y publicación del Acta de Adjudicación",
+    detalle:
+      "El proceso quedó cerrado en ÁGORA con la publicación del acta de adjudicación y la carpeta de soporte archivada.",
+    usuario: "sistema",
+    nombreUsuario: "Sistema ÁGORA",
+    rol: "Automatización institucional",
+    estadoAnterior: "abierta",
+    estadoNuevo: "cerrada",
+    icono: "lock",
+    tono: "neutro",
+    resultado: "Expediente archivado",
+    tonoResultado: "neutro",
+    evidencia: {
+      icono: "inventory_2",
+      texto: "Carpeta de soporte: 6 documentos",
+    },
+  });
+}
+
+/**
+ * Bitácoras específicas por solicitud (semilla del detalle).
+ *
+ * `SOL-2026-0039` tiene el historial más extenso (seis eventos, con y sin
+ * observación) y `SOL-2026-0042` reproduce los cuatro eventos del mockup. Las
+ * demás solicitudes reciben el historial canónico de su estado.
+ *
+ * Cada semilla es una función porque el número de proveedores notificados
+ * (que aparece en la radicación) depende de la solicitud y lo calcula la
+ * pestaña "Proveedores objetivo".
+ */
+const HISTORIAL_POR_SOLICITUD: Readonly<
+  Record<string, (totalProveedores: number) => readonly EventoHistorial[]>
+> = {
+  "SOL-2026-0039": (totalProveedores) => [
+    eventoCreacion(
+      "evento-0039-creacion",
+      "11/02/2026",
+      "09:20",
+      "raquimbayap",
+      "Raúl Quimbaya",
+    ),
+    eventoCdp("evento-0039-cdp", "12/02/2026", "16:15"),
+    eventoRadicacion(
+      "evento-0039-radicacion",
+      "13/02/2026",
+      "10:45",
+      "SOL-2026-0039",
+      totalProveedores,
+    ),
+    eventoPublicacion("evento-0039-publicacion", "17/02/2026", "08:05"),
+    eventoModificacion("evento-0039-modificacion", "24/02/2026", "11:30"),
+    eventoEvaluacion("evento-0039-evaluacion", "25/02/2026", "09:15"),
+  ],
+  "SOL-2026-0042": (totalProveedores) => [
+    eventoCreacion(
+      "evento-0042-creacion",
+      "15/02/2026",
+      "09:20",
+      "raquimbayap",
+      "Raúl Quimbaya",
+    ),
+    eventoCdp("evento-0042-cdp", "28/02/2026", "16:15"),
+    eventoRadicacion(
+      "evento-0042-radicacion",
+      "02/03/2026",
+      "10:45",
+      "SOL-2026-0042",
+      totalProveedores,
+    ),
+    eventoModificacion("evento-0042-modificacion", "02/03/2026", "11:30"),
+  ],
+  "SOL-2026-0028": () => [
+    eventoCreacion(
+      "evento-0028-creacion",
+      "29/01/2026",
+      "09:20",
+      "raquimbayap",
+      "Raúl Quimbaya",
+    ),
+    eventoCdp("evento-0028-cdp", "02/02/2026", "16:15"),
+  ],
+};
+
+/** Suma días a una fecha dd/MM/yyyy ("15/02/2026" + 2 = "17/02/2026"). */
+function sumarDiasHistorial(fecha: string, dias: number): string {
+  const [dia, mes, anio] = fecha.split("/").map(Number);
+  const base = new Date(Date.UTC(anio, mes - 1, dia));
+  base.setUTCDate(base.getUTCDate() + dias);
+  const diaFinal = String(base.getUTCDate()).padStart(2, "0");
+  const mesFinal = String(base.getUTCMonth() + 1).padStart(2, "0");
+  return `${diaFinal}/${mesFinal}/${base.getUTCFullYear()}`;
+}
+
+/**
+ * Bitácora canónica según el estado de la solicitud.
+ *
+ * Reproduce las transiciones naturales del trámite y termina siempre en el
+ * estado actual de la solicitud, de modo que la bitácora sea coherente con el
+ * encabezado del detalle.
+ */
+function historialPorDefecto(
+  solicitud: Solicitud,
+  totalProveedores: number,
+): readonly EventoHistorial[] {
+  const apertura = solicitud.apertura ?? "15/02/2026";
+  const [dia, mes] = apertura.split("/");
+  const anio = "2026";
+  const fechaCreacion = `${dia}/${mes}/${anio}`;
+
+  const eventos: EventoHistorial[] = [
+    eventoCreacion(
+      `evento-${solicitud.id}-creacion`,
+      fechaCreacion,
+      "09:20",
+      "raquimbayap",
+      "Raúl Quimbaya",
+    ),
+  ];
+
+  if (solicitud.estado === "borrador") {
+    return eventos;
+  }
+
+  eventos.push(
+    eventoCdp(
+      `evento-${solicitud.id}-cdp`,
+      sumarDiasHistorial(fechaCreacion, 1),
+      "16:15",
+    ),
+  );
+
+  if (solicitud.estado === "publicada") {
+    return eventos;
+  }
+
+  eventos.push(
+    eventoRadicacion(
+      `evento-${solicitud.id}-radicacion`,
+      sumarDiasHistorial(fechaCreacion, 2),
+      "10:45",
+      solicitud.id,
+      totalProveedores,
+    ),
+  );
+
+  if (solicitud.estado === "abierta") {
+    return eventos;
+  }
+
+  if (solicitud.estado === "en-evaluacion") {
+    eventos.push(
+      eventoEvaluacion(
+        `evento-${solicitud.id}-evaluacion`,
+        sumarDiasHistorial(fechaCreacion, 5),
+        "09:15",
+      ),
+    );
+    return eventos;
+  }
+
+  eventos.push(
+    eventoCierre(
+      `evento-${solicitud.id}-cierre`,
+      sumarDiasHistorial(fechaCreacion, 7),
+      "17:45",
+    ),
+  );
+  return eventos;
+}
+
+/**
+ * Bitácora de la solicitud.
+ *
+ * Devuelve `null` cuando la solicitud todavía no tiene expediente (borrador o
+ * expediente sin apertura): así la pestaña muestra su estado vacío sin
+ * inventar eventos. Los eventos se devuelven del más reciente al más antiguo.
+ */
+function historialDetalle(solicitud: Solicitud): HistorialDetalle | null {
+  if (
+    solicitud.estado === "borrador" ||
+    SIN_HISTORIAL.includes(solicitud.id)
+  ) {
+    return null;
+  }
+
+  // El número de proveedores notificados lo calcula la pestaña "Proveedores
+  // objetivo": la bitácora lo usa para no contradecirla.
+  const proveedores = proveedoresDetalle(solicitud);
+  const totalProveedores = proveedores ? contarProveedores(proveedores) : 0;
+
+  const semilla = HISTORIAL_POR_SOLICITUD[solicitud.id];
+  const eventos = [
+    ...(semilla
+      ? semilla(totalProveedores)
+      : historialPorDefecto(solicitud, totalProveedores)),
+  ].sort((a, b) => Date.parse(b.fechaIso) - Date.parse(a.fechaIso));
+
+  return {
+    eventos,
+    notaConfidencialidad: NOTA_CONFIDENCIALIDAD_HISTORIAL,
+    matrizNormativa: MATRIZ_NORMATIVA_HISTORIAL,
+    selloTiempo: SELLO_TIEMPO_HISTORIAL,
+    notaIntegridad: NOTA_INTEGRIDAD_HISTORIAL,
+  };
+}
+
 /** Amplía una fila del listado con la información del detalle. */
 function comoDetalle(solicitud: Solicitud): SolicitudDetalle {
   const proveedores = proveedoresDetalle(solicitud);
   const documentos = documentosDetalle(solicitud);
+  const historial = historialDetalle(solicitud);
 
   return {
     ...solicitud,
@@ -1120,6 +1641,7 @@ function comoDetalle(solicitud: Solicitud): SolicitudDetalle {
     contratacion: contratacionDetalle(solicitud),
     proveedores,
     documentos,
+    historial,
     contadores: {
       ...CONTADORES_MOCK,
       proveedores: proveedores ? contarProveedores(proveedores) : 0,

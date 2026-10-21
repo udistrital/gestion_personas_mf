@@ -26,15 +26,15 @@ export interface PestanaDetalleMeta {
   readonly icono: string;
   /** Clave del contador a mostrar a la derecha del nombre; null = sin badge. */
   readonly contador: keyof ContadoresPestanas | null;
-  /** false ⇒ la pestaña aún no tiene contenido (placeholder). */
+  /** false ⇒ la pestaña aún no tiene contenido (pendiente de implementar). */
   readonly implementada: boolean;
 }
 
 /**
  * Pestañas del detalle en el orden del mockup.
  *
- * Hoy sólo "General" tiene contenido; las demás muestran el placeholder hasta
- * que se implemente cada una.
+ * Las siete pestañas tienen contenido: cada una tiene su propia ruta hija y
+ * su propio componente en `pestanas/`.
  */
 export const PESTANAS_DETALLE: readonly PestanaDetalleMeta[] = [
   { id: "general", etiqueta: "General", icono: "info", contador: null, implementada: true },
@@ -43,5 +43,5 @@ export const PESTANAS_DETALLE: readonly PestanaDetalleMeta[] = [
   { id: "contratacion", etiqueta: "Contratación y pago", icono: "handshake", contador: null, implementada: true },
   { id: "proveedores", etiqueta: "Proveedores objetivo", icono: "store", contador: "proveedores", implementada: true },
   { id: "documentos", etiqueta: "Documentos", icono: "folder_open", contador: "documentos", implementada: true },
-  { id: "historial", etiqueta: "Historial", icono: "history", contador: null, implementada: false },
+  { id: "historial", etiqueta: "Historial", icono: "history", contador: null, implementada: true },
 ];

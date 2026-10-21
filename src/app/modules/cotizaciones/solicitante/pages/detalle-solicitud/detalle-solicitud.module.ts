@@ -9,10 +9,10 @@ import { EncabezadoPestanaComponent } from "./components/encabezado-pestana/enca
 import { PestanaContratacionPagoComponent } from "./pestanas/contratacion-pago/pestana-contratacion-pago.component";
 import { PestanaDocumentosComponent } from "./pestanas/documentos/pestana-documentos.component";
 import { PestanaGeneralComponent } from "./pestanas/general/pestana-general.component";
+import { PestanaHistorialComponent } from "./pestanas/historial/pestana-historial.component";
 import { PestanaItemsComponent } from "./pestanas/items/pestana-items.component";
 import { PestanaPresupuestoComponent } from "./pestanas/presupuesto/pestana-presupuesto.component";
 import { PestanaProveedoresObjetivoComponent } from "./pestanas/proveedores-objetivo/pestana-proveedores-objetivo.component";
-import { PestanaPlaceholderComponent } from "./pestanas/pestana-placeholder/pestana-placeholder.component";
 
 /**
  * Módulo del detalle de una solicitud (S-03).
@@ -36,7 +36,7 @@ import { PestanaPlaceholderComponent } from "./pestanas/pestana-placeholder/pest
     PestanaContratacionPagoComponent,
     PestanaProveedoresObjetivoComponent,
     PestanaDocumentosComponent,
-    PestanaPlaceholderComponent,
+    PestanaHistorialComponent,
   ],
   imports: [CommonModule, SharedModule, DetalleSolicitudRoutingModule],
 })
