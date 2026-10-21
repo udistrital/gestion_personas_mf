@@ -5,8 +5,9 @@ import {
   GeneralDetalle,
   ItemsDetalle,
   PresupuestoDetalle,
+  ProveedoresObjetivoDetalle,
 } from "./detalle-solicitud.model";
-import { ItemSolicitud } from "./items.model";
+import { ItemSolicitud, TipoNecesidadSolicitud } from "./items.model";
 
 export type TipoCotizacion = "BIEN" | "SERVICIO" | "BIEN_Y_SERVICIO";
 
@@ -66,6 +67,8 @@ export interface SolicitudDetalle extends Solicitud {
   readonly items: readonly ItemSolicitud[];
   /** Contratación y pagos de la pestaña 4; `null` si aún no está definida. */
   readonly contratacion: ContratacionDetalle | null;
+  /** Proveedores objetivo de la pestaña 5; `null` si aún no hay segmentación. */
+  readonly proveedores: ProveedoresObjetivoDetalle | null;
   readonly contadores: ContadoresPestanas;
 }
 
@@ -108,6 +111,24 @@ export function etiquetaTipoCotizacion(tipo: TipoCotizacion): string {
       return "SERVICIO";
     case "BIEN_Y_SERVICIO":
       return "BIEN Y SERVICIO";
+  }
+}
+
+/**
+ * Naturaleza de la solicitud expresada como clasificación de necesidad.
+ *
+ * Es la traducción que usa el paso 5 del asistente (S-02) para decidir si
+ * la segmentación exige idoneidad técnica (SNIES) además de la actividad
+ * económica (CIIU).
+ */
+export function tipoNecesidad(tipo: TipoCotizacion): TipoNecesidadSolicitud {
+  switch (tipo) {
+    case "SERVICIO":
+      return "servicios";
+    case "BIEN_Y_SERVICIO":
+      return "mixta";
+    case "BIEN":
+      return "bienes";
   }
 }
 

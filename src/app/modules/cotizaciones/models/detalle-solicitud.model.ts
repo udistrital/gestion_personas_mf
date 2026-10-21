@@ -18,6 +18,7 @@ import {
   ResumenPagos,
   calcularResumenPagos,
 } from "./contratacion.model";
+import { SegmentacionProveedores } from "./proveedores.model";
 
 /* ── Tarjeta 1: responsable de la solicitud ───────────────────────────────── */
 
@@ -304,6 +305,56 @@ export function totalImputado(
 /** Texto legal fijo del banner normativo de la pestaña "Presupuesto". */
 export const TEXTO_NORMATIVO_PRESUPUESTO =
   "De conformidad con el Estatuto de Contratación de la Universidad Distrital (Acuerdo 003 de 2015) y el Régimen Presupuestal de Entidades Autónomas (Ley 30 de 1992), ningún compromiso u ordenación de gasto podrá contraerse sin el correspondiente Certificado de Disponibilidad Presupuestal que ampare la totalidad de la vigencia estimada.";
+
+/* ── Pestaña 5: proveedores objetivo (solo lectura) ───────────────────────── */
+
+/**
+ * Registro de la notificación automatizada a los proveedores objetivo.
+ *
+ * Es la evidencia de que la convocatoria salió a los oferentes del segmento;
+ * las cifras acompañan al contador de la tarjeta principal.
+ */
+export interface NotificacionProveedores {
+  /** Fecha y hora del envío certificado ("15/02/2026 08:00 COT"). */
+  readonly enviada: string;
+  /** Proveedores que consultaron la convocatoria. */
+  readonly vistos: number;
+  /** Proveedores que descargaron el pliego de condiciones. */
+  readonly descargaron: number;
+  /** Proveedores que enviaron cotización. */
+  readonly cotizaron: number;
+  /** Hash abreviado de la auditoría de notificación. */
+  readonly hash: string;
+}
+
+/**
+ * Contenido completo de la pestaña "Proveedores objetivo".
+ *
+ * Es un agregado independiente del de las demás pestañas. Cuando la solicitud
+ * todavía no tiene segmentación registrada (p. ej. un borrador) el detalle
+ * trae `proveedores: null` y la pestaña muestra su estado vacío.
+ *
+ * La segmentación (CIIU y SNIES) es el mismo modelo del asistente (S-02); el
+ * número de proveedores objetivo NO se guarda: se calcula cruzando el banco de
+ * proveedores con la segmentación, igual que hace el paso 5.
+ */
+export interface ProveedoresObjetivoDetalle {
+  /** Criterios de segmentación registrados (CIIU y SNIES). */
+  readonly segmentacion: SegmentacionProveedores;
+  /**
+   * true cuando el cruce filtra por idoneidad técnica certificada (SNIES).
+   *
+   * La regla es de negocio: los bienes se segmentan solo por CIIU y los
+   * servicios exigen además núcleo básico de conocimiento.
+   */
+  readonly requiereIdoneidad: boolean;
+  /** Nota institucional sobre el requisito de idoneidad técnica (SNIES). */
+  readonly notaIdoneidad: string;
+  /** Referencia normativa del núcleo de conocimiento ("Acuerdo CSU 002/2021"). */
+  readonly acuerdo: string;
+  /** Registro de la notificación a los proveedores objetivo. */
+  readonly notificacion: NotificacionProveedores;
+}
 
 /* ── Contadores compartidos por la barra de pestañas ──────────────────────── */
 

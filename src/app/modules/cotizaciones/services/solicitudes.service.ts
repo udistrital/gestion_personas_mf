@@ -7,6 +7,7 @@ import {
   Solicitud,
   SolicitudDetalle,
   TipoCotizacion,
+  tipoNecesidad,
 } from "../models/solicitud.model";
 import {
   CaracteristicasDetalle,
@@ -18,11 +19,20 @@ import {
   ItemsDetalle,
   PlanAccionDetalle,
   PresupuestoDetalle,
+  ProveedoresObjetivoDetalle,
   ResponsableDetalle,
   TEXTO_NORMATIVO_PRESUPUESTO,
 } from "../models/detalle-solicitud.model";
-import { ItemSolicitud } from "../models/items.model";
+import { ItemSolicitud, TipoNecesidadSolicitud } from "../models/items.model";
 import { ParametroPago } from "../models/contratacion.model";
+import {
+  ACTIVIDADES_CIIU,
+  ActividadCiiu,
+  ActividadVinculada,
+  SegmentacionProveedores,
+  buscarProveedores,
+  exigeSnies,
+} from "../models/proveedores.model";
 
 /**
  * Capa de datos de solicitudes.
@@ -299,7 +309,12 @@ function generalDetalle(solicitud: Solicitud): GeneralDetalle {
   return { responsable: RESPONSABLE_MOCK, caracteristicas, planAccion };
 }
 
-/** Contadores de la barra de pestañas, derivados del modelo simulado. */
+/**
+ * Contadores de la barra de pestañas, derivados del modelo simulado.
+ *
+ * El de "proveedores" no se usa como valor fijo: `comoDetalle` lo recalcula
+ * con el cruce de cada solicitud para que coincida con la pestaña.
+ */
 const CONTADORES_MOCK: ContadoresPestanas = {
   items: 18,
   proveedores: 12,
@@ -747,8 +762,138 @@ function contratacionDetalle(solicitud: Solicitud): ContratacionDetalle | null {
   };
 }
 
+/* ── Proveedores objetivo (pestaña "Proveedores objetivo") ─────────────────── */
+
+/**
+ * Códigos CIIU de una solicitud de bienes.
+ *
+ * Un suministro de equipamiento se segmenta por las dos actividades del banco
+ * que lo cubren: comercio al por mayor de computadores y fabricación de
+ * computadoras y equipo periférico. Los bienes no exigen idoneidad SNIES.
+ */
+const CODIGOS_BIENES: readonly string[] = ["4651", "2620"];
+
+/**
+ * Códigos CIIU de una solicitud de servicios.
+ *
+ * Son las tres actividades de TIC que el banco de proveedores acredita con
+ * idoneidad técnica (NBC SISTEMAS).
+ */
+const CODIGOS_SERVICIOS: readonly string[] = ["6201", "6202", "6209"];
+
+/** Solicitudes cuya segmentación de proveedores aún no se ha registrado. */
+const SIN_SEGMENTACION: readonly string[] = ["SOL-2026-0008"];
+
+/** Nota institucional sobre el requisito de idoneidad técnica (SNIES). */
+const NOTA_IDONEIDAD =
+  "Para la componente de servicios técnicos especializados y consultoría en virtualización, se requirió idoneidad amparada en el núcleo SNIES convalidado ante el Ministerio de Educación y el banco de proveedores UD.";
+
+/** Referencia normativa del núcleo básico de conocimiento. */
+const ACUERDO_SNIES = "Acuerdo CSU 002/2021";
+
+/** Hash abreviado de la auditoría de notificación (simulado). */
+const HASH_AUDITORIA = "SHA-256: 8F4C...3E1A";
+
+/**
+ * Cifras de la notificación a los proveedores objetivo.
+ *
+ * Son coherentes con el cruce de cada caso: 9/7/4 de 12 proveedores notificados
+ * (segmentación de servicios) y 18/14/8 de 24 (segmentación de bienes).
+ */
+const NOTIFICACION_SERVICIOS = { vistos: 9, descargaron: 7, cotizaron: 4 };
+const NOTIFICACION_BIENES = { vistos: 18, descargaron: 14, cotizaron: 8 };
+
+/**
+ * Actividades CIIU de una solicitud, tomadas del catálogo DANE.
+ *
+ * Las descripciones y clases NO se reescriben: salen del mismo catálogo que
+ * usa el buscador del paso 5 (S-02), de modo que el detalle y el asistente
+ * muestran exactamente el mismo texto.
+ */
+function actividadesDesde(codigos: readonly string[]): readonly ActividadVinculada[] {
+  return codigos
+    .map((codigo) => ACTIVIDADES_CIIU.find((a) => a.codigo === codigo))
+    .filter((actividad): actividad is ActividadCiiu => !!actividad)
+    .map((actividad) => ({ ...actividad, id: actividad.codigo }));
+}
+
+/**
+ * Segmentación de proveedores objetivo según la naturaleza de la solicitud.
+ *
+ * Reproduce la regla de negocio: los bienes se segmentan solo por actividad
+ * económica (CIIU) y los servicios exigen además idoneidad técnica (SNIES).
+ * La solicitud mixta acumula ambos conjuntos de códigos.
+ */
+function segmentacionProveedores(
+  tipo: TipoNecesidadSolicitud,
+  conIdoneidad: boolean,
+): SegmentacionProveedores {
+  const codigos =
+    tipo === "mixta"
+      ? [...CODIGOS_BIENES, ...CODIGOS_SERVICIOS]
+      : conIdoneidad
+        ? CODIGOS_SERVICIOS
+        : CODIGOS_BIENES;
+
+  return {
+    actividades: actividadesDesde(codigos),
+    areaSnies: conIdoneidad ? "ING" : "",
+    nucleoSnies: conIdoneidad ? "SISTEMAS" : "",
+  };
+}
+
+/**
+ * Proveedores objetivo de una solicitud.
+ *
+ * Devuelve `null` cuando la solicitud todavía no tiene segmentación
+ * registrada (borrador o expediente sin cruce registral): así la pestaña
+ * muestra su estado vacío sin inventar cifras.
+ */
+function proveedoresDetalle(solicitud: Solicitud): ProveedoresObjetivoDetalle | null {
+  if (solicitud.estado === "borrador" || SIN_SEGMENTACION.includes(solicitud.id)) {
+    return null;
+  }
+
+  const tipo = tipoNecesidad(solicitud.tipoCotizacion);
+  const conIdoneidad = exigeSnies(tipo);
+
+  return {
+    segmentacion: segmentacionProveedores(tipo, conIdoneidad),
+    requiereIdoneidad: conIdoneidad,
+    notaIdoneidad: NOTA_IDONEIDAD,
+    acuerdo: ACUERDO_SNIES,
+    notificacion: {
+      enviada: solicitud.apertura
+        ? `${solicitud.apertura} 08:00 COT`
+        : "Pendiente de envío",
+      ...(conIdoneidad ? NOTIFICACION_SERVICIOS : NOTIFICACION_BIENES),
+      hash: HASH_AUDITORIA,
+    },
+  };
+}
+
+/**
+ * Número de proveedores objetivo de una segmentación.
+ *
+ * Se cruza el banco simulado con los CIIU y el NBC de la segmentación, igual
+ * que el paso 5 del asistente; de ahí sale también el contador de la barra de
+ * pestañas, para que badge y contenido nunca se contradigan.
+ */
+function contarProveedores(detalle: ProveedoresObjetivoDetalle): number {
+  const codigos = detalle.segmentacion.actividades.map(
+    (actividad) => actividad.codigo,
+  );
+  return buscarProveedores(
+    codigos,
+    detalle.segmentacion.nucleoSnies,
+    detalle.requiereIdoneidad,
+  ).length;
+}
+
 /** Amplía una fila del listado con la información del detalle. */
 function comoDetalle(solicitud: Solicitud): SolicitudDetalle {
+  const proveedores = proveedoresDetalle(solicitud);
+
   return {
     ...solicitud,
     cotizacionesRecibidas: COTIZACIONES_RECIBIDAS_MOCK,
@@ -757,7 +902,11 @@ function comoDetalle(solicitud: Solicitud): SolicitudDetalle {
     itemsDetalle: ITEMS_DETALLE_MOCK,
     items: itemsSolicitud(solicitud),
     contratacion: contratacionDetalle(solicitud),
-    contadores: CONTADORES_MOCK,
+    proveedores,
+    contadores: {
+      ...CONTADORES_MOCK,
+      proveedores: proveedores ? contarProveedores(proveedores) : 0,
+    },
   };
 }
 

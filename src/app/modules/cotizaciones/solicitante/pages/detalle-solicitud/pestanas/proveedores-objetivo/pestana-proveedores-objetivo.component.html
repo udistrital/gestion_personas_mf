@@ -1,0 +1,268 @@
+@if (solicitud(); as s) {
+  <encabezado-pestana
+    icono="groups"
+    titulo="Proveedores objetivo"
+    descripcion="Segmentación de los oferentes del proceso: actividades económicas CIIU, idoneidad técnica SNIES y proveedores notificados."
+  >
+    <ng-container acciones>
+      <button class="boton-recto" type="button" (click)="descargarRegistro()">
+        <mat-icon aria-hidden="true">download</mat-icon>
+        <span>Descargar Registro de Segmentación (PDF)</span>
+      </button>
+    </ng-container>
+  </encabezado-pestana>
+
+  @if (detalle(); as d) {
+    <!-- ───────────── Panel destacado: proveedores objetivo ───────────── -->
+    <tarjeta-seccion
+      icono="groups"
+      titulo="Proveedores notificados y habilitados"
+      subtitulo="Proceso automatizado de coincidencia basado en el registro unificado de proponentes, historial de contratación con la Universidad Distrital y convalidaciones normativas."
+    >
+      <ng-container acciones>
+        <span class="chip chip--recto">
+          <mat-icon aria-hidden="true">policy</mat-icon>
+          <span>Búsqueda registral conforme a estudios de mercado (RF-013)</span>
+        </span>
+      </ng-container>
+
+      <div class="panel-proveedores">
+        <!-- Cifra principal + indicadores de la notificación -->
+        <div class="panel-proveedores__cifra">
+          <div class="metrica-proveedores">
+            <span class="metrica-proveedores__valor">
+              {{ totalProveedores() }}
+            </span>
+            <span class="metrica-proveedores__rotulo">Proveedores objetivo</span>
+          </div>
+
+          <p class="panel-proveedores__descripcion">
+            @if (sinCoincidencias()) {
+              Ningún proveedor habilitado reúne la combinación actual de
+              actividades CIIU y núcleo de conocimiento SNIES.
+            } @else {
+              {{ totalProveedores() }} proveedores cumplen las características
+              y fueron notificados automáticamente en la apertura.
+            }
+          </p>
+
+          <ul class="indicadores">
+            <li class="indicador">
+              <mat-icon aria-hidden="true">visibility</mat-icon>
+              <span>{{ d.notificacion.vistos }} Vistos</span>
+            </li>
+            <li class="indicador">
+              <mat-icon aria-hidden="true">download</mat-icon>
+              <span>{{ d.notificacion.descargaron }} Descargaron pliego</span>
+            </li>
+            <li class="indicador">
+              <mat-icon aria-hidden="true">send</mat-icon>
+              <span>{{ d.notificacion.cotizaron }} Cotizaron</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Muestra representativa de los oferentes notificados -->
+        <div class="muestra">
+          <div class="muestra__cabecera">
+            <span class="muestra__titulo">
+              Muestra representativa de oferentes notificados
+            </span>
+            <span class="muestra__meta">
+              {{ muestra().length }} de {{ totalProveedores() }} empresas
+              mostradas
+            </span>
+          </div>
+
+          @for (proveedor of muestra(); track proveedor.id) {
+            <article class="oferente">
+              <span class="oferente__icono" aria-hidden="true">
+                <mat-icon>{{ proveedor.icono }}</mat-icon>
+              </span>
+
+              <div class="oferente__identidad">
+                <h3 class="oferente__nombre">{{ proveedor.nombre }}</h3>
+                <span class="oferente__nit">
+                  NIT: {{ proveedor.nit }} · CIIU {{ codigosProveedor(proveedor) }}
+                </span>
+              </div>
+
+              <span class="chip chip--exito">
+                <mat-icon aria-hidden="true">verified</mat-icon>
+                <span>Habilitado</span>
+              </span>
+            </article>
+          } @empty {
+            <p class="muestra__vacia">
+              No hay proveedores notificados que mostrar.
+            </p>
+          }
+        </div>
+      </div>
+
+      <!-- Aviso de notificación certificada -->
+      <div class="aviso-notificacion" role="note">
+        <mat-icon aria-hidden="true">notifications_active</mat-icon>
+        <div class="aviso-notificacion__texto">
+          <span class="aviso-notificacion__titulo">
+            Notificación certificada:
+          </span>
+          <span>Enviada {{ d.notificacion.enviada }}</span>
+        </div>
+      </div>
+    </tarjeta-seccion>
+
+    <!-- ───────────── Actividades económicas (CIIU) ───────────── -->
+    <tarjeta-seccion
+      icono="domain"
+      titulo="Actividades económicas homologadas (CIIU)"
+      subtitulo="Clasificación industrial internacional uniforme aplicada para el filtro registral institucional"
+    >
+      <ng-container acciones>
+        <span class="chip chip--recto">DANE Rev. 4 A.C.</span>
+      </ng-container>
+
+      <div class="tabla-detalle__scroll">
+        <table
+          class="tabla-detalle"
+          aria-label="Actividades económicas homologadas (CIIU) y oferentes registrados"
+        >
+          <thead>
+            <tr>
+              <th scope="col" class="tabla-detalle__th">Código CIIU</th>
+              <th scope="col" class="tabla-detalle__th">
+                Descripción de la actividad
+              </th>
+              <th scope="col" class="tabla-detalle__th">Sector / Clase</th>
+              <th scope="col" class="tabla-detalle__th tabla-detalle__th--numero">
+                Oferentes registrados
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (actividad of actividades(); track actividad.id) {
+              <tr class="tabla-detalle__fila">
+                <td class="tabla-detalle__td">
+                  <span class="codigo-ciiu">{{ actividad.codigo }}</span>
+                </td>
+                <td class="tabla-detalle__td tabla-detalle__celda-titulo">
+                  {{ actividad.descripcion }}
+                </td>
+                <td class="tabla-detalle__td">
+                  <span class="chip chip--neutro">{{ actividad.clase }}</span>
+                </td>
+                <td
+                  class="tabla-detalle__td tabla-detalle__td--numero tabla-detalle__td--fuerte"
+                >
+                  <span class="oferentes">
+                    <mat-icon aria-hidden="true">groups</mat-icon>
+                    <span>{{ oferentes(actividad) }} proveedores</span>
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="nota-concurrencia" role="note">
+        <span class="nota-concurrencia__texto">
+          <mat-icon aria-hidden="true">info</mat-icon>
+          <span>
+            Proveedores con concurrencia en múltiples códigos son consolidados
+            sin duplicidad de notificación.
+          </span>
+        </span>
+        <span class="nota-concurrencia__total">
+          Total único: {{ totalProveedores() }}
+        </span>
+      </div>
+    </tarjeta-seccion>
+
+    <!-- ───────────── Clasificación SNIES ───────────── -->
+    <tarjeta-seccion
+      [icono]="aplicaSnies() ? 'account_balance' : 'school'"
+      titulo="Clasificación SNIES"
+      subtitulo="Requerimiento de idoneidad técnica"
+    >
+      @if (aplicaSnies()) {
+        <div class="datos-grid datos-grid--dos">
+          <div class="bloque-area">
+            <span class="bloque-area__rotulo">Área de conocimiento</span>
+            <span class="bloque-area__valor">{{ areaSnies() }}</span>
+            <span class="bloque-area__nota">
+              <mat-icon aria-hidden="true">category</mat-icon>
+              <span>Registro Calificado Institucional</span>
+            </span>
+          </div>
+
+          <div class="bloque-area">
+            <span class="bloque-area__rotulo">
+              Núcleo Básico de Conocimiento (NBC)
+            </span>
+            <span class="bloque-area__valor">{{ nucleoSnies() }}</span>
+            <span class="bloque-area__nota">
+              <mat-icon aria-hidden="true">psychology</mat-icon>
+              <span>Convalidado ante el Ministerio de Educación</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="bloque-icono nota-idoneidad" role="note">
+          <mat-icon class="bloque-icono__icono" aria-hidden="true">
+            verified_user
+          </mat-icon>
+          <p class="bloque-icono__texto">{{ d.notaIdoneidad }}</p>
+        </div>
+
+        <div class="acuerdo">
+          <span class="acuerdo__norma">{{ d.acuerdo }}</span>
+          <span class="acuerdo__cumplimiento">Cumplimiento 100%</span>
+        </div>
+      } @else {
+        <div class="bloque-icono bloque-icono--neutro" role="note">
+          <mat-icon class="bloque-icono__icono" aria-hidden="true">info</mat-icon>
+          <div class="bloque-icono__texto">
+            <span class="bloque-icono__texto--fuerte">
+              Para bienes solo se registran actividades económicas
+            </span>
+            <p class="bloque-icono__texto bloque-icono__texto--suave texto-auxiliar">
+              El núcleo básico de conocimiento (SNIES) aplica de forma exclusiva
+              a requerimientos de prestación de servicios profesionales,
+              técnicos o de consultoría especializada. Para el suministro de
+              bienes, la identificación de cotizantes se realiza únicamente
+              mediante la clasificación CIIU.
+            </p>
+          </div>
+        </div>
+      }
+    </tarjeta-seccion>
+
+    <!-- ───────────── Auditoría de notificación ───────────── -->
+    <div class="banner-auditoria" role="note">
+      <span class="banner-auditoria__icono" aria-hidden="true">
+        <mat-icon>history_edu</mat-icon>
+      </span>
+      <div class="banner-auditoria__textos">
+        <span class="banner-auditoria__titulo">Auditoría de notificación:</span>
+        <p class="banner-auditoria__texto">
+          El registro de entrega de la solicitud fue certificado por la Oficina
+          de Contratación mediante la firma digital SHA-256 del sistema ÁGORA.
+        </p>
+      </div>
+      <span class="banner-auditoria__hash">{{ d.notificacion.hash }}</span>
+    </div>
+  } @else {
+    <!-- ───────────── Estado: sin segmentación registrada ───────────── -->
+    <div class="estado-vacio">
+      <mat-icon class="estado-vacio__icono" aria-hidden="true">groups</mat-icon>
+      <h2 class="estado-vacio__titulo">Sin proveedores objetivo segmentados</h2>
+      <p class="estado-vacio__texto">
+        Esta solicitud todavía no tiene registradas las actividades económicas
+        (CIIU) ni la clasificación SNIES que definen su grupo objetivo de
+        oferentes. Cuando el proceso avance, aquí se mostrará la segmentación
+        y el número de proveedores notificados.
+      </p>
+    </div>
+  }
+}

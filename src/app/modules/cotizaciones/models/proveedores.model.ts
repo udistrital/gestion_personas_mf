@@ -95,6 +95,26 @@ export interface ActividadVinculada extends ActividadCiiu {
   readonly id: string;
 }
 
+/**
+ * Segmentación de proveedores objetivo de una solicitud.
+ *
+ * Reúne lo que el solicitante diligenció en el paso 5 (S-02) y que el detalle
+ * (S-03, pestaña "Proveedores objetivo") muestra en solo lectura: las
+ * actividades económicas CIIU vinculadas y, cuando la naturaleza del objeto lo
+ * exige, el área y el núcleo básico de conocimiento (SNIES).
+ *
+ * Los valores de SNIES son los del catálogo (`AREAS_SNIES` / `NUCLEOS_SNIES`);
+ * vacíos cuando la solicitud es de bienes y el SNIES no aplica.
+ */
+export interface SegmentacionProveedores {
+  /** Actividades económicas CIIU vinculadas. */
+  readonly actividades: readonly ActividadVinculada[];
+  /** Valor del área de conocimiento SNIES; vacío cuando no aplica. */
+  readonly areaSnies: string;
+  /** Valor del núcleo básico de conocimiento; vacío cuando no aplica. */
+  readonly nucleoSnies: string;
+}
+
 /* ── Núcleo de conocimiento (SNIES) ───────────────────────────────────────── */
 
 /** Opción de los selectores del SNIES. */
@@ -172,6 +192,16 @@ export const NUCLEOS_SNIES: readonly OpcionSnies[] = [
 
 /** Valor del NBC que amplía el espectro (no filtra por idoneidad técnica). */
 export const NBC_SIN_IDONEIDAD = "NO_APLICA";
+
+/** Etiqueta legible del área de conocimiento SNIES ("ING" → "INGENIERÍA…"). */
+export function etiquetaAreaSnies(valor: string): string {
+  return AREAS_SNIES.find((area) => area.valor === valor)?.etiqueta ?? valor;
+}
+
+/** Etiqueta legible del núcleo básico de conocimiento ("SISTEMAS" → …). */
+export function etiquetaNucleoSnies(valor: string): string {
+  return NUCLEOS_SNIES.find((nucleo) => nucleo.valor === valor)?.etiqueta ?? valor;
+}
 
 /** Perfil técnico inferido que se muestra al elegir un NBC. */
 export interface PerfilNbc {
@@ -498,6 +528,30 @@ export function buscarProveedores(
 /** true cuando la solicitud exige idoneidad técnica certificada (SNIES). */
 export function exigeSnies(tipo: TipoNecesidadSolicitud): boolean {
   return tipo === "servicios" || tipo === "mixta";
+}
+
+/**
+ * Oferentes registrados por cada código CIIU dentro del cruce.
+ *
+ * El conteo se limita a los proveedores del cruce (CIIU + SNIES), de modo que
+ * la suma de las filas puede superar el total único: un proveedor que
+ * concurre en varios códigos se consolida en una sola notificación.
+ */
+export function conteoOferentesPorActividad(
+  proveedores: readonly ProveedorObjetivo[],
+  codigos: readonly string[],
+): ReadonlyMap<string, number> {
+  const conteo = new Map<string, number>(codigos.map((codigo) => [codigo, 0]));
+
+  for (const proveedor of proveedores) {
+    for (const codigo of proveedor.actividades) {
+      if (conteo.has(codigo)) {
+        conteo.set(codigo, (conteo.get(codigo) ?? 0) + 1);
+      }
+    }
+  }
+
+  return conteo;
 }
 
 /** Códigos CIIU vinculados en una sola línea ("6201, 6202, 6209"). */

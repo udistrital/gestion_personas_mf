@@ -10,6 +10,7 @@ import { PestanaContratacionPagoComponent } from "./pestanas/contratacion-pago/p
 import { PestanaGeneralComponent } from "./pestanas/general/pestana-general.component";
 import { PestanaItemsComponent } from "./pestanas/items/pestana-items.component";
 import { PestanaPresupuestoComponent } from "./pestanas/presupuesto/pestana-presupuesto.component";
+import { PestanaProveedoresObjetivoComponent } from "./pestanas/proveedores-objetivo/pestana-proveedores-objetivo.component";
 import { PestanaPlaceholderComponent } from "./pestanas/pestana-placeholder/pestana-placeholder.component";
 
 /**
@@ -32,6 +33,7 @@ import { PestanaPlaceholderComponent } from "./pestanas/pestana-placeholder/pest
     PestanaPresupuestoComponent,
     PestanaItemsComponent,
     PestanaContratacionPagoComponent,
+    PestanaProveedoresObjetivoComponent,
     PestanaPlaceholderComponent,
   ],
   imports: [CommonModule, SharedModule, DetalleSolicitudRoutingModule],

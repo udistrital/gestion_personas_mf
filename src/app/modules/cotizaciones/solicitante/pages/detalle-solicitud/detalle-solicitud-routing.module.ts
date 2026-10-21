@@ -6,6 +6,7 @@ import { PestanaContratacionPagoComponent } from "./pestanas/contratacion-pago/p
 import { PestanaGeneralComponent } from "./pestanas/general/pestana-general.component";
 import { PestanaItemsComponent } from "./pestanas/items/pestana-items.component";
 import { PestanaPresupuestoComponent } from "./pestanas/presupuesto/pestana-presupuesto.component";
+import { PestanaProveedoresObjetivoComponent } from "./pestanas/proveedores-objetivo/pestana-proveedores-objetivo.component";
 import { PestanaPlaceholderComponent } from "./pestanas/pestana-placeholder/pestana-placeholder.component";
 
 /**
@@ -48,9 +49,8 @@ const routes: Routes = [
       },
       {
         path: "proveedores",
-        component: PestanaPlaceholderComponent,
+        component: PestanaProveedoresObjetivoComponent,
         title: "ÁGORA · Detalle · Proveedores objetivo",
-        data: { pestanaTitulo: "Proveedores objetivo" },
       },
       {
         path: "documentos",
