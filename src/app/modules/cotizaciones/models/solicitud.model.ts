@@ -2,6 +2,7 @@ import { EstadoSolicitud } from "src/app/core/constants/estados-solicitud.const"
 import {
   ContadoresPestanas,
   ContratacionDetalle,
+  DocumentosDetalle,
   GeneralDetalle,
   ItemsDetalle,
   PresupuestoDetalle,
@@ -69,6 +70,8 @@ export interface SolicitudDetalle extends Solicitud {
   readonly contratacion: ContratacionDetalle | null;
   /** Proveedores objetivo de la pestaña 5; `null` si aún no hay segmentación. */
   readonly proveedores: ProveedoresObjetivoDetalle | null;
+  /** Documentos de la pestaña 6; `null` si aún no hay expediente documental. */
+  readonly documentos: DocumentosDetalle | null;
   readonly contadores: ContadoresPestanas;
 }
 

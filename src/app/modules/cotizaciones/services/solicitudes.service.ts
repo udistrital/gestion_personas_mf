@@ -13,6 +13,7 @@ import {
   CaracteristicasDetalle,
   ContadoresPestanas,
   ContratacionDetalle,
+  DocumentosDetalle,
   FirmaAval,
   GeneralDetalle,
   ImputacionPresupuestal,
@@ -25,6 +26,12 @@ import {
 } from "../models/detalle-solicitud.model";
 import { ItemSolicitud, TipoNecesidadSolicitud } from "../models/items.model";
 import { ParametroPago } from "../models/contratacion.model";
+import {
+  AnexoSolicitud,
+  DOCUMENTOS_OFERENTE_SEMILLA,
+  DocumentoResuelto,
+  iconoPorFormato,
+} from "../models/documentos.model";
 import {
   ACTIVIDADES_CIIU,
   ActividadCiiu,
@@ -63,6 +70,17 @@ export abstract class SolicitudesService {
    * traduce ese `null` al estado "solicitud no encontrada".
    */
   abstract obtenerPorId(id: string): Observable<SolicitudDetalle | null>;
+
+  /**
+   * Documento adjunto de una solicitud, listo para verse o descargarse.
+   *
+   * Es el único punto que cambia cuando se conecte el gestor documental
+   * institucional (Alfresco UD): hoy devuelve los metadatos del archivo y el
+   * aviso de que la operación es simulada.
+   *
+   * @param id identificador del anexo (único en todo el repositorio)
+   */
+  abstract obtenerDocumento(id: string): Observable<DocumentoResuelto>;
 }
 
 const DATOS_MOCK: readonly Solicitud[] = [
@@ -312,8 +330,9 @@ function generalDetalle(solicitud: Solicitud): GeneralDetalle {
 /**
  * Contadores de la barra de pestañas, derivados del modelo simulado.
  *
- * El de "proveedores" no se usa como valor fijo: `comoDetalle` lo recalcula
- * con el cruce de cada solicitud para que coincida con la pestaña.
+ * Los de "proveedores" y "documentos" no se usan como valor fijo: `comoDetalle`
+ * los recalcula con el cruce y los anexos de cada solicitud para que coincidan
+ * con la pestaña.
  */
 const CONTADORES_MOCK: ContadoresPestanas = {
   items: 18,
@@ -890,9 +909,206 @@ function contarProveedores(detalle: ProveedoresObjetivoDetalle): number {
   ).length;
 }
 
+/* ── Documentos (pestaña "Documentos") ─────────────────────────────────────── */
+
+/**
+ * Nota institucional del banner normativo de la pestaña "Documentos".
+ *
+ * Reproduce el texto del mockup: los documentos habilitantes son obligatorios
+ * y los complementarios se aportan durante la subsanación.
+ */
+const NOTA_NORMATIVA_DOCUMENTOS =
+  "La Unidad de Contratación se encuentra en proceso de validación previa según la Resolución de Rectoría 2026. Los oferentes registrados deben remitir obligatoriamente los documentos marcados como habilitantes. Los complementarios podrán aportarse durante la subsanación.";
+
+/** Estado de la matriz documental (la institución aún no la define). */
+const ESTADO_MATRIZ_DOCUMENTOS =
+  "Por definir: Matriz de documentos obligatorios y complementarios";
+
+/** Fecha de la última modificación del expediente documental. */
+const ULTIMA_MODIFICACION_DOCUMENTOS = "02 Mar 2026 10:22 COT";
+
+/** Versión del sistema que generó el expediente documental. */
+const VERSION_SISTEMA_DOCUMENTOS = "ÁGORA v3.4.1";
+
+/** Aviso de que el gestor documental institucional todavía no está conectado. */
+const MENSAJE_GESTOR_DOCUMENTAL =
+  "El gestor documental institucional (Alfresco UD) aún no está conectado: la operación se simuló con los metadatos del archivo.";
+
+/** Solicitudes sin expediente documental (borradores y expediente sin apertura). */
+const SIN_DOCUMENTOS: readonly string[] = ["SOL-2026-0008"];
+
+/** Autor de la carga en los expedientes de la Vicerrectoría Académica. */
+const AUTOR_VICERRECTORIA = "cjgonzalezp";
+
+/** Autor de la carga en los expedientes de la División de TI. */
+const AUTOR_TI = "mrodriguezs";
+
+/** Autor de la carga en los expedientes de la Facultad de Ingeniería. */
+const AUTOR_INGENIERIA = "lperdomo";
+
+/**
+ * Construye un anexo oficial ya cargado (estado "cargado").
+ *
+ * El icono se deriva del formato con la misma función del paso 6, de modo que
+ * el detalle y el asistente coinciden en la iconografía.
+ */
+function anexoCargado(
+  id: string,
+  nombre: string,
+  descripcion: string,
+  pesoBytes: number,
+  subidoEl: string,
+  autor: string,
+): AnexoSolicitud {
+  return {
+    id,
+    nombre,
+    descripcion,
+    pesoBytes,
+    icono: iconoPorFormato(nombre),
+    estado: "cargado",
+    progreso: 100,
+    subidoEl,
+    autor,
+  };
+}
+
+/**
+ * Anexos oficiales cargados por cada solicitud (semilla del detalle).
+ *
+ * Cada solicitud tiene sus propios soportes, con formatos distintos: así se
+ * revisa la columna "Tipo" con más de una variante. Las solicitudes que no
+ * aparecen aquí todavía no tienen anexos cargados.
+ */
+const ANEXOS_POR_SOLICITUD: Readonly<
+  Record<string, readonly AnexoSolicitud[]>
+> = {
+  "SOL-2026-0042": [
+    anexoCargado(
+      "anexo-0042-estudios-previos",
+      "Estudios_Previos_Infraestructura_2026.pdf",
+      "Estudio de conveniencia técnica y necesidad institucional",
+      2.4 * 1024 * 1024,
+      "Subido el 02 Mar 2026, 10:15 AM",
+      AUTOR_VICERRECTORIA,
+    ),
+    anexoCargado(
+      "anexo-0042-anexo-tecnico",
+      "Anexo_Tecnico_Especificaciones_Servidores.docx",
+      "Requerimientos mínimos de CPU, RAM, redundancia y SAN",
+      840 * 1024,
+      "Subido el 02 Mar 2026, 10:18 AM",
+      AUTOR_VICERRECTORIA,
+    ),
+    anexoCargado(
+      "anexo-0042-cdp-presupuestal",
+      "CDP_Presupuestal_Firmado_2026.pdf",
+      "Certificado de Disponibilidad Presupuestal ref. 2026-04192",
+      1.8 * 1024 * 1024,
+      "Subido el 02 Mar 2026, 10:20 AM",
+      AUTOR_VICERRECTORIA,
+    ),
+    anexoCargado(
+      "anexo-0042-ficha-tecnica-items",
+      "Ficha_Tecnica_Items_Consolidada.xlsx",
+      "Matriz tabulada con 12 ítems discriminados para cotización",
+      148 * 1024,
+      "Subido el 02 Mar 2026, 10:22 AM",
+      AUTOR_VICERRECTORIA,
+    ),
+  ],
+  "SOL-2026-0039": [
+    anexoCargado(
+      "anexo-0039-informe-diagnostico",
+      "Informe_Diagnostico_Servidores_Centrales.pdf",
+      "Informe de diagnóstico de la infraestructura de servidores centrales",
+      3.1 * 1024 * 1024,
+      "Subido el 11 Feb 2026, 09:05 AM",
+      AUTOR_TI,
+    ),
+    anexoCargado(
+      "anexo-0039-certificaciones-tecnicas",
+      "Certificaciones_Tecnicas_Equipos_Ofertados.xlsx",
+      "Certificaciones técnicas de los equipos ofertados",
+      612 * 1024,
+      "Subido el 11 Feb 2026, 09:12 AM",
+      AUTOR_TI,
+    ),
+    anexoCargado(
+      "anexo-0039-metodologia-mantenimiento",
+      "Metodologia_Mantenimiento_Preventivo_Correctivo.doc",
+      "Metodología de los servicios de mantenimiento preventivo y correctivo",
+      320 * 1024,
+      "Subido el 11 Feb 2026, 09:20 AM",
+      AUTOR_TI,
+    ),
+  ],
+  "SOL-2026-0044": [
+    anexoCargado(
+      "anexo-0044-especificaciones-insumos",
+      "Especificaciones_Insumos_Laboratorio_Quimica.pdf",
+      "Especificaciones técnicas de los insumos de laboratorio",
+      1.2 * 1024 * 1024,
+      "Subido el 02 Feb 2026, 08:40 AM",
+      AUTOR_INGENIERIA,
+    ),
+    anexoCargado(
+      "anexo-0044-comparativo-precios",
+      "Comparativo_Precios_Insumos_Cotizados.xlsx",
+      "Comparativo de precios de los insumos cotizados",
+      96 * 1024,
+      "Subido el 02 Feb 2026, 08:47 AM",
+      AUTOR_INGENIERIA,
+    ),
+  ],
+  "SOL-2026-0015": [
+    anexoCargado(
+      "anexo-0015-plan-impresion",
+      "Plan_Impresion_Catalogo_Universitario.docx",
+      "Plan de impresión del catálogo universitario 2026",
+      720 * 1024,
+      "Subido el 09 Jan 2026, 15:10 AM",
+      AUTOR_VICERRECTORIA,
+    ),
+  ],
+};
+
+/**
+ * Contenido documental de una solicitud.
+ *
+ * Devuelve `null` cuando la solicitud todavía no tiene expediente documental
+ * (borrador o expediente sin apertura): así la pestaña muestra su estado
+ * vacío sin inventar soportes.
+ *
+ * Solo se listan los anexos ya cargados: los estados "subiendo" y "error"
+ * pertenecen al flujo de carga del asistente, no a un expediente archivado.
+ */
+function documentosDetalle(solicitud: Solicitud): DocumentosDetalle | null {
+  if (
+    solicitud.estado === "borrador" ||
+    SIN_DOCUMENTOS.includes(solicitud.id)
+  ) {
+    return null;
+  }
+
+  const anexos = (ANEXOS_POR_SOLICITUD[solicitud.id] ?? []).filter(
+    (anexo) => anexo.estado === "cargado",
+  );
+
+  return {
+    anexos,
+    requeridos: DOCUMENTOS_OFERENTE_SEMILLA,
+    notaNormativa: NOTA_NORMATIVA_DOCUMENTOS,
+    estadoMatriz: ESTADO_MATRIZ_DOCUMENTOS,
+    ultimaModificacion: ULTIMA_MODIFICACION_DOCUMENTOS,
+    versionSistema: VERSION_SISTEMA_DOCUMENTOS,
+  };
+}
+
 /** Amplía una fila del listado con la información del detalle. */
 function comoDetalle(solicitud: Solicitud): SolicitudDetalle {
   const proveedores = proveedoresDetalle(solicitud);
+  const documentos = documentosDetalle(solicitud);
 
   return {
     ...solicitud,
@@ -903,9 +1119,11 @@ function comoDetalle(solicitud: Solicitud): SolicitudDetalle {
     items: itemsSolicitud(solicitud),
     contratacion: contratacionDetalle(solicitud),
     proveedores,
+    documentos,
     contadores: {
       ...CONTADORES_MOCK,
       proveedores: proveedores ? contarProveedores(proveedores) : 0,
+      documentos: documentos ? documentos.anexos.length : 0,
     },
   };
 }
@@ -965,6 +1183,51 @@ export class SolicitudesServiceMock extends SolicitudesService {
 
     const solicitud = DATOS_MOCK.find((fila) => fila.id === id);
     return of(solicitud ? comoDetalle(solicitud) : null).pipe(delay(retardo));
+  }
+
+  /**
+   * Devuelve los metadatos del anexo solicitado.
+   *
+   * No hay gestor documental conectado: el resultado informa que la operación
+   * es simulada. Con `?mockDocumento=error` la consulta falla, para revisar el
+   * estado de error de la pestaña.
+   */
+  obtenerDocumento(id: string): Observable<DocumentoResuelto> {
+    const params = new URLSearchParams(window.location.search);
+    const retardo = Number(params.get("mockRetardo")) || 700;
+
+    if (params.get("mockDocumento") === "error") {
+      return throwError(
+        () =>
+          new Error(
+            "No fue posible consultar el archivo en el repositorio institucional (Alfresco UD).",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const documento = this.buscarAnexo(id);
+    if (!documento) {
+      return throwError(
+        () => new Error("El documento solicitado no existe en el expediente."),
+      ).pipe(delay(retardo));
+    }
+
+    return of({
+      documento,
+      disponible: true,
+      mensaje: MENSAJE_GESTOR_DOCUMENTAL,
+    }).pipe(delay(retardo));
+  }
+
+  /** Busca un anexo por su identificador en todos los expedientes simulados. */
+  private buscarAnexo(id: string): AnexoSolicitud | null {
+    for (const anexos of Object.values(ANEXOS_POR_SOLICITUD)) {
+      const encontrado = anexos.find((anexo) => anexo.id === id);
+      if (encontrado) {
+        return encontrado;
+      }
+    }
+    return null;
   }
 
   private coincide(

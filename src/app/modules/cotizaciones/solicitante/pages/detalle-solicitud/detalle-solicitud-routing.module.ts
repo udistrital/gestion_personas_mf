@@ -3,6 +3,7 @@ import { RouterModule, Routes } from "@angular/router";
 import { solicitudResolver } from "../../../resolvers/solicitud.resolver";
 import { DetalleSolicitudComponent } from "./detalle-solicitud.component";
 import { PestanaContratacionPagoComponent } from "./pestanas/contratacion-pago/pestana-contratacion-pago.component";
+import { PestanaDocumentosComponent } from "./pestanas/documentos/pestana-documentos.component";
 import { PestanaGeneralComponent } from "./pestanas/general/pestana-general.component";
 import { PestanaItemsComponent } from "./pestanas/items/pestana-items.component";
 import { PestanaPresupuestoComponent } from "./pestanas/presupuesto/pestana-presupuesto.component";
@@ -54,9 +55,8 @@ const routes: Routes = [
       },
       {
         path: "documentos",
-        component: PestanaPlaceholderComponent,
+        component: PestanaDocumentosComponent,
         title: "ÁGORA · Detalle · Documentos",
-        data: { pestanaTitulo: "Documentos" },
       },
       {
         path: "historial",

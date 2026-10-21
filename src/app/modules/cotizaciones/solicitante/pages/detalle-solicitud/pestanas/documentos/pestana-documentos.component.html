@@ -1,0 +1,278 @@
+@if (solicitud(); as s) {
+  <encabezado-pestana
+    icono="folder_open"
+    titulo="Documentos"
+    descripcion="Anexos oficiales cargados por la institución y documentos exigidos a cada oferente en su propuesta electrónica."
+  >
+    <ng-container acciones>
+      <button class="boton-recto" type="button" (click)="descargarTodo()">
+        <mat-icon aria-hidden="true">folder_zip</mat-icon>
+        <span>Descargar Todo (.zip)</span>
+      </button>
+    </ng-container>
+  </encabezado-pestana>
+
+  @if (documentos(); as d) {
+    <!-- ───────────── Error al ver o descargar ───────────── -->
+    @if (errorDescarga(); as mensaje) {
+      <div class="alerta-error" role="alert" aria-live="assertive">
+        <mat-icon class="alerta-error__icono" aria-hidden="true">
+          error_outline
+        </mat-icon>
+        <div class="alerta-error__textos">
+          <span class="alerta-error__titulo">
+            No fue posible consultar el archivo
+          </span>
+          <p class="alerta-error__texto">{{ mensaje }}</p>
+        </div>
+        <button
+          class="boton-recto"
+          type="button"
+          aria-label="Cerrar aviso de error"
+          (click)="cerrarError()"
+        >
+          <mat-icon aria-hidden="true">close</mat-icon>
+        </button>
+      </div>
+    }
+
+    <!-- ───────────── 1. Anexos oficiales ───────────── -->
+    <tarjeta-seccion
+      icono="attachment"
+      titulo="1. Anexos Oficiales de la Solicitud (Soportes Institucionales)"
+      subtitulo="Archivos técnicos, jurídicos y presupuestales cargados por la Universidad Distrital Francisco José de Caldas."
+    >
+      <ng-container acciones>
+        <span class="chip chip--recto">
+          <mat-icon aria-hidden="true">lock</mat-icon>
+          <span>Solo Lectura Institucional</span>
+        </span>
+      </ng-container>
+
+      <div class="tabla-detalle__scroll">
+        <table
+          class="tabla-detalle"
+          aria-label="Anexos oficiales cargados por la institución"
+        >
+          <caption class="tabla-detalle__caption">
+            Anexos oficiales de la solicitud con formato, tamaño, fecha de carga y
+            responsable
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col" class="tabla-detalle__th">Tipo</th>
+              <th scope="col" class="tabla-detalle__th">Nombre del Archivo</th>
+              <th scope="col" class="tabla-detalle__th">Tamaño</th>
+              <th scope="col" class="tabla-detalle__th">Fecha de Carga</th>
+              <th scope="col" class="tabla-detalle__th">Subido por</th>
+              <th scope="col" class="tabla-detalle__th tabla-detalle__th--numero">
+                Acciones
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (anexo of anexos(); track anexo.id) {
+              <tr class="tabla-detalle__fila">
+                <td class="tabla-detalle__td">
+                  <span class="chip chip--formato">
+                    <mat-icon aria-hidden="true">{{ anexo.icono }}</mat-icon>
+                    <span>{{ formato(anexo.nombre) }}</span>
+                  </span>
+                </td>
+                <td class="tabla-detalle__td">
+                  <span class="documento__datos">
+                    <span class="tabla-detalle__celda-titulo">
+                      {{ anexo.nombre }}
+                    </span>
+                    @if (anexo.descripcion) {
+                      <span class="tabla-detalle__celda-nota">
+                        {{ anexo.descripcion }}
+                      </span>
+                    }
+                  </span>
+                </td>
+                <td class="tabla-detalle__td tabla-detalle__td--fuerte">
+                  {{ peso(anexo) }}
+                </td>
+                <td class="tabla-detalle__td">{{ anexo.subidoEl }}</td>
+                <td class="tabla-detalle__td">
+                  <span class="autor">
+                    <mat-icon aria-hidden="true">account_circle</mat-icon>
+                    <span>{{ anexo.autor }}</span>
+                  </span>
+                </td>
+                <td class="tabla-detalle__td tabla-detalle__td--numero">
+                  <div class="acciones">
+                    <button
+                      class="boton-recto"
+                      type="button"
+                      [attr.aria-label]="'Ver ' + anexo.nombre"
+                      [disabled]="descargando() === anexo.id"
+                      (click)="verDocumento(anexo)"
+                    >
+                      <mat-icon aria-hidden="true">visibility</mat-icon>
+                      <span>Ver</span>
+                    </button>
+                    <button
+                      class="boton-recto boton-recto--vino"
+                      type="button"
+                      [attr.aria-label]="'Descargar ' + anexo.nombre"
+                      [disabled]="descargando() === anexo.id"
+                      (click)="descargarDocumento(anexo)"
+                    >
+                      @if (descargando() === anexo.id) {
+                        <mat-spinner diameter="14"></mat-spinner>
+                      } @else {
+                        <mat-icon aria-hidden="true">download</mat-icon>
+                      }
+                      <span>Descargar</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" class="tabla-detalle__vacio">
+                  <mat-icon aria-hidden="true">folder_open</mat-icon>
+                  <span>
+                    Esta solicitud todavía no tiene anexos oficiales cargados.
+                    Los soportes técnicos, jurídicos y presupuestales aparecerán
+                    aquí cuando la Unidad de Contratación los adjunte.
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="tabla-detalle__pie">
+        <span>{{ anexos().length }} anexos oficiales</span>
+        <span class="tabla-detalle__total">{{ pesoTotal() }}</span>
+      </div>
+    </tarjeta-seccion>
+
+    <!-- ───────────── 2. Documentos requeridos al oferente ───────────── -->
+    <tarjeta-seccion
+      icono="checklist"
+      titulo="2. Documentos Requeridos al Oferente (Pliego de Requisitos)"
+      subtitulo="Exigencias documentales que cada proponente debe cargar en su propuesta electrónica."
+    >
+      <ng-container acciones>
+        <span class="chip chip--recto">
+          <span>{{ resumenMatriz().obligatorios }} obligatorios</span>
+        </span>
+        <span class="chip chip--recto">
+          <span>{{ resumenMatriz().complementarios }} complementarios</span>
+        </span>
+      </ng-container>
+
+      <div class="leyenda">
+        <span class="leyenda__item">
+          <span class="leyenda__marca leyenda__marca--obligatorio">
+            Obligatorio
+          </span>
+          <span class="leyenda__texto">
+            = Requisito habilitante sin el cual no puede presentar oferta.
+          </span>
+        </span>
+        <span class="leyenda__separador" aria-hidden="true"></span>
+        <span class="leyenda__item">
+          <span class="leyenda__marca leyenda__marca--complementario">
+            Complementario
+          </span>
+          <span class="leyenda__texto">
+            = Documento de soporte que no excluye la cotización.
+          </span>
+        </span>
+      </div>
+
+      <div class="tabla-detalle__scroll">
+        <table
+          class="tabla-detalle"
+          aria-label="Documentos exigidos al oferente al cotizar"
+        >
+          <caption class="tabla-detalle__caption">
+            Matriz documental exigida a cada proponente con su clasificación y
+            requisito normativo
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col" class="tabla-detalle__th">Documento Exigido</th>
+              <th scope="col" class="tabla-detalle__th">Clasificación</th>
+              <th scope="col" class="tabla-detalle__th">
+                Requisito / Descripción Normativa
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (documento of requeridos(); track documento.id) {
+              <tr class="tabla-detalle__fila">
+                <td class="tabla-detalle__td">
+                  <span class="requisito">
+                    <mat-icon class="requisito__icono" aria-hidden="true">
+                      {{ documento.icono }}
+                    </mat-icon>
+                    <span class="requisito__datos">
+                      <span class="tabla-detalle__celda-titulo">
+                        {{ documento.nombre }}
+                      </span>
+                      @if (documento.norma) {
+                        <span class="requisito__norma">
+                          <mat-icon aria-hidden="true">verified</mat-icon>
+                          <span>{{ documento.norma }}</span>
+                        </span>
+                      }
+                    </span>
+                    @if (documento.fijo) {
+                      <mat-icon
+                        class="requisito__candado"
+                        aria-hidden="true"
+                        title="Requisito bloqueado por norma"
+                      >
+                        lock
+                      </mat-icon>
+                    }
+                  </span>
+                </td>
+                <td class="tabla-detalle__td">
+                  <span
+                    class="chip chip--clasificacion"
+                    [class.chip--clasificacion--obligatorio]="
+                      documento.clasificacion === 'obligatorio'
+                    "
+                  >
+                    {{ etiquetaClasificacion(documento.clasificacion) }}
+                  </span>
+                </td>
+                <td class="tabla-detalle__td">{{ documento.instruccion }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="3" class="tabla-detalle__vacio">
+                  <mat-icon aria-hidden="true">assignment_turned_in</mat-icon>
+                  <span>
+                    Aún no hay documentos exigidos al oferente. La matriz
+                    documental se definirá por la Unidad de Contratación.
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </tarjeta-seccion>
+  } @else {
+    <!-- ───────────── Estado: sin expediente documental ───────────── -->
+    <div class="estado-vacio">
+      <mat-icon class="estado-vacio__icono" aria-hidden="true">folder_open</mat-icon>
+      <h2 class="estado-vacio__titulo">Sin documentos registrados</h2>
+      <p class="estado-vacio__texto">
+        Esta solicitud todavía no tiene expediente documental: no hay anexos
+        oficiales cargados ni matriz de documentos exigidos al oferente. Cuando
+        la Unidad de Contratación registre los soportes, aquí se mostrarán los
+        archivos con su formato, tamaño, fecha de carga y responsable.
+      </p>
+    </div>
+  }
+}

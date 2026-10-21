@@ -19,6 +19,7 @@ import {
   calcularResumenPagos,
 } from "./contratacion.model";
 import { SegmentacionProveedores } from "./proveedores.model";
+import { AnexoSolicitud, DocumentoOferente } from "./documentos.model";
 
 /* ── Tarjeta 1: responsable de la solicitud ───────────────────────────────── */
 
@@ -354,6 +355,34 @@ export interface ProveedoresObjetivoDetalle {
   readonly acuerdo: string;
   /** Registro de la notificación a los proveedores objetivo. */
   readonly notificacion: NotificacionProveedores;
+}
+
+/* ── Pestaña 6: documentos (solo lectura) ──────────────────────────────────── */
+
+/**
+ * Contenido documental de la solicitud.
+ *
+ * Reúne los dos bloques de la pestaña "Documentos": los anexos oficiales que
+ * adjuntó la institución (sección 1) y la matriz de documentos que debe
+ * presentar cada oferente al cotizar (sección 2).
+ *
+ * Los anexos y la matriz son los mismos del paso 6 del asistente (S-02): la
+ * pestaña no define un segundo modelo de documento, solo lo muestra en solo
+ * lectura.
+ */
+export interface DocumentosDetalle {
+  /** Anexos oficiales cargados por la institución. */
+  readonly anexos: readonly AnexoSolicitud[];
+  /** Documentos exigidos al oferente al cotizar. */
+  readonly requeridos: readonly DocumentoOferente[];
+  /** Nota institucional sobre la obligatoriedad de los soportes. */
+  readonly notaNormativa: string;
+  /** Estado de la matriz documental (aún por definir). */
+  readonly estadoMatriz: string;
+  /** Fecha de la última modificación del expediente documental. */
+  readonly ultimaModificacion: string;
+  /** Versión del sistema que generó el expediente. */
+  readonly versionSistema: string;
 }
 
 /* ── Contadores compartidos por la barra de pestañas ──────────────────────── */

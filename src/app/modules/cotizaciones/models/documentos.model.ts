@@ -54,6 +54,13 @@ export interface AnexoSolicitud {
   readonly subidoEl: string;
   /** Autor de la carga ("cjgonzalezp"). */
   readonly autor: string;
+  /**
+   * Línea descriptiva del soporte ("Estudio de conveniencia técnica…").
+   *
+   * Opcional: el asistente no la necesita, pero el detalle de la solicitud
+   * (S-03) la muestra bajo el nombre del archivo.
+   */
+  readonly descripcion?: string;
 }
 
 /* ── Matriz de documentos del oferente (sección 2) ────────────────────────── */
@@ -129,6 +136,11 @@ export function iconoPorFormato(nombre: string): string {
   }
 }
 
+/** Etiqueta legible del formato de un archivo ("PDF", "DOCX"). */
+export function etiquetaFormato(nombre: string): string {
+  return extensionDe(nombre).toUpperCase();
+}
+
 /** Resultado de validar un archivo antes de vincularlo. */
 export interface ResultadoValidacionArchivo {
   readonly error: ErrorAnexo | null;
@@ -172,6 +184,25 @@ export function formatoPesoTotal(anexos: readonly AnexoSolicitud[]): string {
     0,
   );
   return total > 0 ? `${formatoTamano(total)} cargados` : "0 B cargados";
+}
+
+/* ── Consulta de un documento al gestor documental ─────────────────────────── */
+
+/**
+ * Resultado de pedir un documento al gestor documental.
+ *
+ * Hoy no hay almacenamiento real: el servicio simulado devuelve los metadatos
+ * del archivo y el aviso de que la operación es simulada. Cuando se conecte el
+ * repositorio institucional (Alfresco UD), este mismo punto devolverá la URL
+ * real del binario sin cambiar las pantallas.
+ */
+export interface DocumentoResuelto {
+  /** Metadatos del archivo solicitado. */
+  readonly documento: AnexoSolicitud;
+  /** true cuando el archivo está disponible para verse o descargarse. */
+  readonly disponible: boolean;
+  /** Mensaje que explica el resultado de la operación. */
+  readonly mensaje: string;
 }
 
 /* ── Catálogo simulado (reproduce el mockup aprobado) ─────────────────────── */

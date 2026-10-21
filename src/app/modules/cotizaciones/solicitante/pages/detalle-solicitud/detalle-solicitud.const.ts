@@ -42,6 +42,6 @@ export const PESTANAS_DETALLE: readonly PestanaDetalleMeta[] = [
   { id: "items", etiqueta: "Ítems", icono: "list_alt", contador: "items", implementada: true },
   { id: "contratacion", etiqueta: "Contratación y pago", icono: "handshake", contador: null, implementada: true },
   { id: "proveedores", etiqueta: "Proveedores objetivo", icono: "store", contador: "proveedores", implementada: true },
-  { id: "documentos", etiqueta: "Documentos", icono: "folder_open", contador: "documentos", implementada: false },
+  { id: "documentos", etiqueta: "Documentos", icono: "folder_open", contador: "documentos", implementada: true },
   { id: "historial", etiqueta: "Historial", icono: "history", contador: null, implementada: false },
 ];
