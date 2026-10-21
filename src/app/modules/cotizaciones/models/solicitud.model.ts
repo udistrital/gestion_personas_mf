@@ -2,8 +2,10 @@ import { EstadoSolicitud } from "src/app/core/constants/estados-solicitud.const"
 import {
   ContadoresPestanas,
   GeneralDetalle,
+  ItemsDetalle,
   PresupuestoDetalle,
 } from "./detalle-solicitud.model";
+import { ItemSolicitud } from "./items.model";
 
 export type TipoCotizacion = "BIEN" | "SERVICIO" | "BIEN_Y_SERVICIO";
 
@@ -57,6 +59,10 @@ export interface SolicitudDetalle extends Solicitud {
   readonly general: GeneralDetalle;
   /** Presupuesto SICAPITAL de la pestaña 2; `null` si aún no hay CDP. */
   readonly presupuesto: PresupuestoDetalle | null;
+  /** Cabecera de la pestaña 3 (unidad ejecutora y sede de entrega). */
+  readonly itemsDetalle: ItemsDetalle;
+  /** Ítems del pliego de la pestaña 3; lista vacía ⇒ estado vacío. */
+  readonly items: readonly ItemSolicitud[];
   readonly contadores: ContadoresPestanas;
 }
 

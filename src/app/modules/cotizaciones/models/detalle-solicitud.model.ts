@@ -87,6 +87,24 @@ export interface GeneralDetalle {
   readonly planAccion: PlanAccionDetalle;
 }
 
+/* ── Pestaña 3: ítems solicitados (solo lectura) ─────────────────────────── */
+
+/**
+ * Cabecera de la pestaña "Ítems".
+ *
+ * Sólo aporta la unidad ejecutora y la ubicación de entrega, que el mockup
+ * muestra en su propia tarjeta. El listado de ítems vive aparte, en
+ * `SolicitudDetalle.items`, porque es el mismo modelo del asistente (S-02).
+ */
+export interface ItemsDetalle {
+  /** Unidad ejecutora con su nombre ("División de Tecnologías … (DITIC)"). */
+  readonly unidadEjecutora: string;
+  /** Código institucional de la dependencia ("CÓD. 02-304-DITIC"). */
+  readonly codigoDependencia: string;
+  /** Lugar de entrega ("Sede Aduanilla de Paiba - Bloque B Sala DataCenter"). */
+  readonly sede: string;
+}
+
 /* ── Pestaña 2: presupuesto (SICAPITAL, solo lectura) ─────────────────────── */
 
 /** Tono con el que se pinta el estado de una fila de imputación. */

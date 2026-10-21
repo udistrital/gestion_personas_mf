@@ -7,6 +7,7 @@ import { TarjetaSeccionComponent } from "./components/tarjeta-seccion/tarjeta-se
 import { ParEtiquetaValorComponent } from "./components/par-etiqueta-valor/par-etiqueta-valor.component";
 import { EncabezadoPestanaComponent } from "./components/encabezado-pestana/encabezado-pestana.component";
 import { PestanaGeneralComponent } from "./pestanas/general/pestana-general.component";
+import { PestanaItemsComponent } from "./pestanas/items/pestana-items.component";
 import { PestanaPresupuestoComponent } from "./pestanas/presupuesto/pestana-presupuesto.component";
 import { PestanaPlaceholderComponent } from "./pestanas/pestana-placeholder/pestana-placeholder.component";
 
@@ -28,6 +29,7 @@ import { PestanaPlaceholderComponent } from "./pestanas/pestana-placeholder/pest
     EncabezadoPestanaComponent,
     PestanaGeneralComponent,
     PestanaPresupuestoComponent,
+    PestanaItemsComponent,
     PestanaPlaceholderComponent,
   ],
   imports: [CommonModule, SharedModule, DetalleSolicitudRoutingModule],

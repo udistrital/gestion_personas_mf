@@ -53,6 +53,19 @@
     color: var(--agora-info);
   }
 
+  /* Tipo de ítem: vino para bienes, tono de servicio para servicios. */
+  .chip--bien {
+    border-color: var(--agora-border-strong);
+    background: var(--agora-resalte-neutro);
+    color: var(--agora-primary);
+  }
+
+  .chip--servicio {
+    border-color: var(--agora-borde-tarjeta);
+    background: var(--agora-superficie-neutra);
+    color: var(--agora-primary);
+  }
+
   /* Variante rectangular usada en la cabecera del detalle. */
   .chip--recto {
     padding: 0.25rem 0.75rem;
@@ -338,6 +351,24 @@
   .tabla-detalle__th--numero,
   .tabla-detalle__td--numero {
     text-align: right;
+  }
+
+  /* Columnas cortas de categoría (tipo, unidad, consecutivo): al centro. */
+  .tabla-detalle__th--centro,
+  .tabla-detalle__td--centro {
+    text-align: center;
+  }
+
+  .tabla-detalle__vacio {
+    padding: 2.5rem 1rem;
+    color: var(--agora-texto-neutro);
+    text-align: center;
+  }
+
+  .tabla-detalle__vacio mat-icon {
+    display: block;
+    margin: 0 auto 0.5rem;
+    color: var(--agora-texto-deshabilitado);
   }
 
   .tabla-detalle__td {
