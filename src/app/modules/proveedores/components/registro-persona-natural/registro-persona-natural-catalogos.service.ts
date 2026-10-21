@@ -33,6 +33,13 @@ export const PREGUNTAS_BOOLEANAS_PERSONA_NATURAL = {
   },
 } as const;
 
+export const CAMPOS_COMPLEMENTARIOS_PERSONA_NATURAL = {
+  grupo: 'Grupo_9',
+  codigos: {
+    numeroHijos: 'NUMERO_HIJOS',
+  },
+} as const;
+
 export interface CatalogosPersonaNaturalPaso1 {
   tiposDocumento: OpcionNatural[];
   paises: OpcionNatural[];

@@ -781,8 +781,8 @@
               <input
                 matInput
                 type="number"
-                min="1"
-                max="10"
+                min="0"
+                step="1"
                 formControlName="numeroHijos"
                 inputmode="numeric"
               />
@@ -798,10 +798,10 @@
 
               @if (
                 caracterizacionForm.get("numeroHijos")?.hasError("min") ||
-                caracterizacionForm.get("numeroHijos")?.hasError("max")
+                caracterizacionForm.get("numeroHijos")?.hasError("pattern")
               ) {
                 <mat-error>
-                  El número debe estar entre 1 y 10.
+                  Ingrese una cantidad entera no negativa.
                 </mat-error>
               }
 

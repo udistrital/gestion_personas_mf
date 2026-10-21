@@ -156,7 +156,7 @@ export class RegistroPersonaJuridicaCatalogosService {
       tiposCuentaBancaria: parametro("TCB"),
       actividadEconomicaCiiu: parametro("CIIU", { exigirCodigo: true }),
       // Catálogos que usa el formulario y que no figuran en PERSONA_JURIDICA_CONSUMO.md.
-      responsabilidadFiscal: parametro("RESP_FIS", { codigoArea: "IT" }),
+      responsabilidadFiscal: parametro("RESP_FIS"),
       tipoDocumento: parametro("TIP_DOC", {
         codigoArea: "IT",
         exigirCodigo: true,

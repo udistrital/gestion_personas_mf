@@ -260,7 +260,7 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
         victimaConflictoArmado: this.fb.control<boolean | null>(null, Validators.required),
 
         tieneHijos: this.fb.control<boolean | null>(null, Validators.required),
-        numeroHijos: ["", [Validators.min(1), Validators.max(10)]],
+        numeroHijos: ["", [Validators.min(0), Validators.pattern(/^\d+$/)]],
 
         esCabezaFamilia: this.fb.control<boolean | null>(null, Validators.required),
         esPep: this.fb.control<boolean | null>(null, Validators.required),
@@ -470,8 +470,8 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
         if (this.esRespuestaAfirmativa(tieneHijos)) {
           numeroHijos?.setValidators([
             Validators.required,
-            Validators.min(1),
-            Validators.max(10),
+            Validators.min(0),
+            Validators.pattern(/^\d+$/),
           ]);
         } else {
           numeroHijos?.clearValidators();
@@ -999,11 +999,12 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
     if (this.esRespuestaAfirmativa(tieneHijos)) {
       numeroHijos?.setValidators([
         Validators.required,
-        Validators.min(1),
-        Validators.max(10),
+        Validators.min(0),
+        Validators.pattern(/^\d+$/),
       ]);
     } else {
       numeroHijos?.clearValidators();
+      numeroHijos?.setValue("", { emitEvent: false });
     }
 
     numeroHijos?.updateValueAndValidity({ emitEvent: false });

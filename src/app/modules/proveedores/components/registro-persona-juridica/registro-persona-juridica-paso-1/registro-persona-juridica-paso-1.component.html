@@ -167,24 +167,60 @@
     </div>
     <fieldset class="responsabilidades">
       <legend>Responsabilidades Fiscales en Casilla 53 del RUT vigente: <b>*</b></legend>
-      @for (opcion of opcionesResponsabilidadesFiscales; track opcion.id) {
-        <label>
-          <input
-            [checked]="formulario.get('responsabilidades')?.value?.includes(opcion.id)"
-            (change)="cambiarResponsabilidad(opcion.id, $any($event.target).checked)"
-            type="checkbox"
-          >
-          {{ opcion.nombre }}
-        </label>
-      }
-      @if (
-        formulario.get('responsabilidades')?.touched &&
-        formulario.get('responsabilidades')?.invalid
-      ) {
-        <small class="field-error">
-          Seleccione al menos una responsabilidad fiscal.
-        </small>
-      }
+      <div class="responsabilidades-contenido">
+        <div class="campo-grid campo-grid--three responsabilidades-selector">
+          <label class="campo"><span>Buscar responsabilidad fiscal</span>
+            <input
+              [value]="busquedaResponsabilidadFiscal"
+              (input)="busquedaResponsabilidadFiscal = $any($event.target).value"
+              type="search"
+              autocomplete="off"
+            >
+          </label>
+          <label class="campo"><span>Responsabilidad disponible</span>
+            <select [formControl]="responsabilidadFiscalDisponibleId">
+              <option [ngValue]="null">Seleccione...</option>
+              @for (opcion of responsabilidadesFiscalesDisponibles; track opcion.id) {
+                <option [ngValue]="opcion.id">
+                  {{ opcion.codigo ? opcion.codigo + ' — ' : '' }}{{ opcion.nombre }}
+                </option>
+              }
+            </select>
+          </label>
+          <button
+            class="boton boton--primary"
+            type="button"
+            [disabled]="responsabilidadFiscalDisponibleId.value === null"
+            (click)="agregarResponsabilidadFiscal()"
+          >Agregar responsabilidad</button>
+        </div>
+        @if (
+          opcionesResponsabilidadesFiscales.length > 0 &&
+          responsabilidadesFiscalesDisponibles.length === 0
+        ) {
+          <p>No hay responsabilidades fiscales disponibles para agregar.</p>
+        }
+        <div class="responsabilidades-seleccionadas">
+          @for (opcion of responsabilidadesFiscalesSeleccionadas; track opcion.id) {
+            <div class="vinculacion responsabilidad-seleccionada">
+              <span>{{ opcion.codigo ? opcion.codigo + ' — ' : '' }}{{ opcion.nombre }}</span>
+              <button
+                class="boton boton--ligero"
+                type="button"
+                (click)="quitarResponsabilidadFiscal(opcion.id)"
+              >Retirar</button>
+            </div>
+          }
+        </div>
+        @if (
+          formulario.get('responsabilidades')?.touched &&
+          formulario.get('responsabilidades')?.invalid
+        ) {
+          <small class="field-error">
+            Seleccione al menos una responsabilidad fiscal.
+          </small>
+        }
+      </div>
     </fieldset>
   </plantilla-tarjeta-contenedora>
 
