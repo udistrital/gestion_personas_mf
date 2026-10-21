@@ -1,0 +1,4 @@
+@use "src/app/shared/styles/detalle-solicitud" as detalle;
+
+/* El par etiqueta/valor se apoya en las clases compartidas del detalle. */
+@include detalle.styles;

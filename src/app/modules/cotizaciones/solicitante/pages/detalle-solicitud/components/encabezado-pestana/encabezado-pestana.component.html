@@ -1,0 +1,17 @@
+<header class="encabezado-pestana">
+  <div class="encabezado-pestana__textos">
+    <h2 class="encabezado-pestana__titulo">
+      @if (icono) {
+        <mat-icon aria-hidden="true">{{ icono }}</mat-icon>
+      }
+      {{ titulo }}
+    </h2>
+    @if (descripcion) {
+      <p class="encabezado-pestana__descripcion">{{ descripcion }}</p>
+    }
+  </div>
+
+  <div class="encabezado-pestana__acciones">
+    <ng-content select="[acciones]"></ng-content>
+  </div>
+</header>
