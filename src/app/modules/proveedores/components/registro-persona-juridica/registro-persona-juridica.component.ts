@@ -1,5 +1,5 @@
 import { Component, DestroyRef, OnInit } from "@angular/core";
-import { FormControl, FormGroup, Validators } from "@angular/forms";
+import { FormControl, FormGroup, Validators, ValidatorFn, ValidationErrors, AbstractControl } from "@angular/forms";
 import { Router } from "@angular/router";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import {
@@ -36,6 +36,17 @@ const URL_HTTP = /^https?:\/\/[^\s]+$/;
 const CUENTA_BANCARIA = /^\d{8,20}$/;
 const ARCHIVO_PDF = /^[\wáéíóúüñ(). -]+\.pdf$/i;
 const OTP = /^\d{6}$/;
+
+// Validador que requiere al menos un elemento en un array
+function minArrayLength(min: number): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const value = control.value;
+    if (!value || !Array.isArray(value)) {
+      return null;
+    }
+    return value.length >= min ? null : { minArrayLength: { requiredLength: min, actualLength: value.length } };
+  };
+}
 
 @Component({
   selector: "app-registro-persona-juridica",
@@ -413,7 +424,7 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
     granContribuyente: new FormControl<number | null>(null, Validators.required),
     autorretenedor: new FormControl<number | null>(null, Validators.required),
     exencionIca: new FormControl<number | null>(null, Validators.required),
-    responsabilidades: new FormControl<number[]>([], Validators.required),
+    responsabilidades: new FormControl<number[]>([], [Validators.required, minArrayLength(1)]),
     departamento: new FormControl<number | null>(null, Validators.required),
     ciudad: new FormControl<number | null>({ value: null, disabled: true }, Validators.required),
     tipoVia: new FormControl<number | null>(null, Validators.required),

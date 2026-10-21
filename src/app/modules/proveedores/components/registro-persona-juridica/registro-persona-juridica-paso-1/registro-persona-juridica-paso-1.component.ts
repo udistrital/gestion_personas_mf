@@ -103,7 +103,9 @@ export class RegistroPersonaJuridicaPaso1Component {
       ? [...responsabilidades, valor]
       : responsabilidades.filter((responsabilidad: number) => responsabilidad !== valor);
 
-    this.formulario.get('responsabilidades')?.setValue([...new Set(actualizadas)]);
+    const control = this.formulario.get('responsabilidades');
+    control?.setValue([...new Set(actualizadas)]);
+    control?.markAsTouched();
     this.formularioChange.emit(this.formulario);
   };
 

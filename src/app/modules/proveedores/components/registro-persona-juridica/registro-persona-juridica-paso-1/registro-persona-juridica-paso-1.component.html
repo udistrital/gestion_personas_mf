@@ -177,6 +177,14 @@
           {{ opcion.nombre }}
         </label>
       }
+      @if (
+        formulario.get('responsabilidades')?.touched &&
+        formulario.get('responsabilidades')?.invalid
+      ) {
+        <small class="field-error">
+          Seleccione al menos una responsabilidad fiscal.
+        </small>
+      }
     </fieldset>
   </plantilla-tarjeta-contenedora>
 
