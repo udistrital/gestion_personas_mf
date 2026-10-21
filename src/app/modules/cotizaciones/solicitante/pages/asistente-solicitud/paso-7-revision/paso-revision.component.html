@@ -194,6 +194,17 @@
     </ng-container>
   </banner-paso>
 
+  <!-- Aviso: el plazo se calculó sin el calendario de festivos -->
+  @if (calendarioDegradado()) {
+    <p class="revision__aviso-calendario" role="alert">
+      <mat-icon aria-hidden="true">warning</mat-icon>
+      <span>
+        El plazo en días hábiles se calculó sin el calendario de festivos (no se
+        pudo consultar). Verifique los días festivos antes de procesar.
+      </span>
+    </p>
+  }
+
   <div class="rejilla-revision">
     <!-- Columna izquierda: acordeones por paso -->
     <div class="revision__acordeones">

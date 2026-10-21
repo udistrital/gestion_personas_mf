@@ -112,6 +112,111 @@
   color: var(--agora-error);
 }
 
+/* ── Festivos que se descuentan del cronograma ────────────────────────────── */
+.festivos-rango {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-left: 3px solid var(--agora-warning-border);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-superficie-neutra);
+}
+
+.festivos-rango__titulo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--agora-warning-text);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.festivos-rango__titulo mat-icon {
+  width: 0.9375rem;
+  height: 0.9375rem;
+  font-size: 0.9375rem;
+}
+
+.festivos-rango__lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.festivos-rango__item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+}
+
+.festivos-rango__fecha {
+  color: var(--agora-text);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.festivos-rango__nombre {
+  color: var(--agora-texto-neutro);
+}
+
+/* ── Enlace a la fuente del calendario ────────────────────────────────────── */
+.nota-legal__enlace {
+  color: var(--agora-primary);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.nota-legal__enlace:focus-visible {
+  outline: 2px solid var(--agora-primary);
+  outline-offset: 2px;
+}
+
+/* ── Aviso del calendario de festivos ──────────────────────────────────────── */
+.aviso-calendario {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.625rem;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border: 1px solid var(--agora-warning-border);
+  border-left: 3px solid var(--agora-warning-border);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-warning-surface);
+  color: var(--agora-warning-text);
+}
+
+.aviso-calendario > mat-icon {
+  flex: 0 0 auto;
+  width: 1.125rem;
+  height: 1.125rem;
+  font-size: 1.125rem;
+}
+
+.aviso-calendario__texto {
+  flex: 1 1 16rem;
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+/* Aviso neutro mientras se consulta el calendario. */
+.aviso-calendario--carga {
+  border-color: var(--agora-borde-tarjeta);
+  border-left-color: var(--agora-primary);
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-texto-neutro);
+}
+
 /* ── Notas informativas con borde vino ───────────────────────────────────── */
 .nota-legal {
   margin: 0;

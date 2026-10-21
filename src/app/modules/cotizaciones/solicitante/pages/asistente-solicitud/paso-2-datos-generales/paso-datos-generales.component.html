@@ -249,11 +249,39 @@
     </div>
   </div>
 
+  <!-- Festivos que se descuentan del cronograma -->
+  @if (cronograma().festivosExcluidos.length > 0) {
+    <div class="festivos-rango" role="note">
+      <span class="festivos-rango__titulo">
+        <mat-icon aria-hidden="true">event_busy</mat-icon>
+        Días festivos en el periodo (no hábiles)
+      </span>
+      <ul class="festivos-rango__lista">
+        @for (festivo of cronograma().festivosExcluidos; track festivo.fecha) {
+          <li class="festivos-rango__item">
+            <span class="festivos-rango__fecha">{{ festivo.fechaCorta }}</span>
+            <span class="festivos-rango__nombre">{{ festivo.nombre }}</span>
+          </li>
+        }
+      </ul>
+    </div>
+  }
+
   <!-- Validación legal informativa -->
   <p class="nota-legal">
     <span class="nota-legal__titulo">Validación del sistema:</span>
     La fecha de cierre debe ser al menos {{ minimoDiasHabiles }} días hábiles
     después de la apertura según la directriz institucional de compras públicas.
+    Los días hábiles excluyen sábados, domingos y los festivos nacionales de
+    Colombia
+    <a
+      class="nota-legal__enlace"
+      href="https://date.nager.at/"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      (fuente: Nager.Date)
+    </a>.
   </p>
 
   <!-- Banner de horario de participación -->
@@ -266,6 +294,31 @@
       formal establecida.
     </p>
   </div>
+
+  <!-- Estado de la consulta del calendario de festivos -->
+  @if (calendarioCargando()) {
+    <p class="aviso-calendario aviso-calendario--carga" role="status">
+      <mat-icon aria-hidden="true">hourglass_top</mat-icon>
+      <span>Verificando calendario de festivos…</span>
+    </p>
+  } @else if (calendarioDegradado()) {
+    <div class="aviso-calendario" role="alert">
+      <mat-icon aria-hidden="true">warning</mat-icon>
+      <p class="aviso-calendario__texto">
+        No se pudo consultar el calendario de días festivos. El conteo sólo
+        descuenta sábados y domingos: tenga en cuenta los días festivos al
+        seleccionar su fecha de cierre.
+      </p>
+      <button
+        class="boton-recto"
+        type="button"
+        (click)="reintentarCalendario()"
+      >
+        <mat-icon aria-hidden="true">refresh</mat-icon>
+        <span>Reintentar</span>
+      </button>
+    </div>
+  }
 </plantilla-tarjeta-contenedora>
 
 <!-- ──────────────────────────── TARJETA 3 ───────────────────────────────── -->

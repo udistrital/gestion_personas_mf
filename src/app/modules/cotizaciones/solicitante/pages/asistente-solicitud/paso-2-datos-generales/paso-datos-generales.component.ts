@@ -26,6 +26,11 @@ import {
   formatoFechaLarga,
 } from "../../../../models/datos-generales.model";
 import {
+  FechasFestivas,
+  festivosDelRango,
+} from "../../../../models/calendario.model";
+import { CalendarioFestivosService } from "../../../../services/calendario-festivos.service";
+import {
   CaracteristicasSolicitud,
   ResponsableSolicitud,
 } from "../../../../models/necesidad.model";
@@ -35,15 +40,22 @@ import {
  * `DIAS_HABILES_MINIMOS` días hábiles después de la apertura.
  *
  * Es un validador de grupo porque depende de los dos controles a la vez.
+ *
+ * Los días hábiles se calculan con el calendario de festivos vigente, que se
+ * recibe como función para leer siempre el estado más reciente: cuando la
+ * consulta del calendario termina, el asistente revalida el grupo y la regla
+ * se vuelve a evaluar con los festivos ya cargados.
  */
-export function validadorCronograma(): ValidatorFn {
+export function validadorCronograma(
+  obtenerFestivos: () => FechasFestivas = () => new Set<string>(),
+): ValidatorFn {
   return (grupo: AbstractControl): ValidationErrors | null => {
     const apertura = String(grupo.get("fechaApertura")?.value ?? "");
     const cierre = String(grupo.get("fechaCierre")?.value ?? "");
     if (!apertura || !cierre) {
       return null;
     }
-    const dias = diasHabilesEntre(apertura, cierre);
+    const dias = diasHabilesEntre(apertura, cierre, obtenerFestivos());
     return dias >= DIAS_HABILES_MINIMOS
       ? null
       : { cronogramaInsuficiente: { dias, minimo: DIAS_HABILES_MINIMOS } };
@@ -100,6 +112,15 @@ export class PasoDatosGeneralesComponent implements OnInit {
 
   private readonly destroyRef = inject(DestroyRef);
 
+  /**
+   * Calendario de días festivos (raíz del inyector).
+   *
+   * Lo consulta el asistente; este componente sólo lee el resultado para
+   * contar los días hábiles y para avisar cuando el calendario no está
+   * disponible.
+   */
+  private readonly calendario = inject(CalendarioFestivosService);
+
   /** Dispara el recálculo del resumen del cronograma. */
   private readonly marcas = signal(0);
 
@@ -118,7 +139,11 @@ export class PasoDatosGeneralesComponent implements OnInit {
     this.marcas();
     const apertura = String(this.control("fechaApertura").value ?? "");
     const cierre = String(this.control("fechaCierre").value ?? "");
-    const dias = diasHabilesEntre(apertura, cierre);
+    const dias = diasHabilesEntre(
+      apertura,
+      cierre,
+      this.calendario.fechasFestivas(),
+    );
     return {
       aperturaLarga: formatoFechaLarga(apertura),
       cierreLarga: formatoFechaLarga(cierre),
@@ -127,8 +152,44 @@ export class PasoDatosGeneralesComponent implements OnInit {
       dias,
       cumple: !!apertura && !!cierre && dias >= DIAS_HABILES_MINIMOS,
       completo: !!apertura && !!cierre,
+      /** Festivos que se descuentan dentro del rango del cronograma. */
+      festivosExcluidos: this.festivosExcluidos(apertura, cierre),
     };
   });
+
+  /** true mientras se consulta el calendario de festivos. */
+  readonly calendarioCargando = computed(
+    () => this.calendario.detalle().estado === "cargando",
+  );
+
+  /**
+   * true cuando el conteo de días hábiles se hizo sin todos los festivos.
+   *
+   * El trámite no se bloquea: la tarjeta avisa al solicitante para que revise
+   * los días festivos al elegir la fecha de cierre.
+   */
+  readonly calendarioDegradado = computed(() => this.calendario.degradado());
+
+  /** Vuelve a consultar los años del calendario que no se pudieron cargar. */
+  reintentarCalendario(): void {
+    this.calendario.reintentar();
+  }
+
+  /** Festivos del rango del cronograma, con la fecha ya formateada. */
+  private festivosExcluidos(
+    apertura: string,
+    cierre: string,
+  ): readonly FestivoExcluido[] {
+    return festivosDelRango(
+      apertura,
+      cierre,
+      this.calendario.festivos(),
+    ).map((festivo) => ({
+      fecha: festivo.fecha,
+      fechaCorta: formatoFechaCorta(festivo.fecha),
+      nombre: festivo.nombre,
+    }));
+  }
 
   /** Responsable precargado por SICAPITAL (o `null` si no hay cruce). */
   get responsable(): ResponsableSolicitud | null {
@@ -191,4 +252,11 @@ export class PasoDatosGeneralesComponent implements OnInit {
 export interface RespuestaPaso2 {
   readonly responsable: ResponsableSolicitud;
   readonly caracteristicas: CaracteristicasSolicitud;
+}
+
+/** Festivo que se descuenta del cronograma, con la fecha ya formateada. */
+interface FestivoExcluido {
+  readonly fecha: string;
+  readonly fechaCorta: string;
+  readonly nombre: string;
 }

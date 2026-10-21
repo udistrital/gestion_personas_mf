@@ -1,4 +1,11 @@
-import { Component, DestroyRef, OnInit, ViewChild, inject, signal } from "@angular/core";
+import {
+  Component,
+  DestroyRef,
+  OnInit,
+  ViewChild,
+  inject,
+  signal,
+} from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { FormBuilder, FormGroup, Validators } from "@angular/forms";
 import { Router } from "@angular/router";
@@ -9,7 +16,9 @@ import {
   BorradorSolicitudNueva,
   BorradorSolicitudService,
 } from "../../../services/borrador-solicitud.service";
+import { CalendarioFestivosService } from "../../../services/calendario-festivos.service";
 import { ResultadoCruce, formatoCop } from "../../../models/necesidad.model";
+import { aniosDelRango } from "../../../models/calendario.model";
 import {
   DEPENDENCIAS_DESTINO,
   DEPENDENCIAS_SOLICITANTES,
@@ -130,6 +139,7 @@ export class AsistenteSolicitudComponent implements OnInit {
     private readonly router: Router,
     private readonly alerta: AlertService,
     private readonly destroyRef: DestroyRef,
+    private readonly calendarioFestivos: CalendarioFestivosService,
   ) {
     this.asistenteForm = fb.group({
       // Paso 1 (implementado)
@@ -148,7 +158,11 @@ export class AsistenteSolicitudComponent implements OnInit {
           criterioSeleccion: ["", minCaracteres(MIN_CARACTERES_CRITERIO)],
           planAccion: ["", minCaracteres(MIN_CARACTERES_PLAN)],
         },
-        { validators: validadorCronograma() },
+        {
+          validators: validadorCronograma(
+            () => this.calendarioFestivos.fechasFestivas(),
+          ),
+        },
       ),
       // Pasos 3 en adelante: se habilitan con su implementación.
       items: fb.group(
@@ -208,9 +222,48 @@ export class AsistenteSolicitudComponent implements OnInit {
       .pipe(debounceTime(800), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.guardarBorrador(true));
 
+    // Las fechas del cronograma determinan los años del calendario: al
+    // cambiarlas se consultan los que falten.
+    this.datosGeneralesForm.valueChanges
+      .pipe(debounceTime(400), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.cargarCalendario());
+
+    // Cuando llegan los festivos, la regla de días hábiles se reevalúa: el
+    // validador del cronograma los tiene en cuenta.
+    this.calendarioFestivos.cambios$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.datosGeneralesForm.updateValueAndValidity());
+
     // Un borrador restaurado con la solicitud ya radicada abre el paso 7 en
     // la vista de éxito.
     this.vistaExitosa.set(this.solicitudRadicada);
+  }
+
+  /**
+   * Consulta el calendario de días festivos que necesita el cronograma.
+   *
+   * Se piden los años que abrange el rango apertura→cierre más la vigencia
+   * elegida: un proceso que abre en diciembre y cierra en enero necesita
+   * ambos años. El servicio cachea por año, así que mover las fechas no
+   * dispara consultas repetidas.
+   */
+  private cargarCalendario(): void {
+    const vigencia = String(this.resultadoCruce()?.necesidad.vigencia ?? "");
+    const apertura = String(
+      this.datosGeneralesForm.get("fechaApertura")?.value ?? "",
+    );
+    const cierre = String(
+      this.datosGeneralesForm.get("fechaCierre")?.value ?? "",
+    );
+
+    const anios = new Set<number>(aniosDelRango(apertura, cierre));
+    if (/^\d{4}$/.test(vigencia)) {
+      anios.add(Number(vigencia));
+    }
+
+    if (anios.size > 0) {
+      this.calendarioFestivos.cargar([...anios].sort((a, b) => a - b));
+    }
   }
 
   get necesidadForm(): FormGroup {
@@ -589,6 +642,7 @@ export class AsistenteSolicitudComponent implements OnInit {
           ? diasHabilesEntre(
               datosGenerales.fechaApertura,
               datosGenerales.fechaCierre,
+              this.calendarioFestivos.fechasFestivas(),
             )
           : 0,
       // Los dos campos del paso 2 son editores de texto enriquecido: su valor
@@ -695,6 +749,8 @@ export class AsistenteSolicitudComponent implements OnInit {
 
   alCambiarResultadoCruce(resultado: ResultadoCruce | null): void {
     this.resultadoCruce.set(resultado);
+    // La vigencia del cruce determina el año del calendario de festivos.
+    this.cargarCalendario();
   }
 
   guardarBorrador(automatico = false): void {

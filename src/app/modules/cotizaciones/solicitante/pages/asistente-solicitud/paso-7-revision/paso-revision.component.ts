@@ -49,6 +49,7 @@ import {
   etiquetaClasificacion,
 } from "../../../../models/documentos.model";
 import { AlertService } from "src/app/shared/services/alert.service";
+import { CalendarioFestivosService } from "../../../../services/calendario-festivos.service";
 import { DialogoProcesarComponent } from "./components/dialogo-procesar/dialogo-procesar.component";
 
 /** Segundos que tarda la radicación simulada antes de mostrar el éxito. */
@@ -129,6 +130,14 @@ export class PasoRevisionComponent {
   private readonly alerta = inject(AlertService);
   private readonly destroyRef = inject(DestroyRef);
 
+  /**
+   * Calendario de días festivos (raíz del inyector).
+   *
+   * Sólo se consulta para avisar cuando el plazo en días hábiles se calculó
+   * sin el calendario oficial.
+   */
+  private readonly calendario = inject(CalendarioFestivosService);
+
   /** Temporizadores pendientes (radicación y acuse de copia). */
   private readonly temporizadores = new Set<ReturnType<typeof setTimeout>>();
 
@@ -166,6 +175,12 @@ export class PasoRevisionComponent {
     this.acordeonPaso5(),
     this.acordeonPaso6(),
   ]);
+
+  /**
+   * true cuando el plazo en días hábiles se calculó sin el calendario de
+   * festivos (la consulta al calendario no pudo completarse).
+   */
+  readonly calendarioDegradado = computed(() => this.calendario.degradado());
 
   /** Criterios de la lista de verificación institucional. */
   readonly verificacion = computed<readonly ItemVerificacion[]>(() => {

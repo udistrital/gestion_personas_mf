@@ -8,4 +8,7 @@ export const environment = {
   TERCEROS_SERVICE:
     "https://autenticacion.portaloas.udistrital.edu.co/apioas/terceros_crud/v1/",
 
+  /* API pública de días festivos (Nager.Date v3). */
+  CALENDARIO_FESTIVOS_URL:
+    "https://date.nager.at/api/v3/PublicHolidays",
 };

@@ -6,6 +6,8 @@
  * (dependencias, cronograma, criterio de selección y plan de acción).
  */
 
+import { FechasFestivas } from "./calendario.model";
+
 /** Funcionario que radica la solicitud (tarjeta 1, solo lectura). */
 export interface ResponsableSolicitud {
   readonly nombres: string;
@@ -171,8 +173,22 @@ export function formatoFechaCorta(valor: string): string {
   return `${dia} ${MESES[fecha.getMonth()].slice(0, 3)} ${fecha.getFullYear()}`;
 }
 
-/** Días hábiles transcurridos entre dos fechas (sin contar festivos). */
-export function diasHabilesEntre(desde: string, hasta: string): number {
+/**
+ * Días hábiles transcurridos entre dos fechas.
+ *
+ * Es la **fuente única** de la regla de días hábiles: la usan el validador del
+ * cronograma, el contador que muestra el paso 2 y el plazo de la revisión del
+ * paso 7, de modo que los tres nunca se contradigan.
+ *
+ * Un día es hábil si es día de semana **y** no es festivo. Los festivos se
+ * reciben ya calculados desde el calendario oficial (`modelos/calendario.model.ts`),
+ * de modo que aquí no hay ninguna constante de calendario.
+ */
+export function diasHabilesEntre(
+  desde: string,
+  hasta: string,
+  festivos: FechasFestivas = new Set<string>(),
+): number {
   const inicio = parsearFecha(desde);
   const fin = parsearFecha(hasta);
   if (!inicio || !fin || fin <= inicio) {
@@ -184,9 +200,17 @@ export function diasHabilesEntre(desde: string, hasta: string): number {
   while (cursor < fin) {
     cursor.setDate(cursor.getDate() + 1);
     const dia = cursor.getDay();
-    if (dia !== 0 && dia !== 6) {
+    if (dia !== 0 && dia !== 6 && !festivos.has(fechaIso(cursor))) {
       dias += 1;
     }
   }
   return dias;
+}
+
+/** Fecha local en ISO-8601 ("2026-03-23"). */
+function fechaIso(fecha: Date): string {
+  const anio = fecha.getFullYear();
+  const mes = String(fecha.getMonth() + 1).padStart(2, "0");
+  const dia = String(fecha.getDate()).padStart(2, "0");
+  return `${anio}-${mes}-${dia}`;
 }

@@ -10,6 +10,31 @@
   flex-direction: column;
 }
 
+/* ── Aviso: el plazo se calculó sin el calendario de festivos ─────────────── */
+.revision__aviso-calendario {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  box-sizing: border-box;
+  width: min(100% - 3rem, 86.25rem);
+  margin: 0 auto;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--agora-warning-border);
+  border-left: 3px solid var(--agora-warning-border);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-warning-surface);
+  color: var(--agora-warning-text);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.revision__aviso-calendario mat-icon {
+  flex: 0 0 auto;
+  width: 1.125rem;
+  height: 1.125rem;
+  font-size: 1.125rem;
+}
+
 /* ── Rejilla principal de la revisión (8/12 + 4/12) ──────────────────────── */
 .rejilla-revision {
   display: grid;
