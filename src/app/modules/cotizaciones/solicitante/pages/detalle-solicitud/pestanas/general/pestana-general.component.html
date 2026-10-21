@@ -1,0 +1,158 @@
+@if (solicitud(); as s) {
+  <encabezado-pestana
+    icono="info"
+    titulo="General"
+    descripcion="Información base de la solicitud: responsable, características y plan de acción relacionado."
+  ></encabezado-pestana>
+
+  <!-- ───────────────────── Tarjeta 1: Responsable ───────────────────── -->
+  @if (responsable(); as r) {
+    <tarjeta-seccion
+      icono="badge"
+      titulo="Responsable de la solicitud"
+      subtitulo="Funcionario radicador y dependencias intervinientes"
+    >
+      <div class="datos-grid datos-grid--tres">
+        <par-etiqueta-valor etiqueta="Nombres" [valor]="r.nombres" />
+        <par-etiqueta-valor etiqueta="Apellidos" [valor]="r.apellidos" />
+        <par-etiqueta-valor
+          etiqueta="Identificación"
+          [valor]="r.identificacion"
+          icono="fingerprint"
+        />
+        <par-etiqueta-valor
+          etiqueta="Unidad Ejecutora"
+          [valor]="r.unidadEjecutora"
+          icono="account_balance"
+        />
+        <par-etiqueta-valor
+          clase="dato--destacado"
+          etiqueta="Ordenador del Gasto"
+          [valor]="r.ordenadorGasto"
+          [nota]="r.ordenadorCargo"
+          icono="verified_user"
+          formato="destacado"
+        />
+        <par-etiqueta-valor
+          etiqueta="Dependencia solicitante"
+          [valor]="r.dependenciaSolicitante"
+        />
+        <par-etiqueta-valor
+          clase="dato--ancho"
+          etiqueta="Dependencia destino"
+          [valor]="r.dependenciaDestino"
+        />
+      </div>
+    </tarjeta-seccion>
+  }
+
+  <!-- ─────────────────── Tarjeta 2: Características ─────────────────── -->
+  @if (caracteristicas(); as c) {
+    <tarjeta-seccion
+      icono="tune"
+      titulo="Características de la solicitud"
+      subtitulo="Condiciones técnicas y operativas del proceso"
+    >
+      <div class="datos-grid datos-grid--tres">
+        <par-etiqueta-valor
+          etiqueta="Fecha de apertura"
+          [valor]="c.apertura.fecha"
+          [nota]="notaDe(c.apertura)"
+          icono="event_available"
+        />
+        <par-etiqueta-valor
+          etiqueta="Fecha de cierre"
+          [valor]="c.cierre.fecha"
+          [nota]="notaDe(c.cierre)"
+          icono="event_busy"
+        />
+        <par-etiqueta-valor
+          etiqueta="Plazo de ejecución"
+          [valor]="c.plazoEjecucion"
+          [nota]="c.plazoNota"
+          icono="timer"
+        />
+      </div>
+
+      <div class="datos-grid">
+        <div class="dato dato--ancho">
+          <span class="dato__etiqueta">Objetivo / Tema</span>
+          <div
+            class="bloque-lectura bloque-cita"
+            [innerHTML]="c.objetivo | htmlSeguro"
+          ></div>
+        </div>
+
+        <div class="dato dato--ancho">
+          <span class="dato__etiqueta">
+            Requisitos habilitantes mínimos
+          </span>
+          <div class="bloque-icono">
+            <mat-icon class="bloque-icono__icono" aria-hidden="true">
+              verified
+            </mat-icon>
+            <p class="bloque-icono__texto">{{ c.requisitos }}</p>
+          </div>
+        </div>
+
+        <div class="dato dato--ancho">
+          <span class="dato__etiqueta">Criterio de selección</span>
+          <div class="bloque-icono">
+            <mat-icon class="bloque-icono__icono" aria-hidden="true">
+              balance
+            </mat-icon>
+            <div
+              class="bloque-icono__texto bloque-icono__texto--fuerte"
+              [innerHTML]="c.criterioSeleccion | htmlSeguro"
+            ></div>
+          </div>
+        </div>
+
+        <div class="dato dato--ancho">
+          <span class="dato__etiqueta">Observaciones adicionales</span>
+          <div class="bloque-icono bloque-icono--neutro">
+            <mat-icon class="bloque-icono__icono" aria-hidden="true">
+              info
+            </mat-icon>
+            <p class="bloque-icono__texto bloque-icono__texto--suave">
+              {{ c.observaciones }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </tarjeta-seccion>
+  }
+
+  <!-- ─────────────── Tarjeta 3: Plan de acción relacionado ─────────────── -->
+  @if (planAccion(); as p) {
+    <tarjeta-seccion icono="account_tree" titulo="Plan de acción relacionado">
+      <ng-container acciones>
+        <span class="codigo-plan">{{ p.codigo }}</span>
+      </ng-container>
+
+      <div class="plan">
+        <span class="plan__icono" aria-hidden="true">
+          <mat-icon>flag</mat-icon>
+        </span>
+        <div class="plan__cuerpo">
+          <span class="dato__etiqueta">
+            Descripción del Plan y Meta Estratégica
+          </span>
+          <div class="bloque-lectura" [innerHTML]="p.descripcion | htmlSeguro"></div>
+
+          <div class="plan__pie">
+            <span class="plan__meta">
+              <mat-icon aria-hidden="true">assured_workload</mat-icon>
+              <span>{{ p.eje }}</span>
+            </span>
+            <span class="plan__separador" aria-hidden="true">•</span>
+            <span class="plan__meta">
+              <mat-icon aria-hidden="true">calendar_today</mat-icon>
+              <span>{{ p.aprobacion }}</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </tarjeta-seccion>
+  }
+}
