@@ -96,16 +96,16 @@
         <div class="campo-grid campo-grid--two">
           <label class="campo"><span>Obligado a Facturar Electrónicamente <b>*</b></span><select formControlName="obligadoFacturar">
           <option [ngValue]="null">Seleccione...</option>
-          @for (opcion of opcionesObligadoFacturar; track opcion.id) {
-            <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+          @for (opcion of opcionesSiNo; track opcion.value) {
+            <option [ngValue]="opcion.value">{{ opcion.label }}</option>
           }
         </select></label>
           <label class="campo"><span>Prefijo y Rango de Facturación</span><input formControlName="prefijoFacturacion" type="text"></label>
           <label class="campo"><span>Resolución de Autorización DIAN</span><input formControlName="resolucionDian" type="text"></label>
           <label class="campo"><span>Operaciones en Moneda Extranjera</span><select formControlName="monedaExtranjera">
             <option [ngValue]="null">Seleccione...</option>
-            @for (opcion of opcionesMonedaExtranjera; track opcion.id) {
-              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+            @for (opcion of opcionesSiNo; track opcion.value) {
+              <option [ngValue]="opcion.value">{{ opcion.label }}</option>
             }
           </select></label>
         </div>
