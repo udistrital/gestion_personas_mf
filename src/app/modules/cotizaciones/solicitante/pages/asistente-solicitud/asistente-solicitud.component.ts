@@ -33,6 +33,7 @@ import {
   ResumenSolicitudProveedores,
 } from "../../../models/proveedores.model";
 import {
+  FORMA_PAGO_CONTRAENTREGA,
   MEDIOS_PAGO,
   ParametroPago,
   TIPOS_CONTRATO,
@@ -498,7 +499,12 @@ export class AsistenteSolicitudComponent implements OnInit {
       return "Seleccione la forma de pago del contrato.";
     }
     if (form.hasError("sinParametros")) {
-      return "Agregue al menos un parámetro de la forma de pago.";
+      return form.get("formaPago")?.value === FORMA_PAGO_CONTRAENTREGA
+        ? "Registre la condición del pago único (100 %) de la contraentrega."
+        : "Agregue al menos un parámetro de la forma de pago.";
+    }
+    if (form.hasError("pagoUnicoIncompleto")) {
+      return "La contraentrega admite un único parámetro de pago al 100 %: registre solo la condición del pago final.";
     }
     if (form.hasError("sumaPorcentajes")) {
       const error = form.getError("sumaPorcentajes") as { total: number };

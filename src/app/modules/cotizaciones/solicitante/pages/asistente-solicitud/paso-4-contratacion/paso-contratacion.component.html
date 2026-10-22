@@ -139,6 +139,25 @@
         de pago.
       </span>
     </div>
+
+    <!-- Aviso de la forma de pago: la contraentrega admite un solo desembolso -->
+    @if (esContraentrega()) {
+      <div class="caja-normativa" role="note">
+        <mat-icon aria-hidden="true">lock</mat-icon>
+        <div>
+          <span class="caja-normativa__titulo">
+            Pago único al cumplimiento final
+          </span>
+          <p class="caja-normativa__texto">
+            La contraentrega se ejecuta como un único desembolso del 100 % del
+            valor pactado contra el acta de recibo final a satisfacción de la
+            interventoría. Registre únicamente la
+            <strong>condición del pago</strong>: el porcentaje queda fijo en
+            100 % y no se admiten parámetros adicionales.
+          </p>
+        </div>
+      </div>
+    }
   </plantilla-tarjeta-contenedora>
 </div>
 
@@ -171,8 +190,13 @@
       <div class="aviso-cupo__textos">
         <span class="aviso-cupo__titulo">Cupo Porcentual Completo</span>
         <p class="aviso-cupo__texto">
-          Todos los desembolsos requeridos han sido parametrizados y cumplen con
-          el 100% reglamentario.
+          @if (esContraentrega()) {
+            El pago único contra el acta de recibo final quedó parametrizado y
+            cumple con el 100% reglamentario.
+          } @else {
+            Todos los desembolsos requeridos han sido parametrizados y cumplen con
+            el 100% reglamentario.
+          }
         </p>
       </div>
       <span class="aviso-cupo__sello">100.0% Asignado</span>
@@ -206,11 +230,7 @@
           rows="3"
           formControlName="condicion"
           [readonly]="completo()"
-          [placeholder]="
-            completo()
-              ? 'Cupo de porcentaje completo (100% alcanzado)'
-              : 'Describa el hito o entregable que condiciona el desembolso…'
-          "
+          [placeholder]="placeholderCondicion()"
         ></textarea>
       </div>
       @if (mostrarError("condicion", parametroForm)) {
@@ -226,7 +246,7 @@
       </label>
       <span class="numero-unidad">
         <mat-icon class="numero-unidad__icono" aria-hidden="true">
-          {{ completo() ? "lock" : "percent" }}
+          {{ completo() || esContraentrega() ? "lock" : "percent" }}
         </mat-icon>
         <input
           id="porcentaje-pago"
@@ -235,7 +255,7 @@
           step="1"
           [attr.max]="maximoPorcentaje()"
           formControlName="porcentaje"
-          [readonly]="completo()"
+          [readonly]="completo() || esContraentrega()"
           [placeholder]="maximoPorcentaje()"
         />
         <span class="numero-unidad__sufijo">%</span>
@@ -253,7 +273,12 @@
       }
       @if (!completo()) {
         <span class="campo__ayuda">
-          Disponible: {{ maximoPorcentaje() }} % para asignar.
+          @if (esContraentrega()) {
+            Porcentaje fijo: el desembolso de la contraentrega es único y siempre
+            es del 100 %.
+          } @else {
+            Disponible: {{ maximoPorcentaje() }} % para asignar.
+          }
         </span>
       }
     </div>
@@ -269,7 +294,13 @@
           {{ completo() ? "add" : "add_circle" }}
         </mat-icon>
         <span>
-          {{ completo() ? "Agregar" : "Agregar parámetro de pago" }}
+          {{
+            completo()
+              ? "Agregar"
+              : esContraentrega()
+                ? "Registrar pago único"
+                : "Agregar parámetro de pago"
+          }}
         </span>
       </button>
     </div>
@@ -289,7 +320,11 @@
 <plantilla-tarjeta-contenedora
   icon="receipt_long"
   title="4. Formas de pago agregadas"
-  description="Desglose de actas parciales para ejecución presupuestal institucional."
+  [description]="
+    esContraentrega()
+      ? 'Pago único del 100 % contra el acta de recibo final para ejecución presupuestal institucional.'
+      : 'Desglose de actas parciales para ejecución presupuestal institucional.'
+  "
 >
   <ng-container acciones>
     <span class="chip chip--neutro">
@@ -338,8 +373,13 @@
             <td colspan="4" class="tabla-paso__vacio">
               <mat-icon aria-hidden="true">receipt_long</mat-icon>
               <span>
-                Todavía no hay parámetros de pago. Descríbalos en la tarjeta
-                superior para cerrar la distribución porcentual.
+                @if (esContraentrega()) {
+                  Todavía no se ha registrado la condición del pago único.
+                  Diligencie el 100 % fijo en la tarjeta superior.
+                } @else {
+                  Todavía no hay parámetros de pago. Descríbalos en la tarjeta
+                  superior para cerrar la distribución porcentual.
+                }
               </span>
             </td>
           </tr>
@@ -495,13 +535,22 @@
       </span>
       <div>
         <span class="estado-paso__titulo">
-          Paso 4 incompleto (Progreso:
-          {{ formatoPorcentaje(resumen().total) }}% de 100%)
+          @if (esContraentrega()) {
+            Paso 4 incompleto (Pago único sin registrar)
+          } @else {
+            Paso 4 incompleto (Progreso:
+            {{ formatoPorcentaje(resumen().total) }}% de 100%)
+          }
         </span>
         <p class="estado-paso__texto">
-          Debe registrar el parámetro de pago restante
-          ({{ formatoPorcentaje(resumen().restante) }}%) en la tarjeta superior
-          para habilitar el botón "Continuar al Paso 5".
+          @if (esContraentrega()) {
+            Debe registrar la condición del pago único (100 % fijo) en la tarjeta
+            superior para habilitar el botón "Continuar al Paso 5".
+          } @else {
+            Debe registrar el parámetro de pago restante
+            ({{ formatoPorcentaje(resumen().restante) }}%) en la tarjeta superior
+            para habilitar el botón "Continuar al Paso 5".
+          }
         </p>
       </div>
     </div>

@@ -17,32 +17,49 @@ import {
   Validators,
 } from "@angular/forms";
 import {
+  CONDICION_CONTRAENTREGA_SUGERIDA,
   FORMAS_PAGO,
   MEDIOS_PAGO,
   MIN_CARACTERES_CONDICION,
   NORMA_MEDIO_PAGO,
   PORCENTAJE_MINIMO,
+  PORCENTAJE_PAGO_UNICO,
   PORCENTAJE_TOTAL,
   ParametroPago,
   TIPOS_CONTRATO,
   calcularResumenPagos,
+  esPagoUnico,
   etiquetaCorta,
   formatoPorcentajePago,
   reglaDesembolso,
 } from "../../../../models/contratacion.model";
+import { AlertService } from "src/app/shared/services/alert.service";
 
 /**
  * Validador del paso 4: exige al menos un parámetro de pago y que la suma de
  * los porcentajes sea exactamente el 100 %.
  *
  * Es un validador de grupo porque depende de la lista completa de parámetros.
+ *
+ * La contraentrega tiene su propia regla: admite **un solo** parámetro y su
+ * porcentaje es fijo al 100 %, así que no basta con que la suma dé 100 %.
  */
 export function sumaPorcentajes(): ValidatorFn {
   return (grupo: AbstractControl): ValidationErrors | null => {
     const lista = grupo.get("parametros")?.value;
+    const formaPago = String(grupo.get("formaPago")?.value ?? "");
+
     if (!Array.isArray(lista) || lista.length === 0) {
       return { sinParametros: true };
     }
+
+    if (esPagoUnico(formaPago)) {
+      const porcentaje = Number(lista[0]?.porcentaje ?? 0);
+      return lista.length === 1 && porcentaje === PORCENTAJE_PAGO_UNICO
+        ? null
+        : { pagoUnicoIncompleto: { cantidad: lista.length, porcentaje } };
+    }
+
     const total = lista.reduce(
       (acumulado: number, parametro: ParametroPago) =>
         acumulado + Number(parametro?.porcentaje ?? 0),
@@ -91,11 +108,15 @@ export class PasoContratacionComponent implements OnInit {
   readonly minCondicion = MIN_CARACTERES_CONDICION;
   readonly formatoPorcentaje = formatoPorcentajePago;
 
+  /** Condición de pago sugerida para la contraentrega (placeholder). */
+  readonly condicionSugerida = CONDICION_CONTRAENTREGA_SUGERIDA;
+
   /** Subgrupo `contratacion` del `FormGroup` raíz del asistente. */
   @Input({ required: true }) form!: FormGroup;
 
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly alerta = inject(AlertService);
 
   /** Parámetros de pago agregados (alimenta la tabla y el medidor). */
   readonly parametros = signal<readonly ParametroPago[]>([]);
@@ -126,14 +147,48 @@ export class PasoContratacionComponent implements OnInit {
       this.parametros.set(guardados as readonly ParametroPago[]);
     }
 
-    for (const nombre of ["tipoContrato", "medioPago", "formaPago"]) {
+    for (const nombre of ["tipoContrato", "medioPago"]) {
       this.controlOpcional(nombre)
         ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe(() => this.marcas.update((cantidad) => cantidad + 1));
     }
+
+    // La forma de pago manda sobre la captura: al cambiarla se revisa que los
+    // parámetros ya registrados sigan siendo válidos.
+    this.controlOpcional("formaPago")
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((valor: string) => {
+        this.marcas.update((cantidad) => cantidad + 1);
+        this.reconciliarParametros(String(valor ?? ""));
+      });
+
+    // Normaliza el borrador restaurado: un borrador anterior a esta regla
+    // podría venir en contraentrega con más de un parámetro.
+    this.reconciliarParametros(this.formaPagoActual());
   }
 
   // ── Estado derivado ──────────────────────────────────────────────────────
+
+  /**
+   * true cuando la forma de pago exige un único desembolso al 100 %.
+   *
+   * En contraentrega el solicitante solo registra la condición del pago: el
+   * porcentaje viene fijo y no se admiten parámetros adicionales.
+   */
+  readonly esContraentrega = computed(() => {
+    this.marcas();
+    return esPagoUnico(this.formaPagoActual());
+  });
+
+  /** Texto de ayuda del campo de condición de pago, según la forma de pago. */
+  readonly placeholderCondicion = computed(() => {
+    if (this.completo()) {
+      return "Cupo de porcentaje completo (100% alcanzado)";
+    }
+    return this.esContraentrega()
+      ? this.condicionSugerida
+      : "Describa el hito o entregable que condiciona el desembolso…";
+  });
 
   /** Resumen porcentual de los parámetros agregados. */
   readonly resumen = computed(() => calcularResumenPagos(this.parametros()));
@@ -176,6 +231,10 @@ export class PasoContratacionComponent implements OnInit {
     if (this.completo()) {
       return;
     }
+    // La contraentrega admite un único parámetro de pago.
+    if (this.esContraentrega() && this.parametros().length > 0) {
+      return;
+    }
     if (form.invalid) {
       form.markAllAsTouched();
       return;
@@ -185,10 +244,15 @@ export class PasoContratacionComponent implements OnInit {
       condicion: string;
       porcentaje: number;
     };
-    const porcentaje = Number(valores.porcentaje);
+    const pagoUnico = this.esContraentrega();
+    // En contraentrega el porcentaje no es un dato que capture el solicitante:
+    // el desembolso es único y siempre es del 100 %.
+    const porcentaje = pagoUnico
+      ? PORCENTAJE_PAGO_UNICO
+      : Number(valores.porcentaje);
     const controlPorcentaje = form.get("porcentaje");
 
-    if (porcentaje > this.maximoPorcentaje()) {
+    if (!pagoUnico && porcentaje > this.maximoPorcentaje()) {
       controlPorcentaje?.setErrors({ maximo: { maximo: this.maximoPorcentaje() } });
       controlPorcentaje?.markAsTouched();
       return;
@@ -203,7 +267,10 @@ export class PasoContratacionComponent implements OnInit {
       },
     ]);
     this.sincronizarLista();
-    form.reset({ condicion: "", porcentaje: null });
+    form.reset({
+      condicion: "",
+      porcentaje: pagoUnico ? PORCENTAJE_PAGO_UNICO : null,
+    });
   }
 
   /** Quita un parámetro de la tabla. */
@@ -212,6 +279,10 @@ export class PasoContratacionComponent implements OnInit {
       lista.filter((parametro) => parametro.id !== id),
     );
     this.sincronizarLista();
+    // En contraentrega el campo de captura vuelve a quedar fijo en 100 %.
+    if (this.esContraentrega()) {
+      this.fijarPorcentajeUnico();
+    }
   }
 
   /** true si el campo ya recibió interacción y es inválido. */
@@ -221,6 +292,49 @@ export class PasoContratacionComponent implements OnInit {
   }
 
   // ── Apoyo ────────────────────────────────────────────────────────────────
+
+  /**
+   * Ajusta los parámetros registrados a la forma de pago elegida.
+   *
+   * La contraentrega admite un único parámetro al 100 %: si lo que hay
+   * capturado no cumple esa forma, se limpia la lista y se avisa al
+   * solicitante para que diligencie solo la condición del pago final.
+   */
+  private reconciliarParametros(formaPago: string): void {
+    if (!esPagoUnico(formaPago)) {
+      // Al salir de la contraentrega el porcentaje vuelve a ser capturable.
+      if (!this.completo()) {
+        this.parametroForm.patchValue({ porcentaje: null });
+      }
+      return;
+    }
+
+    const lista = this.parametros();
+    const cumple =
+      lista.length === 1 &&
+      Number(lista[0]?.porcentaje ?? 0) === PORCENTAJE_PAGO_UNICO;
+
+    if (!cumple && lista.length > 0) {
+      this.parametros.set([]);
+      this.sincronizarLista();
+      this.alerta.showAlert(
+        "Forma de pago actualizada",
+        "La contraentrega se paga en un solo desembolso del 100 %, por lo que se eliminaron los parámetros de pago que no aplican a esta forma de pago. Registre únicamente la condición del pago final.",
+      );
+    }
+
+    this.fijarPorcentajeUnico();
+  }
+
+  /** Deja el campo de porcentaje fijo en 100 % (contraentrega). */
+  private fijarPorcentajeUnico(): void {
+    this.parametroForm.patchValue({ porcentaje: PORCENTAJE_PAGO_UNICO });
+  }
+
+  /** Forma de pago seleccionada en el formulario. */
+  private formaPagoActual(): string {
+    return String(this.controlOpcional("formaPago")?.value ?? "");
+  }
 
   /**
    * Escribe la lista de parámetros en el control `parametros` del formulario.

@@ -24,6 +24,15 @@ export type MedioPago =
 /** Forma de pago del contrato (tarjeta 2). */
 export type TipoFormaPago = "pagos_parciales" | "contraentrega";
 
+/**
+ * Forma de pago que exige un único desembolso del 100 % (contraentrega).
+ *
+ * En esta modalidad no hay cronograma de desembolsos: el contrato se paga en
+ * un solo evento contra el acta de recibo final, así que el solicitante solo
+ * registra la **condición** del pago y el porcentaje queda fijo.
+ */
+export const FORMA_PAGO_CONTRAENTREGA = "contraentrega";
+
 /** Opción de los selects del paso. */
 export interface OpcionContratacion {
   readonly valor: string;
@@ -132,6 +141,18 @@ export const FORMAS_PAGO: readonly OpcionContratacion[] = [
 /** Porcentaje total que debe sumar la distribución de pagos. */
 export const PORCENTAJE_TOTAL = 100;
 
+/** Porcentaje del desembolso único de la contraentrega (bloqueado). */
+export const PORCENTAJE_PAGO_UNICO = PORCENTAJE_TOTAL;
+
+/**
+ * Condición de pago sugerida para la contraentrega.
+ *
+ * Se usa únicamente como *placeholder* del campo de captura: el texto lo
+ * redacta el solicitante, no se inventa contenido en su nombre.
+ */
+export const CONDICION_CONTRAENTREGA_SUGERIDA =
+  "Pago único del 100 % del valor pactado contra acta de recibo final a satisfacción de la interventoría.";
+
 /** Porcentaje mínimo asignable a un parámetro de pago. */
 export const PORCENTAJE_MINIMO = 1;
 
@@ -159,9 +180,20 @@ export function etiquetaCorta(
   return opcion ? (opcion.corta ?? opcion.etiqueta) : "";
 }
 
+/**
+ * true cuando la forma de pago admite un único parámetro de pago al 100 %.
+ *
+ * La contraentrega se ejecuta como un solo desembolso contra el acta de
+ * recibo final: no admite un cronograma de desembolsos, así que el paso 4
+ * limita la captura a un solo parámetro con el porcentaje fijo.
+ */
+export function esPagoUnico(formaPago: string): boolean {
+  return formaPago === FORMA_PAGO_CONTRAENTREGA;
+}
+
 /** Regla de desembolso aplicable a la forma de pago elegida. */
 export function reglaDesembolso(formaPago: string): string {
-  return formaPago === "contraentrega"
+  return esPagoUnico(formaPago)
     ? REGLAS_DESEMBOLSO.contraentrega
     : REGLAS_DESEMBOLSO.pagos_parciales;
 }

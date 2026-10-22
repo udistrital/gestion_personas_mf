@@ -81,13 +81,13 @@ export class EditorEnriquecidoComponent
   /** Acciones de la barra de herramientas (agrupadas como en Quill). */
   readonly editorModules = {
     toolbar: [
-      ["bold", "italic", "underline", "strike"], // Botones de formato
-      ["blockquote", "code-block"],
+      ["bold", "italic", "underline"], // Botones de formato
+      // ["blockquote", "code-block"],
       [{ list: "ordered" }, { list: "bullet" }], // Listas
-      [{ header: [1, 2, 3, false] }], // Encabezados
-      [{ color: [] }, { background: [] }], // Colores
-      ["link", "image"], // Enlace e imágenes
-      ["clean"], // Eliminar formato
+      // [{ header: [1, 2, 3, false] }], // Encabezados
+      // [{ color: [] }, { background: [] }], // Colores
+      // ["link", "image"], // Enlace e imágenes
+      // ["clean"], // Eliminar formato
     ],
   };
 
