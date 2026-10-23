@@ -97,7 +97,7 @@ steps:
     event:
     - push
 
-- name: nodejs_develop
+- name: nodejs_feature
   image: node:24-alpine
   commands:
   - npm install -g pnpm@12.6.0
