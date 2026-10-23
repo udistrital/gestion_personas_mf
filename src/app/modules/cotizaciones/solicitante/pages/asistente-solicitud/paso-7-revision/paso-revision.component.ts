@@ -15,7 +15,6 @@ import {
   AcordeonRevision,
   ArchivoRevision,
   HASH_RADICADO_MOCK,
-  ItemVerificacion,
   LIBRO_RADICADO_MOCK,
   RequisitoRevision,
   ResumenRadicacion,
@@ -26,6 +25,7 @@ import {
   pluralizarOferentes,
   pluralizarProveedores,
 } from "../../../../models/revision.model";
+import type { ItemVerificacion } from "../../../../models/revision.model";
 import {
   ETIQUETAS_TIPO_NECESIDAD,
   ItemSolicitud,
@@ -39,7 +39,6 @@ import {
   NUCLEOS_SNIES,
   ResumenSolicitudProveedores,
   etiquetaTipoNecesidad,
-  listarCodigos,
 } from "../../../../models/proveedores.model";
 import {
   AnexoSolicitud,
@@ -100,6 +99,9 @@ export class PasoRevisionComponent {
 
   /** Valores crudos de los pasos 1 y 4 que alimentan los acordeones. */
   @Input() datosRevision: DatosRevision = datosRevisionVacios();
+
+  /** Validación final calculada por el asistente y compartida con el proceso. */
+  @Input() verificacionFinal: readonly ItemVerificacion[] = [];
 
   /**
    * true cuando la solicitud ya fue radicada en una sesión anterior (borrador).
@@ -182,57 +184,13 @@ export class PasoRevisionComponent {
    */
   readonly calendarioDegradado = computed(() => this.calendario.degradado());
 
-  /** Criterios de la lista de verificación institucional. */
-  readonly verificacion = computed<readonly ItemVerificacion[]>(() => {
-    const items = this.itemsResumen;
-    const proveedores = this.proveedoresNotificados;
-    const codigos = this.codigosCiiu;
-    const parametros = this.parametrosPago;
-    return [
-      {
-        titulo: "Presupuesto asociado",
-        detalle: "CDP vigente sincronizado con SICAPITAL",
-        cumple: !!this.resumen?.numeroCotizacion,
-      },
-      {
-        titulo: "Cronograma válido",
-        detalle: `Plazo mínimo legal cumplido${this.diasPlazo ? ` (${this.diasPlazo} días)` : ""}`,
-        cumple: !!this.resumen?.fechaCierre,
-      },
-      {
-        titulo: "Al menos un ítem registrado",
-        detalle: `${items.totalItems} ítems cargados exitosamente`,
-        cumple: items.totalItems > 0,
-      },
-      {
-        titulo: "Forma de pago al 100%",
-        detalle: "Consolidado financiero balanceado",
-        cumple: this.sumaPagos === 100,
-      },
-      {
-        titulo: "Al menos una actividad CIIU",
-        detalle: codigos
-          ? `${codigos.split(",").length} códigos clasificados correctamente`
-          : "Sin códigos clasificados",
-        cumple: !!codigos,
-      },
-      {
-        titulo: "Proveedores identificados (>0)",
-        detalle: `${pluralizarProveedores(proveedores)} activos en banco UD`,
-        cumple: proveedores > 0,
-      },
-      {
-        titulo: "Documentos requeridos definidos",
-        detalle: "Matriz de oferente parametrizada",
-        cumple: this.documentos.length > 0,
-      },
-    ];
-  });
-
-  /** true cuando todos los criterios se cumplen. */
-  readonly verificacionCompleta = computed(() =>
-    this.verificacion().every((item) => item.cumple),
-  );
+  /** true solo cuando el asistente confirma todos los criterios finales. */
+  get verificacionCompleta(): boolean {
+    return (
+      this.verificacionFinal.length > 0 &&
+      this.verificacionFinal.every((item) => item.cumple)
+    );
+  }
 
   /** Resumen institucional que alimenta el modal y la vista de éxito. */
   readonly radicacion = computed<ResumenRadicacion>(() => ({
@@ -283,7 +241,7 @@ export class PasoRevisionComponent {
 
   /** Abre el diálogo de confirmación y, si se acepta, radica la solicitud. */
   procesar(): void {
-    if (this.dialogando()) {
+    if (this.dialogando() || !this.verificacionCompleta) {
       return;
     }
     this.dialogando.set(true);
@@ -324,9 +282,7 @@ export class PasoRevisionComponent {
     }
     void portapapeles.writeText(numero).then(() => {
       this.copiado.set(true);
-      this.temporizadores.add(
-        setTimeout(() => this.copiado.set(false), 2000),
-      );
+      this.temporizadores.add(setTimeout(() => this.copiado.set(false), 2000));
     });
   }
 
@@ -342,7 +298,9 @@ export class PasoRevisionComponent {
   readonly etiquetasNotificacion = computed<readonly string[]>(() => {
     const etiquetas = this.actividades
       .slice(0, 2)
-      .map((actividad) => `CIIU ${actividad.codigo} (${actividad.descripcion})`);
+      .map(
+        (actividad) => `CIIU ${actividad.codigo} (${actividad.descripcion})`,
+      );
     return [...etiquetas, "Certificado RUP vigente"];
   });
 
@@ -356,10 +314,6 @@ export class PasoRevisionComponent {
     // El banco de proveedores institucional habilita doce empresas; si el
     // paso 5 no dejó actividades no hay notificación que anunciar.
     return contarProveedoresNotificados(this.actividades.length);
-  }
-
-  private get codigosCiiu(): string {
-    return listarCodigos(this.actividades);
   }
 
   private get itemsResumen(): ResumenItems {
@@ -377,13 +331,6 @@ export class PasoRevisionComponent {
 
   private get etiquetaNecesidad(): string {
     return etiquetaTipoNecesidad(this.resumen?.tipoNecesidad ?? "bienes");
-  }
-
-  private get sumaPagos(): number {
-    return this.parametrosPago.reduce(
-      (total, parametro) => total + parametro.porcentaje,
-      0,
-    );
   }
 
   private get diasPlazo(): number {
@@ -545,8 +492,7 @@ export class PasoRevisionComponent {
       numero: 4,
       icono: "payments",
       titulo: "Paso 4: Tipo de Contratación y Forma de Pago",
-      descripcion:
-        "Modalidad contractual, periodicidad de giros y desembolsos",
+      descripcion: "Modalidad contractual, periodicidad de giros y desembolsos",
       campos: [
         { etiqueta: "Modalidad de contrato", valor: datos.tipoContrato || "—" },
         { etiqueta: "Medio de pago", valor: datos.medioPago || "—" },

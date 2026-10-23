@@ -51,6 +51,7 @@ import {
   contarProveedoresNotificados,
   pluralizarProveedores,
 } from "../../../models/revision.model";
+import type { ItemVerificacion } from "../../../models/revision.model";
 import { EstadoCruce } from "./paso-1-necesidad/paso-necesidad.component";
 import {
   minCaracteres,
@@ -72,6 +73,10 @@ const QUINTO_PASO = 5;
 const SEXTO_PASO = 6;
 const SEPTIMO_PASO = 7;
 const ULTIMO_PASO = 7;
+
+interface ValidacionPaso extends ItemVerificacion {
+  readonly paso: number;
+}
 
 /**
  * Asistente de nueva solicitud de cotización (S-02).
@@ -160,8 +165,8 @@ export class AsistenteSolicitudComponent implements OnInit {
           planAccion: ["", minCaracteres(MIN_CARACTERES_PLAN)],
         },
         {
-          validators: validadorCronograma(
-            () => this.calendarioFestivos.fechasFestivas(),
+          validators: validadorCronograma(() =>
+            this.calendarioFestivos.fechasFestivas(),
           ),
         },
       ),
@@ -352,9 +357,8 @@ export class AsistenteSolicitudComponent implements OnInit {
   }
 
   /**
-   * Habilita "Continuar": el paso 1 avanza cuando la necesidad es válida, el
-   * cruce terminó bien y el acuerdo marco está aceptado (cuando aplica); el
-   * paso 2, cuando su formulario (dependencias, cronograma y editores) es válido.
+   * Habilita la acción del paso actual: en el paso 7 se exige que la validación
+   * final de todos los pasos y condiciones adicionales esté completa.
    */
   get pasoValido(): boolean {
     if (this.pasoActual === PRIMER_PASO) {
@@ -382,11 +386,100 @@ export class AsistenteSolicitudComponent implements OnInit {
       return true;
     }
     if (this.pasoActual === SEPTIMO_PASO) {
-      // El paso 7 no valida campos: el botón habilita la confirmación del
-      // procesamiento (el propio diálogo advierte su carácter vinculante).
-      return true;
+      return this.pasoPendienteValidacion === null;
     }
     return false;
+  }
+
+  /**
+   * Validación final centralizada. El checklist y el procesamiento usan estos
+   * mismos resultados para evitar que un paso editado quede sin revalidar.
+   */
+  get validacionFinal(): readonly ValidacionPaso[] {
+    const cruce = this.resultadoCruce();
+    const presupuestoValido =
+      this.necesidadForm.valid &&
+      this.estadoCruce() === "cargado" &&
+      !!cruce &&
+      cruce.presupuesto.disponibilidades.length > 0 &&
+      cruce.presupuesto.valorCdp > 0;
+    const acuerdoMarcoAplica = !!cruce?.acuerdoMarco;
+    const totalPagos = this.parametrosPago.reduce(
+      (total, parametro) => total + Number(parametro.porcentaje ?? 0),
+      0,
+    );
+    const actividades = this.actividadesVinculadas.length;
+
+    return [
+      {
+        paso: PRIMER_PASO,
+        titulo: "Presupuesto asociado",
+        detalle: presupuestoValido
+          ? "CDP vigente sincronizado con SICAPITAL"
+          : "Revise los datos de la necesidad y el cruce presupuestal en el paso 1.",
+        cumple: presupuestoValido,
+      },
+      {
+        paso: PRIMER_PASO,
+        titulo: "Acuerdo marco aceptado",
+        detalle: !acuerdoMarcoAplica
+          ? "No aplica a esta necesidad"
+          : this.acuerdoAceptado()
+            ? "Acuerdo marco aceptado"
+            : "Debe aceptar el acuerdo marco en el paso 1.",
+        cumple: !acuerdoMarcoAplica || this.acuerdoAceptado(),
+      },
+      {
+        paso: SEGUNDO_PASO,
+        titulo: "Datos generales y cronograma válidos",
+        detalle: this.datosGeneralesForm.valid
+          ? `Plazo mínimo legal cumplido${this.datosRevision.diasPlazo ? ` (${this.datosRevision.diasPlazo} días)` : ""}`
+          : "Complete los campos obligatorios y corrija el cronograma en el paso 2.",
+        cumple: this.datosGeneralesForm.valid,
+      },
+      {
+        paso: TERCER_PASO,
+        titulo: "Al menos un ítem registrado",
+        detalle: this.itemsForm.valid
+          ? `${this.resumenItems.totalItems} ítems cargados exitosamente`
+          : "Agregue al menos un ítem al pliego en el paso 3.",
+        cumple: this.itemsForm.valid,
+      },
+      {
+        paso: CUARTO_PASO,
+        titulo: "Contratación y forma de pago válidas",
+        detalle: this.contratacionForm.valid
+          ? "Consolidado financiero balanceado (100 %)"
+          : `Complete la contratación y ajuste los pagos al 100 % en el paso 4 (actual: ${totalPagos} %).`,
+        cumple: this.contratacionForm.valid,
+      },
+      {
+        paso: QUINTO_PASO,
+        titulo: "Proveedores objetivo definidos",
+        detalle: this.proveedoresCompleto
+          ? `${actividades} actividades CIIU${this.sniesAplicaProveedores ? " y criterios SNIES" : ""} definidos`
+          : "Complete las actividades CIIU y los criterios SNIES requeridos en el paso 5.",
+        cumple: this.proveedoresCompleto,
+      },
+      {
+        paso: SEXTO_PASO,
+        titulo: "Documentos requeridos definidos",
+        detalle:
+          this.documentosForm.valid && this.documentosRequeridos.length > 0
+            ? "Matriz de oferente parametrizada"
+            : "Revise la matriz documental del paso 6.",
+        cumple:
+          this.documentosForm.valid && this.documentosRequeridos.length > 0,
+      },
+    ];
+  }
+
+  /** Primer paso que debe corregirse antes de permitir el procesamiento. */
+  private get pasoPendienteValidacion(): number | null {
+    return (
+      this.validacionFinal.find((validacion) => !validacion.cumple)?.paso ??
+      null
+    );
   }
 
   /**
@@ -540,9 +633,14 @@ export class AsistenteSolicitudComponent implements OnInit {
     return "";
   }
 
-  /** El paso 7 no bloquea el avance: la confirmación la hace el diálogo. */
+  /** Explica qué paso debe corregirse antes de procesar. */
   private ayudaPaso7(): string {
-    return "";
+    const pendiente = this.validacionFinal.find(
+      (validacion) => !validacion.cumple,
+    );
+    return pendiente
+      ? `Solicitud incompleta: corrija el paso ${pendiente.paso} (${pendiente.titulo}).`
+      : "";
   }
 
   // ── Datos del paso 7 (revisión y procesar) ───────────────────────────────
@@ -573,18 +671,14 @@ export class AsistenteSolicitudComponent implements OnInit {
   /** Anexos cargados en el paso 6. */
   get anexosCargados(): readonly AnexoSolicitud[] {
     const anexos = this.documentosForm.get("anexos")?.value as
-      | readonly AnexoSolicitud[]
-      | null
-      | undefined;
+      readonly AnexoSolicitud[] | null | undefined;
     return anexos?.length ? anexos : ANEXOS_SEMILLA;
   }
 
   /** Matriz de documentos del oferente del paso 6. */
   get documentosRequeridos(): readonly DocumentoOferente[] {
     const requeridos = this.documentosForm.get("requeridos")?.value as
-      | readonly DocumentoOferente[]
-      | null
-      | undefined;
+      readonly DocumentoOferente[] | null | undefined;
     return requeridos?.length ? requeridos : DOCUMENTOS_OFERENTE_SEMILLA;
   }
 
@@ -624,7 +718,8 @@ export class AsistenteSolicitudComponent implements OnInit {
     const disponibilidad = cruce?.presupuesto.disponibilidades[0];
 
     return {
-      numeroNecesidad: cruce?.necesidad.valor ?? necesidad.numeroNecesidad ?? "",
+      numeroNecesidad:
+        cruce?.necesidad.valor ?? necesidad.numeroNecesidad ?? "",
       numeroCdp: disponibilidad?.numeroDisponibilidad ?? "",
       rubro: disponibilidad
         ? `${disponibilidad.rubro} - ${disponibilidad.rubroNombre}`
@@ -710,10 +805,44 @@ export class AsistenteSolicitudComponent implements OnInit {
    */
   finalizarPaso(): void {
     if (this.pasoActual === SEPTIMO_PASO) {
+      const pasoPendiente = this.pasoPendienteValidacion;
+      if (pasoPendiente !== null) {
+        this.pasoActual = pasoPendiente;
+        this.asistenteForm
+          .get(this.grupoFormularioPorPaso(pasoPendiente))
+          ?.markAllAsTouched();
+        const nombrePaso =
+          this.pasos.find((paso) => paso.numero === pasoPendiente)?.nombre ??
+          `Paso ${pasoPendiente}`;
+        void this.alerta.showAlert(
+          "Solicitud incompleta",
+          `Corrija las validaciones pendientes de ${nombrePaso} antes de procesar.`,
+        );
+        return;
+      }
       this.pasoRevision?.procesar();
       return;
     }
     this.continuar();
+  }
+
+  private grupoFormularioPorPaso(paso: number): string {
+    switch (paso) {
+      case PRIMER_PASO:
+        return "necesidad";
+      case SEGUNDO_PASO:
+        return "datosGenerales";
+      case TERCER_PASO:
+        return "items";
+      case CUARTO_PASO:
+        return "contratacion";
+      case QUINTO_PASO:
+        return "proveedores";
+      case SEXTO_PASO:
+        return "documentos";
+      default:
+        return "";
+    }
   }
 
   /** Subtítulo del botón "Procesar solicitud" (proveedores a notificar). */
@@ -721,9 +850,7 @@ export class AsistenteSolicitudComponent implements OnInit {
     const proveedores = contarProveedoresNotificados(
       this.actividadesVinculadas.length,
     );
-    return proveedores
-      ? `Enviar a ${pluralizarProveedores(proveedores)}`
-      : "";
+    return proveedores ? `Enviar a ${pluralizarProveedores(proveedores)}` : "";
   }
 
   /** Marca la solicitud como radicada tras la confirmación del paso 7. */
