@@ -114,15 +114,3 @@ steps:
         - master
       event:
         - push
-
-  - name: nodejs_feature
-    image: node:24-alpine
-    commands:
-      - npm install -g pnpm@12.6.0
-      - pnpm install --frozen-lockfile
-      - pnpm run build:test
-    when:
-      branch:
-        - feature/*
-      event:
-        - push
