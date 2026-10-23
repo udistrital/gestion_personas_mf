@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { FormControl, FormGroup } from '@angular/forms';
 import {
   CatalogosPersonaJuridica,
   OpcionCatalogo,
@@ -34,6 +34,9 @@ export class RegistroPersonaJuridicaPaso1Component {
   @Output() reintentarDepartamentos = new EventEmitter<void>();
   @Output() reintentarCiudades = new EventEmitter<void>();
 
+  responsabilidadFiscalDisponibleId = new FormControl<number | null>(null);
+  busquedaResponsabilidadFiscal = '';
+
   get opcionesProcedencia(): OpcionCatalogo[] {
     return this.catalogos?.procedencia ?? [];
   }
@@ -58,29 +61,32 @@ export class RegistroPersonaJuridicaPaso1Component {
     return this.catalogos?.responsabilidadFiscal ?? [];
   }
 
-  get opcionesBeneficiariosFinales(): OpcionCatalogo[] {
-    return this.catalogos?.beneficiariosFinalesRub ?? [];
+  get responsabilidadesFiscalesDisponibles(): OpcionCatalogo[] {
+    const texto = this.busquedaResponsabilidadFiscal.trim().toLocaleLowerCase();
+    const seleccionadas = new Set(this.idsResponsabilidadesSeleccionadas());
+
+    return this.opcionesResponsabilidadesFiscales.filter(
+      opcion =>
+        !seleccionadas.has(opcion.id)
+        && (
+          texto.length === 0
+          || `${opcion.codigo ?? ''} ${opcion.nombre} ${opcion.descripcion ?? ''}`
+            .toLocaleLowerCase()
+            .includes(texto)
+        ),
+    );
   }
 
-  get opcionesCotizaBolsa(): OpcionCatalogo[] {
-    return this.catalogos?.cotizaBvc ?? [];
+  get responsabilidadesFiscalesSeleccionadas(): OpcionCatalogo[] {
+    return this.idsResponsabilidadesSeleccionadas()
+      .map(id => this.opcionesResponsabilidadesFiscales.find(opcion => opcion.id === id))
+      .filter((opcion): opcion is OpcionCatalogo => opcion !== undefined);
   }
 
-  get opcionesRevisorFiscal(): OpcionCatalogo[] {
-    return this.catalogos?.obligacionRevisorFiscal ?? [];
-  }
-
-  get opcionesGranContribuyente(): OpcionCatalogo[] {
-    return this.catalogos?.granContribuyenteDian ?? [];
-  }
-
-  get opcionesAutorretenedor(): OpcionCatalogo[] {
-    return this.catalogos?.autorretenedorRenta ?? [];
-  }
-
-  get opcionesExencionIca(): OpcionCatalogo[] {
-    return this.catalogos?.exencionIcaBogota ?? [];
-  }
+  readonly opcionesSiNo: Opcion<boolean>[] = [
+    { label: 'Sí', value: true },
+    { label: 'No', value: false },
+  ];
 
   opcionesLimitacionEstatutaria: Opcion<boolean>[] = [
     { label: 'No, facultades amplias y suficientes sin límite de cuantía (Estatutos tipo S.A.S.)', value: false },
@@ -116,14 +122,32 @@ export class RegistroPersonaJuridicaPaso1Component {
     return opciones.find(opcion => opcion.id === id)?.nombre ?? '';
   }
 
-  cambiarResponsabilidad(valor: number, seleccionado: boolean): void {
-    const responsabilidades: number[] = this.formulario.get('responsabilidades')?.value ?? [];
-    const actualizadas = seleccionado
-      ? [...responsabilidades, valor]
-      : responsabilidades.filter((responsabilidad: number) => responsabilidad !== valor);
+  agregarResponsabilidadFiscal(): void {
+    const id = this.responsabilidadFiscalDisponibleId.value;
+    const seleccionadas = this.idsResponsabilidadesSeleccionadas();
+    if (id === null || seleccionadas.includes(id)) {
+      return;
+    }
 
-    this.formulario.get('responsabilidades')?.setValue([...new Set(actualizadas)]);
+    const control = this.formulario.get('responsabilidades');
+    control?.setValue([...seleccionadas, id]);
+    control?.markAsTouched();
+    this.responsabilidadFiscalDisponibleId.setValue(null);
     this.formularioChange.emit(this.formulario);
-  };
+  }
+
+  quitarResponsabilidadFiscal(id: number): void {
+    const control = this.formulario.get('responsabilidades');
+    control?.setValue(this.idsResponsabilidadesSeleccionadas().filter(valor => valor !== id));
+    control?.markAsTouched();
+    this.formularioChange.emit(this.formulario);
+  }
+
+  private idsResponsabilidadesSeleccionadas(): number[] {
+    const valor: unknown = this.formulario.get('responsabilidades')?.value;
+    return Array.isArray(valor)
+      ? valor.filter((id): id is number => typeof id === 'number' && Number.isInteger(id))
+      : [];
+  }
 
 }

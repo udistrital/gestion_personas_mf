@@ -1,8 +1,16 @@
 import { Component, DestroyRef, OnInit } from "@angular/core";
-import { FormControl, FormGroup, Validators } from "@angular/forms";
+import { FormControl, FormGroup, Validators, ValidatorFn, ValidationErrors, AbstractControl } from "@angular/forms";
 import { Router } from "@angular/router";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { asapScheduler, forkJoin, map, observeOn, Subscription } from "rxjs";
+import {
+  asapScheduler,
+  catchError,
+  forkJoin,
+  map,
+  observeOn,
+  of,
+  Subscription,
+} from "rxjs";
 import { PasoStepperVisual } from "src/app/shared/components/stepper-visual/stepper-visual.component";
 import { camposPorPaso } from "./registro-persona-juridica.component.utils";
 import {
@@ -28,6 +36,17 @@ const URL_HTTP = /^https?:\/\/[^\s]+$/;
 const CUENTA_BANCARIA = /^\d{8,20}$/;
 const ARCHIVO_PDF = /^[\wáéíóúüñ(). -]+\.pdf$/i;
 const OTP = /^\d{6}$/;
+
+// Validador que requiere al menos un elemento en un array
+function minArrayLength(min: number): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const value = control.value;
+    if (!value || !Array.isArray(value)) {
+      return null;
+    }
+    return value.length >= min ? null : { minArrayLength: { requiredLength: min, actualLength: value.length } };
+  };
+}
 
 @Component({
   selector: "app-registro-persona-juridica",
@@ -140,21 +159,38 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
     this.errorCatalogos = null;
     this.catalogosSinRegistros = false;
     this.catalogos = null;
+    const fallosUbicaciones: string[] = [];
     const aOpcionesCatalogo = map((lugares: { id: number; nombre: string }[]) =>
       lugares.map(lugar => ({ id: lugar.id, nombre: lugar.nombre })),
     );
     this.suscripcionCatalogos = forkJoin({
       catalogos: this.catalogosService.obtenerCatalogos(),
-      procedencia: this.ubicacionesService.obtenerProcedencias().pipe(aOpcionesCatalogo),
-      tipoVia: this.ubicacionesService.obtenerTiposVia().pipe(aOpcionesCatalogo),
-      tipoInterior: this.ubicacionesService.obtenerTiposInterior().pipe(aOpcionesCatalogo),
+      tipoVia: this.ubicacionesService.obtenerTiposVia().pipe(
+        aOpcionesCatalogo,
+        catchError(error => {
+          console.error('No fue posible cargar los tipos de vía de Ubicaciones.', error);
+          fallosUbicaciones.push('tipos de vía');
+          return of([]);
+        }),
+      ),
+      tipoInterior: this.ubicacionesService.obtenerTiposInterior().pipe(
+        aOpcionesCatalogo,
+        catchError(error => {
+          console.error('No fue posible cargar los tipos de interior de Ubicaciones.', error);
+          fallosUbicaciones.push('tipos de interior');
+          return of([]);
+        }),
+      ),
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: ({ catalogos, procedencia, tipoVia, tipoInterior }) => {
-          this.catalogos = { ...catalogos, procedencia, tipoVia, tipoInterior };
+        next: ({ catalogos, tipoVia, tipoInterior }) => {
+          this.catalogos = { ...catalogos, tipoVia, tipoInterior };
+          this.errorCatalogos = fallosUbicaciones.length
+            ? `No fue posible cargar los catálogos de Ubicaciones: ${fallosUbicaciones.join(' y ')}.`
+            : null;
           this.catalogosSinRegistros = [
-            procedencia,
+            catalogos.procedencia,
             tipoVia,
             tipoInterior,
             catalogos.tipoOrganizacion,
@@ -162,17 +198,8 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
             catalogos.tipoCapital,
             catalogos.cargo,
             catalogos.camaraComercio,
-            catalogos.beneficiariosFinalesRub,
-            catalogos.cotizaBvc,
-            catalogos.obligacionRevisorFiscal,
-            catalogos.granContribuyenteDian,
-            catalogos.autorretenedorRenta,
-            catalogos.exencionIcaBogota,
             catalogos.entidadesBancarias,
             catalogos.tiposCuentaBancaria,
-            catalogos.obligadoFacturar,
-            catalogos.monedaExtranjera,
-            catalogos.rupVigente,
             catalogos.actividadEconomicaCiiu,
           ].some(opciones => opciones.length === 0);
           this.cargandoCatalogos = false;
@@ -391,13 +418,13 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
     telefonoRepresentante: new FormControl('+57 310 456 7890', [Validators.required, Validators.pattern(TELEFONO)]),
     limitacionEstatutaria: new FormControl(false, Validators.required),
     registrarSuplente: new FormControl(false),
-    beneficiariosFinales: new FormControl<number | null>(null, Validators.required),
-    cotizaBolsa: new FormControl<number | null>(null, Validators.required),
-    revisorFiscal: new FormControl<number | null>(null, Validators.required),
-    granContribuyente: new FormControl<number | null>(null, Validators.required),
-    autorretenedor: new FormControl<number | null>(null, Validators.required),
-    exencionIca: new FormControl<number | null>(null, Validators.required),
-    responsabilidades: new FormControl<number[]>([], Validators.required),
+    beneficiariosFinales: new FormControl<boolean | null>(null, Validators.required),
+    cotizaBolsa: new FormControl<boolean | null>(null, Validators.required),
+    revisorFiscal: new FormControl<boolean | null>(null, Validators.required),
+    granContribuyente: new FormControl<boolean | null>(null, Validators.required),
+    autorretenedor: new FormControl<boolean | null>(null, Validators.required),
+    exencionIca: new FormControl<boolean | null>(null, Validators.required),
+    responsabilidades: new FormControl<number[]>([], [Validators.required, minArrayLength(1)]),
     departamento: new FormControl<number | null>(null, Validators.required),
     ciudad: new FormControl<number | null>({ value: null, disabled: true }, Validators.required),
     tipoVia: new FormControl<number | null>(null, Validators.required),
@@ -434,15 +461,15 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
     correoPagosConfirmacion: new FormControl('pagos@integratech.com.co', [Validators.required, Validators.pattern(CORREO)]),
     responsableTesoreria: new FormControl('Diana Marcela Mendoza Castro', Validators.required),
     telefonoTesoreria: new FormControl('+57 (601) 745 8900 Ext. 105', [Validators.required, Validators.pattern(TELEFONO)]),
-    obligadoFacturar: new FormControl<number | null>(null, Validators.required),
+    obligadoFacturar: new FormControl<boolean | null>(null, Validators.required),
     prefijoFacturacion: new FormControl('SETT - 001 hasta 50000'),
     resolucionDian: new FormControl('18764039201934 del 14/01/2024'),
-    monedaExtranjera: new FormControl<number | null>(null),
+    monedaExtranjera: new FormControl<boolean | null>(null),
     certificacionBancaria: new FormControl('Certificacion_Bancaria_BancoBogota_2025.pdf', Validators.pattern(ARCHIVO_PDF)),
     rutArchivo: new FormControl('RUT_Integratech_2025.pdf', [Validators.required, Validators.pattern(ARCHIVO_PDF)]),
     certificadoExistenciaArchivo: new FormControl('Certificado_CCB_Integratech_2025.pdf', [Validators.required, Validators.pattern(ARCHIVO_PDF)]),
     cedulaRepresentanteArchivo: new FormControl('Cedula_Representante_Legal.pdf', [Validators.required, Validators.pattern(ARCHIVO_PDF)]),
-    tieneRup: new FormControl<number | null>(null, Validators.required),
+    tieneRup: new FormControl<boolean | null>(null, Validators.required),
     rupArchivo: new FormControl('Certificado_RUP_Vigente_2025.pdf', [Validators.required, Validators.pattern(ARCHIVO_PDF)]),
     vigenciaRup: new FormControl('2025-12-31', Validators.required),
     certificadoParafiscales: new FormControl('Cert_Parafiscales_Feb2025.pdf', [Validators.required, Validators.pattern(ARCHIVO_PDF)]),

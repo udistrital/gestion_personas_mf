@@ -28,8 +28,8 @@
     <div class="rup-encabezado">
       <label class="campo"><span>¿Cuenta con RUP vigente?</span><select formControlName="tieneRup">
         <option [ngValue]="null">Seleccione...</option>
-        @for (estado of estadosRup; track estado.id) {
-          <option [ngValue]="estado.id">{{ estado.nombre }}</option>
+        @for (opcion of opcionesSiNo; track opcion.value) {
+          <option [ngValue]="opcion.value">{{ opcion.label }}</option>
         }
       </select></label>
       <span class="estado-documento" [class.estado-documento--activo]="tieneRupVigente()">

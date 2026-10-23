@@ -8,7 +8,7 @@ export const environment = {
   TERCEROS_SERVICE:
     "https://autenticacion.portaloas.udistrital.edu.co/apioas/terceros_crud/v1/",
   UBICACIONES_SERVICE:
-    "https://autenticacion.portaloas.udistrital.edu.co/apioas/ubicaciones_crud/v1/",
+    "https://autenticacion.portaloas.udistrital.edu.co/apioas/ubicaciones_crud/v2/",
   UNGM_UNSPSC_SERVICE: "https://www.ungm.org/API/UNSPSCs",
 
 };

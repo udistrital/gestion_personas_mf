@@ -1,3 +1,13 @@
 @use 'src/app/shared/styles/registro-formulario' as registro-formulario;
 
 @include registro-formulario.styles;
+
+.estado-error {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  p {
+    margin: 0;
+  }
+}

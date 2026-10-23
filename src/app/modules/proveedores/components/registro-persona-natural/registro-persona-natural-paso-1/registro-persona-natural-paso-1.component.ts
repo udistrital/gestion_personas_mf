@@ -29,6 +29,11 @@ export class RegistroPersonaNaturalPaso1Component {
   @Output() reintentarCatalogos = new EventEmitter<void>();
   @Output() reintentarGeografia = new EventEmitter<ClaveGeografiaNatural>();
 
+  readonly opcionesSiNo = [
+    { id: true, nombre: 'Sí' },
+    { id: false, nombre: 'No' },
+  ];
+
   opciones(clave: keyof CatalogosPersonaNaturalPaso1): OpcionNatural[] {
     return this.catalogos?.[clave] ?? [];
   }
@@ -44,12 +49,7 @@ export class RegistroPersonaNaturalPaso1Component {
   }
 
   get tieneHijosAfirmativo(): boolean {
-    const id = this.caracterizacionForm.get("tieneHijos")?.value;
-    const nombre = this.opciones("tieneHijos").find((o) => o.id === id)?.nombre;
-    return (
-      typeof nombre === "string" &&
-      nombre.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase() === "si"
-    );
+    return this.caracterizacionForm.get("tieneHijos")?.value === true;
   }
 
   incrementarMeses(
