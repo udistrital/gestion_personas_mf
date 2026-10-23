@@ -1,3 +1,5 @@
+@use 'src/app/shared/styles/tokens' as t;
+
 :host {
   display: block;
 }
@@ -16,9 +18,9 @@
   max-width: 1380px;
   margin: 0 auto;
   padding: 1rem;
-  border: 1px solid rgb(105 16 27 / 8%);
+  border: 1px solid color-mix(in srgb, var(--agora-primary) 8%, transparent);
   border-radius: 0.75rem;
-  background: rgb(255 255 255 / 95%);
+  background: color-mix(in srgb, var(--agora-surface) 95%, transparent);
   box-shadow: 0 0.5rem 1.5rem rgb(37 24 25 / 14%);
   backdrop-filter: blur(0.75rem);
 }
@@ -34,12 +36,12 @@
 .estado-autoguardado {
   gap: 0.5rem;
   min-width: 0;
-  color: #564241;
+  color: var(--agora-text-muted);
 }
 
 .estado-autoguardado__icono {
   flex: 0 0 auto;
-  color: #277443;
+  color: var(--agora-success);
 }
 
 .estado-autoguardado__texto {
@@ -55,7 +57,7 @@
 }
 
 .estado-autoguardado__texto strong {
-  color: #251819;
+  color: var(--agora-text);
   font-size: 0.8125rem;
   line-height: 1.125rem;
 }
@@ -86,28 +88,28 @@
 }
 
 .boton-borrador {
-  color: #47000b;
-  background: #fff0f0;
+  color: var(--agora-primary-dark);
+  background: var(--agora-surface-soft);
 }
 
 .boton-borrador:hover,
 .boton-borrador:focus-visible {
-  background: #ffe2e3;
+  background: var(--agora-surface-highlight);
 }
 
 .boton-acento {
-  color: #fff;
-  background: #47000b;
-  box-shadow: 0 0.25rem 0.5rem rgb(71 0 11 / 20%);
+  color: var(--agora-on-primary);
+  background: var(--agora-primary-dark);
+  box-shadow: 0 0.25rem 0.5rem color-mix(in srgb, var(--agora-primary) 20%, transparent);
 }
 
 .boton-acento:hover,
 .boton-acento:focus-visible {
-  background: #69101b;
+  background: var(--agora-primary);
 }
 
 :is(.boton-borrador, .boton-acento):focus-visible {
-  outline: 0.1875rem solid rgb(167 55 62 / 35%);
+  outline: 0.1875rem solid color-mix(in srgb, var(--agora-primary) 35%, transparent);
   outline-offset: 0.125rem;
 }
 
@@ -118,7 +120,7 @@
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: t.$bp-sm) {
   .barra-acciones {
     left: 0.75rem;
     right: 0.75rem;

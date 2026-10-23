@@ -1,0 +1,302 @@
+<div [formGroup]="actividadDeclaracionForm">
+
+  <!-- PASO 4 - ACTIVIDAD -->
+
+  <section class="step-banner">
+    <div class="step-banner__icon" aria-hidden="true">
+      <mat-icon>verified_user</mat-icon>
+    </div>
+    <div>
+      <h2>
+        Paso 4: Clasificación Contractual, Declaraciones Juramentadas y Radicación Final
+      </h2>
+      <p>
+        Revise la concordancia de sus actividades económicas autorizadas frente al catálogo institucional de compras, diligencie las
+        declaraciones normativas obligatorias de orden constitucional y proceda con la firma digital y radicación del expediente ante el
+        Banco Institucional de Proveedores.
+      </p>
+    </div>
+  </section>
+
+  <plantilla-tarjeta-contenedora
+    [icon]="'category'"
+    [title]="'Actividad Económica'"
+    [description]="'Clasificación de las actividades económicas de la Persona Natural.'"
+  >
+    <ng-container *ngTemplateOutlet="contenidoActividad"></ng-container>
+  </plantilla-tarjeta-contenedora>
+
+  <plantilla-tarjeta-contenedora
+    [icon]="'description'"
+    [title]="'Portafolio y Capacidad de Entrega'"
+    [description]="'Descripción de capacidades y servicios ofrecidos.'"
+  >
+    <ng-container *ngTemplateOutlet="contenidoPortafolio"></ng-container>
+  </plantilla-tarjeta-contenedora>
+
+  <plantilla-tarjeta-contenedora
+    [icon]="'gavel'"
+    [title]="'Declaraciones y Consentimientos'"
+    [description]="'Consentimiento expreso y declaración juramentada.'"
+  >
+    <ng-container *ngTemplateOutlet="contenidoDeclaraciones"></ng-container>
+  </plantilla-tarjeta-contenedora>
+
+  <ng-template #contenidoActividad>
+<div class="paso4-actividad">
+
+    <div class="paso4-seccion-encabezado">
+
+      <div class="paso4-seccion-titulo">
+        <mat-icon aria-hidden="true">category</mat-icon>
+
+        <h2>
+          01. Clasificación de Actividades Económicas (CIIU)
+        </h2>
+      </div>
+
+      <p>
+        Verificación de coincidencia con RUT registrado y catálogo SECOP II /
+        Universidad Distrital Francisco José de Caldas.
+      </p>
+
+    </div>
+
+
+    <div class="paso4-ciiu-grid">
+
+      <article class="paso4-ciiu-card">
+
+        <span class="paso4-ciiu-badge paso4-ciiu-badge--principal">
+          Principal
+        </span>
+
+        <div>
+          <h3>CIIU 6201</h3>
+
+          <p>
+            Actividades de desarrollo de sistemas lógicos
+            (software y aplicativos institucionales).
+          </p>
+        </div>
+
+      </article>
+
+
+      <article class="paso4-ciiu-card">
+
+        <span class="paso4-ciiu-badge">
+          Secundaria
+        </span>
+
+        <div>
+          <h3>CIIU 6202</h3>
+
+          <p>
+            Actividades de consultoría informática y gestión de instalaciones
+            e infraestructura tecnológica.
+          </p>
+        </div>
+
+      </article>
+
+
+      <article class="paso4-ciiu-card">
+
+        <span class="paso4-ciiu-badge">
+          Secundaria
+        </span>
+
+        <div>
+          <h3>CIIU 8544</h3>
+
+          <p>
+            Educación técnica, tecnológica y de formación académica avanzada
+            o continua.
+          </p>
+        </div>
+
+      </article>
+
+    </div>
+
+  </div>
+  </ng-template>
+
+  <ng-template #contenidoPortafolio>
+<div
+    class="paso4-portafolio"
+    [formGroup]="actividadDeclaracionForm"
+  >
+
+    <div class="paso4-subseccion-encabezado">
+
+      <div class="paso4-subseccion-titulo">
+        <mat-icon aria-hidden="true">description</mat-icon>
+
+        <h2>
+          02. Descripción Especializada del Portafolio y Capacidad de Entrega
+        </h2>
+      </div>
+
+      <p>
+        Resuma las capacidades operativas, titulaciones y alcance de soporte
+        técnico a poner a disposición de la Universidad.
+      </p>
+
+    </div>
+
+
+    <div class="paso4-editor">
+
+      <div class="paso4-editor-toolbar" aria-hidden="true">
+        <button type="button" tabindex="-1"><strong>B</strong></button>
+        <button type="button" tabindex="-1"><em>I</em></button>
+        <button type="button" tabindex="-1"><u>U</u></button>
+        <span></span>
+        <button type="button" tabindex="-1">☷</button>
+        <button type="button" tabindex="-1">☰</button>
+        <span></span>
+        <button type="button" tabindex="-1">↗</button>
+      </div>
+
+      <textarea
+        formControlName="portafolioCapacidadEntrega"
+        rows="5"
+        maxlength="2000"
+        placeholder="Describa sus capacidades, experiencia, servicios y alcance de entrega."
+      ></textarea>
+
+      <div class="paso4-editor-contador">
+        {{ actividadDeclaracionForm.get('portafolioCapacidadEntrega')?.value?.length || 0 }}
+        / 2.000 caracteres
+      </div>
+
+    </div>
+
+  </div>
+  </ng-template>
+
+  <ng-template #contenidoDeclaraciones>
+<div class="paso4-declaraciones" [formGroup]="actividadDeclaracionForm">
+
+    <div class="paso4-declaraciones__encabezado">
+
+      <div class="paso4-declaraciones__titulo">
+        <div class="paso4-declaraciones__icono" aria-hidden="true">
+          <mat-icon>gavel</mat-icon>
+        </div>
+
+        <div class="paso4-declaraciones__texto">
+          <h2>
+            <span class="paso4-declaraciones__numero">03.</span>
+            Términos de Registro, Consentimiento y Declaración Juramentada
+          </h2>
+          <p>
+            Autorización expresa de tratamiento de datos personales conforme al Régimen Constitucional y Estatuto de Contratación Pública.
+          </p>
+        </div>
+      </div>
+
+      <div class="paso4-declaraciones__referencias">
+        <span class="paso4-declaraciones__obligatorio">Obligatorio (*)</span>
+        <span class="paso4-declaraciones__leyes">Ley 1581 de 2012 / Ley 80 de 1993</span>
+      </div>
+
+    </div>
+
+
+    <section class="paso4-consentimiento">
+
+      <div class="paso4-consentimiento__icono" aria-hidden="true">
+        <mat-icon>verified_user</mat-icon>
+      </div>
+
+      <div class="paso4-consentimiento__contenido">
+
+        <h3>Consentimiento Expreso de Registro y Verificación</h3>
+
+        <p>
+          Acepta y reconoce bajo consentimiento propio, expreso, previo e informado, el registro,
+          verificación y tratamiento de su información personal y jurídica en el
+          <strong>Sistema de Registro Único de Personas y Banco de Proveedores de la Universidad Distrital Francisco José de Caldas</strong>,
+          para fines estrictamente institucionales y contractuales de conformidad con la normativa vigente.
+        </p>
+
+        <button
+          class="paso4-consentimiento__politica"
+          type="button"
+        >
+          <mat-icon aria-hidden="true">policy</mat-icon>
+          <span>Consultar Política Institucional de Tratamiento de Datos Personales (Habeas Data)</span>
+        </button>
+
+      </div>
+
+      <label class="paso4-consentimiento__autorizacion">
+
+        <span>Autorización:</span>
+
+        <span class="paso4-switch">
+          <input
+            type="checkbox"
+            formControlName="consentimientoExpreso"
+          />
+          <span class="paso4-switch__visual" aria-hidden="true"></span>
+          <span class="paso4-switch__texto">Sí</span>
+        </span>
+
+      </label>
+
+    </section>
+
+
+    <label class="paso4-declaracion">
+
+      <input
+        type="checkbox"
+        formControlName="declaracionJuramentada"
+      />
+
+      <span class="paso4-declaracion__check" aria-hidden="true">
+        <mat-icon>check</mat-icon>
+      </span>
+
+      <span class="paso4-declaracion__contenido">
+
+        <strong>
+          Declaración Juramentada de Inexistencia de Inhabilidades, Incompatibilidades y Conflicto de Intereses
+        </strong>
+
+        <span>
+          Bajo la gravedad de juramento manifiesto que no me encuentro incurso(a) en causal alguna de
+          inhabilidad o incompatibilidad consagrada en el artículo 8 de la Ley 80 de 1993,
+          el artículo 183 de la Constitución Política, la Ley 1474 de 2011
+          (Estatuto Anticorrupción) ni demás disposiciones legales vigentes para contratar
+          con el Estado colombiano ni con la Universidad Distrital Francisco José de Caldas.
+        </span>
+
+      </span>
+
+    </label>
+
+
+    <div class="paso4-advertencia" role="note">
+
+      <mat-icon aria-hidden="true">warning</mat-icon>
+
+      <p>
+        <strong>Advertencia Legal:</strong>
+        La falsedad o inexactitud en los datos suministrados acarreará las sanciones penales,
+        disciplinarias, civiles y fiscales previstas en el ordenamiento jurídico colombiano
+        (artículos 287 y 289 del Código Penal).
+      </p>
+
+    </div>
+
+  </div>
+  </ng-template>
+
+
+
+</div>

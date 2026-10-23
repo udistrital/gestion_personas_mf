@@ -1,0 +1,42 @@
+<div
+  class="rp-fila-opciones d-grid gap-3"
+  [class.rp-fila-opciones--bloqueada]="deshabilitado"
+  [formGroup]="formulario"
+>
+  @for (opcion of opciones; track opcion.id) {
+    <div class="rp-columna-opcion d-flex">
+      <label
+        class="rp-opcion d-flex flex-column justify-content-between w-100 p-3 rounded-3"
+        [class.rp-opcion--seleccionada]="modalidadSeleccionada === opcion.id"
+      >
+        <input
+          class="rp-opcion-input"
+          type="radio"
+          name="modalidad"
+          [id]="'modalidad-' + opcion.id"
+          [value]="opcion.id"
+          formControlName="modalidad"
+          [attr.disabled]="deshabilitado ? '' : null"
+          required
+        />
+
+        <div class="rp-opcion-cabecera d-flex align-items-start justify-content-between gap-2">
+          <div class="rp-opcion-icono d-flex align-items-center justify-content-center rounded-3">
+            <mat-icon class="rp-ico-opcion">{{ opcion.icono }}</mat-icon>
+          </div>
+          <span class="rp-opcion-radio d-flex align-items-center justify-content-center" aria-hidden="true">
+            <span class="rp-opcion-radio-punto"></span>
+          </span>
+        </div>
+
+        <div class="rp-opcion-texto d-flex flex-column gap-1 mb-3">
+          <span class="rp-opcion-titulo fw-bold">{{ opcion.titulo }}</span>
+          <span class="rp-opcion-subtitulo fw-semibold">{{ opcion.subtitulo }}</span>
+          <p class="rp-opcion-descripcion mt-2 mb-0">{{ opcion.descripcion }}</p>
+        </div>
+
+        <div class="rp-opcion-pie" aria-hidden="true"></div>
+      </label>
+    </div>
+  }
+</div>

@@ -1,17 +1,83 @@
-<form>
+<form [formGroup]="formulario" (input)="emitirCambio()" (change)="emitirCambio()">
   <plantilla-tarjeta-contenedora
-    [icon]="'help_outline'"
-    [title]="'Placeholder de contenido'"
-    [description]="'Tarjeta de prueba'"
+    [icon]="'corporate_fare'"
+    [title]="'1. Existencia Legal y Registro Único Tributario (RUT)'"
+    [description]="'Documentos oficiales obligatorios validados contra el Registro Único Empresarial y Social (RUES) y la DIAN.'"
   >
-    <p>Esta es una tarjeta de prueba para verificar renderizado y funcionalidad. Puede reemplazar este contenido con información relevante según sea necesario.</p>
+    <div class="documentos-grid">
+      @for (documento of documentosExistencia; track documento.control) {
+        <article class="documento-card" [class.documento-cargado]="formulario.get(documento.control)?.value">
+          <div class="documento-icono"><mat-icon>{{ documento.icono }}</mat-icon></div>
+          <h3>{{ nombreTipoDocumento(documento.codigoTipoDocumento) }}</h3>
+          <p>{{ documento.descripcion }}</p>
+          <label class="campo"><span>Archivo cargado</span><input [formControlName]="documento.control" type="text" readonly></label>
+          <div class="documento-acciones">
+            <button class="boton boton--secundario" type="button"><mat-icon>visibility</mat-icon> Ver visor PDF</button>
+            <button class="boton boton--ligero" type="button"><mat-icon>cached</mat-icon> {{ documento.accion }}</button>
+          </div>
+        </article>
+      }
+    </div>
   </plantilla-tarjeta-contenedora>
 
   <plantilla-tarjeta-contenedora
-    [icon]="'help_outline'"
-    [title]="'Placeholder de contenido'"
-    [description]="'Tarjeta de prueba'"
+    [icon]="'workspace_premium'"
+    [title]="nombreTipoDocumento('RUP') + ' - Ley 1150 de 2007'"
+    [description]="'Requerido para licitaciones públicas, selección abreviada y concursos en la Universidad Distrital.'"
   >
-    <p>Esta es una tarjeta de prueba para verificar renderizado y funcionalidad. Puede reemplazar este contenido con información relevante según sea necesario.</p>
+    <div class="rup-encabezado">
+      <label class="campo"><span>¿Cuenta con RUP vigente?</span><select formControlName="tieneRup">
+        <option [ngValue]="null">Seleccione...</option>
+        @for (opcion of opcionesSiNo; track opcion.value) {
+          <option [ngValue]="opcion.value">{{ opcion.label }}</option>
+        }
+      </select></label>
+      <span class="estado-documento" [class.estado-documento--activo]="tieneRupVigente()">
+        <mat-icon>{{ tieneRupVigente() ? 'check_circle' : 'cancel' }}</mat-icon>
+        {{ tieneRupVigente() ? 'Soporte activo' : 'Sin soporte vigente' }}
+      </span>
+    </div>
+    @if (tieneRupVigente()) {
+      <div class="rup-contenido">
+        <div class="datos-documento vinculacion">
+          <h3>Datos contrastados en RUES</h3>
+          <div class="campo-grid campo-grid--three">
+            <label class="campo"><span>Razón social</span><input [value]="formulario.get('razonSocial')?.value" type="text" readonly></label>
+            <label class="campo"><span>NIT</span><input [value]="formulario.get('nit')?.value + '-' + formulario.get('digitoVerificacion')?.value" type="text" readonly></label>
+            <label class="campo"><span>Vigencia del registro</span><input formControlName="vigenciaRup" type="date"></label>
+          </div>
+        </div>
+        <div class="soporte-rup">
+          <div class="documento-icono"><mat-icon>description</mat-icon></div>
+          <div><span class="etiqueta-documento">Soporte RUP adjunto</span><input formControlName="rupArchivo" type="text" readonly></div>
+          <button class="boton boton--secundario" type="button"><mat-icon>visibility</mat-icon> Ver certificado</button>
+          <button class="boton boton--ligero" type="button"><mat-icon>upload_file</mat-icon> Cargar nueva vigencia</button>
+        </div>
+      </div>
+    }
+  </plantilla-tarjeta-contenedora>
+
+  <plantilla-tarjeta-contenedora
+    [icon]="'health_and_safety'"
+    [title]="'3. Cumplimiento de Aportes a Seguridad Social y Parafiscales'"
+    [description]="'Certificación expresa del Revisor Fiscal bajo gravedad de juramento (Artículo 50, Ley 789 de 2002).'"
+  >
+    <div class="aportes-grid">
+      <div class="vinculacion aporte-card"><mat-icon>favorite</mat-icon><div><h3>Salud, Pensión y ARL</h3><p>Aportes patronales y de nómina completa cancelados oportunamente según planillas PILA oficiales.</p></div></div>
+      <div class="vinculacion aporte-card"><mat-icon>school</mat-icon><div><h3>SENA, ICBF y CCF</h3><p>Compensación familiar al día y sin saldos moratorios a la fecha de certificación.</p></div></div>
+      @for (soporte of soportesParafiscales; track soporte.control) {
+        <article class="documento-card">
+          <div class="documento-icono"><mat-icon>{{ soporte.icono }}</mat-icon></div>
+          <h3>{{ nombreTipoDocumento(soporte.codigoTipoDocumento) }}</h3>
+          <p>{{ soporte.descripcion }}</p>
+          <label class="campo"><span>Archivo cargado</span><input [formControlName]="soporte.control" type="text" readonly></label>
+          <div class="documento-acciones">
+            <button class="boton boton--secundario" type="button"><mat-icon>visibility</mat-icon> Ver certificación</button>
+            <button class="boton boton--ligero" type="button"><mat-icon>cached</mat-icon> Reemplazar</button>
+          </div>
+        </article>
+      }
+    </div>
+    <label class="checkbox-line"><input formControlName="aportesSeguridadSocial" type="checkbox"><span>Certifico el cumplimiento vigente de los aportes a seguridad social y parafiscales.</span></label>
   </plantilla-tarjeta-contenedora>
 </form>

@@ -1,0 +1,495 @@
+<div class="paso-2-card-wrapper">
+  <registro-persona-juridica-estado-catalogos
+    [cargando]="estadoCatalogos.cargando"
+    [error]="estadoCatalogos.error"
+    (reintentar)="reintentarCatalogos.emit()"
+  ></registro-persona-juridica-estado-catalogos>
+
+  <mat-card class="paso-2-card">
+
+    <!-- BANNER DEL PASO 2 -->
+    <section class="step-banner">
+      <div class="step-banner__icon" aria-hidden="true">
+        <mat-icon>verified_user</mat-icon>
+      </div>
+
+      <div class="step-banner__content">
+        <div class="step-banner__headline">
+          <h2>
+            Paso 2: Afiliaciones al Sistema de Seguridad Social y Datos Financieros
+          </h2>
+
+          <span class="step-banner__tag">
+            Ley 100 de 1993
+          </span>
+
+          <span class="step-banner__tag">
+            Decreto 780 / Normativa UD
+          </span>
+        </div>
+
+        <p class="step-banner__description">
+          Ingrese su vinculación al Sistema de Seguridad Social y registre la
+          información bancaria y financiera requerida para los procesos de
+          desembolso y tesorería de la Universidad Distrital Francisco José de Caldas.
+        </p>
+      </div>
+    </section>
+
+    <!-- ENCABEZADO AFILIACIONES Y FINANZAS -->
+    <header class="paso-2-card__header">
+      <div class="paso-2-card__icon" aria-hidden="true">
+        <mat-icon>account_balance</mat-icon>
+      </div>
+
+      <div class="paso-2-card__header-text">
+        <h1>Afiliaciones y Finanzas</h1>
+
+        <p>
+          Información de seguridad social, afiliaciones, información bancaria
+          y capacidad financiera.
+        </p>
+      </div>
+    </header>
+
+    <!-- CONTENIDO -->
+    <mat-card-content class="paso-2-card__content">
+      <div [formGroup]="afiliacionesFinanzasForm">
+
+        <!-- =====================================================
+             1. ESTADO DE SEGURIDAD SOCIAL Y PENSIONES
+             ===================================================== -->
+        <section class="form-section">
+
+          <div class="form-section__header">
+            <div class="form-section__title">
+
+              <div class="form-section__icon" aria-hidden="true">
+                <mat-icon>health_and_safety</mat-icon>
+              </div>
+
+              <div>
+                <h3>1. Estado de Seguridad Social y Pensiones</h3>
+
+                <p>
+                  Conforme al Sistema Integral de Seguridad Social en Salud,
+                  Pensiones y Riesgos Laborales (Ley 100/93 y Decreto 780/16).
+                </p>
+              </div>
+
+          </div>
+
+          <div class="form-section__meta">
+
+            <span class="form-section__tag">
+              Tipo Persona: Natural
+            </span>
+
+            <span class="form-section__tag form-section__tag--required">
+              Campos obligatorios (*)
+            </span>
+
+          </div>
+
+        </div>
+
+          <div class="form-grid">
+
+            <div class="pensionado-card">
+
+              <div class="pensionado-card__info">
+
+                <div class="pensionado-card__icon" aria-hidden="true">
+                  <mat-icon>elderly</mat-icon>
+                </div>
+
+                <div class="pensionado-card__text">
+
+                  <p class="pensionado-card__question">
+                    ¿Es usted actualmente pensionado(a) o goza de asignación de retiro?
+                    <span>*</span>
+                  </p>
+
+                  <p class="pensionado-card__description">
+                    De conformidad con la reglamentación colombiana, las personas
+                    pensionadas están exentas del aporte a pensión pero deben acreditar
+                    EPS y ARL.
+                  </p>
+
+                </div>
+
+              </div>
+
+              <div class="pensionado-card__options">
+
+                @for (opcion of opcionesSiNo; track opcion.value) {
+
+                  <label class="pensionado-option">
+
+                    <input
+                      type="radio"
+                      formControlName="pensionadoAsignacionRetiro"
+                      [value]="opcion.value"
+                    />
+
+                    <span>
+                      {{ opcion.label }}
+                    </span>
+
+                  </label>
+
+                }
+
+              </div>
+
+              @if (esInvalido("pensionadoAsignacionRetiro")) {
+                <span class="field-error">
+                  Este campo es obligatorio.
+                </span>
+              }
+
+            </div>
+
+            <div class="afiliacion-card">
+
+              <div class="afiliacion-card__title">
+                <mat-icon aria-hidden="true">medical_services</mat-icon>
+                <span>Entidad Promotora de Salud (EPS) <strong>*</strong></span>
+              </div>
+
+              <div class="afiliacion-card__select">
+                <mat-icon aria-hidden="true">health_and_safety</mat-icon>
+
+                <select id="eps" formControlName="eps">
+            <option value="">Seleccione una EPS</option>
+            @for (opcion of opcionesEps; track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+            }
+          </select>
+              </div>
+
+              <p class="afiliacion-card__description">
+                Seleccione la entidad donde registra cotización activa en régimen contributivo.
+              </p>
+
+              @if (esInvalido("eps")) {
+                <span class="field-error">
+                  Seleccione una EPS.
+                </span>
+              }
+
+            </div>
+
+            <div class="afiliacion-card">
+
+              <div class="afiliacion-card__title">
+                <mat-icon aria-hidden="true">savings</mat-icon>
+                <span>Fondo de Pensiones (AFP) <strong>*</strong></span>
+              </div>
+
+              <div class="afiliacion-card__select">
+                <mat-icon aria-hidden="true">account_balance</mat-icon>
+
+                <select id="afp" formControlName="afp">
+            <option value="">Seleccione una AFP</option>
+            @for (opcion of opcionesAfp; track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+            }
+          </select>
+              </div>
+
+              <p class="afiliacion-card__description">
+                Indique administradora de fondos obligatorios de pensiones.
+              </p>
+
+              @if (esInvalido("afp")) {
+                <span class="field-error">
+                  Seleccione una AFP.
+                </span>
+              }
+
+            </div>
+
+            <div class="afiliacion-card">
+
+              <div class="afiliacion-card__title">
+                <mat-icon aria-hidden="true">family_restroom</mat-icon>
+                <span>Caja de Compensación Familiar (CCF)</span>
+              </div>
+
+              <div class="afiliacion-card__select">
+                <mat-icon aria-hidden="true">account_balance</mat-icon>
+
+                <select id="ccf" formControlName="ccf">
+            <option value="">Seleccione una Caja de Compensación</option>
+            @for (opcion of opcionesCcf; track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+            }
+          </select>
+              </div>
+
+              <p class="afiliacion-card__description">
+                Aporte facultativo o por vinculación directa corporativa.
+              </p>
+
+            </div>
+
+          </div>
+        </section>
+
+        <!-- =====================================================
+             2. INFORMACIÓN FINANCIERA
+             ===================================================== -->
+        <section class="form-section form-section--financial">
+
+          <div class="form-section__header">
+            <div class="form-section__title">
+
+              <div class="form-section__icon" aria-hidden="true">
+                <mat-icon>account_balance</mat-icon>
+              </div>
+
+              <div>
+                <h3>2. Información Financiera y Cuenta Bancaria de Giro</h3>
+
+                <p>
+                  Diligencie la cuenta bancaria de ahorros o corriente para trámite
+                  oportuno de desembolsos y pagos institucionales.
+                </p>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="form-grid form-grid--bancario">
+
+            <div class="form-field afiliacion-card">
+
+              <div class="afiliacion-card__title">
+                <mat-icon aria-hidden="true">account_balance</mat-icon>
+                <span>Entidad Bancaria <strong>*</strong></span>
+              </div>
+
+              <div class="afiliacion-card__select">
+                <mat-icon aria-hidden="true">business</mat-icon>
+
+                <select id="entidadBancaria" formControlName="entidadBancaria">
+            <option value="">Seleccione una entidad bancaria</option>
+            @for (opcion of opcionesEntidadesBancarias; track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+            }
+          </select>
+              </div>
+
+              @if (esInvalido("entidadBancaria")) {
+                <span class="field-error">
+                  Seleccione una entidad bancaria.
+                </span>
+              }
+
+            </div>
+
+
+            <div class="form-field afiliacion-card">
+
+              <div class="afiliacion-card__title">
+                <mat-icon aria-hidden="true">credit_card</mat-icon>
+                <span>Tipo de Cuenta <strong>*</strong></span>
+              </div>
+
+              <div class="afiliacion-card__select">
+                <mat-icon aria-hidden="true">payments</mat-icon>
+
+                <select id="tipoCuenta" formControlName="tipoCuenta">
+            <option value="">Seleccione un tipo de cuenta</option>
+            @for (opcion of opcionesTipoCuenta; track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+            }
+          </select>
+              </div>
+
+              @if (esInvalido("tipoCuenta")) {
+                <span class="field-error">
+                  Seleccione el tipo de cuenta.
+                </span>
+              }
+
+            </div>
+
+
+            <div class="form-field afiliacion-card">
+
+              <div class="afiliacion-card__title">
+                <mat-icon aria-hidden="true">123</mat-icon>
+                <span>Número de Cuenta Bancaria <strong>*</strong></span>
+              </div>
+
+              <div class="afiliacion-card__select">
+                <mat-icon aria-hidden="true">lock</mat-icon>
+
+                <input
+                  id="numeroCuentaBancaria"
+                  type="text"
+                  formControlName="numeroCuentaBancaria"
+                  autocomplete="off"
+                  placeholder="Ingrese el número de cuenta"
+                />
+              </div>
+
+              @if (esInvalido("numeroCuentaBancaria")) {
+                <span class="field-error">
+                  El número de cuenta es obligatorio.
+                </span>
+              }
+
+            </div>
+
+
+            <div class="form-field form-field--full tesoreria-card">
+
+              <div class="tesoreria-card__title">
+                <mat-icon aria-hidden="true">alternate_email</mat-icon>
+                <span>Correo Electrónico para Notificaciones de Tesorería <strong>*</strong></span>
+              </div>
+
+              <div class="tesoreria-card__input">
+                <mat-icon aria-hidden="true">mail</mat-icon>
+
+                <input
+                  id="correoNotificacionesTesoreria"
+                  type="email"
+                  formControlName="correoNotificacionesTesoreria"
+                  autocomplete="email"
+                />
+              </div>
+
+              @if (esInvalido("correoNotificacionesTesoreria")) {
+                <span class="field-error">
+                  Ingrese un correo válido.
+                </span>
+              }
+
+              <p class="tesoreria-card__description">
+                A esta casilla se enviarán las constancias de transferencia y volantes
+                de retención en la fuente practicadas por la UD.
+              </p>
+
+              <div class="tesoreria-card__divider"></div>
+
+              <label class="checkbox-option tesoreria-card__authorization">
+
+                <input
+                  type="checkbox"
+                  formControlName="autorizacionGiro"
+                />
+
+                <span>
+                  Autorizo expresamente a la
+                  <strong>Universidad Distrital Francisco José de Caldas</strong>
+                  a efectuar el abono directo en la cuenta bancaria registrada por
+                  concepto de las obligaciones contractuales pactadas, exonerándola
+                  de responsabilidades por inconsistencias en los datos proporcionados.
+                </span>
+
+              </label>
+
+            </div>
+
+          </div>
+
+          <!-- CAPACIDAD FINANCIERA -->
+          <!-- ENCABEZADO: CAPACIDAD FINANCIERA Y PATRIMONIAL -->
+      <div class="capacidad-financiera-header">
+
+        <div class="capacidad-financiera-header__main">
+
+          <div class="capacidad-financiera-header__icon" aria-hidden="true">
+            <mat-icon>trending_up</mat-icon>
+          </div>
+
+          <div class="capacidad-financiera-header__text">
+            <h3>
+              3. Registro de Capacidad Financiera y Patrimonial
+            </h3>
+
+            <p>
+              Bases financieras referenciales para idoneidad contractual y
+              reportes a entes de fiscalización.
+            </p>
+          </div>
+
+        </div>
+
+      </div>
+
+      <div class="capacidad-financiera-divider"></div>
+
+      <!-- CAJA ROSADA: CAPACIDAD FINANCIERA -->
+      <div class="form-subsection form-subsection--capacidad">
+
+        <div class="capacidad-financiera-grid">
+
+          <div class="capacidad-field">
+            <label for="capitalAutorizadoPatrimonio">
+              <mat-icon aria-hidden="true">monetization_on</mat-icon>
+              <span>
+                Capital Autorizado / Patrimonio Líquido
+                <strong>*</strong>
+              </span>
+            </label>
+
+            <div class="capacidad-field__input capacidad-field__input--moneda">
+              <span class="capacidad-field__currency">$ COP</span>
+
+              <input
+                id="capitalAutorizadoPatrimonio"
+                type="text"
+                inputmode="decimal"
+                formControlName="capitalAutorizadoPatrimonio"
+                autocomplete="off"
+                placeholder="Ingrese el valor"
+              />
+            </div>
+
+            @if (esInvalido("capitalAutorizadoPatrimonio")) {
+              <span class="field-error">
+                Este valor es obligatorio.
+              </span>
+            }
+          </div>
+
+          <div class="capacidad-field">
+            <label for="indiceLiquidezReferencial">
+              <mat-icon aria-hidden="true">trending_up</mat-icon>
+              <span>
+                Índice de Liquidez Referencial
+              </span>
+            </label>
+
+            <div class="capacidad-field__input capacidad-field__input--readonly">
+              <mat-icon aria-hidden="true">query_stats</mat-icon>
+
+              <input
+                id="indiceLiquidezReferencial"
+                type="text"
+                formControlName="indiceLiquidezReferencial"
+                readonly
+              />
+            </div>
+
+            <small class="field-help">
+              Cálculo institucional automático para licitaciones públicas.
+            </small>
+          </div>
+
+        </div>
+
+      </div>
+
+        </section>
+
+      </div>
+    </mat-card-content>
+
+  </mat-card>
+</div>

@@ -1,0 +1,1250 @@
+@use 'src/app/shared/styles/tokens' as t;
+
+:host {
+  display: block;
+}
+
+/* =========================================================
+   BANNER INSTITUCIONAL DEL PASO
+   ========================================================= */
+
+.step-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--agora-border);
+  border-radius: 0.75rem;
+  background: var(--agora-surface-soft);
+}
+
+.step-banner__icon {
+  display: flex;
+  flex: 0 0 2.875rem;
+  align-items: center;
+  justify-content: center;
+  width: 2.875rem;
+  height: 2.875rem;
+  margin-top: 0.125rem;
+  border-radius: 0.625rem;
+  background: var(--agora-border);
+  color: var(--agora-primary);
+}
+
+.step-banner__icon mat-icon {
+  font-size: 1.5rem;
+}
+
+.step-banner__content {
+  min-width: 0;
+  flex: 1;
+}
+
+.step-banner__headline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.step-banner__headline h2 {
+  margin: 0;
+  color: var(--agora-primary);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.step-banner__tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.5rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  background: var(--agora-border);
+  color: var(--agora-primary-dark);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.step-banner__description {
+  margin: 0.5rem 0 0;
+  color: var(--agora-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+
+/* =========================================================
+   CAMPOS
+   ========================================================= */
+
+.form-section {
+  padding: 0.25rem 0;
+}
+
+.form-section + .form-section {
+  margin-top: 1rem;
+}
+
+.form-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.25rem;
+
+  border-bottom: 1px solid var(--agora-border);
+}
+
+.form-section__title {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.form-section__icon {
+  display: flex;
+  flex: 0 0 1.75rem;
+  align-items: center;
+  justify-content: center;
+
+  width: 1.75rem;
+  height: 1.75rem;
+
+  margin-top: 0.05rem;
+
+  border-radius: 0.5rem;
+
+  background: var(--agora-surface-soft);
+  color: var(--agora-primary);
+}
+
+.form-section__icon mat-icon {
+  font-size: 1.125rem;
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.form-section__title h3 {
+  margin: 0 0 0.75rem;
+
+  color: var(--agora-primary);
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.form-section__title p {
+  margin: 0.2rem 0 0;
+
+  color: var(--agora-text-muted);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.form-section__meta {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.form-section__tag {
+  display: inline-flex;
+  align-items: center;
+
+  min-height: 1.75rem;
+  box-sizing: border-box;
+
+  padding: 0.3rem 0.625rem;
+
+  border-radius: 0.25rem;
+
+  background: var(--agora-border);
+  color: var(--agora-text);
+
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.form-section__tag--required {
+  color: var(--agora-primary);
+  font-weight: 700;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+}
+
+.form-field--full {
+  grid-column: 1 / -1;
+}
+
+.form-field > label:not(.radio-option):not(.checkbox-option) {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--agora-text);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: normal;
+  text-transform: uppercase;
+  line-height: 1.4;
+}
+
+.form-field > label > span {
+  color: var(--agora-primary);
+}
+
+.form-field input,
+.form-field select {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  background: var(--agora-background);
+  color: var(--agora-text);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.4;
+  outline: none;
+  box-shadow: var(--agora-sombra-xs);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.form-field select {
+  cursor: pointer;
+}
+
+.form-field input:focus,
+.form-field select:focus {
+  border-color: var(--agora-primary);
+  outline: 2px solid color-mix(in srgb, var(--agora-primary) 14%, transparent);
+  box-shadow: var(--agora-sombra-xs);
+}
+
+.form-field input.ng-invalid.ng-touched,
+.form-field select.ng-invalid.ng-touched {
+  border: 2px solid var(--agora-error);
+  outline: 2px solid color-mix(in srgb, var(--agora-error) 28%, transparent);
+  background: var(--agora-error-surface);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--agora-error) 12%, transparent);
+}
+
+.form-field input:read-only {
+  background: var(--agora-surface-highlight);
+  text-align: center;
+  color: var(--agora-text);
+  cursor: default;
+}
+
+/* =========================================================
+   PENSIONADO / ASIGNACIÓN DE RETIRO
+   ========================================================= */
+
+.pensionado-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+
+  grid-column: 1 / -1;
+  width: 100%;
+  box-sizing: border-box;
+
+  padding: 1rem 1.25rem;
+
+  border: 1px solid var(--agora-surface-highlight);
+  border-radius: 0.75rem;
+
+  background: var(--agora-surface-soft);
+}
+
+.pensionado-card__info {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pensionado-card__icon {
+  display: flex;
+  flex: 0 0 2.75rem;
+  align-items: center;
+  justify-content: center;
+
+  width: 2.75rem;
+  height: 2.75rem;
+
+  border-radius: 0.5rem;
+
+  background: var(--agora-primary-light);
+  color: var(--agora-primary);
+}
+
+.pensionado-card__icon mat-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  font-size: 1.5rem;
+}
+
+.pensionado-card__text {
+  min-width: 0;
+}
+
+.pensionado-card__question {
+  margin: 0;
+
+  color: var(--agora-text);
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.pensionado-card__question span {
+  color: var(--agora-primary);
+}
+
+.pensionado-card__description {
+  max-width: 52rem;
+  margin: 0.35rem 0 0;
+
+  color: var(--agora-text-muted);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.pensionado-card__options {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.pensionado-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  min-width: 10rem;
+  min-height: 2.5rem;
+  box-sizing: border-box;
+
+  margin: 0;
+  padding: 0.5rem 0.875rem;
+
+  border: 1px solid var(--agora-border-strong);
+  border-radius: 0.5rem;
+
+  background: var(--agora-surface-highlight);
+
+  color: var(--agora-text);
+  font-size: 0.875rem;
+  font-weight: 500;
+
+  cursor: pointer;
+
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.pensionado-option:hover {
+  border-color: var(--agora-error-border);
+  background: var(--agora-surface-soft);
+}
+
+.pensionado-option input {
+  flex: 0 0 auto;
+
+  width: 1rem;
+  height: 1rem;
+
+  margin: 0;
+
+  accent-color: var(--agora-primary);
+}
+
+.pensionado-option span {
+  color: var(--agora-text);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.pensionado-option:has(input:checked) {
+  border-color: var(--agora-primary);
+  background: var(--agora-surface-highlight);
+  box-shadow: 0 0 0 1px var(--agora-primary);
+}
+
+.pensionado-option:has(input:checked) span {
+  color: var(--agora-primary);
+  font-weight: 700;
+}
+
+.pensionado-card > .field-error {
+  flex-basis: 100%;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: t.$bp-lg) {
+
+  .pensionado-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .pensionado-card__options {
+    width: 100%;
+  }
+
+  .pensionado-option {
+    flex: 1 1 0;
+  }
+}
+
+@media (max-width: t.$bp-sm) {
+
+  .pensionado-card__options {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pensionado-option {
+    width: 100%;
+  }
+}
+
+/* =========================================================
+   CHECKBOX
+   ========================================================= */
+
+.checkbox-field {
+  padding-top: 0.125rem;
+}
+
+.checkbox-option {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 !important;
+  color: var(--agora-text);
+  font-size: 0.8125rem !important;
+  font-weight: 400 !important;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.checkbox-option input {
+  flex: 0 0 auto;
+  width: 1rem !important;
+  min-width: 1rem;
+  min-height: 1rem !important;
+  margin: 0;
+  padding: 0 !important;
+  accent-color: var(--agora-primary);
+}
+
+.checkbox-option span {
+  color: var(--agora-text);
+}
+
+/* =========================================================
+   MENSAJES DE VALIDACIÓN
+   ========================================================= */
+
+.field-error {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--agora-error);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.field-help {
+  margin: 0.25rem 0 0.75rem;
+  color: var(--agora-text-muted);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+/* =========================================================
+   SUBSECCIÓN FINANCIERA
+   ========================================================= */
+
+.form-subsection {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--agora-border);
+}
+
+/* =========================================================
+   ALINEACIÓN CON EL CONTENEDOR INSTITUCIONAL
+   ========================================================= */
+
+plantilla-tarjeta-contenedora {
+  display: block;
+  width: calc(100% + 3rem);
+  margin-left: -1.5rem;
+}
+
+@media (max-width: t.$bp-sm) {
+  plantilla-tarjeta-contenedora {
+    width: calc(100% + 1.5rem);
+    margin-left: -0.75rem;
+  }
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: t.$bp-md) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-field--full {
+    grid-column: auto;
+  }
+
+  .step-banner {
+    padding: 1rem;
+  }
+
+  .step-banner__headline {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: t.$bp-sm) {
+  .step-banner {
+    flex-direction: column;
+  }
+
+  .step-banner__icon {
+    margin-top: 0;
+  }
+}
+
+/* =========================================================
+   SECCIONES INTERNAS DEL CONTENEDOR ÚNICO
+   ========================================================= */
+
+.form-section--financial {
+  margin-top: 1.75rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--agora-border);
+}
+
+/* =========================================================
+   CONTENEDOR ÚNICO DEL PASO 2
+   ========================================================= */
+
+.paso-2-card-wrapper {
+  width: min(100% - 3rem, 86.25rem);
+  margin: 0 auto;
+  padding: 1rem 0;
+  color: var(--agora-text);
+}
+
+.paso-2-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 1.5rem;
+  border: 0;
+  border-radius: 0.75rem;
+  background: var(--agora-surface) !important;
+  box-shadow: var(--agora-sombra-tarjeta);
+}
+
+/* =========================================================
+   BANNER
+   ========================================================= */
+
+.paso-2-card .step-banner {
+  margin: 0;
+  background: var(--agora-surface-soft);
+}
+
+/* =========================================================
+   ENCABEZADO "AFILIACIONES Y FINANZAS"
+   ========================================================= */
+
+.paso-2-card__header {
+  display: flex;
+  align-items: stretch;
+  gap: 0.75rem;
+  width: 100%;
+  min-width: 0;
+  padding: 0 0 1rem;
+  border-bottom: 1px solid var(--agora-border);
+}
+
+.paso-2-card__icon {
+  display: flex;
+  flex: 0 0 3.5rem;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  aspect-ratio: 1;
+  border-radius: 0.75rem;
+  background: var(--agora-border);
+  color: var(--agora-primary);
+}
+
+.paso-2-card__icon mat-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  font-size: 1.5rem;
+}
+
+.paso-2-card__header-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.paso-2-card__header-text h1 {
+  margin: 0;
+  color: var(--agora-primary-dark);
+  font-size: clamp(1.25rem, 2vw, 1.75rem);
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.paso-2-card__header-text p {
+  display: block;
+  margin: 0.5rem 0 0;
+  color: var(--agora-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+/* =========================================================
+   CONTENIDO
+   ========================================================= */
+
+.paso-2-card__content {
+  margin: 0;
+  padding: 0;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: t.$bp-lg) {
+  .form-section__header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .form-section__meta {
+    width: 100%;
+  }
+}
+
+@media (max-width: t.$bp-sm) {
+  .form-section__meta {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .form-section__tag {
+    width: 100%;
+  }
+}
+
+@media (max-width: t.$bp-sm) {
+
+  .paso-2-card-wrapper {
+    width: min(100% - 1.5rem, 80rem);
+    padding-top: 1rem;
+  }
+
+  .paso-2-card {
+    padding: 1.25rem;
+  }
+
+  .paso-2-card__header {
+    flex-direction: column;
+    padding-bottom: 1.25rem;
+  }
+
+}
+/* ============================================================
+   TARJETAS DE AFILIACIONES - EPS / AFP / CCF
+   ============================================================ */
+
+.afiliacion-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+
+  min-width: 0;
+  padding: 1.25rem;
+
+  background: var(--agora-surface);
+  border: 1px solid var(--agora-border);
+  border-radius: 0.75rem;
+
+  box-sizing: border-box;
+}
+
+.afiliacion-card__title {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+
+  color: var(--agora-text);
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.afiliacion-card__title mat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 2rem;
+  height: 2rem;
+
+  padding: 0.375rem;
+  box-sizing: border-box;
+
+  border-radius: 0.5rem;
+  background: var(--agora-border);
+  color: var(--agora-primary);
+
+  font-size: 1.125rem;
+}
+
+.afiliacion-card__title strong {
+  color: var(--agora-primary);
+}
+
+.afiliacion-card__select {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+
+  min-height: 2.5rem;
+  padding: 0 0.875rem;
+
+  box-sizing: border-box;
+
+  background: var(--agora-background);
+  border: 1px solid var(--agora-border);
+  border-radius: 0.5rem;
+}
+
+.afiliacion-card__select:focus-within {
+  border-color: var(--agora-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--agora-primary) 8%, transparent);
+}
+
+.afiliacion-card__select mat-icon {
+  flex: 0 0 auto;
+
+  color: var(--agora-primary);
+  font-size: 1.125rem;
+}
+
+.afiliacion-card__select select {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+
+  min-height: 2.5rem;
+
+  padding: 0;
+
+  border: 0;
+  outline: 0;
+
+  background: var(--agora-background);
+
+  color: var(--agora-text);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.afiliacion-card__description {
+  margin: 0;
+
+  color: var(--agora-text-muted);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+@media (max-width: t.$bp-md) {
+  .afiliacion-card {
+    grid-column: 1 / -1;
+  }
+}
+
+
+/* ============================================================
+   GRID DE INFORMACIÓN FINANCIERA
+   Tres tarjetas bancarias en una sola línea
+   ============================================================ */
+
+.form-grid--bancario {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.form-grid--bancario .tesoreria-card {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: t.$bp-lg) {
+  .form-grid--bancario {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: t.$bp-sm) {
+  .form-grid--bancario {
+    grid-template-columns: 1fr;
+  }
+}
+
+.afiliacion-card__select input {
+  background: var(--agora-background);
+}
+
+/* ============================================================
+   TARJETA DE CORREO DE TESORERÍA
+   Fondo rosado con campo de correo blanco
+   ============================================================ */
+
+.tesoreria-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+
+  grid-column: 1 / -1;
+
+  width: 100%;
+  min-width: 0;
+
+  padding: 1.25rem;
+  box-sizing: border-box;
+
+  background: var(--agora-background) !important;
+  border: 1px solid var(--agora-border);
+  border-radius: 0.75rem;
+}
+
+/* Título del módulo */
+.tesoreria-card__title {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+
+  margin: 0;
+
+  background: transparent !important;
+
+  color: var(--agora-text);
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.tesoreria-card__title mat-icon {
+  flex: 0 0 auto;
+
+  color: var(--agora-primary);
+  font-size: 1.5rem;
+}
+
+/* ÚNICO CUADRO BLANCO PARA EL CORREO */
+.tesoreria-card__input {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+
+  width: 70%;
+  min-height: 2.5rem;
+
+  padding: 0 0.875rem;
+  box-sizing: border-box;
+
+  background: var(--agora-surface) !important;
+
+  border: 1px solid var(--agora-border) !important;
+  border-radius: 0.5rem;
+}
+
+.tesoreria-card__input:focus-within {
+  border-color: var(--agora-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--agora-primary) 8%, transparent);
+}
+
+.tesoreria-card__input mat-icon {
+  flex: 0 0 auto;
+
+  color: var(--agora-text-muted);
+  font-size: 1.25rem;
+}
+
+.tesoreria-card__input input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  min-height: 2.5rem;
+
+  padding: 0;
+
+  border: 0;
+  outline: 0;
+
+  background: var(--agora-surface) !important;
+
+  color: var(--agora-text);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Texto explicativo */
+.tesoreria-card__description {
+  margin: 0;
+
+  background: transparent !important;
+
+  color: var(--agora-text-muted);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+/* Separador */
+.tesoreria-card__divider {
+  width: 100%;
+  height: 1px;
+
+  margin: 0.25rem 0;
+
+  background: var(--agora-border-strong);
+}
+
+/* Autorización */
+.tesoreria-card__authorization {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+
+  margin: 0;
+
+  background: transparent !important;
+
+  color: var(--agora-text);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.tesoreria-card__authorization input {
+  flex: 0 0 auto;
+
+  width: 1.125rem;
+  height: 1.125rem;
+
+  margin-top: 0.125rem;
+
+  accent-color: var(--agora-primary);
+}
+
+/* Responsive */
+@media (max-width: t.$bp-md) {
+  .tesoreria-card__input {
+    width: 100%;
+  }
+}
+
+
+/* ============================================================
+   CAPACIDAD FINANCIERA Y PATRIMONIAL
+   ============================================================ */
+
+.form-subsection--capacidad {
+  width: 100%;
+  box-sizing: border-box;
+
+  padding: 1.25rem;
+
+  background: var(--agora-surface-soft);
+  border: 1px solid var(--agora-border);
+  border-radius: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+}
+
+.capacidad-financiera-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+
+.capacidad-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+
+  min-width: 0;
+}
+
+.capacidad-field > label {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+
+  margin: 0;
+
+  color: var(--agora-text);
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.capacidad-field > label mat-icon {
+  flex: 0 0 auto;
+
+  color: var(--agora-primary);
+  font-size: 1.5rem;
+}
+
+.capacidad-field > label strong {
+  color: var(--agora-primary);
+}
+
+.capacidad-field__input {
+  display: flex;
+  align-items: center;
+
+  min-height: 2.5rem;
+
+  padding: 0 0.875rem;
+
+  box-sizing: border-box;
+
+  background: var(--agora-background);
+
+  border: 1px solid var(--agora-border) !important;
+  border-radius: 0.5rem;
+}
+
+.capacidad-field__input:focus-within {
+  border-color: var(--agora-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--agora-primary) 8%, transparent);
+}
+
+.capacidad-field__currency {
+  flex: 0 0 auto;
+
+  margin-right: 0.875rem;
+
+  background: var(--agora-surface);
+
+  color: var(--agora-primary);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.capacidad-field__input input {
+  flex: 1;
+  min-width: 0;
+
+  width: 100%;
+  min-height: 2.5rem;
+
+  padding: 0;
+
+  border: 0;
+  outline: 0;
+
+  background: transparent;
+
+  color: var(--agora-text);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.capacidad-field__input--readonly mat-icon {
+  flex: 0 0 auto;
+
+  margin-right: 0.625rem;
+
+  color: var(--agora-text-muted);
+  font-size: 1.375rem;
+}
+
+.capacidad-field__input--readonly input {
+  font-weight: 600;
+  color: var(--agora-text);
+  cursor: not-allowed;
+}
+
+.capacidad-field .field-help {
+  margin: 0.25rem 0 0.75rem;
+
+  color: var(--agora-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* El campo de Capital Autorizado, incluido el prefijo $ COP,
+   debe permanecer blanco (por encima del fondo del input) */
+.capacidad-field__input--moneda {
+  background: var(--agora-surface) !important;
+}
+
+.capacidad-field__input--moneda input {
+  background: var(--agora-surface) !important;
+}
+
+@media (max-width: t.$bp-md) {
+  .capacidad-financiera-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ============================================================
+   ENCABEZADO - CAPACIDAD FINANCIERA Y PATRIMONIAL
+   ============================================================ */
+
+.capacidad-financiera-header {
+  width: 100%;
+  box-sizing: border-box;
+
+  margin-top: 2rem;
+
+  background: var(--agora-surface);
+}
+
+.capacidad-financiera-header__main {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+
+  background: var(--agora-surface);
+}
+
+.capacidad-financiera-header__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex: 0 0 auto;
+
+  width: 3rem;
+  height: 3rem;
+
+  border-radius: 0.5rem;
+
+  background: var(--agora-border);
+  color: var(--agora-primary-dark);
+}
+
+.capacidad-financiera-header__icon mat-icon {
+  font-size: 1.5rem;
+}
+
+.capacidad-financiera-header__text {
+  min-width: 0;
+
+  background: var(--agora-surface);
+}
+
+.capacidad-financiera-header__text h3 {
+  margin: 0 0 0.75rem;
+
+  background: transparent;
+
+  color: var(--agora-primary);
+
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: normal;
+}
+
+.capacidad-financiera-header__text p {
+  margin: 0.25rem 0 0;
+
+  background: transparent;
+
+  color: var(--agora-text-muted);
+
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.capacidad-financiera-divider {
+  width: 100%;
+  height: 1px;
+
+  margin: 0.75rem 0 1.25rem;
+
+  background: var(--agora-border);
+}
+
+@media (max-width: t.$bp-sm) {
+  .capacidad-financiera-header__main {
+    align-items: flex-start;
+  }
+
+  .capacidad-financiera-header__icon {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .capacidad-financiera-header__text h3 {
+    font-size: 1rem;
+  }
+
+  .capacidad-financiera-header__text p {
+    font-size: 0.875rem;
+  }
+}
+

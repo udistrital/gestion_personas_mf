@@ -1,4 +1,105 @@
-<section class="registro-inicio">
-  <h1>{{ titulo }}</h1>
-  <p>Microfrontend core de Ágora montado correctamente.</p>
-</section>
+<plantilla-pagina-contenedora
+  [icon]="'edit_square'"
+  [title]="'Registro Único de Persona y Proveedor'"
+  [breadcrumb]="'<p>Gestión de Proveedores > Registro > <b>Formulario Único de Proveedor</b></p>'"
+  class="rp-contenedor"
+>
+  <div>
+    <!-- Tarjeta principal -->
+    <section class="rp-tarjeta d-flex flex-column rounded-3">
+      <!-- Banda superior -->
+      <div class="rp-tarjeta-banda d-flex align-items-start gap-3 p-3 p-lg-4">
+        <div
+          class="rp-banda-icono d-flex align-items-center justify-content-center flex-shrink-0 rounded-3"
+        >
+          <mat-icon class="rp-ico-banda">how_to_reg</mat-icon>
+        </div>
+        <div class="rp-banda-texto d-flex flex-column">
+          <div class="rp-banda-titulos d-flex align-items-center flex-wrap gap-2">
+            <h2 class="m-0 fw-bold">Paso Inicial: Selección de Modalidad de Registro</h2>
+            <span class="rp-badge fw-bold">Fase 0 de 4</span>
+          </div>
+          <p class="mt-1 mb-0">
+            Para iniciar el trámite de inscripción en el Registro Único de Personas y Banco de
+            Proveedores de la Universidad Distrital Francisco José de Caldas, seleccione a
+            continuación la personería jurídica o figura asociativa bajo la cual formalizará su
+            relación contractual.
+          </p>
+        </div>
+      </div>
+
+      <!-- Cuerpo -->
+      <div class="rp-tarjeta-cuerpo d-flex flex-column gap-4">
+        <div class="rp-alerta d-flex align-items-start rounded-3">
+          <mat-icon class="rp-alerta-icono flex-shrink-0">info</mat-icon>
+          <div>
+            <p class="rp-alerta-titulo m-0 fw-bold">
+              Importante: Flujo Documental y Normativo Adaptativo
+            </p>
+            <p class="rp-alerta-texto mt-1 mb-0">
+              Al seleccionar su tipo de personería, el sistema Ágora configurará automáticamente las
+              secciones de validación ante la DIAN, los requisitos de seguridad social y los formatos
+              de soportes obligatorios (RUT, RUP, Cámara de Comercio o Acuerdos de Consorcio). Puede
+              cambiar su selección antes de enviar la información oficial.
+            </p>
+          </div>
+        </div>
+
+        @if (consentimientoPendiente) {
+          <div class="rp-alerta rp-alerta--bloqueo d-flex align-items-start rounded-3" role="alert">
+            <mat-icon class="rp-alerta-icono flex-shrink-0">lock</mat-icon>
+            <div>
+              <p class="rp-alerta-titulo m-0 fw-bold">
+                Consentimiento de datos personales requerido
+              </p>
+              <p class="rp-alerta-texto mt-1 mb-0">
+                El formulario permanece bloqueado hasta que acepte el consentimiento para el
+                tratamiento de sus datos personales. Puede volver a consultarlo en cualquier momento.
+              </p>
+            </div>
+          </div>
+        }
+
+        <fieldset
+          class="rp-grupo d-block m-0 p-0 border-0"
+          [class.rp-grupo--bloqueado]="consentimientoPendiente"
+          [disabled]="consentimientoPendiente"
+          [attr.aria-disabled]="consentimientoPendiente"
+        >
+          <legend class="rp-grupo-leyenda d-flex align-items-center gap-2 p-0 fw-bold text-uppercase">
+            <mat-icon class="rp-ico-leyenda">category</mat-icon>
+            Seleccione la categoría correspondiente
+            <span class="rp-obligatorio-leyenda">*</span>
+          </legend>
+
+          <app-opciones-registro
+            [opciones]="opciones"
+            [formulario]="formulario"
+            [modalidadSeleccionada]="formulario.get('modalidad')?.value"
+            [deshabilitado]="consentimientoPendiente"
+          ></app-opciones-registro>
+        </fieldset>
+
+        <app-boton-tratamiento-informacion
+          [consentimientoAceptado]="consentimientoAceptado()"
+          (solicitarConsentimiento)="consultarConsentimiento()"
+        ></app-boton-tratamiento-informacion>
+      </div>
+
+      <!-- Pie -->
+      <div
+        class="rp-tarjeta-pie rp-acciones d-flex flex-column flex-sm-row align-items-center justify-content-end gap-3"
+      >
+        <button
+          type="button"
+          class="rp-btn-continuar d-inline-flex align-items-center justify-content-center border-0 rounded-1 fw-bold"
+          [disabled]="consentimientoPendiente"
+          (click)="continuar()"
+        >
+          <span>Continuar e Iniciar Diligenciamiento</span>
+          <mat-icon class="rp-ico-continuar">arrow_forward</mat-icon>
+        </button>
+      </div>
+    </section>
+  </div>
+</plantilla-pagina-contenedora>

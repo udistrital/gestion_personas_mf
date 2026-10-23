@@ -1,0 +1,283 @@
+<div [formGroup]="documentosForm">
+<section class="paso3-banner">
+
+  <div class="paso3-banner__icono" aria-hidden="true">
+    <mat-icon>folder_special</mat-icon>
+  </div>
+
+  <div class="paso3-banner__contenido">
+
+    <h2>
+      Paso 3: Carga y Gestión de Soportes Documentales
+      (RUT, RUP y Certificaciones)
+    </h2>
+
+    <p>
+      Cargue los soportes requeridos para la formalización del registro
+      institucional ante la Universidad Distrital.
+    </p>
+
+  </div>
+
+</section>
+
+<section class="paso3-rut-seccion">
+
+  <div class="paso3-rut-seccion__encabezado">
+
+    <div class="paso3-rut-seccion__titulo">
+
+      <div class="paso3-rut-seccion__icono" aria-hidden="true">
+        <mat-icon>receipt_long</mat-icon>
+      </div>
+
+      <div>
+        <h3>1. Registro Único Tributario (RUT)</h3>
+
+        <p>
+          Expedido por la DIAN con fecha de generación del año fiscal corriente
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="paso3-rut-documento">
+
+    @if (!documentosForm.get("rutArchivo")?.value) {
+
+      <div class="paso3-rut-vacio">
+
+        <div class="paso3-rut-vacio__icono" aria-hidden="true">
+          <mat-icon>picture_as_pdf</mat-icon>
+        </div>
+
+        <div class="paso3-rut-vacio__contenido">
+
+          <strong>Adjuntar Registro Único Tributario (RUT)</strong>
+
+          <span>
+            Seleccione el archivo PDF expedido por la DIAN.
+          </span>
+
+        </div>
+
+        <label class="paso3-rut-boton paso3-rut-boton--principal">
+          <mat-icon>upload_file</mat-icon>
+          <span>Cargar RUT</span>
+
+          <input
+            type="file"
+            accept="application/pdf"
+            (change)="onRutArchivoSeleccionado($event)"
+          />
+        </label>
+
+      </div>
+
+    } @else {
+
+      <div class="paso3-rut-cargado">
+
+        <div class="paso3-rut-cargado__archivo">
+
+          <div class="paso3-rut-cargado__icono" aria-hidden="true">
+            <mat-icon>picture_as_pdf</mat-icon>
+          </div>
+
+          <div class="paso3-rut-cargado__contenido">
+
+            <div class="paso3-rut-cargado__nombre">
+              <span>{{ documentosForm.get("rutArchivo")?.value?.name }}</span>
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="paso3-rut-cargado__acciones">
+
+          <button
+            class="paso3-rut-boton"
+            type="button"
+            (click)="visualizarRut()"
+          >
+            <mat-icon>visibility</mat-icon>
+            <span>Visualizar PDF</span>
+          </button>
+
+          <button
+            class="paso3-rut-boton"
+            type="button"
+            (click)="descargarRut()"
+          >
+            <mat-icon>download</mat-icon>
+            <span>Descargar copia</span>
+          </button>
+
+        </div>
+
+      </div>
+
+    }
+
+  </div>
+
+</section>
+
+<div class="paso3-rup-seccion">
+
+  <div class="paso3-rup-seccion__encabezado">
+
+    <div class="paso3-rup-seccion__titulo">
+
+      <div class="paso3-rup-seccion__icono" aria-hidden="true">
+        <mat-icon>badge</mat-icon>
+      </div>
+
+      <div>
+        <h3>
+          2. Registro Único de Proponentes (RUP) / Cámara de Comercio
+        </h3>
+
+        <p>
+          Para personas naturales con establecimiento o personas jurídicas
+          requeridas por contratación pública
+        </p>
+      </div>
+
+    </div>
+
+    <div class="paso3-rup-toggle">
+
+      <span>¿Aplica RUP?</span>
+
+      <button
+        class="paso3-rup-toggle__control"
+        [class.paso3-rup-toggle__control--activo]="
+          documentosForm.get('aplicaRup')?.value === 'si'
+        "
+        type="button"
+        [attr.aria-pressed]="
+          documentosForm.get('aplicaRup')?.value === 'si'
+        "
+        (click)="alternarAplicaRup()"
+      >
+        <span class="paso3-rup-toggle__circulo"></span>
+      </button>
+
+      <strong>
+        {{
+          documentosForm.get("aplicaRup")?.value === "si"
+            ? "Aplica RUP (CCB)"
+            : documentosForm.get("aplicaRup")?.value === "no"
+              ? "No aplica RUP"
+              : "Seleccione una opción"
+        }}
+      </strong>
+
+    </div>
+
+  </div>
+
+  @if (documentosForm.get("aplicaRup")?.value === "si") {
+
+    <div class="paso3-rup-documento">
+
+      <div class="paso3-rup-documento__principal">
+
+        <div class="paso3-rup-documento__icono" aria-hidden="true">
+          <mat-icon>business_center</mat-icon>
+        </div>
+
+        <div class="paso3-rup-documento__contenido">
+
+          <span class="paso3-rup-documento__nombre">
+            {{
+              documentosForm.get("certificadoRup")?.value?.name ||
+                "Sin certificado RUP cargado"
+            }}
+          </span>
+
+          <div class="paso3-rup-datos">
+
+            <label class="paso3-rup-dato">
+              <span>Matrícula Mercantil</span>
+              <input
+                formControlName="matriculaMercantil"
+                type="text"
+              />
+            </label>
+
+            <label class="paso3-rup-dato">
+              <span>Capacidad Residual (K)</span>
+              <input
+                formControlName="capacidadResidual"
+                type="text"
+              />
+            </label>
+
+            <label class="paso3-rup-dato">
+              <span>Fecha Vencimiento</span>
+              <input
+                formControlName="fechaVencimientoRup"
+                type="date"
+              />
+            </label>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <div class="paso3-rup-acciones">
+
+        <button
+          class="paso3-rup-boton"
+          type="button"
+          [disabled]="!documentosForm.get('certificadoRup')?.value"
+          (click)="visualizarRup()"
+        >
+          <mat-icon>visibility</mat-icon>
+          <span>Previsualizar</span>
+        </button>
+
+        <label class="paso3-rup-boton paso3-rup-boton--reemplazar">
+          <mat-icon>cached</mat-icon>
+          <span>
+            {{
+              documentosForm.get("certificadoRup")?.value
+                ? "Reemplazar"
+                : "Cargar certificado"
+            }}
+          </span>
+
+          <input
+            type="file"
+            accept="application/pdf"
+            (change)="onCertificadoRupSeleccionado($event)"
+          />
+        </label>
+
+      </div>
+
+    </div>
+
+  } @else {
+
+    <div class="paso3-rup-vacio">
+
+      <mat-icon aria-hidden="true">business_center</mat-icon>
+
+      <span>
+        Seleccione “Aplica RUP (CCB)” para cargar el certificado RUP.
+      </span>
+
+    </div>
+
+  }
+
+</div>
+</div>

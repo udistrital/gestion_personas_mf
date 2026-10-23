@@ -2,32 +2,45 @@
   <div class="estado-autoguardado" aria-live="polite">
     <mat-icon class="estado-autoguardado__icono" aria-hidden="true">cloud_done</mat-icon>
     <div class="estado-autoguardado__texto">
-      <strong>[mock] Borrador societario autoguardado con éxito</strong>
-      <span>Hoy a las 11:45 AM · Sesión cifrada SSL 256-bit Universidad Distrital</span>
+      <strong>{{ estadoMensaje }}</strong>
+      <span>{{ estadoDetalle }}</span>
     </div>
   </div>
 
   <div class="acciones">
-    @if (mostrarRegreso) {
-      <button class="boton-borrador" type="button" (click)="regreso.emit()">
-        <mat-icon aria-hidden="true">arrow_back</mat-icon>
-        <span>Regresar</span>
-      </button>
-    }
+    <button
+      *ngIf="mostrarRegreso"
+      class="boton-borrador"
+      type="button"
+      (click)="regreso.emit()"
+    >
+      <mat-icon aria-hidden="true">arrow_back</mat-icon>
+      <span>Regresar</span>
+    </button>
+
     <button class="boton-borrador" type="button" (click)="guardar.emit()">
       <mat-icon aria-hidden="true">save</mat-icon>
       <span>Guardar Borrador</span>
     </button>
-    @if (esUltimoPaso) {
-      <button class="boton-acento" type="button" (click)="finalizar.emit()">
-        <span>Finalizar</span>
-        <mat-icon aria-hidden="true">check_circle</mat-icon>
-      </button>
-    } @else {
-      <button class="boton-acento" type="button" (click)="continuar.emit()">
-        <span>Continuar</span>
-        <mat-icon aria-hidden="true">arrow_forward</mat-icon>
-      </button>
-    }
+
+    <button
+      *ngIf="!esUltimoPaso"
+      class="boton-acento"
+      type="button"
+      (click)="continuar.emit()"
+    >
+      <span>Continuar</span>
+      <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+    </button>
+
+    <button
+      *ngIf="esUltimoPaso"
+      class="boton-acento"
+      type="button"
+      (click)="finalizar.emit()"
+    >
+      <span>Finalizar</span>
+      <mat-icon aria-hidden="true">check_circle</mat-icon>
+    </button>
   </div>
 </section>

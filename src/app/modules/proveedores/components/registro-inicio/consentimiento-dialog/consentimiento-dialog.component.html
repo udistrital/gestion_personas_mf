@@ -1,0 +1,54 @@
+<div
+  class="rp-consentimiento d-flex flex-column gap-3"
+  [class]="'rp-consentimiento--' + contenido.tono"
+>
+  <header class="rp-consentimiento-cabecera d-flex align-items-center gap-3">
+    <div
+      class="rp-consentimiento-icono d-flex align-items-center justify-content-center flex-shrink-0 rounded-3"
+    >
+      <mat-icon>{{ contenido.icono }}</mat-icon>
+    </div>
+    <div class="rp-consentimiento-titulos d-flex flex-column">
+      <span class="rp-consentimiento-antetitulo d-flex text-uppercase fw-bold">{{
+        contenido.antetitulo
+      }}</span>
+      <h2 class="rp-consentimiento-titulo d-flex p-0 fw-bold">{{ contenido.titulo }}</h2>
+    </div>
+  </header>
+
+  <mat-dialog-content class="rp-consentimiento-cuerpo m-0">
+    @for (parrafo of parrafos; track $index) {
+      <p class="rp-consentimiento-parrafo">
+        @for (segmento of parrafo.segmentos; track $index) {
+          @if (segmento.url) {
+            <a
+              class="rp-consentimiento-enlace d-inline fw-bold"
+              [href]="segmento.url"
+              target="_blank"
+              rel="noopener noreferrer"
+              >{{ segmento.texto }}</a
+            >
+          } @else {
+            {{ segmento.texto }}
+          }
+        }
+      </p>
+    }
+  </mat-dialog-content>
+
+  <mat-dialog-actions
+    class="rp-consentimiento-acciones d-flex flex-column-reverse flex-sm-row align-items-sm-center justify-content-end m-0"
+  >
+    @for (boton of contenido.botones; track boton.accion) {
+      <button
+        type="button"
+        class="rp-consentimiento-boton d-inline-flex align-items-center justify-content-center gap-2 rounded-1 fw-bold"
+        [class.rp-consentimiento-boton--destacado]="boton.destacado"
+        (click)="accion(boton.accion)"
+      >
+        <mat-icon>{{ boton.icono }}</mat-icon>
+        <span>{{ boton.texto }}</span>
+      </button>
+    }
+  </mat-dialog-actions>
+</div>

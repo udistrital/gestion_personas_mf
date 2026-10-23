@@ -1,7 +1,69 @@
+@use 'src/app/shared/styles/tokens' as t;
+
 @use 'src/app/shared/styles/registro-formulario' as registro-formulario;
 
 @include registro-formulario.styles;
 
 :host {
 	display: block;
+}
+
+.rup-encabezado {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: end;
+	justify-content: space-between;
+	gap: 0.75rem;
+	margin-bottom: 1rem;
+}
+
+.aportes-grid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 1rem;
+}
+
+.rup-encabezado .campo {
+	min-width: min(100%, 20rem);
+}
+
+.rup-contenido {
+	display: grid;
+	gap: 1rem;
+}
+
+.datos-documento {
+	margin-bottom: 1rem;
+}
+
+.datos-documento .campo-grid {
+	margin: 1rem 0 0;
+}
+
+.soporte-rup {
+	align-items: center;
+	background: var(--agora-surface-soft);
+}
+
+.aporte-card {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.75rem;
+	padding: 1rem;
+	flex: 1 1 15rem;
+}
+
+.aporte-card > mat-icon {
+	color: var(--agora-primary);
+}
+
+.aporte-card--soporte {
+	align-items: center;
+	justify-content: space-between;
+}
+
+@media (min-width: t.$bp-lg) {
+	.aportes-grid {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
 }

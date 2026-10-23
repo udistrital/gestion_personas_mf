@@ -5,3 +5,18 @@
 :host {
 	display: block;
 }
+
+.indicador-liquidez.indicador-aprobado {
+	background: var(--agora-success-surface);
+	border: 1px solid var(--agora-success-border);
+	color: var(--agora-success);
+}
+
+.indicador-liquidez.indicador-aprobado h3,
+.indicador-liquidez.indicador-aprobado mat-icon {
+	color: var(--agora-success);
+}
+
+.indicador-liquidez.indicador-aprobado strong {
+	color: var(--agora-success);
+}

@@ -1,10 +1,16 @@
+
 import { NgModule } from "@angular/core";
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from "@angular/common/http";
 import { AppRoutingModule } from "./app-routing.module";
 import { AppComponent } from "./app.component";
-import { provideHttpClient, withInterceptorsFromDi } from "@angular/common/http";
 import { BrowserModule } from "@angular/platform-browser";
 import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
-import { MAT_DATE_LOCALE, provideNativeDateAdapter, MAT_DATE_FORMATS } from '@angular/material/core';
+import {
+  MAT_DATE_LOCALE,
+  provideNativeDateAdapter,
+  MAT_DATE_FORMATS,
+} from "@angular/material/core";
+import { AuthTokenInterceptor } from "./interceptors/auth-token.interceptor";
 
 @NgModule({
   declarations: [AppComponent],
@@ -12,19 +18,24 @@ import { MAT_DATE_LOCALE, provideNativeDateAdapter, MAT_DATE_FORMATS } from '@an
   imports: [
     AppRoutingModule,
     BrowserModule,
-    BrowserAnimationsModule
+    BrowserAnimationsModule,
   ],
   providers: [
     provideHttpClient(withInterceptorsFromDi()),
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthTokenInterceptor,
+      multi: true,
+    },
     provideNativeDateAdapter(),
-    { provide: MAT_DATE_LOCALE, useValue: 'es-CO' },
+    { provide: MAT_DATE_LOCALE, useValue: "es-CO" },
     {
       provide: MAT_DATE_FORMATS,
       useValue: {
-        parse: { dateInput: 'dd/MM/yyyy' },
-        display: { dateInput: 'dd/MM/yyyy' }
-      }
-    }
-  ]
+        parse: { dateInput: "dd/MM/yyyy" },
+        display: { dateInput: "dd/MM/yyyy" },
+      },
+    },
+  ],
 })
 export class AppModule {}

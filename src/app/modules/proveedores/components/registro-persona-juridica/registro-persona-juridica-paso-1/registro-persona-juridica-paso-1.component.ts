@@ -1,5 +1,17 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { FormControl, FormGroup } from '@angular/forms';
+import {
+  CatalogosPersonaJuridica,
+  OpcionCatalogo,
+} from '../services/registro-persona-juridica-catalogos.service';
+import {
+  OpcionLugar,
+} from '../services/registro-persona-juridica-ubicaciones.service';
+
+interface Opcion<T> {
+  label: string;
+  value: T;
+}
 
 @Component({
   selector: 'registro-persona-juridica-paso-1',
@@ -10,6 +22,132 @@ import { FormGroup } from '@angular/forms';
 export class RegistroPersonaJuridicaPaso1Component {
 
   @Input() formulario: FormGroup = new FormGroup({});
+  @Input() catalogos: CatalogosPersonaJuridica | null = null;
+  @Input() pais: OpcionLugar | null = null;
+  @Input() departamentos: OpcionLugar[] = [];
+  @Input() ciudades: OpcionLugar[] = [];
+  @Input() cargandoDepartamentos = false;
+  @Input() cargandoCiudades = false;
+  @Input() errorDepartamentos: string | null = null;
+  @Input() errorCiudades: string | null = null;
   @Output() formularioChange = new EventEmitter<FormGroup>();
+  @Output() reintentarDepartamentos = new EventEmitter<void>();
+  @Output() reintentarCiudades = new EventEmitter<void>();
+
+  responsabilidadFiscalDisponibleId = new FormControl<number | null>(null);
+  busquedaResponsabilidadFiscal = '';
+
+  get opcionesProcedencia(): OpcionCatalogo[] {
+    return this.catalogos?.procedencia ?? [];
+  }
+
+  get opcionesCamaraComercio(): OpcionCatalogo[] {
+    return this.catalogos?.camaraComercio ?? [];
+  }
+
+  get opcionesTipoOrganizacion(): OpcionCatalogo[] {
+    return this.catalogos?.tipoOrganizacion ?? [];
+  }
+
+  get opcionesTamanoEmpresarial(): OpcionCatalogo[] {
+    return this.catalogos?.tamanoEmpresa ?? [];
+  }
+
+  get opcionesCargo(): OpcionCatalogo[] {
+    return this.catalogos?.cargo ?? [];
+  }
+
+  get opcionesResponsabilidadesFiscales(): OpcionCatalogo[] {
+    return this.catalogos?.responsabilidadFiscal ?? [];
+  }
+
+  get responsabilidadesFiscalesDisponibles(): OpcionCatalogo[] {
+    const texto = this.busquedaResponsabilidadFiscal.trim().toLocaleLowerCase();
+    const seleccionadas = new Set(this.idsResponsabilidadesSeleccionadas());
+
+    return this.opcionesResponsabilidadesFiscales.filter(
+      opcion =>
+        !seleccionadas.has(opcion.id)
+        && (
+          texto.length === 0
+          || `${opcion.codigo ?? ''} ${opcion.nombre} ${opcion.descripcion ?? ''}`
+            .toLocaleLowerCase()
+            .includes(texto)
+        ),
+    );
+  }
+
+  get responsabilidadesFiscalesSeleccionadas(): OpcionCatalogo[] {
+    return this.idsResponsabilidadesSeleccionadas()
+      .map(id => this.opcionesResponsabilidadesFiscales.find(opcion => opcion.id === id))
+      .filter((opcion): opcion is OpcionCatalogo => opcion !== undefined);
+  }
+
+  readonly opcionesSiNo: Opcion<boolean>[] = [
+    { label: 'Sí', value: true },
+    { label: 'No', value: false },
+  ];
+
+  opcionesLimitacionEstatutaria: Opcion<boolean>[] = [
+    { label: 'No, facultades amplias y suficientes sin límite de cuantía (Estatutos tipo S.A.S.)', value: false },
+    { label: 'Sí, requiere autorización previa de Junta Directiva / Asamblea de Accionistas', value: true }
+  ];
+
+  get opcionesTipoVia(): OpcionCatalogo[] {
+    return this.catalogos?.tipoVia ?? [];
+  }
+
+  get opcionesTipoInterior(): OpcionCatalogo[] {
+    return this.catalogos?.tipoInterior ?? [];
+  }
+
+  get direccionGenerada(): string {
+    const tipoVia = this.nombreOpcion(this.opcionesTipoVia, this.formulario.get('tipoVia')?.value);
+    const detalleVia = this.formulario.get('detalleVia')?.value ?? '';
+    const numeroCruce = this.formulario.get('numeroCruce')?.value ?? '';
+    const placaPuerta = this.formulario.get('placaPuerta')?.value ?? '';
+    const interiorTipo = this.nombreOpcion(
+      this.opcionesTipoInterior,
+      this.formulario.get('interiorTipo')?.value,
+    );
+    const detalleInterior = this.formulario.get('detalleInterior')?.value ?? '';
+    const via = [tipoVia, detalleVia].filter(Boolean).join(' ').toUpperCase();
+    const cruce = [numeroCruce, placaPuerta].filter(Boolean).join(' - ');
+    const interior = [interiorTipo, detalleInterior].filter(Boolean).join(' ').toUpperCase();
+
+    return [via, cruce ? `# ${cruce}` : '', interior].filter(Boolean).join(' ');
+  }
+
+  private nombreOpcion(opciones: OpcionCatalogo[], id: unknown): string {
+    return opciones.find(opcion => opcion.id === id)?.nombre ?? '';
+  }
+
+  agregarResponsabilidadFiscal(): void {
+    const id = this.responsabilidadFiscalDisponibleId.value;
+    const seleccionadas = this.idsResponsabilidadesSeleccionadas();
+    if (id === null || seleccionadas.includes(id)) {
+      return;
+    }
+
+    const control = this.formulario.get('responsabilidades');
+    control?.setValue([...seleccionadas, id]);
+    control?.markAsTouched();
+    this.responsabilidadFiscalDisponibleId.setValue(null);
+    this.formularioChange.emit(this.formulario);
+  }
+
+  quitarResponsabilidadFiscal(id: number): void {
+    const control = this.formulario.get('responsabilidades');
+    control?.setValue(this.idsResponsabilidadesSeleccionadas().filter(valor => valor !== id));
+    control?.markAsTouched();
+    this.formularioChange.emit(this.formulario);
+  }
+
+  private idsResponsabilidadesSeleccionadas(): number[] {
+    const valor: unknown = this.formulario.get('responsabilidades')?.value;
+    return Array.isArray(valor)
+      ? valor.filter((id): id is number => typeof id === 'number' && Number.isInteger(id))
+      : [];
+  }
 
 }

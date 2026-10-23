@@ -1,17 +1,125 @@
-<form>
+<form [formGroup]="formulario" (input)="emitirCambio()" (change)="emitirCambio()">
   <plantilla-tarjeta-contenedora
-    [icon]="'help_outline'"
-    [title]="'Placeholder de contenido'"
-    [description]="'Tarjeta de prueba'"
+    [icon]="'account_balance'"
+    [title]="'1. Información Financiera Corporativa y Capital Social'"
+    [description]="'Conformación patrimonial y estados financieros certificados según NIIF para el Registro Único de Proponentes (RUP).'"
   >
-    <p>Esta es una tarjeta de prueba para verificar renderizado y funcionalidad. Puede reemplazar este contenido con información relevante según sea necesario.</p>
+    <div class="campo-grid campo-grid--three">
+      <label class="campo"><span>Tipo de Constitución de Capital <b>*</b></span><select formControlName="tipoConstitucion">
+        <option [ngValue]="null">Seleccione...</option>
+        @for (opcion of opcionesTipoConstitucion; track opcion.id) { <option [ngValue]="opcion.id">{{ opcion.nombre }}</option> }
+      </select></label>
+      <label class="campo"><span>Capital Autorizado (COP) <b>*</b></span><campo-dinero formControlName="capitalAutorizado"></campo-dinero></label>
+      <label class="campo"><span>Capital Suscrito y Pagado (COP) <b>*</b></span><campo-dinero formControlName="capitalSuscritoPagado"></campo-dinero></label>
+      <label class="campo"><span>Activos Totales (Corte 31 Dic 2024) <b>*</b></span><campo-dinero formControlName="activosTotales"></campo-dinero></label>
+      <label class="campo"><span>Pasivos Totales y Corrientes (COP) <b>*</b></span><campo-dinero formControlName="pasivosTotales"></campo-dinero></label>
+      <div class="vinculacion indicador-liquidez" [class.indicador-aprobado]="cumpleIndicadorLiquidez">
+        <h3><mat-icon>trending_up</mat-icon> Indicador de Liquidez Proyectado</h3>
+        <p><strong>{{ indicadorLiquidez }}</strong> Razón Corriente (Activo / Pasivo). Umbral mínimo exigido: {{ umbralMinimo }}.</p>
+      </div>
+    </div>
   </plantilla-tarjeta-contenedora>
 
   <plantilla-tarjeta-contenedora
-    [icon]="'help_outline'"
-    [title]="'Placeholder de contenido'"
-    [description]="'Tarjeta de prueba'"
+    [icon]="'credit_card'"
+    [title]="'2. Cuentas Bancarias para Giro y Dispersión de Pagos'"
+    [description]="'La cuenta debe pertenecer exclusivamente a la sociedad titular inscrita.'"
   >
-    <p>Esta es una tarjeta de prueba para verificar renderizado y funcionalidad. Puede reemplazar este contenido con información relevante según sea necesario.</p>
+    <div class="vinculacion">
+      <h3>Cuenta Principal de Abonos</h3>
+      <div class="campo-grid campo-grid--three">
+        <label class="campo"><span>Entidad Bancaria Autorizada <b>*</b></span><select formControlName="banco">
+          <option [ngValue]="null">Seleccione...</option>
+          @for (opcion of opcionesBanco; track opcion.id) { <option [ngValue]="opcion.id">{{ opcion.nombre }}</option> }
+        </select></label>
+        <label class="campo"><span>Tipo de Cuenta <b>*</b></span><select formControlName="tipoCuenta">
+          <option [ngValue]="null">Seleccione...</option>
+          @for (opcion of opcionesTipoCuenta; track opcion.id) { <option [ngValue]="opcion.id">{{ opcion.nombre }}</option> }
+        </select></label>
+        <label class="campo"><span>Departamento de Apertura <b>*</b></span><select formControlName="departamentoApertura">
+          <option [ngValue]="null">Seleccione...</option>
+          @for (opcion of departamentos; track opcion.id) { <option [ngValue]="opcion.id">{{ opcion.nombre }}</option> }
+        </select>
+          @if (cargandoDepartamentos) {
+            <small>Cargando departamentos...</small>
+          } @else if (errorDepartamentos) {
+            <small role="alert">{{ errorDepartamentos }}</small>
+            <button class="boton boton--secundario" type="button" (click)="reintentarDepartamentos.emit()">Reintentar</button>
+          } @else if (departamentos.length === 0) {
+            <small>No hay departamentos disponibles.</small>
+          }
+        </label>
+        <label class="campo"><span>Ciudad / Plaza de Apertura <b>*</b></span><select formControlName="ciudadApertura">
+          <option [ngValue]="null">Seleccione...</option>
+          @for (opcion of ciudades; track opcion.id) { <option [ngValue]="opcion.id">{{ opcion.nombre }}</option> }
+        </select>
+          @if (cargandoCiudades) {
+            <small>Cargando ciudades...</small>
+          } @else if (errorCiudades) {
+            <small role="alert">{{ errorCiudades }}</small>
+            <button class="boton boton--secundario" type="button" (click)="reintentarCiudades.emit()">Reintentar</button>
+          } @else if (formulario.get('departamentoApertura')?.value && ciudades.length === 0) {
+            <small>No hay ciudades disponibles para este departamento.</small>
+          }
+        </label>
+        <label class="campo"><span>Número de Cuenta Bancaria <b>*</b></span><input formControlName="numeroCuenta" type="text"></label>
+        <label class="campo"><span>Confirmar Número de Cuenta <b>*</b></span><input formControlName="numeroCuentaConfirmacion" type="text"></label>
+        <label class="campo"><span>Nombre del Titular Registrado en Banco</span><input formControlName="titularCuenta" type="text" readonly></label>
+      </div>
+    </div>
+  </plantilla-tarjeta-contenedora>
+
+  <plantilla-tarjeta-contenedora
+    [icon]="'forward_to_inbox'"
+    [title]="'3. Notificación y Contacto Directo de Tesorería del Proveedor'"
+    [description]="'Canal para notificaciones de órdenes de giro, retenciones y comprobantes de pago.'"
+  >
+    <div class="campo-grid campo-grid--two">
+      <label class="campo"><span>Correo Exclusivo para Pagos y Notificaciones de Giro <b>*</b></span><input formControlName="correoPagos" type="email"></label>
+      <label class="campo"><span>Confirmar Correo Exclusivo <b>*</b></span><input formControlName="correoPagosConfirmacion" type="email"></label>
+      <label class="campo"><span>Responsable de Cartera / Tesorería <b>*</b></span><input formControlName="responsableTesoreria" type="text"></label>
+      <label class="campo"><span>Teléfono / Línea Directa con Extensión <b>*</b></span><input formControlName="telefonoTesoreria" type="tel"></label>
+    </div>
+    <aviso-legal-formulario [title]="'Aviso Importante de Pagaduría Central'">
+      <p>Los certificados tributarios de retención en la fuente (Formulario 220 y Certificados de Retención de ICA distrital) correspondientes a los pagos expedidos por la Universidad Distrital Francisco José de Caldas serán emitidos con corte semestral y remitidos al buzón anterior o descargables en el Portal ÁGORA.</p>
+    </aviso-legal-formulario>
+  </plantilla-tarjeta-contenedora>
+
+  <plantilla-tarjeta-contenedora
+    [icon]="'receipt_long'"
+    [title]="'4. Facturación Electrónica y Certificación Bancaria'"
+    [description]="'Validación DIAN y certificación bancaria con expedición no mayor a 30 días.'"
+  >
+    <section class="campo-grid campo-grid--two">
+      <div class="vinculacion">
+        <h3><mat-icon>verified</mat-icon>Parámetros de Facturación DIAN</h3>
+        <div class="campo-grid campo-grid--two">
+          <label class="campo"><span>Obligado a Facturar Electrónicamente <b>*</b></span><select formControlName="obligadoFacturar">
+          <option [ngValue]="null">Seleccione...</option>
+          @for (opcion of opcionesSiNo; track opcion.value) {
+            <option [ngValue]="opcion.value">{{ opcion.label }}</option>
+          }
+        </select></label>
+          <label class="campo"><span>Prefijo y Rango de Facturación</span><input formControlName="prefijoFacturacion" type="text"></label>
+          <label class="campo"><span>Resolución de Autorización DIAN</span><input formControlName="resolucionDian" type="text"></label>
+          <label class="campo"><span>Operaciones en Moneda Extranjera</span><select formControlName="monedaExtranjera">
+            <option [ngValue]="null">Seleccione...</option>
+            @for (opcion of opcionesSiNo; track opcion.value) {
+              <option [ngValue]="opcion.value">{{ opcion.label }}</option>
+            }
+          </select></label>
+        </div>
+      </div>
+      <article class="documento-card">
+        <div class="documento-icono"><mat-icon>picture_as_pdf</mat-icon></div>
+        <h3>Certificación bancaria</h3>
+        <p>Documento expedido por la entidad bancaria con una antigüedad no mayor a 30 días.</p>
+        <label class="campo"><span>Archivo cargado</span><input formControlName="certificacionBancaria" type="text" readonly></label>
+        <div class="documento-acciones">
+          <button class="boton boton--secundario" type="button"><mat-icon>visibility</mat-icon> Ver documento</button>
+          <button class="boton boton--ligero" type="button"><mat-icon>cached</mat-icon> Reemplazar</button>
+        </div>
+      </article>
+    </section>
   </plantilla-tarjeta-contenedora>
 </form>

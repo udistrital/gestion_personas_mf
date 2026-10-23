@@ -1,3 +1,5 @@
+@use 'src/app/shared/styles/tokens' as t;
+
 :host {
   display: block;
 }
@@ -17,7 +19,7 @@
   border: 0;
   border-radius: 0.75rem;
   background: var(--agora-surface);
-  box-shadow: 0 0.125rem 0.5rem rgb(37 24 25 / 8%);
+  box-shadow: var(--agora-sombra-tarjeta);
 }
 
 .encabezado {
@@ -94,7 +96,7 @@
   padding: 0;
 }
 
-@media (max-width: 40rem) {
+@media (max-width: t.$bp-sm) {
 
   .contenedor-tarjeta {
     width: min(100% - 1.5rem, 80rem);

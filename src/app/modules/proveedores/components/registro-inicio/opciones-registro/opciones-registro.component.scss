@@ -1,0 +1,161 @@
+@use 'src/app/shared/styles/tokens' as t;
+
+.rp-fila-opciones {
+  grid-template-columns: 1fr;
+  margin-top: 12px;
+}
+
+@media (min-width: t.$bp-md) {
+  .rp-fila-opciones {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.rp-opcion {
+  position: relative;
+  border: 2px solid color-mix(in srgb, var(--agora-border-strong) 40%, var(--agora-surface));
+  background-color: var(--agora-surface);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: border-color 0.2s ease-in-out, background-color 0.2s ease-in-out,
+    box-shadow 0.2s ease-in-out;
+}
+
+.rp-opcion:hover {
+  border-color: color-mix(in srgb, var(--agora-primary) 60%, transparent);
+  background-color: var(--agora-surface-highlight);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+}
+
+.rp-opcion--seleccionada,
+.rp-opcion--seleccionada:hover {
+  border-color: var(--agora-primary);
+  background-color: var(--agora-surface-highlight);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+}
+
+.rp-fila-opciones--bloqueada .rp-opcion,
+.rp-fila-opciones--bloqueada .rp-opcion:hover {
+  border-color: color-mix(in srgb, var(--agora-border-strong) 25%, var(--agora-surface));
+  background-color: color-mix(in srgb, var(--agora-text-muted) 5%, var(--agora-surface));
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.rp-fila-opciones--bloqueada .rp-opcion-icono {
+  background-color: color-mix(in srgb, var(--agora-text-muted) 10%, var(--agora-surface));
+  color: color-mix(in srgb, var(--agora-primary-dark) 45%, var(--agora-surface));
+  box-shadow: none;
+}
+
+.rp-fila-opciones--bloqueada .rp-opcion-radio {
+  border-color: color-mix(in srgb, var(--agora-border-strong) 60%, var(--agora-surface));
+  background-color: color-mix(in srgb, var(--agora-text-muted) 5%, var(--agora-surface));
+}
+
+.rp-fila-opciones--bloqueada .rp-opcion-titulo,
+.rp-fila-opciones--bloqueada .rp-opcion-subtitulo,
+.rp-fila-opciones--bloqueada .rp-opcion-descripcion {
+  color: color-mix(in srgb, var(--agora-text-muted) 60%, var(--agora-surface));
+}
+
+.rp-opcion-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.rp-opcion:has(.rp-opcion-input:focus-visible) {
+  outline: 3px solid var(--agora-primary-dark);
+  outline-offset: 2px;
+}
+
+.rp-opcion-cabecera {
+  margin-bottom: 12px;
+}
+
+.rp-opcion-icono {
+  width: 48px;
+  height: 48px;
+  background-color: var(--agora-surface-highlight);
+  color: var(--agora-primary-dark);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+.rp-opcion:hover .rp-opcion-icono,
+.rp-opcion--seleccionada .rp-opcion-icono {
+  background-color: var(--agora-primary);
+  color: var(--agora-on-primary);
+}
+
+.rp-ico-opcion {
+  font-size: 26px;
+  width: 26px;
+  height: 26px;
+}
+
+.rp-opcion-radio {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--agora-border-strong);
+  border-radius: 12px;
+  background-color: var(--agora-surface);
+}
+
+.rp-opcion--seleccionada .rp-opcion-radio {
+  border-color: var(--agora-primary);
+}
+
+.rp-opcion-radio-punto {
+  width: 14px;
+  height: 14px;
+  border-radius: 12px;
+  background-color: transparent;
+}
+
+.rp-opcion--seleccionada .rp-opcion-radio-punto {
+  background-color: var(--agora-primary);
+}
+
+.rp-opcion-titulo {
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--agora-text);
+  transition: color 0.2s ease-in-out;
+}
+
+.rp-opcion:hover .rp-opcion-titulo,
+.rp-opcion--seleccionada .rp-opcion-titulo {
+  color: var(--agora-primary-dark);
+}
+
+.rp-opcion-subtitulo {
+  font-size: 11px;
+  line-height: 14px;
+  letter-spacing: 0.04em;
+  color: var(--agora-text-muted);
+}
+
+.rp-opcion--seleccionada .rp-opcion-subtitulo {
+  font-weight: 700;
+  color: var(--agora-primary);
+}
+
+.rp-opcion-descripcion {
+  font-size: 12px;
+  line-height: 1.625;
+  color: var(--agora-text-muted);
+}
+
+.rp-opcion-pie {
+  padding-top: 12px;
+  border-top: 1px solid color-mix(in srgb, var(--agora-border-strong) 30%, transparent);
+}

@@ -1,0 +1,53 @@
+:host {
+  display: block;
+}
+
+:host(.campo--invalido) .campo-dinero {
+  border: 2px solid var(--agora-error);
+  outline: 2px solid color-mix(in srgb, var(--agora-error) 28%, transparent);
+  background: var(--agora-error-surface);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--agora-error) 12%, transparent);
+}
+
+.campo-dinero {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: 2.5rem;
+  padding: 0 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  background: var(--agora-background);
+  color: var(--agora-text);
+  box-shadow: 0 0.125rem 0.35rem rgb(37 24 25 / 7%);
+}
+
+.campo-dinero:focus-within {
+  border-color: var(--agora-primary);
+  outline: 2px solid color-mix(in srgb, var(--agora-primary) 14%, transparent);
+}
+
+.campo-dinero input {
+  min-width: 0;
+  flex: 1;
+  padding: 0.625rem 0.5rem;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: right;
+}
+
+.prefijo,
+.sufijo {
+  color: var(--agora-text-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.sufijo {
+  margin-left: 0.5rem;
+}

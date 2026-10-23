@@ -1,0 +1,13 @@
+<div class="campo-dinero">
+  <span class="prefijo" aria-hidden="true">$</span>
+  <input
+    [disabled]="deshabilitado"
+    [value]="valorMostrado"
+    inputmode="numeric"
+    type="text"
+    (blur)="marcarComoTocado()"
+    (input)="actualizarValor($event)"
+    (keydown)="permitirSoloDigitos($event)"
+  >
+  <span class="sufijo">COP</span>
+</div>

@@ -1,0 +1,772 @@
+@use 'src/app/shared/styles/tokens' as t;
+
+:host {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+
+.paso3-rut-seccion {
+  width: min(100% - 3rem, 86.25rem);
+  margin: 0 auto;
+  box-sizing: border-box;
+  background: var(--agora-surface);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: var(--agora-sombra-tarjeta);
+}
+
+.paso3-rut-seccion__encabezado {
+  width: 100%;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--agora-border);
+}
+
+.paso3-rut-seccion__titulo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.paso3-rut-seccion__icono {
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  background: var(--agora-border);
+  color: var(--agora-primary-dark);
+}
+
+.paso3-rut-seccion__icono mat-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  font-size: 1.25rem;
+}
+
+.paso3-rut-seccion__titulo h3 {
+  margin: 0 0 0.75rem;
+  color: var(--agora-primary);
+  font-size: 0.875rem;
+  line-height: 1.5rem;
+  font-weight: 700;
+}
+
+.paso3-rut-seccion__titulo p {
+  margin: 0.25rem 0 0.75rem;
+  color: var(--agora-text-muted);
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+/* =========================================================
+   ESTADO VACÍO
+   ========================================================= */
+
+.paso3-rut-documento {
+  width: 100%;
+}
+
+.paso3-rut-vacio {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: var(--agora-surface-soft);
+  box-sizing: border-box;
+}
+
+.paso3-rut-vacio__icono {
+  width: 3rem;
+  height: 3rem;
+  flex: 0 0 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  background: var(--agora-surface);
+  color: var(--agora-primary-dark);
+}
+
+.paso3-rut-vacio__icono mat-icon {
+  width: 1.75rem;
+  height: 1.75rem;
+  font-size: 1.75rem;
+}
+
+.paso3-rut-vacio__contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.paso3-rut-vacio__contenido strong {
+  color: var(--agora-text);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.paso3-rut-vacio__contenido span {
+  color: var(--agora-text-muted);
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+/* =========================================================
+   ESTADO CARGADO
+   ========================================================= */
+
+.paso3-rut-cargado {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: var(--agora-surface-soft);
+  box-sizing: border-box;
+}
+
+.paso3-rut-cargado__icono {
+  width: 3rem;
+  height: 3rem;
+  flex: 0 0 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  background: var(--agora-surface);
+  color: var(--agora-primary-dark);
+}
+
+.paso3-rut-cargado__icono mat-icon {
+  width: 1.75rem;
+  height: 1.75rem;
+  font-size: 1.75rem;
+}
+
+/* =========================================================
+   BOTONES
+   ========================================================= */
+
+.paso3-rut-boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  min-height: 2.25rem;
+  padding: 0.5rem 0.75rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: var(--agora-surface);
+  color: var(--agora-primary-dark);
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.paso3-rut-boton--principal {
+  background: var(--agora-primary);
+  color: var(--agora-on-primary);
+}
+
+.paso3-rut-boton:hover {
+  background: var(--agora-border);
+  color: var(--agora-primary-dark);
+}
+
+.paso3-rut-boton--principal:hover {
+  background: var(--agora-primary-dark);
+  color: var(--agora-on-primary);
+}
+
+.paso3-rut-boton input {
+  display: none;
+}
+
+@media (max-width: t.$bp-xl) {
+  .paso3-rut-cargado {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: t.$bp-sm) {
+  .paso3-rut-seccion {
+    width: calc(100% - 1.5rem);
+    padding: 1.25rem;
+  }
+
+  .paso3-rut-vacio {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .paso3-rut-vacio__contenido {
+    flex: 1 1 calc(100% - 4rem);
+  }
+
+  .paso3-rut-vacio .paso3-rut-boton--principal {
+    width: 100%;
+    margin-left: 3.75rem;
+  }
+
+  .paso3-rut-boton {
+    width: 100%;
+  }
+}
+
+
+/* =========================================================
+   PASO 3 - BANNER INFORMATIVO
+   Restaurado desde la definición anterior
+   ========================================================= */
+
+.paso3-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  width: min(100% - 3rem, 86.25rem);
+  margin: 0 auto 1.5rem;
+  padding: 1rem;
+  box-sizing: border-box;
+  border-radius: 0.75rem;
+  background: var(--agora-surface-soft);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--agora-primary) 4%, transparent);
+}
+
+.paso3-banner__icono {
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.125rem;
+  border-radius: 0.5rem;
+  background: var(--agora-border);
+  color: var(--agora-primary-dark);
+}
+
+.paso3-banner__icono mat-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  font-size: 1.5rem;
+}
+
+.paso3-banner__contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.paso3-banner__contenido h2 {
+  margin: 0;
+  color: var(--agora-primary-dark);
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 700;
+}
+
+.paso3-banner__contenido p {
+  margin: 0;
+  color: var(--agora-text-muted);
+  font-size: 0.75rem;
+  line-height: 1.5rem;
+}
+
+@media (max-width: t.$bp-sm) {
+  .paso3-banner {
+    gap: 0.75rem;
+    padding: 0.875rem;
+  }
+
+  .paso3-banner__icono {
+    width: 2.25rem;
+    height: 2.25rem;
+    flex-basis: 2.25rem;
+  }
+
+  .paso3-banner__contenido h2 {
+    font-size: 0.9375rem;
+    line-height: 1.375rem;
+  }
+}
+
+/* =========================================================
+   AJUSTE RUT - NOMBRE Y METADATOS EN COLUMNA
+   ========================================================= */
+
+.paso3-rut-cargado__archivo {
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1fr);
+  align-items: start;
+  gap: 0.75rem;
+  column-gap: 0.75rem;
+  min-width: 0;
+}
+
+.paso3-rut-cargado__contenido {
+  min-width: 0;
+  width: 100%;
+}
+
+.paso3-rut-cargado__nombre {
+  min-width: 0;
+  width: 100%;
+  flex: 1;
+}
+
+.paso3-rut-cargado__nombre span {
+  display: block;
+  width: 100%;
+  color: var(--agora-text);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+@media (max-width: t.$bp-sm) {
+  .paso3-rut-cargado__archivo {
+    grid-template-columns: 1fr;
+  }
+
+  .paso3-rut-cargado__icono {
+    display: none;
+  }
+}
+
+
+/* =========================================================
+   PASO 3 - RUP / CÁMARA DE COMERCIO
+   ========================================================= */
+
+.paso3-rup-seccion {
+  width: min(100% - 3rem, 86.25rem);
+  margin: 0 auto;
+  padding: 1.5rem;
+  box-sizing: border-box;
+  background: var(--agora-surface);
+  border-radius: 0.75rem;
+  font-family: inherit;
+  box-shadow: var(--agora-sombra-tarjeta);
+}
+
+.paso3-rup-seccion__encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--agora-border);
+}
+
+.paso3-rup-seccion__titulo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.paso3-rup-seccion__icono {
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  background: var(--agora-border);
+  color: var(--agora-primary-dark);
+}
+
+.paso3-rup-seccion__icono mat-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  font-size: 1.25rem;
+}
+
+.paso3-rup-toggle__control {
+  position: relative;
+  width: 2.25rem;
+  height: 1.25rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--agora-border);
+  cursor: pointer;
+}
+
+.paso3-rup-toggle__control--activo {
+  background: var(--agora-primary);
+}
+
+.paso3-rup-toggle__circulo {
+  position: absolute;
+  top: 0.1875rem;
+  left: 0.1875rem;
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 50%;
+  background: var(--agora-surface);
+  transition: transform 160ms ease;
+}
+
+.paso3-rup-toggle__control--activo .paso3-rup-toggle__circulo {
+  transform: translateX(1rem);
+}
+
+/* Documento RUP */
+.paso3-rup-documento {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: var(--agora-surface-soft);
+  box-sizing: border-box;
+}
+
+.paso3-rup-documento__principal {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.paso3-rup-documento__icono {
+  width: 3rem;
+  height: 3rem;
+  flex: 0 0 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  background: var(--agora-surface);
+  color: var(--agora-primary-dark);
+}
+
+.paso3-rup-documento__icono mat-icon {
+  width: 1.75rem;
+  height: 1.75rem;
+  font-size: 1.75rem;
+}
+
+.paso3-rup-documento__contenido {
+  min-width: 0;
+  flex: 1;
+}
+
+.paso3-rup-datos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+.paso3-rup-dato {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.paso3-rup-boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  width: 100%;
+  min-width: 10.5rem;
+  min-height: 2.25rem;
+  padding: 0.5rem 0.75rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: var(--agora-surface);
+  color: var(--agora-primary-dark);
+  font-family: inherit;
+  font-size: 0.75rem;
+  line-height: 1.125rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+.paso3-rup-boton:hover:not(:disabled) {
+  background: var(--agora-border);
+}
+
+.paso3-rup-boton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.paso3-rup-boton input {
+  display: none;
+}
+
+.paso3-rup-vacio mat-icon {
+  color: var(--agora-primary-dark);
+}
+
+@media (max-width: t.$bp-xl) {
+  .paso3-rup-seccion__encabezado {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .paso3-rup-documento {
+    grid-template-columns: 1fr;
+  }
+
+  .paso3-rup-acciones {
+    flex-direction: row;
+    justify-content: flex-end;
+    min-width: 0;
+  }
+
+  .paso3-rup-boton {
+    min-width: 0;
+    width: auto;
+  }
+}
+
+@media (max-width: t.$bp-sm) {
+  .paso3-rup-seccion {
+    width: calc(100% - 1.5rem);
+    padding: 1.25rem;
+  }
+
+  .paso3-rup-toggle {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .paso3-rup-datos {
+    grid-template-columns: 1fr;
+  }
+
+  .paso3-rup-acciones {
+    flex-direction: column;
+  }
+
+  .paso3-rup-boton {
+    width: 100%;
+  }
+}
+
+/* =========================================================
+   PASO 3 - ACCIONES DOCUMENTALES
+   RUT y RUP: botones verticales como en el mockup
+   ========================================================= */
+
+.paso3-rut-cargado__acciones {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 0.5rem;
+  min-width: 10.5rem;
+  flex: 0 0 10.5rem;
+  flex-wrap: wrap;
+}
+
+.paso3-rut-cargado__acciones .paso3-rut-boton {
+  width: 100%;
+  min-width: 10.5rem;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: 0.75rem;
+  line-height: 1.125rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: visible;
+}
+
+.paso3-rup-acciones {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 0.5rem;
+  min-width: 10.5rem;
+  flex: 0 0 10.5rem;
+}
+
+.paso3-rup-acciones .paso3-rup-boton {
+  width: 100%;
+  min-width: 10.5rem;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: 0.75rem;
+  line-height: 1.125rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: visible;
+}
+
+@media (max-width: t.$bp-xl) {
+  .paso3-rut-cargado__acciones,
+  .paso3-rup-acciones {
+    min-width: 0;
+    flex: 0 0 auto;
+    width: 100%;
+  }
+
+  .paso3-rut-cargado__acciones .paso3-rut-boton,
+  .paso3-rup-acciones .paso3-rup-boton {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+
+/* =========================================================
+   PASO 3 - RUP
+   Tipografía alineada con el mockup
+   ========================================================= */
+
+.paso3-rup-seccion__titulo h3 {
+  margin: 0 0 0.75rem;
+  color: var(--agora-primary);
+  font-family: inherit;
+  font-size: 0.875rem;
+  line-height: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.paso3-rup-seccion__titulo p {
+  margin: 0.25rem 0 0.75rem;
+  color: var(--agora-text-muted);
+  font-family: inherit;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 400;
+}
+
+.paso3-rup-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+  padding: 0.375rem 0.625rem;
+  border-radius: 0.5rem;
+  background: var(--agora-surface-soft);
+  color: var(--agora-text-muted);
+  font-family: inherit;
+  font-size: 0.6875rem;
+  line-height: 0.875rem;
+  font-weight: 600;
+}
+
+.paso3-rup-toggle strong {
+  color: var(--agora-primary-dark);
+  font-family: inherit;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+}
+
+.paso3-rup-documento__nombre {
+  display: block;
+  color: var(--agora-text);
+  font-family: inherit;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.paso3-rup-dato span {
+  color: var(--agora-text);
+  font-family: inherit;
+  font-size: 0.6875rem;
+  line-height: 0.875rem;
+  font-weight: 700;
+  letter-spacing: normal;
+  text-transform: uppercase;
+}
+
+.paso3-rup-dato input {
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  background: var(--agora-background);
+  color: var(--agora-text);
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  box-shadow: var(--agora-sombra-xs);
+}
+
+.paso3-rup-dato input:focus {
+  border-color: var(--agora-primary);
+  outline: 2px solid color-mix(in srgb, var(--agora-primary) 14%, transparent);
+}
+
+.paso3-rup-vacio {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: var(--agora-surface-soft);
+  color: var(--agora-text-muted);
+  font-family: inherit;
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+  font-weight: 400;
+}
+
+
+/* =========================================================
+   CORRECCIÓN DE ICONOS MATERIAL - PASO 3
+   Solo afecta los mat-icon de los botones documentales.
+   No modifica la tipografía de los textos.
+   ========================================================= */
+
+.paso3-rut-boton mat-icon,
+.paso3-rup-boton mat-icon {
+  font-family: "Material Icons" !important;
+  font-feature-settings: "liga";
+  -webkit-font-feature-settings: "liga";
+  font-style: normal;
+  font-weight: normal;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  word-wrap: normal;
+}

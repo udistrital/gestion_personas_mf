@@ -1,33 +1,41 @@
-<nav class="stepper-visual" [aria-label]="label">
-  @for (paso of pasos; track paso.numero; let ultimo = $last) {
-    <button
-      class="paso"
-      [class.paso--activo]="pasoActual === paso.numero"
-      [class.paso--completado]="pasoActual > paso.numero"
-      type="button"
-      [attr.aria-current]="pasoActual === paso.numero ? 'step' : null"
-      (click)="seleccionarPaso(paso.numero)"
-    >
-      <span class="paso__fila">
-        <span class="paso__indicador">
-          @if (pasoActual > paso.numero) {
-            <mat-icon aria-hidden="true">check</mat-icon>
-          } @else {
-            @if (paso.icono) {
-              <mat-icon aria-hidden="true">{{ paso.icono }}</mat-icon>
-            } @else {
-              <span class="paso__numero">{{ paso.numero }}</span>
-            }
-          }
-        </span>
-        @if (!ultimo) {
-          <span class="paso__conector" aria-hidden="true"></span>
-        }
+<nav class="stepper-visual" [attr.aria-label]="label">
+  <button
+    *ngFor="let paso of pasos; let ultimo = last"
+    class="paso"
+    [class.paso--activo]="pasoActual === paso.numero"
+    [class.paso--completado]="pasoActual > paso.numero"
+    type="button"
+    [attr.aria-current]="pasoActual === paso.numero ? 'step' : null"
+    (click)="seleccionarPaso(paso.numero)"
+  >
+    <span class="paso__etiqueta">Paso {{ paso.numero }}</span>
+
+    <span class="paso__fila">
+      <span class="paso__indicador">
+
+        <ng-container *ngIf="pasoActual > paso.numero">
+          <mat-icon aria-hidden="true">check</mat-icon>
+        </ng-container>
+
+        <ng-container *ngIf="pasoActual <= paso.numero">
+          <ng-container *ngIf="paso.icono; else mostrarNumero">
+            <mat-icon aria-hidden="true">{{ paso.icono }}</mat-icon>
+          </ng-container>
+
+          <ng-template #mostrarNumero>
+            <span class="paso__numero">{{ paso.numero }}</span>
+          </ng-template>
+        </ng-container>
+
       </span>
-      <span class="paso__texto">
-        <span class="paso__etiqueta">Paso {{ paso.numero }}</span>
-        <span class="paso__nombre">{{ paso.nombre }}</span>
-      </span>
-    </button>
-  }
+
+      <span
+        *ngIf="!ultimo"
+        class="paso__conector"
+        aria-hidden="true"
+      ></span>
+    </span>
+
+    <span class="paso__nombre">{{ paso.nombre }}</span>
+  </button>
 </nav>

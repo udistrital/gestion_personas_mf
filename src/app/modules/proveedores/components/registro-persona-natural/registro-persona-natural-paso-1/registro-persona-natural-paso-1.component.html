@@ -1,0 +1,1915 @@
+<!-- ========================================================= -->
+<!-- PASO 1: IDENTIFICACIÓN Y CARACTERIZACIÓN                     -->
+<!-- ========================================================= -->
+
+<div class="paso-1-ancho-contenido">
+
+  <section class="step-banner">
+    <div class="step-banner__icon" aria-hidden="true">
+      <mat-icon>verified_user</mat-icon>
+    </div>
+
+    <div class="step-banner__content">
+      <div class="step-banner__headline">
+        <h2>Paso 1: Identificación y Caracterización Ciudadana</h2>
+
+        <span class="step-banner__tag">
+          Ley 1581 de 2012
+        </span>
+
+        <span class="step-banner__tag">
+          Decreto 1082 / Normativa UD
+        </span>
+      </div>
+
+      <p class="step-banner__description">
+        Valide su información de identificación personal, datos de expedición,
+        caracterización socio-demográfica conforme a las directrices de la
+        Corte Constitucional y configure su dirección fiscal estandarizada bajo
+        el formato oficial de la DIAN para el expediente único de la Universidad
+        Distrital.
+      </p>
+    </div>
+  </section>
+
+</div>
+
+<div>
+
+  <registro-persona-juridica-estado-catalogos
+    [cargando]="estadoCatalogos.cargando"
+    [error]="estadoCatalogos.error"
+    (reintentar)="reintentarCatalogos.emit()"
+  ></registro-persona-juridica-estado-catalogos>
+
+  <plantilla-tarjeta-contenedora
+    class="tarjeta-identificacion"
+    [icon]="'badge'"
+    [title]="'1. Identificación y Datos Básicos de la Persona'"
+    [description]="'Conforme al Registro Nacional de Identificación Ciudadana y lineamientos contractuales de la Universidad Distrital.'"
+  >
+    <ng-container *ngTemplateOutlet="contenidoIdentificacion"></ng-container>
+  </plantilla-tarjeta-contenedora>
+
+  <section class="aviso-legal-caracterizacion" aria-label="Aviso legal sobre tratamiento de información sensible">
+
+    <div class="aviso-legal-caracterizacion__icon" aria-hidden="true">
+      <mat-icon>gavel</mat-icon>
+    </div>
+
+    <div class="aviso-legal-caracterizacion__content">
+
+      <div class="aviso-legal-caracterizacion__headline">
+        <h3>
+          AVISO LEGAL OBLIGATORIO · TRATAMIENTO DE INFORMACIÓN SENSIBLE
+        </h3>
+
+        <span class="aviso-legal-caracterizacion__tag">
+          Habeas Data
+        </span>
+      </div>
+
+      <p>
+        Recuerde que el <strong>Registro y Tratamiento de Información sensible</strong>
+        se realizará de estricta conformidad con lo establecido en la
+        <strong>Ley Estatutaria 1581 de 2012</strong> y los pronunciamientos de la
+        <strong>Sentencia C-334 de 2010 de la Corte Constitucional</strong>.
+        Esta caracterización tiene fines exclusivos de enfoque diferencial,
+        formulación de política institucional y cumplimiento tributario.
+      </p>
+
+    </div>
+
+  </section>
+
+
+  <plantilla-tarjeta-contenedora
+    [icon]="'person_search'"
+    [title]="'2. Caracterización Socio-Demográfica y Enfoque Diferencial'"
+    [description]="'Datos necesarios para el cumplimiento de equidad, inclusión y reportes a entes de control del Estado.'"
+  >
+    <ng-container *ngTemplateOutlet="contenidoCaracterizacion"></ng-container>
+  </plantilla-tarjeta-contenedora>
+
+  
+
+  <plantilla-tarjeta-contenedora
+    [icon]="'account_balance'"
+    [title]="'3. Información para Retenciones y Beneficios Tributarios'"
+    [description]="'Para determinación precisa de bases de retención en la fuente por nómina / honorarios.'"
+  >
+    <ng-container *ngTemplateOutlet="contenidoTributario"></ng-container>
+  </plantilla-tarjeta-contenedora>
+
+  <plantilla-tarjeta-contenedora
+    [icon]="'contact_page'"
+    [title]="'4. Información de Contacto y Residencia Fiscal (Estándar DIAN)'"
+    [description]="'Diligencie la nomenclatura oficial para notificaciones judiciales y administrativas de la Universidad.'"
+  >
+    <ng-container *ngTemplateOutlet="contenidoResidenciaContacto"></ng-container>
+  </plantilla-tarjeta-contenedora>
+
+</div>
+
+<ng-template #contenidoIdentificacion>
+
+  <div class="tipo-persona-badge">
+    <span>Tipo Persona:</span>
+    <strong>Natural</strong>
+  </div>
+
+  <div
+    [formGroup]="identificacionForm"
+    class="form-section"
+  >
+
+    <!-- Nombres y apellidos -->
+
+    <div class="form-grid form-grid--four">
+
+      <div class="form-field">
+
+        <label>
+          Primer Apellido
+          <span class="required">*</span>
+        </label>
+
+        <input
+          type="text"
+          formControlName="primerApellido"
+          placeholder="Ej. González"
+          autocomplete="family-name"
+        />
+
+        @if (
+          identificacionForm.get("primerApellido")?.touched &&
+          identificacionForm.get("primerApellido")?.hasError("required")
+        ) {
+          <small class="field-error">
+            Este campo es obligatorio.
+          </small>
+        }
+
+      </div>
+
+
+      <div class="form-field">
+
+        <label>
+          Segundo Apellido
+        </label>
+
+        <input
+          type="text"
+          formControlName="segundoApellido"
+          placeholder="Ej. Pérez"
+          autocomplete="additional-name"
+        />
+
+      </div>
+
+
+      <div class="form-field">
+
+        <label>
+          Primer Nombre
+          <span class="required">*</span>
+        </label>
+
+        <input
+          type="text"
+          formControlName="primerNombre"
+          placeholder="Ej. Carlos"
+          autocomplete="given-name"
+        />
+
+        @if (
+          identificacionForm.get("primerNombre")?.touched &&
+          identificacionForm.get("primerNombre")?.hasError("required")
+        ) {
+          <small class="field-error">
+            Este campo es obligatorio.
+          </small>
+        }
+
+      </div>
+
+
+      <div class="form-field">
+
+        <label>
+          Segundo Nombre
+        </label>
+
+        <input
+          type="text"
+          formControlName="segundoNombre"
+          placeholder="Ej. Javier"
+        />
+
+      </div>
+
+    </div>
+
+
+    <!-- Documento -->
+
+    <div class="form-subsection">
+
+      <h3>
+        <mat-icon aria-hidden="true">credit_card</mat-icon>
+        Documento de Identificación
+      </h3>
+
+
+      <div class="form-grid form-grid--five">
+
+        <div class="form-field">
+
+          <label>
+            Tipo Documento
+            <span class="required">*</span>
+          </label>
+
+          <select formControlName="tipoDocumento">
+            <option value="">Seleccione...</option>
+            @for (opcion of opciones("tiposDocumento"); track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+            }
+          </select>
+          @if (
+            identificacionForm.get("tipoDocumento")?.touched &&
+            identificacionForm.get("tipoDocumento")?.hasError("required")
+          ) {
+            <small class="field-error">
+              Este campo es obligatorio.
+            </small>
+          }
+        </div>
+
+
+        <div class="form-field">
+
+          <label>
+            Confirmar Tipo Doc.
+            <span class="required">*</span>
+          </label>
+
+          <select formControlName="confirmarTipoDocumento">
+
+            <option value="">Seleccione...</option>
+
+            @for (opcion of opciones("tiposDocumento"); track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+            }
+
+          </select>
+
+          @if (
+            identificacionForm.get("confirmarTipoDocumento")?.touched &&
+            identificacionForm.get("confirmarTipoDocumento")?.hasError("required")
+          ) {
+            <small class="field-error">
+              Este campo es obligatorio.
+            </small>
+          }
+
+          @if (
+            identificacionForm.hasError("camposNoCoinciden") &&
+            identificacionForm.get("confirmarTipoDocumento")?.touched
+          ) {
+            <small class="field-error">
+              El tipo de documento no coincide.
+            </small>
+          }
+
+        </div>
+
+
+        <div class="form-field">
+
+          <label>
+            Número Documento
+            <span class="required">*</span>
+          </label>
+
+          <input
+            type="text"
+            formControlName="numeroDocumento"
+            placeholder="Número de documento"
+            [attr.inputmode]="
+              identificacionForm.get('tipoDocumento')?.value === 'CC' ||
+              identificacionForm.get('tipoDocumento')?.value === 'CE'
+                ? 'numeric'
+                : 'text'
+            "
+          />
+
+          @if (
+            identificacionForm.get("numeroDocumento")?.touched &&
+            identificacionForm.get("numeroDocumento")?.hasError("required")
+          ) {
+            <small class="field-error">
+              Este campo es obligatorio.
+            </small>
+          }
+
+          @if (
+            identificacionForm.get("numeroDocumento")?.touched &&
+            identificacionForm.get("numeroDocumento")?.hasError("pattern")
+          ) {
+            <small class="field-error">
+              El número de documento no tiene un formato válido para el tipo seleccionado.
+            </small>
+          }
+
+        </div>
+
+
+        <div class="form-field">
+
+          <label>
+            Confirmar Número
+            <span class="required">*</span>
+          </label>
+
+          <input
+            type="text"
+            formControlName="confirmarNumeroDocumento"
+            placeholder="Confirme el documento"
+            [attr.inputmode]="
+              identificacionForm.get('tipoDocumento')?.value === 'CC' ||
+              identificacionForm.get('tipoDocumento')?.value === 'CE'
+                ? 'numeric'
+                : 'text'
+            "
+          />
+
+          @if (
+            identificacionForm.get("confirmarNumeroDocumento")?.touched &&
+            identificacionForm.get("confirmarNumeroDocumento")?.hasError("required")
+          ) {
+            <small class="field-error">
+              Este campo es obligatorio.
+            </small>
+          }
+
+          @if (
+            identificacionForm.get("confirmarNumeroDocumento")?.touched &&
+            identificacionForm.get("confirmarNumeroDocumento")?.hasError("pattern")
+          ) {
+            <small class="field-error">
+              El número de documento no tiene un formato válido para el tipo seleccionado.
+            </small>
+          }
+
+          @if (
+            identificacionForm.hasError("camposNoCoinciden") &&
+            identificacionForm.get("confirmarNumeroDocumento")?.touched
+          ) {
+            <small class="field-error">
+              Los números de documento no coinciden.
+            </small>
+          }
+
+        </div>
+
+
+        <div class="form-field">
+
+          <label>
+            Dígito Verif. (DV)
+          </label>
+
+          <input
+            type="text"
+            formControlName="dv"
+            maxlength="1"
+            inputmode="numeric"
+          />
+
+          @if (
+            identificacionForm.get("dv")?.hasError("maxlength")
+          ) {
+            <small class="field-error">
+              El DV debe tener máximo un carácter.
+            </small>
+          }
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- Expedición y nacimiento -->
+
+    <div class="form-subsection">
+
+      <h3>
+        <mat-icon aria-hidden="true">event</mat-icon>
+        Datos de Expedición y Nacimiento
+      </h3>
+
+
+      <div class="form-grid form-grid--four">
+
+        <div class="form-field">
+
+          <label>
+            Fecha Expedición
+            <span class="required">*</span>
+          </label>
+
+          <input
+            type="date"
+            formControlName="fechaExpedicion"
+          />
+
+        </div>
+
+
+        <div class="form-field">
+
+          <label>
+            País Expedición
+            <span class="required">*</span>
+          </label>
+
+          <select formControlName="paisExpedicion">
+
+            <option value="">Seleccione...</option>
+            @for (opcion of opciones("paises"); track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+            }
+
+          </select>
+
+        </div>
+
+
+        <div class="form-field">
+
+          <label>
+            Departamento Expedición
+            <span class="required">*</span>
+          </label>
+
+          <select formControlName="departamentoExpedicion">
+
+            <option value="">Seleccione...</option>
+            @for (opcion of geografia.departamentosExpedicion.opciones; track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+            }
+
+          </select>
+
+          <registro-persona-juridica-estado-catalogos
+            [cargando]="geografia.departamentosExpedicion.cargando"
+            [error]="geografia.departamentosExpedicion.error"
+            (reintentar)="reintentarGeografia.emit('departamentosExpedicion')"
+          ></registro-persona-juridica-estado-catalogos>
+
+        </div>
+
+
+        <div class="form-field">
+
+          <label>
+            Ciudad Expedición
+            <span class="required">*</span>
+          </label>
+
+          <select formControlName="ciudadExpedicion">
+
+            <option value="">Seleccione...</option>
+            @for (opcion of geografia.ciudadesExpedicion.opciones; track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+            }
+
+          </select>
+
+          <registro-persona-juridica-estado-catalogos
+            [cargando]="geografia.ciudadesExpedicion.cargando"
+            [error]="geografia.ciudadesExpedicion.error"
+            (reintentar)="reintentarGeografia.emit('ciudadesExpedicion')"
+          ></registro-persona-juridica-estado-catalogos>
+
+        </div>
+
+
+        <div class="form-field">
+
+          <label>
+            Fecha de Nacimiento
+            <span class="required">*</span>
+          </label>
+
+          <input
+            type="date"
+            formControlName="fechaNacimiento"
+          />
+
+        </div>
+
+
+        <div class="form-field">
+
+          <label>
+            Género
+            <span class="required">*</span>
+          </label>
+
+          <select formControlName="genero">
+
+            <option value="">Seleccione...</option>
+            @for (opcion of opciones("genero"); track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+            }
+
+          </select>
+
+        </div>
+
+
+        <div class="form-field">
+
+          <label>
+            País de Nacimiento
+            <span class="required">*</span>
+          </label>
+
+          <select formControlName="paisNacimiento">
+
+            <option value="">Seleccione...</option>
+            @for (opcion of opciones("paises"); track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+            }
+
+          </select>
+
+        </div>
+
+
+        <div class="form-field">
+
+          <label>
+            Perfil / Rol Principal
+            <span class="required">*</span>
+          </label>
+
+          <select formControlName="perfilRolPrincipal">
+
+            <option value="">Seleccione...</option>
+            @for (opcion of opciones("perfilRolPrincipal"); track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+            }
+
+          </select>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</ng-template>
+
+
+<!-- ============================================================= -->
+<!-- CARACTERIZACIÓN                                               -->
+<!-- ============================================================= -->
+
+<ng-template #contenidoCaracterizacion>
+
+  <div
+    [formGroup]="caracterizacionForm"
+    class="form-section"
+  >
+
+    <div class="form-grid caracterizacion-grid">
+
+      <div class="material-field">
+
+        <label class="material-field__label">
+          Grupo Étnico <span class="required">*</span>
+        </label>
+
+        <mat-form-field appearance="outline">
+<mat-select formControlName="grupoEtnico">
+
+          <mat-option value="">
+            Seleccione...
+          </mat-option>
+
+          @for (opcion of opciones("grupoEtnico"); track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
+
+        </mat-select>
+
+        @if (
+          caracterizacionForm.get("grupoEtnico")?.touched &&
+          caracterizacionForm.get("grupoEtnico")?.hasError("required")
+        ) {
+          <mat-error>
+            Este campo es obligatorio.
+          </mat-error>
+        }
+        </mat-form-field>
+
+      </div>
+
+
+      <div class="material-field">
+
+        <label class="material-field__label">
+          Usted se reconoce como
+        </label>
+
+        <mat-form-field appearance="outline">
+          <mat-select formControlName="seReconoceComo">
+
+            <mat-option value="">
+              Seleccione...
+            </mat-option>
+
+            @for (opcion of opciones("seReconoceComo"); track opcion.id) {
+              <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+            }
+
+          </mat-select>
+        </mat-form-field>
+
+      </div>
+
+
+      <div class="material-field">
+
+        <label class="material-field__label">
+          ¿Orientación Sexual?
+        </label>
+
+        <mat-form-field appearance="outline">
+<mat-select formControlName="orientacionSexual">
+
+          <mat-option value="">
+            Seleccione...
+          </mat-option>
+
+          @for (opcion of opciones("orientacionSexual"); track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
+
+        </mat-select>
+        </mat-form-field>
+
+      </div>
+
+
+      <div class="material-field">
+
+        <label class="material-field__label">
+          ¿Es usted migrante? <span class="required">*</span>
+        </label>
+
+        <mat-form-field appearance="outline">
+<mat-select formControlName="esMigrante">
+
+          <mat-option [value]="null">
+            Seleccione...
+          </mat-option>
+
+          @for (opcion of opcionesSiNo; track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
+
+        </mat-select>
+
+        @if (
+          caracterizacionForm.get("esMigrante")?.touched &&
+          caracterizacionForm.get("esMigrante")?.hasError("required")
+        ) {
+          <mat-error>
+            Este campo es obligatorio.
+          </mat-error>
+        }
+        </mat-form-field>
+
+      </div>
+
+
+      <div class="material-field">
+
+        <label class="material-field__label">
+          ¿Víctima del conflicto armado? <span class="required">*</span>
+        </label>
+
+        <mat-form-field appearance="outline">
+<mat-select formControlName="victimaConflictoArmado">
+
+          <mat-option [value]="null">
+            Seleccione...
+          </mat-option>
+
+          @for (opcion of opcionesSiNo; track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
+
+        </mat-select>
+
+        @if (
+          caracterizacionForm.get("victimaConflictoArmado")?.touched &&
+          caracterizacionForm.get("victimaConflictoArmado")?.hasError("required")
+        ) {
+          <mat-error>
+            Este campo es obligatorio.
+          </mat-error>
+        }
+        </mat-form-field>
+
+      </div>
+
+
+      <div class="campo-hijos">
+
+        <div class="material-field">
+
+          <label class="material-field__label">
+            ¿Tiene Hijos? <span class="required">*</span>
+          </label>
+
+          <mat-form-field appearance="outline">
+            <mat-select formControlName="tieneHijos">
+
+              <mat-option [value]="null">
+                Seleccione...
+              </mat-option>
+
+              @for (opcion of opcionesSiNo; track opcion.id) {
+                <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+              }
+
+            </mat-select>
+
+            @if (
+              caracterizacionForm.get("tieneHijos")?.touched &&
+              caracterizacionForm.get("tieneHijos")?.hasError("required")
+            ) {
+              <mat-error>
+                Este campo es obligatorio.
+              </mat-error>
+            }
+
+          </mat-form-field>
+
+        </div>
+
+
+        @if (tieneHijosAfirmativo) {
+
+          <div class="material-field">
+
+            <label class="material-field__label">
+              Número de Hijos <span class="required">*</span>
+            </label>
+
+            <mat-form-field appearance="outline">
+              <input
+                matInput
+                type="number"
+                min="0"
+                step="1"
+                formControlName="numeroHijos"
+                inputmode="numeric"
+              />
+
+              @if (
+                caracterizacionForm.get("numeroHijos")?.touched &&
+                caracterizacionForm.get("numeroHijos")?.hasError("required")
+              ) {
+                <mat-error>
+                  Indique el número de hijos.
+                </mat-error>
+              }
+
+              @if (
+                caracterizacionForm.get("numeroHijos")?.hasError("min") ||
+                caracterizacionForm.get("numeroHijos")?.hasError("pattern")
+              ) {
+                <mat-error>
+                  Ingrese una cantidad entera no negativa.
+                </mat-error>
+              }
+
+            </mat-form-field>
+
+          </div>
+
+        }
+
+      </div>
+
+
+      <div class="material-field">
+
+        <label class="material-field__label">
+          ¿Es Cabeza de Familia? <span class="required">*</span>
+        </label>
+
+        <mat-form-field appearance="outline">
+<mat-select formControlName="esCabezaFamilia">
+
+          <mat-option [value]="null">
+            Seleccione...
+          </mat-option>
+
+          @for (opcion of opcionesSiNo; track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
+
+        </mat-select>
+
+        @if (
+          caracterizacionForm.get("esCabezaFamilia")?.touched &&
+          caracterizacionForm.get("esCabezaFamilia")?.hasError("required")
+        ) {
+          <mat-error>
+            Este campo es obligatorio.
+          </mat-error>
+        }
+        </mat-form-field>
+
+      </div>
+
+
+      <div class="material-field">
+
+        <label class="material-field__label material-field__label--ayuda">
+          <span>
+            Persona Expuesta Políticamente (PEP)
+            <span class="required">*</span>
+          </span>
+
+          <mat-icon
+            class="campo-ayuda"
+            aria-hidden="true"
+          >help_outline</mat-icon>
+        </label>
+
+        <mat-form-field appearance="outline">
+<mat-select formControlName="esPep">
+
+          <mat-option [value]="null">
+            Seleccione...
+          </mat-option>
+
+          @for (opcion of opcionesSiNo; track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
+
+        </mat-select>
+
+        @if (
+          caracterizacionForm.get("esPep")?.touched &&
+          caracterizacionForm.get("esPep")?.hasError("required")
+        ) {
+          <mat-error>
+            Este campo es obligatorio.
+          </mat-error>
+        }
+        </mat-form-field>
+
+      </div>
+
+
+      <div class="material-field">
+
+        <label class="material-field__label">
+          ¿Tiene Personas a Cargo? <span class="required">*</span>
+        </label>
+
+        <mat-form-field appearance="outline">
+<mat-select formControlName="personasACargo">
+
+          <mat-option [value]="null">
+            Seleccione...
+          </mat-option>
+
+          @for (opcion of opcionesSiNo; track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
+
+        </mat-select>
+
+        @if (
+          caracterizacionForm.get("personasACargo")?.touched &&
+          caracterizacionForm.get("personasACargo")?.hasError("required")
+        ) {
+          <mat-error>
+            Este campo es obligatorio.
+          </mat-error>
+        }
+        </mat-form-field>
+
+      </div>
+
+
+      <div class="material-field">
+
+        <label class="material-field__label">
+          Estado Civil <span class="required">*</span>
+        </label>
+
+        <mat-form-field appearance="outline">
+<mat-select formControlName="estadoCivil">
+
+          <mat-option value="">
+            Seleccione...
+          </mat-option>
+
+          @for (opcion of opciones("estadoCivil"); track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
+
+        </mat-select>
+
+        @if (
+          caracterizacionForm.get("estadoCivil")?.touched &&
+          caracterizacionForm.get("estadoCivil")?.hasError("required")
+        ) {
+          <mat-error>
+            Este campo es obligatorio.
+          </mat-error>
+        }
+        </mat-form-field>
+
+      </div>
+
+
+      <div class="material-field">
+
+        <label class="material-field__label">
+          ¿Tiene alguna condición de discapacidad? <span class="required">*</span>
+        </label>
+
+        <mat-form-field appearance="outline">
+<mat-select formControlName="discapacidad">
+
+          <mat-option value="">
+            Seleccione...
+          </mat-option>
+
+          @for (opcion of opciones("discapacidad"); track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
+
+        </mat-select>
+
+        @if (
+          caracterizacionForm.get("discapacidad")?.touched &&
+          caracterizacionForm.get("discapacidad")?.hasError("required")
+        ) {
+          <mat-error>
+            Este campo es obligatorio.
+          </mat-error>
+        }
+        </mat-form-field>
+
+      </div>
+
+    </div>
+
+
+
+
+    <!-- EXPERIENCIA PARA CALIFICACIÓN CONTRACTUAL -->
+
+    <div class="form-subsection experiencia-contractual">
+
+      <h3>
+        <mat-icon aria-hidden="true">work_history</mat-icon>
+        Información de Experiencia para Calificación Contractual
+      </h3>
+
+      <div
+        class="experiencia-grid"
+        [formGroup]="experienciaForm"
+      >
+
+        <!-- EXPERIENCIA LABORAL TOTAL -->
+
+        <div class="experiencia-card">
+
+          <div class="experiencia-card__header">
+
+            <label class="experiencia-card__label">
+              Experiencia Laboral Total (en meses)
+              <span class="required">*</span>
+            </label>
+
+            <span class="experiencia-card__equivalencia">
+              Equivale a: ~4.5 años
+            </span>
+
+          </div>
+
+          <mat-form-field
+            appearance="outline"
+            class="experiencia-card__field"
+          >
+
+            <mat-icon
+              matPrefix
+              aria-hidden="true"
+            >
+              calendar_month
+            </mat-icon>
+
+            <input
+              matInput
+              type="number"
+              min="0"
+              formControlName="experienciaLaboralTotal"
+              step="1"
+              inputmode="numeric"
+            />
+
+            <span matSuffix class="experiencia-card__suffix">
+
+              <span class="experiencia-card__spin-buttons">
+                <button
+                  type="button"
+                  class="experiencia-card__spin-button"
+                  aria-label="Aumentar experiencia laboral total"
+                  (click)="incrementarMeses('experienciaLaboralTotal')"
+                >
+                  ▲
+                </button>
+
+                <button
+                  type="button"
+                  class="experiencia-card__spin-button"
+                  aria-label="Disminuir experiencia laboral total"
+                  (click)="decrementarMeses('experienciaLaboralTotal')"
+                >
+                  ▼
+                </button>
+              </span>
+
+              <span class="experiencia-card__unit">MESES</span>
+
+            </span>
+
+            @if (
+              experienciaForm.get("experienciaLaboralTotal")?.touched &&
+              experienciaForm.get("experienciaLaboralTotal")?.hasError("required")
+            ) {
+              <mat-error>
+                Este campo es obligatorio.
+              </mat-error>
+            }
+
+            @if (
+              experienciaForm.get("experienciaLaboralTotal")?.hasError("min")
+            ) {
+              <mat-error>
+                El valor debe ser mayor o igual a 0.
+              </mat-error>
+            }
+
+          </mat-form-field>
+
+          <p class="experiencia-card__description">
+            Suma acumulada de certificaciones laborales previas aportadas.
+          </p>
+
+        </div>
+
+
+        <!-- EXPERIENCIA PROFESIONAL -->
+
+        <div class="experiencia-card">
+
+          <div class="experiencia-card__header">
+
+            <label class="experiencia-card__label">
+              Experiencia Profesional (en meses)
+              <span class="required">*</span>
+            </label>
+
+            <span class="experiencia-card__equivalencia">
+              Equivale a: ~3.0 años
+            </span>
+
+          </div>
+
+          <mat-form-field
+            appearance="outline"
+            class="experiencia-card__field"
+          >
+
+            <mat-icon
+              matPrefix
+              aria-hidden="true"
+            >
+              school
+            </mat-icon>
+
+            <input
+              matInput
+              type="number"
+              min="0"
+              formControlName="experienciaProfesional"
+              step="1"
+              inputmode="numeric"
+            />
+
+            <span matSuffix class="experiencia-card__suffix">
+
+              <span class="experiencia-card__spin-buttons">
+                <button
+                  type="button"
+                  class="experiencia-card__spin-button"
+                  aria-label="Aumentar experiencia profesional"
+                  (click)="incrementarMeses('experienciaProfesional')"
+                >
+                  ▲
+                </button>
+
+                <button
+                  type="button"
+                  class="experiencia-card__spin-button"
+                  aria-label="Disminuir experiencia profesional"
+                  (click)="decrementarMeses('experienciaProfesional')"
+                >
+                  ▼
+                </button>
+              </span>
+
+              <span class="experiencia-card__unit">MESES</span>
+
+            </span>
+
+            @if (
+              experienciaForm.get("experienciaProfesional")?.touched &&
+              experienciaForm.get("experienciaProfesional")?.hasError("required")
+            ) {
+              <mat-error>
+                Este campo es obligatorio.
+              </mat-error>
+            }
+
+            @if (
+              experienciaForm.get("experienciaProfesional")?.hasError("min")
+            ) {
+              <mat-error>
+                El valor debe ser mayor o igual a 0.
+              </mat-error>
+            }
+
+          </mat-form-field>
+
+          <p class="experiencia-card__description">
+            Contada a partir de la expedición de tarjeta profesional o acta de grado
+            (según disciplina).
+          </p>
+
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+</ng-template>
+
+
+<!-- ============================================================= -->
+<!-- CONTACTO                                                      -->
+<!-- ============================================================= -->
+
+
+
+<!-- ============================================================= -->
+<!-- INFORMACIÓN TRIBUTARIA                                        -->
+<!-- ============================================================= -->
+
+<ng-template #contenidoTributario>
+
+  <div class="tributario-grid" [formGroup]="tributarioForm">
+
+    <!-- DECLARANTE DE RENTA -->
+    <div class="tributario-card">
+
+      <div class="tributario-card__header">
+        <label class="tributario-card__label">
+          ¿Cómo Persona Natural es Declarante de Renta?
+          <span class="required">*</span>
+        </label>
+      </div>
+
+      <mat-form-field
+        appearance="outline"
+        class="tributario-card__field"
+      >
+        <mat-select placeholder="Seleccione..." formControlName="declaranteRenta">
+          @for (opcion of opcionesSiNo; track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
+        </mat-select>
+
+        @if (
+          tributarioForm.get("declaranteRenta")?.touched &&
+          tributarioForm.get("declaranteRenta")?.hasError("required")
+        ) {
+          <mat-error>Este campo es obligatorio.</mat-error>
+        }
+      </mat-form-field>
+
+    </div>
+
+
+    <!-- MEDICINA PREPAGADA -->
+    <div class="tributario-card">
+
+      <div class="tributario-card__header">
+        <label class="tributario-card__label">
+          ¿Posee Medicina Prepagada actualmente?
+          <span class="required">*</span>
+        </label>
+      </div>
+
+      <mat-form-field
+        appearance="outline"
+        class="tributario-card__field"
+      >
+        <mat-select placeholder="Seleccione..." formControlName="medicinaPrepagada">
+          @for (opcion of opcionesSiNo; track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
+        </mat-select>
+
+        @if (
+          tributarioForm.get("medicinaPrepagada")?.touched &&
+          tributarioForm.get("medicinaPrepagada")?.hasError("required")
+        ) {
+          <mat-error>Este campo es obligatorio.</mat-error>
+        }
+      </mat-form-field>
+
+    </div>
+
+
+    <!-- CUENTA AFC -->
+    <div class="tributario-card">
+
+      <div class="tributario-card__header">
+        <label class="tributario-card__label">
+          ¿Posee Cuenta AFC (Ahorro Construcción)?
+          <span class="required">*</span>
+        </label>
+      </div>
+
+      <mat-form-field
+        appearance="outline"
+        class="tributario-card__field"
+      >
+        <mat-select placeholder="Seleccione..." formControlName="cuentaAfc">
+          @for (opcion of opcionesSiNo; track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
+        </mat-select>
+
+        @if (
+          tributarioForm.get("cuentaAfc")?.touched &&
+          tributarioForm.get("cuentaAfc")?.hasError("required")
+        ) {
+          <mat-error>Este campo es obligatorio.</mat-error>
+        }
+      </mat-form-field>
+
+    </div>
+
+
+    <!-- RESPONSABLE DE IVA -->
+    <div class="tributario-card">
+
+      <div class="tributario-card__header">
+        <label class="tributario-card__label">
+          ¿Es responsable de IVA?
+          <span class="required">*</span>
+        </label>
+      </div>
+
+      <mat-form-field
+        appearance="outline"
+        class="tributario-card__field"
+      >
+        <mat-select placeholder="Seleccione..." formControlName="responsableIva">
+          @for (opcion of opcionesSiNo; track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
+        </mat-select>
+
+        @if (
+          tributarioForm.get("responsableIva")?.touched &&
+          tributarioForm.get("responsableIva")?.hasError("required")
+        ) {
+          <mat-error>Este campo es obligatorio.</mat-error>
+        }
+      </mat-form-field>
+
+    </div>
+
+
+    <!-- RESIDENCIA FISCAL -->
+    <div class="tributario-card">
+
+      <div class="tributario-card__header">
+        <label class="tributario-card__label">
+          ¿Reside fiscalmente en Colombia?
+          <span class="required">*</span>
+        </label>
+      </div>
+
+      <mat-form-field
+        appearance="outline"
+        class="tributario-card__field"
+      >
+        <mat-select placeholder="Seleccione..." formControlName="resideFiscalmenteColombia">
+          @for (opcion of opcionesSiNo; track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
+        </mat-select>
+
+        @if (
+          tributarioForm.get("resideFiscalmenteColombia")?.touched &&
+          tributarioForm.get("resideFiscalmenteColombia")?.hasError("required")
+        ) {
+          <mat-error>Este campo es obligatorio.</mat-error>
+        }
+      </mat-form-field>
+
+    </div>
+
+
+    <!-- PENSIÓN VOLUNTARIA -->
+    <div class="tributario-card">
+
+      <div class="tributario-card__header">
+        <label class="tributario-card__label">
+          ¿Realiza aportes a pensión voluntaria?
+          <span class="required">*</span>
+        </label>
+      </div>
+
+      <mat-form-field
+        appearance="outline"
+        class="tributario-card__field"
+      >
+        <mat-select placeholder="Seleccione..." formControlName="aportesPensionVoluntaria">
+          @for (opcion of opcionesSiNo; track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
+        </mat-select>
+
+        @if (
+          tributarioForm.get("aportesPensionVoluntaria")?.touched &&
+          tributarioForm.get("aportesPensionVoluntaria")?.hasError("required")
+        ) {
+          <mat-error>Este campo es obligatorio.</mat-error>
+        }
+      </mat-form-field>
+
+    </div>
+
+  </div>
+
+</ng-template>
+
+<!-- ============================================================= -->
+<!-- RESIDENCIA                                                     -->
+<!-- ============================================================= -->
+
+<ng-template #contenidoResidenciaContacto>
+
+  <div class="residencia-contacto">
+
+    <section class="residencia-contacto__ubicacion">
+      <ng-container *ngTemplateOutlet="contenidoResidencia"></ng-container>
+    </section>
+
+    <section class="residencia-contacto__contacto">
+      <ng-container *ngTemplateOutlet="contenidoContacto"></ng-container>
+    </section>
+
+  </div>
+
+</ng-template>
+
+
+<ng-template #contenidoResidencia>
+
+  <div class="form-grid" [formGroup]="residenciaForm">
+
+    <div class="residencia-contacto__campo">
+      <label class="residencia-contacto__label">
+        País de Residencia
+      </label>
+
+      <mat-form-field
+        appearance="outline"
+        class="residencia-contacto__field"
+      >
+        <input
+          matInput
+          type="text"
+          readonly
+          [value]="paisResidenciaNombre"
+          aria-label="País de residencia"
+        />
+      </mat-form-field>
+    </div>
+
+    <div class="residencia-contacto__campo">
+      <label class="residencia-contacto__label">
+        Departamento de Residencia
+        <span class="required">*</span>
+      </label>
+
+      <mat-form-field
+        appearance="outline"
+        class="residencia-contacto__field"
+      >
+        <mat-select placeholder="Seleccione..." formControlName="departamentoResidencia">
+          @for (opcion of geografia.departamentosResidencia.opciones; track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
+        </mat-select>
+
+        @if (
+          residenciaForm.get("departamentoResidencia")?.touched &&
+          residenciaForm.get("departamentoResidencia")?.hasError("required")
+        ) {
+          <mat-error>Este campo es obligatorio.</mat-error>
+        }
+      </mat-form-field>
+
+      <registro-persona-juridica-estado-catalogos
+        [cargando]="geografia.departamentosResidencia.cargando"
+        [error]="geografia.departamentosResidencia.error"
+        (reintentar)="reintentarGeografia.emit('departamentosResidencia')"
+      ></registro-persona-juridica-estado-catalogos>
+    </div>
+
+    <div class="residencia-contacto__campo">
+      <label class="residencia-contacto__label">
+        Ciudad / Municipio
+        <span class="required">*</span>
+      </label>
+
+      <mat-form-field
+        appearance="outline"
+        class="residencia-contacto__field"
+      >
+        <mat-select placeholder="Seleccione..." formControlName="ciudadMunicipioResidencia">
+          @for (opcion of geografia.ciudadesResidencia.opciones; track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
+        </mat-select>
+
+        @if (
+          residenciaForm.get("ciudadMunicipioResidencia")?.touched &&
+          residenciaForm.get("ciudadMunicipioResidencia")?.hasError("required")
+        ) {
+          <mat-error>Este campo es obligatorio.</mat-error>
+        }
+      </mat-form-field>
+
+      <registro-persona-juridica-estado-catalogos
+        [cargando]="geografia.ciudadesResidencia.cargando"
+        [error]="geografia.ciudadesResidencia.error"
+        (reintentar)="reintentarGeografia.emit('ciudadesResidencia')"
+      ></registro-persona-juridica-estado-catalogos>
+    </div>
+
+    <div class="address-builder">
+      <div class="address-builder__header">
+        <mat-icon aria-hidden="true">home</mat-icon>
+        <div>
+          <h3>Generador de Nomenclatura Estándar DIAN (RUT)</h3>
+          <p>
+            Registre la dirección utilizando la nomenclatura estandarizada.
+          </p>
+          <span class="address-builder__norma">
+            Norma Técnica Geográfica
+          </span>
+        </div>
+      </div>
+
+      <div class="form-grid">
+
+        <div class="address-builder__campo">
+          <label class="address-builder__field-label">
+            Vía <span class="required">*</span>
+          </label>
+
+          <mat-form-field appearance="outline" class="field">
+            <mat-select placeholder="Seleccione..." formControlName="via">
+              @for (opcion of opciones("tiposVia"); track opcion.id) {
+                <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+              }
+            </mat-select>
+
+            @if (
+              residenciaForm.get("via")?.touched &&
+              residenciaForm.get("via")?.hasError("required")
+            ) {
+              <mat-error>Este campo es obligatorio.</mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <div class="address-builder__campo">
+          <label class="address-builder__field-label">
+            Detalle Vía <span class="required">*</span>
+          </label>
+
+          <mat-form-field appearance="outline" class="field">
+            <input
+              matInput
+              type="text"
+              formControlName="detalleVia"
+              placeholder="Ej. 45"
+            />
+
+            @if (
+              residenciaForm.get("detalleVia")?.touched &&
+              residenciaForm.get("detalleVia")?.hasError("required")
+            ) {
+              <mat-error>Este campo es obligatorio.</mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <div class="address-builder__campo">
+          <label class="address-builder__field-label">
+            # <span class="required">*</span>
+          </label>
+
+          <div class="address-static-field__value">#</div>
+        </div>
+
+        <div class="address-builder__campo">
+          <label class="address-builder__field-label">
+            Número Cruce <span class="required">*</span>
+          </label>
+
+          <mat-form-field appearance="outline" class="field">
+            <input
+              matInput
+              type="text"
+              formControlName="numeroCruce"
+              placeholder="Ej. 26"
+            />
+
+            @if (
+              residenciaForm.get("numeroCruce")?.touched &&
+              residenciaForm.get("numeroCruce")?.hasError("required")
+            ) {
+              <mat-error>Este campo es obligatorio.</mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <div class="address-builder__campo">
+          <label class="address-builder__field-label">
+            - <span class="required">*</span>
+          </label>
+
+          <div class="address-static-field__value">-</div>
+        </div>
+
+        <div class="address-builder__campo">
+          <label class="address-builder__field-label">
+            Placa Puerta <span class="required">*</span>
+          </label>
+
+          <mat-form-field appearance="outline" class="field">
+            <input
+              matInput
+              type="text"
+              formControlName="placaPuerta"
+              placeholder="Ej. 85"
+            />
+
+            @if (
+              residenciaForm.get("placaPuerta")?.touched &&
+              residenciaForm.get("placaPuerta")?.hasError("required")
+            ) {
+              <mat-error>Este campo es obligatorio.</mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <div class="address-builder__campo">
+          <label class="address-builder__field-label">
+            Interior 1
+          </label>
+
+          <mat-form-field appearance="outline" class="field">
+            <mat-select placeholder="Seleccione..." formControlName="interior1">
+              <mat-option value="">Seleccione...</mat-option>
+              @for (opcion of opciones("tiposInterior"); track opcion.id) {
+                <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="address-builder__campo">
+          <label class="address-builder__field-label">
+            Detalle Interior
+          </label>
+
+          <mat-form-field appearance="outline" class="field">
+            <input
+              matInput
+              type="text"
+              formControlName="detalleInterior"
+              placeholder="Detalle adicional"
+            />
+          </mat-form-field>
+        </div>
+
+      </div>
+
+      <div class="address-builder__example">
+        <span class="address-builder__generated-label">
+          DIRECCIÓN GENERADA:
+        </span>
+
+        <strong class="address-builder__generated-value">
+          CL 45 # 26 - 85 AP 402
+        </strong>
+
+        <span class="address-builder__validated">
+          <mat-icon aria-hidden="true">check</mat-icon>
+          Nomenclatura Validada
+        </span>
+      </div>
+    </div>
+
+  </div>
+
+</ng-template>
+
+<ng-template #contenidoContacto>
+
+  <div class="contacto-seccion-header">
+    <mat-icon aria-hidden="true">contact_mail</mat-icon>
+    <h3>Información de Canales de Contacto Directo</h3>
+  </div>
+
+  <div class="form-grid contacto-grid" [formGroup]="contactoForm">
+
+    <!-- CORREO ELECTRÓNICO -->
+    <div class="contacto-campo">
+      <label class="contacto-campo__label">
+        Correo Electrónico
+        <span class="required">*</span>
+      </label>
+
+      <mat-form-field
+        appearance="outline"
+        class="contacto-campo__field"
+      >
+        <input
+          matInput
+          type="email"
+          formControlName="correoElectronico"
+          placeholder="correo@ejemplo.com"
+        />
+
+        @if (
+          contactoForm.get("correoElectronico")?.touched &&
+          contactoForm.get("correoElectronico")?.hasError("required")
+        ) {
+          <mat-error>Este campo es obligatorio.</mat-error>
+        }
+
+        @if (
+          contactoForm.get("correoElectronico")?.touched &&
+          contactoForm.get("correoElectronico")?.hasError("email")
+        ) {
+          <mat-error>Ingrese un correo electrónico válido.</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+
+    <!-- CONFIRMAR CORREO -->
+    <div class="contacto-campo">
+      <label class="contacto-campo__label">
+        Confirmar Correo Electrónico
+        <span class="required">*</span>
+      </label>
+
+      <mat-form-field
+        appearance="outline"
+        class="contacto-campo__field"
+      >
+        <input
+          matInput
+          type="email"
+          formControlName="confirmarCorreoElectronico"
+          placeholder="Confirme su correo electrónico"
+        />
+
+        @if (
+          contactoForm.get("confirmarCorreoElectronico")?.touched &&
+          contactoForm.get("confirmarCorreoElectronico")?.hasError("required")
+        ) {
+          <mat-error>Este campo es obligatorio.</mat-error>
+        }
+
+        @if (
+          contactoForm.get("confirmarCorreoElectronico")?.touched &&
+          contactoForm.get("confirmarCorreoElectronico")?.hasError("email")
+        ) {
+          <mat-error>Ingrese un correo electrónico válido.</mat-error>
+        }
+
+        @if (
+          contactoForm.touched &&
+          contactoForm.hasError("camposNoCoinciden")
+        ) {
+          <mat-error>Los correos electrónicos no coinciden.</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+
+    <!-- TELÉFONO CELULAR -->
+    <div class="contacto-campo">
+      <label class="contacto-campo__label">
+        Teléfono Celular / Móvil
+        <span class="required">*</span>
+      </label>
+
+      <mat-form-field
+        appearance="outline"
+        class="contacto-campo__field"
+      >
+        <input
+          matInput
+          type="tel"
+          formControlName="telefonoCelular"
+          placeholder="Número de celular"
+        />
+
+        @if (
+          contactoForm.get("telefonoCelular")?.touched &&
+          contactoForm.get("telefonoCelular")?.hasError("required")
+        ) {
+          <mat-error>Este campo es obligatorio.</mat-error>
+        }
+
+        @if (
+          contactoForm.get("telefonoCelular")?.touched &&
+          contactoForm.get("telefonoCelular")?.hasError("pattern")
+        ) {
+          <mat-error>El número de celular no tiene un formato válido.</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+
+    <!-- OTRO CONTACTO -->
+    <div class="contacto-campo">
+      <label class="contacto-campo__label">
+        Otro Contacto (Móvil / Fijo)
+        <span class="required">*</span>
+      </label>
+
+      <mat-form-field
+        appearance="outline"
+        class="contacto-campo__field"
+      >
+        <input
+          matInput
+          type="tel"
+          formControlName="otroContacto"
+          placeholder="Número de contacto"
+        />
+
+        @if (
+          contactoForm.get("otroContacto")?.touched &&
+          contactoForm.get("otroContacto")?.hasError("required")
+        ) {
+          <mat-error>Este campo es obligatorio.</mat-error>
+        }
+
+        @if (
+          contactoForm.get("otroContacto")?.touched &&
+          contactoForm.get("otroContacto")?.hasError("pattern")
+        ) {
+          <mat-error>El número de contacto no tiene un formato válido.</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+
+    <!-- EXTENSIÓN -->
+    <div class="contacto-campo">
+      <label class="contacto-campo__label">
+        Extensión Telefónica
+      </label>
+
+      <mat-form-field
+        appearance="outline"
+        class="contacto-campo__field"
+      >
+        <input
+          matInput
+          type="text"
+          formControlName="extensionTelefonica"
+          placeholder="Extensión"
+        />
+      </mat-form-field>
+    </div>
+
+
+    <!-- SITIO WEB -->
+    <div class="contacto-campo">
+      <label class="contacto-campo__label">
+        Sitio Web / Portafolio Profesional
+      </label>
+
+      <mat-form-field
+        appearance="outline"
+        class="contacto-campo__field"
+      >
+        <input
+          matInput
+          type="url"
+          formControlName="sitioWebPortafolio"
+          placeholder="https://ejemplo.com"
+        />
+
+        @if (
+          contactoForm.get("sitioWebPortafolio")?.touched &&
+          contactoForm.get("sitioWebPortafolio")?.hasError("pattern")
+        ) {
+          <mat-error>Ingrese una URL válida.</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+
+    <!-- CONTACTO DE EMERGENCIA -->
+    <div class="contacto-campo">
+      <label class="contacto-campo__label">
+        Contacto de Emergencia
+      </label>
+
+      <mat-form-field
+        appearance="outline"
+        class="contacto-campo__field"
+      >
+        <input
+          matInput
+          type="text"
+          formControlName="contactoEmergencia"
+          placeholder="Nombre del contacto"
+        />
+      </mat-form-field>
+    </div>
+
+
+    <!-- TELÉFONO DE EMERGENCIA -->
+    <div class="contacto-campo">
+      <label class="contacto-campo__label">
+        Teléfono Contacto de Emergencia
+      </label>
+
+      <mat-form-field
+        appearance="outline"
+        class="contacto-campo__field"
+      >
+        <input
+          matInput
+          type="tel"
+          formControlName="telefonoContactoEmergencia"
+          placeholder="Teléfono de emergencia"
+        />
+      </mat-form-field>
+    </div>
+
+  </div>
+
+</ng-template>

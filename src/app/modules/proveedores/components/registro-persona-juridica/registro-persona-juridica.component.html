@@ -2,29 +2,72 @@
   [icon]="'corporate_fare'"
   [title]="'Registro Único de Persona Jurídica'"
   [breadcrumb]="'<p>Gestión de Proveedores > <b>Persona Jurídica</b></p>'"
+  [mostrarBotonRegresar]="true"
+  (regresar)="regresarARegistroInicial()"
 >
 
   <stepper-visual
     [label]="'Progreso del registro de persona jurídica'"
     [pasos]="pasos"
-    [(pasoActual)]="pasoActual"
+    [pasoActual]="pasoActual"
+    (pasoActualChange)="irAlPaso($event)"
   ></stepper-visual>
 
   <section class="contenido-pasos" aria-label="Información del registro">
+    <registro-persona-juridica-estado-catalogos
+      [cargando]="cargandoCatalogos"
+      [error]="errorCatalogos"
+      [sinRegistros]="catalogosSinRegistros"
+      (reintentar)="reintentarCatalogos()"
+    ></registro-persona-juridica-estado-catalogos>
     @switch (pasoActual) {
       @case (1) {
         <registro-persona-juridica-paso-1
           [(formulario)]="formulario"
+          [catalogos]="catalogos"
+          [pais]="pais"
+          [departamentos]="departamentos"
+          [ciudades]="ciudadesDomicilio"
+          [cargandoDepartamentos]="cargandoDepartamentos"
+          [cargandoCiudades]="cargandoCiudadesDomicilio"
+          [errorDepartamentos]="errorDepartamentos"
+          [errorCiudades]="errorCiudadesDomicilio"
+          (reintentarDepartamentos)="reintentarCargaDepartamentos()"
+          (reintentarCiudades)="reintentarCiudadesDomicilio()"
         ></registro-persona-juridica-paso-1>
         }
       @case (2) {
-        <registro-persona-juridica-paso-2></registro-persona-juridica-paso-2>
+        <registro-persona-juridica-paso-2
+          [(formulario)]="formulario"
+          [catalogos]="catalogos"
+          [pais]="pais"
+          [departamentos]="departamentos"
+          [ciudades]="ciudadesApertura"
+          [cargandoDepartamentos]="cargandoDepartamentos"
+          [cargandoCiudades]="cargandoCiudadesApertura"
+          [errorDepartamentos]="errorDepartamentos"
+          [errorCiudades]="errorCiudadesApertura"
+          (reintentarDepartamentos)="reintentarCargaDepartamentos()"
+          (reintentarCiudades)="reintentarCiudadesApertura()"
+        ></registro-persona-juridica-paso-2>
       }
       @case (3) {
-        <registro-persona-juridica-paso-3></registro-persona-juridica-paso-3>
+        <registro-persona-juridica-paso-3
+          [(formulario)]="formulario"
+          [catalogos]="catalogos"
+        ></registro-persona-juridica-paso-3>
       }
       @case (4) {
-        <registro-persona-juridica-paso-4></registro-persona-juridica-paso-4>
+        <registro-persona-juridica-paso-4
+          [(formulario)]="formulario"
+          [catalogos]="catalogos"
+          [cargandoCatalogos]="cargandoCatalogos"
+          [errorCatalogos]="errorCatalogos"
+          [catalogoUnspsc]="catalogoUnspsc"
+          [cargandoUnspsc]="cargandoUnspsc"
+          [errorUnspsc]="errorUnspsc"
+          (reintentarUnspsc)="reintentarUnspsc()"
+        ></registro-persona-juridica-paso-4>
       }
     }
   </section>
@@ -33,7 +76,7 @@
     [mostrarRegreso]="pasoActual > 1"
     [esUltimoPaso]="pasoActual === pasos.length"
     (regreso)="pasoActual = pasoActual - 1"
-    (continuar)="pasoActual = pasoActual + 1"
+    (continuar)="continuar()"
     (finalizar)="finalizar()"
   ></barra-acciones-formulario>
 

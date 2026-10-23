@@ -1,7 +1,159 @@
+@use 'src/app/shared/styles/tokens' as t;
+
 @use 'src/app/shared/styles/registro-formulario' as registro-formulario;
 
 @include registro-formulario.styles;
 
 :host {
 	display: block;
+}
+
+.actividades-lista {
+	display: grid;
+	gap: 0.75rem;
+}
+
+.actividad-item {
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	align-items: center;
+	gap: 0.75rem;
+	margin-bottom: 0;
+}
+
+.actividad-item p {
+	margin: 0.25rem 0 0;
+	color: var(--agora-text-muted);
+	font-size: 0.75rem;
+}
+
+.actividad-item strong {
+	color: var(--agora-primary);
+	font-size: 0.6875rem;
+	text-transform: uppercase;
+}
+
+.actividad-codigo {
+	color: var(--agora-primary);
+	font-family: monospace;
+	font-size: 0.875rem;
+	font-weight: 700;
+}
+
+.actividad-principal {
+	border: 1px solid var(--agora-border);
+	background: var(--agora-background);
+}
+
+.actividad-principal > mat-icon {
+	color: var(--agora-warning);
+}
+
+.codigos-lista {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin-bottom: 1rem;
+	padding: 1rem;
+	border-radius: 0.75rem;
+	background: var(--agora-surface-soft);
+}
+
+.codigo-item {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	padding: 0.5rem 0.65rem;
+	border-radius: 0.5rem;
+	background: var(--agora-surface);
+	color: var(--agora-text-muted);
+	font-size: 0.75rem;
+}
+
+.codigo-item strong,
+.codigo-item mat-icon {
+	color: var(--agora-primary);
+}
+
+.codigo-item mat-icon {
+	font-size: 1rem;
+}
+
+.editor-encabezado {
+	display: flex;
+	align-items: end;
+	justify-content: space-between;
+	gap: 1rem;
+	margin-bottom: 0.5rem;
+}
+
+.editor-encabezado .campo {
+	flex: 1;
+}
+
+.editor-encabezado > span {
+	color: var(--agora-text-muted);
+	font-size: 0.6875rem;
+}
+
+.editor-servicios {
+	overflow: hidden;
+	border-radius: 0.75rem;
+	background: var(--agora-surface-soft);
+	box-shadow: inset 0 0.125rem 0.35rem rgb(37 24 25 / 7%);
+}
+
+.editor-barra {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+	padding: 0.65rem 0.75rem;
+	color: var(--agora-text-muted);
+}
+
+.editor-barra mat-icon {
+	font-size: 1.1rem;
+}
+
+.editor-servicios textarea {
+	box-sizing: border-box;
+	width: 100%;
+	padding: 1rem;
+	border: 0;
+	outline: 0;
+	resize: vertical;
+	background: var(--agora-surface);
+	color: var(--agora-text);
+	font: inherit;
+	font-size: 0.875rem;
+	line-height: 1.5;
+}
+
+.campo-ayuda,
+.firma-estado {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	color: var(--agora-text-muted);
+	font-size: 0.6875rem;
+}
+
+.campo-ayuda mat-icon,
+.firma-estado mat-icon {
+	font-size: 1rem;
+}
+
+.firma-estado {
+	margin-top: 1rem;
+	padding: 0.75rem;
+	border-radius: 0.5rem;
+	background: var(--agora-success-surface);
+	color: var(--agora-success);
+}
+
+@media (max-width: t.$bp-sm) {
+	.editor-encabezado {
+		align-items: flex-start;
+		flex-direction: column;
+	}
 }

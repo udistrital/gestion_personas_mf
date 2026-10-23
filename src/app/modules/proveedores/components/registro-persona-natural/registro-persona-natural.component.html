@@ -1,0 +1,179 @@
+<plantilla-pagina-contenedora
+  [icon]="'person'"
+  [title]="'Registro Único de Persona Natural'"
+  [breadcrumb]="'<p>Gestión de Proveedores > <b>Persona Natural</b></p>'"
+  [mostrarBotonRegresar]="true"
+  (regresar)="regresarARegistroInicial()"
+>
+  <ng-container *ngTemplateOutlet="contenidoDePlantilla"></ng-container>
+</plantilla-pagina-contenedora>
+
+<ng-template #contenidoDePlantilla>
+
+  <div class="registro-persona-natural-contenido">
+
+  @if (borradorRestaurado) {
+    <section class="aviso-borrador" role="status">
+      <div class="aviso-borrador__texto">
+        <strong>Se restauró un borrador anterior.</strong>
+        <span>
+          Los archivos adjuntos no se guardan en el navegador; vuelva a
+          cargarlos en el paso de documentos si los necesita.
+        </span>
+      </div>
+      <button
+        class="aviso-borrador__descartar"
+        type="button"
+        (click)="descartarBorrador()"
+      >
+        Descartar borrador
+      </button>
+    </section>
+  }
+
+  <!-- ========================================================= -->
+  <!-- STEPPER                                                   -->
+  <!-- ========================================================= -->
+
+  <div class="persona-natural-stepper">
+    <stepper-visual
+      [pasoActual]="currentStep"
+      [pasos]="pasosStepper"
+      (pasoActualChange)="irAlPaso($event)"
+      label="Progreso del registro de Persona Natural"
+    ></stepper-visual>
+  </div>
+
+
+  <section class="contenido-pasos" aria-label="Información del registro">
+
+    <!-- ========================================================= -->
+    <!-- PASO 1                                                    -->
+    <!-- ========================================================= -->
+
+    @if (currentStep === 1) {
+
+      <app-registro-persona-natural-paso-1
+        [identificacionForm]="identificacionForm"
+        [caracterizacionForm]="caracterizacionForm"
+        [experienciaForm]="experienciaForm"
+        [tributarioForm]="tributarioForm"
+        [residenciaForm]="residenciaForm"
+        [contactoForm]="contactoForm"
+        [catalogos]="catalogosPaso1"
+        [estadoCatalogos]="estadoPaso1"
+        [geografia]="geografia"
+        (reintentarCatalogos)="cargarCatalogosPaso1()"
+        (reintentarGeografia)="reintentarGeografia($event)"
+      ></app-registro-persona-natural-paso-1>
+
+    }
+
+
+    <!-- ========================================================= -->
+    <!-- PASO 2                                                    -->
+    <!-- ========================================================= -->
+
+    @if (currentStep === 2) {
+
+      <app-registro-persona-natural-paso-2
+        [afiliacionesFinanzasForm]="afiliacionesFinanzasForm"
+        [catalogos]="catalogosPaso2"
+        [estadoCatalogos]="estadoPaso2"
+        (reintentarCatalogos)="cargarCatalogosPaso2()"
+      ></app-registro-persona-natural-paso-2>
+
+    }
+
+
+    <!-- ========================================================= -->
+    <!-- PASO 3                                                    -->
+    <!-- ========================================================= -->
+
+    @if (currentStep === 3) {
+      <app-registro-persona-natural-paso-3
+        [documentosForm]="documentosForm"
+        (estadoCambio)="estadoMensaje = $event.mensaje; estadoDetalle = $event.detalle"
+        (solicitarPersistencia)="persistirBorrador($event)"
+      ></app-registro-persona-natural-paso-3>
+    }
+
+    @if (currentStep === 4) {
+      <app-registro-persona-natural-paso-4
+        [actividadDeclaracionForm]="actividadDeclaracionForm"
+      ></app-registro-persona-natural-paso-4>
+    }
+
+  </section>
+
+<barra-acciones-formulario
+    [mostrarRegreso]="currentStep > 1"
+    [esUltimoPaso]="currentStep === totalSteps"
+    [estadoMensaje]="estadoMensaje"
+    [estadoDetalle]="estadoDetalle"
+    (regreso)="regresar()"
+    (guardar)="guardarBorrador()"
+    (continuar)="continuar()"
+    (finalizar)="continuar()"
+  ></barra-acciones-formulario>
+  </div>
+
+</ng-template>
+
+
+<!-- ============================================================= -->
+<!-- CONTENIDO DE LAS TARJETAS                                     -->
+<!-- ============================================================= -->
+
+
+<!-- ============================================================= -->
+<!-- IDENTIFICACIÓN                                                -->
+<!-- ============================================================= -->
+
+<!-- ============================================================= -->
+<!-- CARACTERIZACIÓN                                               -->
+<!-- ============================================================= -->
+
+<!-- ============================================================= -->
+<!-- EXPERIENCIA LABORAL Y PROFESIONAL                             -->
+<!-- ============================================================= -->
+
+<!-- ============================================================= -->
+<!-- INFORMACIÓN TRIBUTARIA                                        -->
+<!-- ============================================================= -->
+
+<!-- ============================================================= -->
+<!-- RESIDENCIA                                                    -->
+<!-- ============================================================= -->
+
+<!-- ============================================================= -->
+<!-- CONTACTO                                                      -->
+<!-- ============================================================= -->
+
+<!-- ============================================================= -->
+<!-- PASO 2 - AFILIACIONES                                         -->
+<!-- ============================================================= -->
+
+<!-- ============================================================= -->
+<!-- PASO 2 - FINANCIERO                                           -->
+<!-- ============================================================= -->
+
+<!-- ============================================================= -->
+<!-- PASO 3 - RUT                                                  -->
+<!-- ============================================================= -->
+
+<!-- ============================================================= -->
+<!-- PASO 3 - RUP                                                  -->
+<!-- ============================================================= -->
+
+<!-- ============================================================= -->
+<!-- PASO 4 - ACTIVIDAD                                            -->
+<!-- ============================================================= -->
+
+<!-- ============================================================= -->
+<!-- PASO 4 - PORTAFOLIO                                           -->
+<!-- ============================================================= -->
+
+<!-- ============================================================= -->
+<!-- PASO 4 - DECLARACIONES                                        -->
+<!-- ============================================================= -->

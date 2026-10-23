@@ -1,14 +1,33 @@
 /* Estilos globales de agora-gestion-personas-mf */
 @use '@angular/material' as mat;
+@use 'src/app/shared/styles/tokens' as tokens;
+
+/* ---------------------------------------------------------------------------
+   Bootstrap 5.3 — solo variables, mixins y utilities.
+   Se omiten a propósito `root`, `reboot`, `type`, `containers`, `grid` y todos
+   los componentes: así las clases utilitarias (d-flex, gap-3, p-3, rounded-3,
+   fw-bold, flex-sm-row, …) están disponibles en los templates sin introducir
+   ningún reset ni estilo global que altere el aspecto actual de la app.
+   --------------------------------------------------------------------------- */
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/variables";
+@import "bootstrap/scss/variables-dark";
+@import "bootstrap/scss/maps";
+@import "bootstrap/scss/mixins";
+@import "bootstrap/scss/utilities";
+@import "bootstrap/scss/utilities/api";
+
+/* Tokens de diseño compartidos (colores, tipografía, radios, sombras). */
+@include tokens.tokens;
 
 :root {
-  --agora-primary: #69101b;
-  --agora-primary-dark: #47000b;
-  --agora-background: #fff8f7;
-  --agora-surface: #ffffff;
-  --agora-border: #fce2e3;
-  --agora-text: #251819;
-  --agora-text-muted: #665252;
+  /* Ajustes mínimos para asegurar que las utilities de radio funcionen sin root/reboot */
+  --bs-border-radius-sm: 0.25rem;
+  --bs-border-radius: 0.375rem;
+  --bs-border-radius-lg: 0.5rem;
+  --bs-border-radius-xl: 1rem;
+  --bs-border-radius-xxl: 2rem;
+  --bs-border-radius-pill: 50rem;
 }
 
 html,
@@ -19,11 +38,11 @@ body {
 
 body {
   margin: 0;
-  font-family: Roboto, "Helvetica Neue", sans-serif;
 }
 
 agora-gestion-personas-mf {
   display: block;
   min-height: 100vh;
   background: var(--agora-background);
+  color: var(--agora-text);
 }

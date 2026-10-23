@@ -1,17 +1,171 @@
-<form>
+<form [formGroup]="formulario" (input)="emitirCambio()" (change)="emitirCambio()">
   <plantilla-tarjeta-contenedora
-    [icon]="'help_outline'"
-    [title]="'Placeholder de contenido'"
-    [description]="'Tarjeta de prueba'"
+    [icon]="'storefront'"
+    [title]="'1. Actividades Económicas y Clasificación de Bienes y Servicios (CIIU y UNSPSC)'"
+    [description]="'Homologación tributaria según RUT y clasificador de bienes para contratación con el Estado.'"
   >
-    <p>Esta es una tarjeta de prueba para verificar renderizado y funcionalidad. Puede reemplazar este contenido con información relevante según sea necesario.</p>
+    <aviso-legal-formulario [title]="'Normativa UD'">
+      <p>Relacione al menos una actividad económica principal registrada en la casilla 46 del RUT. Los códigos adicionales deben ser coherentes con el objeto social registrado.</p>
+    </aviso-legal-formulario>
+    <div class="subtitulo"><mat-icon>category</mat-icon> Catálogo dinámico de actividad económica</div>
+    <div class="campo-grid campo-grid--three">
+      <label class="campo"><span>Buscar actividad CIIU</span>
+        <input
+          [value]="busquedaCiiu"
+          (input)="busquedaCiiu = $any($event.target).value"
+          type="search"
+          autocomplete="off"
+        >
+      </label>
+      <label class="campo"><span>Actividad disponible</span>
+        <select [formControl]="actividadCiiuDisponibleId">
+          <option [ngValue]="null">Seleccione...</option>
+          @for (actividad of actividadesCiiuDisponibles; track actividad.id) {
+            <option [ngValue]="actividad.id">{{ actividad.codigo }} — {{ actividad.nombre }}</option>
+          }
+        </select>
+      </label>
+      <button
+        class="boton boton--secundario"
+        type="button"
+        [disabled]="actividadCiiuDisponibleId.value === null"
+        (click)="agregarActividadCiiu()"
+      >Agregar actividad</button>
+    </div>
+    @if (!cargandoCatalogos && !errorCatalogos && actividadesCiiu.length === 0) {
+      <p>No hay actividades CIIU disponibles.</p>
+    } @else if (actividadesCiiu.length > 0 && actividadesCiiuDisponibles.length === 0 && !busquedaCiiu) {
+      <p>Todas las actividades encontradas ya fueron agregadas.</p>
+    } @else if (busquedaCiiu && actividadesCiiuDisponibles.length === 0) {
+      <p>No hay coincidencias para la búsqueda CIIU.</p>
+    }
+    <div class="actividades-lista">
+      @for (actividad of actividadesCiiuSeleccionadas; track actividad.id; let primero = $first) {
+        <div class="vinculacion actividad-item">
+          <div class="actividad-codigo">{{ actividad.codigo }}</div>
+          <div>
+            <strong>{{ actividad.nombre }}</strong>
+            @if (primero) {
+              <span> — Actividad principal</span>
+            } @else {
+              <span> — Actividad secundaria</span>
+            }
+            @if (actividad.descripcion) {
+              <p>{{ actividad.descripcion }}</p>
+            }
+          </div>
+          <button class="boton boton--ligero" type="button" (click)="quitarActividadCiiu(actividad.id)">
+            Retirar
+          </button>
+        </div>
+      }
+      @if (actividadesCiiuSeleccionadas.length === 0) {
+        <p>Aún no hay actividades CIIU agregadas.</p>
+      }
+    </div>
   </plantilla-tarjeta-contenedora>
 
   <plantilla-tarjeta-contenedora
-    [icon]="'help_outline'"
-    [title]="'Placeholder de contenido'"
-    [description]="'Tarjeta de prueba'"
+    [icon]="'inventory_2'"
+    [title]="'Clasificador UNSPSC'"
+    [description]="'Busque y agregue códigos del catálogo de productos y servicios UNGM.'"
   >
-    <p>Esta es una tarjeta de prueba para verificar renderizado y funcionalidad. Puede reemplazar este contenido con información relevante según sea necesario.</p>
+    @if (cargandoUnspsc) {
+      <p aria-live="polite">Cargando catálogo UNSPSC...</p>
+    } @else if (errorUnspsc) {
+      <p role="alert">{{ errorUnspsc }}</p>
+      <button class="boton boton--secundario" type="button" (click)="reintentarUnspsc.emit()">Reintentar carga UNSPSC</button>
+    } @else {
+      <div class="campo-grid campo-grid--three">
+        <label class="campo"><span>Buscar código o descripción UNSPSC</span>
+          <input
+            [value]="busquedaUnspsc"
+            (input)="busquedaUnspsc = $any($event.target).value"
+            type="search"
+            autocomplete="off"
+          >
+        </label>
+        <label class="campo"><span>Resultado disponible</span>
+          <select [formControl]="unspscDisponibleId">
+            <option [ngValue]="null">Seleccione...</option>
+            @for (opcion of unspscDisponibles; track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.codigo }} — {{ opcion.titulo }}</option>
+            }
+          </select>
+        </label>
+        <button
+          class="boton boton--secundario"
+          type="button"
+          [disabled]="unspscDisponibleId.value === null"
+          (click)="agregarUnspsc()"
+        >Agregar código</button>
+      </div>
+      @if (catalogoUnspsc.length === 0) {
+        <p>El catálogo UNSPSC no contiene registros.</p>
+      } @else if (unspscCoincidentesDisponibles.length === 0 && busquedaUnspsc) {
+        <p>No hay coincidencias UNSPSC para la búsqueda.</p>
+      } @else if (hayMasResultadosUnspsc) {
+        <p>Se muestran los primeros resultados. Refine la búsqueda para encontrar un código.</p>
+      }
+    }
+    <div class="actividades-lista">
+      @for (opcion of unspscSeleccionados; track opcion.id) {
+        <div class="vinculacion actividad-item">
+          <div class="actividad-codigo">{{ opcion.codigo }}</div>
+          <div><strong>{{ opcion.titulo }}</strong></div>
+          <button class="boton boton--ligero" type="button" (click)="quitarUnspsc(opcion.id)">
+            Retirar
+          </button>
+        </div>
+      }
+      @if (!cargandoUnspsc && !errorUnspsc && unspscSeleccionados.length === 0) {
+        <p>Aún no hay códigos UNSPSC agregados.</p>
+      }
+    </div>
+  </plantilla-tarjeta-contenedora>
+
+  <plantilla-tarjeta-contenedora
+    [icon]="'cases'"
+    [title]="'2. Portafolio de Bienes, Servicios y Capacidad Técnica'"
+    [description]="'Descripción detallada de la oferta comercial y experiencia empresarial para contratación pública UD.'"
+  >
+    <div class="editor-encabezado">
+      <label class="campo"><span>Descripción de Idoneidad Corporativa y Alcance de Servicios <b>*</b></span></label>
+      <span>{{ cantidadCaracteres }} / 2000 caracteres</span>
+    </div>
+    <div class="editor-servicios">
+      <div class="editor-barra" aria-hidden="true">
+        <mat-icon>format_bold</mat-icon><mat-icon>format_italic</mat-icon><mat-icon>format_underlined</mat-icon><mat-icon>format_list_bulleted</mat-icon><mat-icon>format_align_left</mat-icon><mat-icon>link</mat-icon>
+      </div>
+      <textarea formControlName="descripcionServicios" maxlength="2000" rows="7"></textarea>
+    </div>
+    <p class="campo-ayuda"><mat-icon>info</mat-icon> Esta descripción será visible para comités evaluadores y supervisores contractuales.</p>
+  </plantilla-tarjeta-contenedora>
+
+  <plantilla-tarjeta-contenedora
+    [icon]="'gavel'"
+    [title]="'3. Declaraciones Normativas, Inhabilidades y SAGRILAFT'"
+    [description]="'Confirme las declaraciones obligatorias para la radicación del registro.'"
+  >
+    <div class="opciones declaraciones-lista" role="group" aria-labelledby="declaraciones-proveedor-titulo">
+      <span class="opciones__titulo" id="declaraciones-proveedor-titulo">Declaraciones del proveedor <b>*</b></span>
+      @for (declaracion of declaraciones; track declaracion.id) {
+        <label><input [checked]="estaDeclaracionSeleccionada(declaracion.id)" (change)="cambiarDeclaracion(declaracion.id, $any($event.target).checked)" type="checkbox"> {{ declaracion.nombre }}</label>
+      }
+    </div>
+  </plantilla-tarjeta-contenedora>
+
+  <plantilla-tarjeta-contenedora
+    [icon]="'draw'"
+    [title]="'4. Mecanismo de Firma Electrónica y Formalización de Radicado'"
+    [description]="'Valide la identidad del representante legal y autorice el tratamiento de la información.'"
+  >
+    <div class="campo-grid campo-grid--three">
+      <label class="campo"><span>Representante Legal</span><input [value]="formulario.get('razonSocial')?.value ? formulario.get('primerNombre')?.value + ' ' + formulario.get('primerApellido')?.value : ''" type="text" readonly></label>
+      <label class="campo"><span>Documento</span><input [value]="formulario.get('documentoRepresentante')?.value" type="text" readonly></label>
+      <label class="campo"><span>Token OTP Institucional <b>*</b></span><input formControlName="tokenOtp" type="text" inputmode="numeric"></label>
+    </div>
+    <label class="checkbox-line"><input formControlName="aceptaTratamiento" type="checkbox"><span>Autorizo el tratamiento de datos personales y corporativos conforme a la Ley 1581 de 2012.</span></label>
+    <div class="firma-estado"><mat-icon>verified_user</mat-icon><span>Identidad lista para firma electrónica y radicación institucional.</span></div>
   </plantilla-tarjeta-contenedora>
 </form>

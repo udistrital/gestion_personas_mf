@@ -113,6 +113,10 @@ Con estos pasos, se tendrán las partes mínimas necesarias para ejecutar el pro
 # Developing
 ```
 
+## Navegación del registro de Persona Natural
+
+En el registro de Persona Natural se puede seleccionar cualquier paso directamente desde el stepper, incluso uno posterior al paso actual. La validación de los datos se conserva al usar el botón **Continuar** y al finalizar; navegar directamente entre pasos no elimina ni modifica las validaciones.
+
 ## Estado CI
 
 | Develop | Release | Master |

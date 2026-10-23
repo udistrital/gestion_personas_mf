@@ -1,3 +1,5 @@
+@use 'src/app/shared/styles/tokens' as t;
+
 :host {
   display: block;
 }
@@ -9,7 +11,7 @@
   gap: 1rem;
   padding: 0.75rem;
   border-radius: 0.5rem;
-  background: #fff;
+  background: var(--agora-surface);
   color: var(--agora-primary);
   font-size: 0.6875rem;
   font-weight: 700;
@@ -25,12 +27,12 @@
 .direccion-generada__estado {
   padding: 0.25rem 0.6rem;
   border-radius: 999px;
-  background: #eef9f0;
-  color: #237a37;
+  background: var(--agora-success-surface);
+  color: var(--agora-success);
   white-space: nowrap;
 }
 
-@media (max-width: 40rem) {
+@media (max-width: t.$bp-sm) {
   .direccion-generada {
     align-items: flex-start;
     flex-direction: column;

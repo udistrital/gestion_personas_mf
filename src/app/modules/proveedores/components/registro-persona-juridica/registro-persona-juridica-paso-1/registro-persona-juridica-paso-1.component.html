@@ -20,9 +20,10 @@
       <label class="campo">
         <span>Procedencia de la Empresa <b>*</b></span>
         <select formControlName="procedencia">
-          <option>Nacional (Constituida en Colombia)</option>
-          <option>Extranjera con Sucursal en Colombia</option>
-          <option>Extranjera sin Domicilio en el País</option>
+          <option [ngValue]="null">Seleccione...</option>
+          @for (opcion of opcionesProcedencia; track opcion.id) {
+            <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+          }
         </select>
       </label>
     </div>
@@ -44,11 +45,10 @@
       <label class="campo">
         <span>Cámara de Comercio <b>*</b></span>
         <select formControlName="camaraComercio">
-          <option>Cámara de Comercio de Bogotá</option>
-          <option>Cámara de Comercio de Medellín</option>
-          <option>Cámara de Comercio de Cali</option>
-          <option>Cámara de Comercio de Barranquilla</option>
-          <option>Otra Jurisdicción Nacional</option>
+          <option [ngValue]="null">Seleccione...</option>
+          @for (opcion of opcionesCamaraComercio; track opcion.id) {
+            <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+          }
         </select>
       </label>
       <label class="campo">
@@ -62,20 +62,19 @@
       <label class="campo campo--wide">
         <span>Tipo de Organización / Figura Jurídica <b>*</b></span>
         <select formControlName="tipoOrganizacion">
-          <option>Sociedad por Acciones Simplificada - S.A.S.</option>
-          <option>Sociedad Anónima - S.A.</option>
-          <option>Sociedad de Responsabilidad Limitada - Ltda.</option>
-          <option>Entidad Sin Ánimo de Lucro - ESAL</option>
-          <option>Sucursal de Sociedad Extranjera</option>
+          <option [ngValue]="null">Seleccione...</option>
+          @for (opcion of opcionesTipoOrganizacion; track opcion.id) {
+            <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+          }
         </select>
       </label>
       <label class="campo campo--wide">
         <span>Tamaño Empresarial (Decreto 957/2019) <b>*</b></span>
         <select formControlName="tamanoEmpresarial">
-          <option>Microempresa (Hasta 23.563 UVT Servicios)</option>
-          <option>Pequeña Empresa (Hasta 204.653 UVT Servicios)</option>
-          <option>Mediana Empresa (Hasta 483.034 UVT Servicios)</option>
-          <option>Gran Empresa (Mayor a 483.034 UVT)</option>
+          <option [ngValue]="null">Seleccione...</option>
+          @for (opcion of opcionesTamanoEmpresarial; track opcion.id) {
+            <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+          }
         </select>
       </label>
     </div>
@@ -97,7 +96,12 @@
       <p>Cotejo con Censo Ciudadano</p>
       <div class="campo-grid campo-grid--three">
         <label class="campo"><span>Documento Identificación <b>*</b></span><input formControlName="documentoRepresentante" type="text"></label>
-        <label class="campo"><span>Cargo Representante <b>*</b></span><input formControlName="cargoRepresentante" type="text"></label>
+        <label class="campo"><span>Cargo Representante <b>*</b></span><select formControlName="cargoRepresentante">
+          <option [ngValue]="null">Seleccione...</option>
+          @for (opcion of opcionesCargo; track opcion.id) {
+            <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+          }
+        </select></label>
         <button class="boton boton--primary" type="button">Relacionar</button>
       </div>
     </div>
@@ -109,11 +113,12 @@
       <label class="campo campo--wide"><span>Correo Corporativo Representante <b>*</b></span><input formControlName="correoRepresentante" type="email"></label>
       <label class="campo campo--wide"><span>Teléfono Celular Directo <b>*</b></span><input formControlName="telefonoRepresentante" type="tel"></label>
     </div>
-    <fieldset class="opciones">
-      <legend>¿Tiene limitación estatutaria en cuantía para celebrar contratos o comprometer a la sociedad? <b>*</b></legend>
-      <label><input formControlName="limitacionEstatutaria" value="no" type="radio"> No, facultades amplias y suficientes sin límite de cuantía (Estatutos tipo S.A.S.)</label>
-      <label><input formControlName="limitacionEstatutaria" value="si" type="radio"> Sí, requiere autorización previa de Junta Directiva / Asamblea de Accionistas</label>
-    </fieldset>
+    <div class="opciones" role="group" aria-labelledby="limitacion-estatutaria-titulo">
+      <span class="opciones__titulo" id="limitacion-estatutaria-titulo">¿Tiene limitación estatutaria en cuantía para celebrar contratos o comprometer a la sociedad? <b>*</b></span>
+      @for (opcion of opcionesLimitacionEstatutaria; track opcion.value) {
+        <label><input formControlName="limitacionEstatutaria" [value]="opcion.value" type="radio"> {{ opcion.label }}</label>
+      }
+    </div>
     <label class="checkbox-line"><input formControlName="registrarSuplente" type="checkbox"><span>Registrar Representante Legal Suplente o Apoderado Especial con Poder Vigente</span><small>Opcional según estatutos</small></label>
   </plantilla-tarjeta-contenedora>
 
@@ -123,19 +128,99 @@
     [description]="'Determinación de control societario, revisoría fiscal y obligaciones Casilla 53 del RUT.'"
   >
     <div class="campo-grid campo-grid--three">
-      <label class="campo campo--question"><span>¿Cuenta con Beneficiarios Finales reportados en el RUB? <b>*</b></span><select formControlName="beneficiariosFinales"><option>Sí, titularidad directa/indirecta &gt;= 5%</option><option>No, participación pública mayoritaria</option></select></label>
-      <label class="campo campo--question"><span>¿Cotiza en la Bolsa de Valores de Colombia (BVC)? <b>*</b></span><select formControlName="cotizaBolsa"><option>No cotiza en bolsa de valores</option><option>Sí, cotiza activamente en bolsa</option></select></label>
-      <label class="campo campo--question"><span>¿Obligada a contar con Revisor Fiscal? <b>*</b></span><select formControlName="revisorFiscal"><option>Sí, por monto de activos o estatutos</option><option>No obligada legalmente</option></select></label>
-      <label class="campo campo--question"><span>¿Gran Contribuyente DIAN? <b>*</b></span><select formControlName="granContribuyente"><option>No</option><option>Sí (Con Resolución Vigente)</option></select></label>
-      <label class="campo campo--question"><span>¿Es Autorretenedor en Renta? <b>*</b></span><select formControlName="autorretenedor"><option>No</option><option>Sí (Resolución DIAN)</option></select></label>
-      <label class="campo campo--question"><span>¿Aplica Exención ICA Bogotá? <b>*</b></span><select formControlName="exencionIca"><option>No, tarifa plena Distrital</option><option>Sí, Actividad Exenta Distrital</option></select></label>
+      <label class="campo campo--question"><span>¿Cuenta con Beneficiarios Finales reportados en el RUB? <b>*</b></span><select formControlName="beneficiariosFinales">
+        <option [ngValue]="null">Seleccione...</option>
+        @for (opcion of opcionesSiNo; track opcion.value) {
+          <option [ngValue]="opcion.value">{{ opcion.label }}</option>
+        }
+      </select></label>
+      <label class="campo campo--question"><span>¿Cotiza en la Bolsa de Valores de Colombia (BVC)? <b>*</b></span><select formControlName="cotizaBolsa">
+        <option [ngValue]="null">Seleccione...</option>
+        @for (opcion of opcionesSiNo; track opcion.value) {
+          <option [ngValue]="opcion.value">{{ opcion.label }}</option>
+        }
+      </select></label>
+      <label class="campo campo--question"><span>¿Obligada a contar con Revisor Fiscal? <b>*</b></span><select formControlName="revisorFiscal">
+        <option [ngValue]="null">Seleccione...</option>
+        @for (opcion of opcionesSiNo; track opcion.value) {
+          <option [ngValue]="opcion.value">{{ opcion.label }}</option>
+        }
+      </select></label>
+      <label class="campo campo--question"><span>¿Gran Contribuyente DIAN? <b>*</b></span><select formControlName="granContribuyente">
+        <option [ngValue]="null">Seleccione...</option>
+        @for (opcion of opcionesSiNo; track opcion.value) {
+          <option [ngValue]="opcion.value">{{ opcion.label }}</option>
+        }
+      </select></label>
+      <label class="campo campo--question"><span>¿Es Autorretenedor en Renta? <b>*</b></span><select formControlName="autorretenedor">
+        <option [ngValue]="null">Seleccione...</option>
+        @for (opcion of opcionesSiNo; track opcion.value) {
+          <option [ngValue]="opcion.value">{{ opcion.label }}</option>
+        }
+      </select></label>
+      <label class="campo campo--question"><span>¿Aplica Exención ICA Bogotá? <b>*</b></span><select formControlName="exencionIca">
+        <option [ngValue]="null">Seleccione...</option>
+        @for (opcion of opcionesSiNo; track opcion.value) {
+          <option [ngValue]="opcion.value">{{ opcion.label }}</option>
+        }
+      </select></label>
     </div>
     <fieldset class="responsabilidades">
       <legend>Responsabilidades Fiscales en Casilla 53 del RUT vigente: <b>*</b></legend>
-      <label><input formControlName="responsabilidadRenta" type="checkbox"><strong>05:</strong> Renta Régimen Ordinario</label>
-      <label><input formControlName="responsabilidadIva" type="checkbox"><strong>48:</strong> Impuesto a las Ventas - IVA</label>
-      <label><input formControlName="responsabilidadExogena" type="checkbox"><strong>14:</strong> Informante de Exógena</label>
-      <label><input formControlName="responsabilidadContabilidad" type="checkbox"><strong>42:</strong> Obligado a llevar contabilidad</label>
+      <div class="responsabilidades-contenido">
+        <div class="campo-grid campo-grid--three responsabilidades-selector">
+          <label class="campo"><span>Buscar responsabilidad fiscal</span>
+            <input
+              [value]="busquedaResponsabilidadFiscal"
+              (input)="busquedaResponsabilidadFiscal = $any($event.target).value"
+              type="search"
+              autocomplete="off"
+            >
+          </label>
+          <label class="campo"><span>Responsabilidad disponible</span>
+            <select [formControl]="responsabilidadFiscalDisponibleId">
+              <option [ngValue]="null">Seleccione...</option>
+              @for (opcion of responsabilidadesFiscalesDisponibles; track opcion.id) {
+                <option [ngValue]="opcion.id">
+                  {{ opcion.codigo ? opcion.codigo + ' — ' : '' }}{{ opcion.nombre }}
+                </option>
+              }
+            </select>
+          </label>
+          <button
+            class="boton boton--primary"
+            type="button"
+            [disabled]="responsabilidadFiscalDisponibleId.value === null"
+            (click)="agregarResponsabilidadFiscal()"
+          >Agregar responsabilidad</button>
+        </div>
+        @if (
+          opcionesResponsabilidadesFiscales.length > 0 &&
+          responsabilidadesFiscalesDisponibles.length === 0
+        ) {
+          <p>No hay responsabilidades fiscales disponibles para agregar.</p>
+        }
+        <div class="responsabilidades-seleccionadas">
+          @for (opcion of responsabilidadesFiscalesSeleccionadas; track opcion.id) {
+            <div class="vinculacion responsabilidad-seleccionada">
+              <span>{{ opcion.codigo ? opcion.codigo + ' — ' : '' }}{{ opcion.nombre }}</span>
+              <button
+                class="boton boton--ligero"
+                type="button"
+                (click)="quitarResponsabilidadFiscal(opcion.id)"
+              >Retirar</button>
+            </div>
+          }
+        </div>
+        @if (
+          formulario.get('responsabilidades')?.touched &&
+          formulario.get('responsabilidades')?.invalid
+        ) {
+          <small class="field-error">
+            Seleccione al menos una responsabilidad fiscal.
+          </small>
+        }
+      </div>
     </fieldset>
   </plantilla-tarjeta-contenedora>
 
@@ -145,21 +230,74 @@
     [description]="'Diligencie la nomenclatura oficial para notificaciones judiciales y administrativas de la Universidad.'"
   >
     <div class="campo-grid campo-grid--two">
-      <label class="campo"><span>Departamento de Sede Principal <b>*</b></span><select formControlName="departamento"><option>Bogotá D.C.</option><option>Cundinamarca</option><option>Antioquia</option><option>Valle del Cauca</option></select></label>
-      <label class="campo"><span>Ciudad / Municipio <b>*</b></span><select formControlName="ciudad"><option>Bogotá D.C.</option><option>Chía</option><option>Soacha</option><option>Medellín</option></select></label>
+      <label class="campo"><span>País</span><input [value]="pais?.nombre ?? ''" type="text" readonly></label>
+      <label class="campo"><span>Departamento de Sede Principal <b>*</b></span><select formControlName="departamento">
+        <option [ngValue]="null">Seleccione...</option>
+        @for (opcion of departamentos; track opcion.id) {
+          <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+        }
+      </select>
+        @if (cargandoDepartamentos) {
+          <small>Cargando departamentos...</small>
+        } @else if (errorDepartamentos) {
+          <small role="alert">{{ errorDepartamentos }}</small>
+          <button class="boton boton--secundario" type="button" (click)="reintentarDepartamentos.emit()">Reintentar</button>
+        } @else if (departamentos.length === 0) {
+          <small>No hay departamentos disponibles.</small>
+        }
+      </label>
+      <label class="campo"><span>Ciudad / Municipio <b>*</b></span><select formControlName="ciudad">
+        <option [ngValue]="null">Seleccione...</option>
+        @for (opcion of ciudades; track opcion.id) {
+          <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+        }
+      </select>
+        @if (cargandoCiudades) {
+          <small>Cargando ciudades...</small>
+        } @else if (errorCiudades) {
+          <small role="alert">{{ errorCiudades }}</small>
+          <button class="boton boton--secundario" type="button" (click)="reintentarCiudades.emit()">Reintentar</button>
+        } @else if (formulario.get('departamento')?.value && ciudades.length === 0) {
+          <small>No hay ciudades disponibles para este departamento.</small>
+        }
+      </label>
     </div>
     <div class="direccion">
       <h3><mat-icon>signpost</mat-icon> Generador de Nomenclatura Estándar DIAN (RUT)</h3>
-      <div class="campo-grid campo-grid--four">
-        <label class="campo"><span>Vía *</span><select formControlName="tipoVia"><option>CALLE</option><option>CARRERA</option><option>AVENIDA CARRERA</option><option>DIAGONAL</option><option>TRANSVERSAL</option></select></label>
+      <div class="campo-grid campo-grid--direccion">
+        <label class="campo">
+          <span>Vía *</span>
+          <select formControlName="tipoVia">
+            <option [ngValue]="null">Seleccione...</option>
+            @for (opcion of opcionesTipoVia; track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+            }
+          </select>
+          @if (catalogos && opcionesTipoVia.length === 0) {
+            <small>No hay opciones de vía disponibles en Ubicaciones.</small>
+          }
+        </label>
         <label class="campo"><span>Detalle Vía *</span><input formControlName="detalleVia" type="text"></label>
+        <span class="separador-direccion" aria-hidden="true">#</span>
         <label class="campo"><span>Número Cruce *</span><input formControlName="numeroCruce" type="text"></label>
+        <span class="separador-direccion" aria-hidden="true">-</span>
         <label class="campo"><span>Placa Puerta *</span><input formControlName="placaPuerta" type="text"></label>
-        <label class="campo"><span>Interior 1</span><select formControlName="interiorTipo"><option>OF</option><option>LC</option><option>PIS</option><option>ED</option></select></label>
+        <label class="campo">
+          <span>Interior 1</span>
+          <select formControlName="interiorTipo">
+            <option [ngValue]="null">Seleccione...</option>
+            @for (opcion of opcionesTipoInterior; track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+            }
+          </select>
+          @if (catalogos && opcionesTipoInterior.length === 0) {
+            <small>No hay opciones de interior disponibles en Ubicaciones.</small>
+          }
+        </label>
         <label class="campo"><span>Det. Interior</span><input formControlName="detalleInterior" type="text"></label>
       </div>
       <direccion-generada
-        [direccion]="'AK 68 # 45 - 20 OF 502 ED BAVARIA'"
+        [direccion]="direccionGenerada"
       ></direccion-generada>
     </div>
     <h3 class="subtitulo"><mat-icon>contact_phone</mat-icon> Información de Canales de Contacto Directo y Notificaciones</h3>
