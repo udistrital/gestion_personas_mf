@@ -53,7 +53,10 @@
           [resultado]="resultadoCruce()"
         ></paso-datos-generales>
       } @else if (pasoActual === 3) {
-        <paso-items [form]="itemsForm"></paso-items>
+        <paso-items
+          [form]="itemsForm"
+          (itemsCambiados)="alCambiarItems()"
+        ></paso-items>
       } @else if (pasoActual === 4) {
         <paso-contratacion [form]="contratacionForm"></paso-contratacion>
       } @else if (pasoActual === 5) {

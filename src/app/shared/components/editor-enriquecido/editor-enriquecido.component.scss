@@ -3,13 +3,20 @@
   flex-direction: column;
   gap: 0.35rem;
   min-width: 0;
+  width: 100%;
 }
 
 .editor {
+  width: 100%;
   overflow: hidden;
   border: 1px solid var(--agora-borde-tarjeta);
   border-radius: var(--agora-radio-lg);
   background-color: color-mix(in srgb, var(--agora-text-muted) 5%, var(--agora-surface));
+}
+
+.editor ::ng-deep quill-editor {
+  display: block;
+  width: 100%;
 }
 
 .editor:focus-within {

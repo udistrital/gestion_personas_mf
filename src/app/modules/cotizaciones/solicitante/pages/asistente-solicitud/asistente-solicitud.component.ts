@@ -790,6 +790,11 @@ export class AsistenteSolicitudComponent implements OnInit {
     this.guardarBorrador(true);
   }
 
+  /** Revalida el paso 3 tras una actualización de ítems desde su componente. */
+  alCambiarItems(): void {
+    this.itemsForm.updateValueAndValidity();
+  }
+
   /** Vuelve al paso anterior o al listado desde el paso 1. */
   regresar(): void {
     if (this.pasoActual > PRIMER_PASO) {

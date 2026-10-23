@@ -2,8 +2,10 @@ import {
   Component,
   DestroyRef,
   ElementRef,
+  EventEmitter,
   Input,
   OnInit,
+  Output,
   ViewChild,
   computed,
   inject,
@@ -117,6 +119,9 @@ export class PasoItemsComponent implements OnInit {
   /** Subgrupo `items` del `FormGroup` raíz del asistente. */
   @Input({ required: true }) form!: FormGroup;
 
+  /** Notifica al asistente cuando cambia la lista que determina la validez. */
+  @Output() itemsCambiados = new EventEmitter<void>();
+
   @ViewChild("archivo") private entradaArchivo?: ElementRef<HTMLInputElement>;
 
   private readonly fb = inject(FormBuilder);
@@ -228,7 +233,11 @@ export class PasoItemsComponent implements OnInit {
       return { desde: 0, hasta: 0, total };
     }
     const desde = (this.pagina() - 1) * ITEMS_POR_PAGINA + 1;
-    return { desde, hasta: Math.min(desde + ITEMS_POR_PAGINA - 1, total), total };
+    return {
+      desde,
+      hasta: Math.min(desde + ITEMS_POR_PAGINA - 1, total),
+      total,
+    };
   });
 
   /** Lista de páginas para el paginador del mockup. */
@@ -521,6 +530,8 @@ export class PasoItemsComponent implements OnInit {
    */
   private sincronizarLista(): void {
     this.controlOpcional("registros")?.setValue([...this.items()]);
+    this.form.updateValueAndValidity();
+    this.itemsCambiados.emit();
   }
 
   private nuevoId(): string {
