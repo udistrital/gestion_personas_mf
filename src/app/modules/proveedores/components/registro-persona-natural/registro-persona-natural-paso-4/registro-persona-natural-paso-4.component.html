@@ -63,62 +63,83 @@
     </div>
 
 
-    <div class="paso4-ciiu-grid">
-
-      <article class="paso4-ciiu-card">
-
-        <span class="paso4-ciiu-badge paso4-ciiu-badge--principal">
-          Principal
-        </span>
-
-        <div>
-          <h3>CIIU 6201</h3>
-
-          <p>
-            Actividades de desarrollo de sistemas lógicos
-            (software y aplicativos institucionales).
-          </p>
-        </div>
-
-      </article>
-
-
-      <article class="paso4-ciiu-card">
-
-        <span class="paso4-ciiu-badge">
-          Secundaria
-        </span>
-
-        <div>
-          <h3>CIIU 6202</h3>
-
-          <p>
-            Actividades de consultoría informática y gestión de instalaciones
-            e infraestructura tecnológica.
-          </p>
-        </div>
-
-      </article>
-
-
-      <article class="paso4-ciiu-card">
-
-        <span class="paso4-ciiu-badge">
-          Secundaria
-        </span>
-
-        <div>
-          <h3>CIIU 8544</h3>
-
-          <p>
-            Educación técnica, tecnológica y de formación académica avanzada
-            o continua.
-          </p>
-        </div>
-
-      </article>
-
-    </div>
+    @if (cargandoCiiu) {
+      <p aria-live="polite">Cargando catálogo CIIU...</p>
+    } @else if (errorCiiu) {
+      <p role="alert">{{ errorCiiu }}</p>
+      <button class="boton boton--secundario" type="button" (click)="reintentarCiiu.emit()">
+        Reintentar carga CIIU
+      </button>
+    } @else {
+      <div class="campo-grid campo-grid--three">
+        <label class="campo">
+          <span>Buscar actividad CIIU</span>
+          <input
+            [value]="busquedaCiiu"
+            (input)="actualizarBusquedaCiiu($event)"
+            type="search"
+            autocomplete="off"
+          >
+        </label>
+        <label class="campo">
+          <span>Actividad disponible</span>
+          <select
+            [value]="actividadCiiuDisponibleId ?? ''"
+            (change)="seleccionarActividadCiiu($event)"
+          >
+            <option value="">Seleccione...</option>
+            @for (actividad of actividadesCiiuDisponibles; track actividad.id) {
+              <option [value]="actividad.id">{{ actividad.codigo }} — {{ actividad.nombre }}</option>
+            }
+          </select>
+        </label>
+        <button
+          class="boton boton--secundario"
+          type="button"
+          [disabled]="actividadCiiuDisponibleId === null"
+          (click)="agregarActividadCiiu()"
+        >Agregar actividad</button>
+      </div>
+      @if (actividadesCiiu.length === 0) {
+        <p>No hay actividades CIIU disponibles.</p>
+      } @else if (actividadesCiiuDisponibles.length === 0 && !busquedaCiiu) {
+        <p>Todas las actividades CIIU ya fueron agregadas.</p>
+      } @else if (busquedaCiiu && actividadesCiiuDisponibles.length === 0) {
+        <p>No hay coincidencias para la búsqueda CIIU.</p>
+      }
+      <div class="actividades-lista">
+        @for (actividad of actividadesCiiuSeleccionadas; track actividad.id; let primero = $first) {
+          <div class="vinculacion actividad-item">
+            <div class="actividad-codigo">{{ actividad.codigo }}</div>
+            <div>
+              <strong>{{ actividad.nombre }}</strong>
+              @if (primero) {
+                <span> — Actividad principal</span>
+              } @else {
+                <span> — Actividad secundaria</span>
+              }
+              @if (actividad.descripcion) {
+                <p>{{ actividad.descripcion }}</p>
+              }
+            </div>
+            <button
+              class="boton boton--ligero"
+              type="button"
+              (click)="quitarActividadCiiu(actividad.id)"
+            >Retirar</button>
+          </div>
+        }
+        @if (actividadesCiiuSeleccionadas.length === 0) {
+          <p>Aún no hay actividades CIIU agregadas.</p>
+        }
+      </div>
+      @if (
+        actividadDeclaracionForm.get('actividadesCiiu')?.touched
+        && actividadDeclaracionForm.get('actividadesCiiu')?.hasError('required')
+      ) {
+        <small class="field-error">Agregue al menos una actividad CIIU.</small>
+      }
+    }
 
   </div>
   </ng-template>

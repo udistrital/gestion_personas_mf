@@ -101,6 +101,10 @@
     @if (currentStep === 4) {
       <app-registro-persona-natural-paso-4
         [actividadDeclaracionForm]="actividadDeclaracionForm"
+        [actividadesCiiu]="actividadesCiiu"
+        [cargandoCiiu]="estadoCiiu.cargando"
+        [errorCiiu]="estadoCiiu.error"
+        (reintentarCiiu)="cargarCatalogoCiiu()"
       ></app-registro-persona-natural-paso-4>
     }
 

@@ -95,14 +95,26 @@
       <h3><mat-icon>person_search</mat-icon> Búsqueda y Vinculación Asistida de Persona Natural</h3>
       <p>Cotejo con Censo Ciudadano</p>
       <div class="campo-grid campo-grid--three">
-        <label class="campo"><span>Documento Identificación <b>*</b></span><input formControlName="documentoRepresentante" type="text"></label>
-        <label class="campo"><span>Cargo Representante <b>*</b></span><select formControlName="cargoRepresentante">
+        <label class="campo"><span>Documento Identificación <b>*</b></span><input formControlName="documentoRepresentante" (input)="desmarcarRepresentanteRelacionado()" type="text"></label>
+        <label class="campo"><span>Cargo Representante <b>*</b></span><select formControlName="cargoRepresentante" (change)="desmarcarRepresentanteRelacionado()">
           <option [ngValue]="null">Seleccione...</option>
           @for (opcion of opcionesCargo; track opcion.id) {
             <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
           }
         </select></label>
-        <button class="boton boton--primary" type="button">Relacionar</button>
+        <button
+          class="boton boton--primary"
+          type="button"
+          [disabled]="formulario.get('representanteRelacionado')?.value"
+          [attr.aria-pressed]="formulario.get('representanteRelacionado')?.value"
+          (click)="relacionarRepresentante()"
+        >{{ formulario.get('representanteRelacionado')?.value ? 'Relacionado' : 'Relacionar' }}</button>
+        @if (formulario.get('representanteRelacionado')?.value) {
+          <span class="estado-documento estado-documento--activo" role="status">
+            <mat-icon>check_circle</mat-icon>
+            Documento y cargo relacionados
+          </span>
+        }
       </div>
     </div>
     <div class="campo-grid campo-grid--four">

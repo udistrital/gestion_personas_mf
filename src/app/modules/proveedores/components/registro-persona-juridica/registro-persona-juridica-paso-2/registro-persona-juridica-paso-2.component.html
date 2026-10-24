@@ -114,10 +114,36 @@
         <div class="documento-icono"><mat-icon>picture_as_pdf</mat-icon></div>
         <h3>Certificación bancaria</h3>
         <p>Documento expedido por la entidad bancaria con una antigüedad no mayor a 30 días.</p>
-        <label class="campo"><span>Archivo cargado</span><input formControlName="certificacionBancaria" type="text" readonly></label>
+        <label class="campo"><span>Archivo cargado</span><input [value]="nombreCertificacionBancaria()" type="text" readonly></label>
+        <input
+          #certificacionBancariaInput
+          type="file"
+          accept="application/pdf,.pdf"
+          hidden
+          (change)="seleccionarCertificacionBancaria($event)"
+        >
+        @if (errorCertificacionBancaria) {
+          <p role="alert">{{ errorCertificacionBancaria }}</p>
+        }
         <div class="documento-acciones">
-          <button class="boton boton--secundario" type="button"><mat-icon>visibility</mat-icon> Ver documento</button>
-          <button class="boton boton--ligero" type="button"><mat-icon>cached</mat-icon> Reemplazar</button>
+          <button
+            class="boton boton--secundario"
+            type="button"
+            [disabled]="!formulario.get('certificacionBancaria')?.value"
+            (click)="visualizarCertificacionBancaria()"
+          ><mat-icon>visibility</mat-icon> Ver documento</button>
+          <button
+            class="boton boton--ligero"
+            type="button"
+            (click)="certificacionBancariaInput.click()"
+          ><mat-icon>upload_file</mat-icon> {{ formulario.get('certificacionBancaria')?.value ? 'Reemplazar' : 'Adjuntar PDF' }}</button>
+          @if (formulario.get('certificacionBancaria')?.value) {
+            <button
+              class="boton boton--ligero"
+              type="button"
+              (click)="descargarCertificacionBancaria()"
+            ><mat-icon>download</mat-icon> Descargar copia</button>
+          }
         </div>
       </article>
     </section>

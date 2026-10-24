@@ -27,6 +27,7 @@ export class RegistroPersonaJuridicaPaso2Component {
   @Output() formularioChange = new EventEmitter<FormGroup>();
   @Output() reintentarDepartamentos = new EventEmitter<void>();
   @Output() reintentarCiudades = new EventEmitter<void>();
+  errorCertificacionBancaria: string | null = null;
 
   get opcionesTipoConstitucion(): OpcionCatalogo[] {
     return this.catalogos?.tipoCapital ?? [];
@@ -60,6 +61,70 @@ export class RegistroPersonaJuridicaPaso2Component {
 
   darFormatoDinero(number: number): string {
     return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(number);
+  }
+
+  nombreCertificacionBancaria(): string {
+    const archivo = this.archivoCertificacionBancaria();
+    return archivo?.name ?? 'Ningún archivo seleccionado';
+  }
+
+  seleccionarCertificacionBancaria(evento: Event): void {
+    const input = evento.target as HTMLInputElement;
+    const archivo = input.files?.[0] ?? null;
+    if (!archivo) {
+      return;
+    }
+
+    if (archivo.type !== 'application/pdf') {
+      this.errorCertificacionBancaria = 'Seleccione un archivo PDF válido.';
+      input.value = '';
+      return;
+    }
+
+    const control = this.formulario.get('certificacionBancaria');
+    if (!control) {
+      this.errorCertificacionBancaria =
+        'No se encontró el campo de certificación bancaria.';
+      input.value = '';
+      return;
+    }
+
+    control.setValue(archivo);
+    control.markAsTouched();
+    control.updateValueAndValidity();
+    this.errorCertificacionBancaria = null;
+    input.value = '';
+    this.emitirCambio();
+  }
+
+  visualizarCertificacionBancaria(): void {
+    const archivo = this.archivoCertificacionBancaria();
+    if (!archivo) {
+      return;
+    }
+
+    const url = URL.createObjectURL(archivo);
+    window.open(url, '_blank', 'noopener,noreferrer');
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  }
+
+  descargarCertificacionBancaria(): void {
+    const archivo = this.archivoCertificacionBancaria();
+    if (!archivo) {
+      return;
+    }
+
+    const url = URL.createObjectURL(archivo);
+    const enlace = document.createElement('a');
+    enlace.href = url;
+    enlace.download = archivo.name;
+    enlace.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1_000);
+  }
+
+  private archivoCertificacionBancaria(): File | null {
+    const value: unknown = this.formulario.get('certificacionBancaria')?.value;
+    return typeof File !== 'undefined' && value instanceof File ? value : null;
   }
 
   emitirCambio(): void {

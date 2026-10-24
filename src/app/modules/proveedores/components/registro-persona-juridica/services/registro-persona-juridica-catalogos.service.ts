@@ -165,6 +165,14 @@ export class RegistroPersonaJuridicaCatalogosService {
     });
   }
 
+  obtenerActividadesEconomicasCiiu(): Observable<OpcionCatalogo[]> {
+    return this.obtenerParametrosPorTipo(
+      "CIIU",
+      { exigirCodigo: true },
+      (_clave, crear) => crear(),
+    );
+  }
+
   private obtenerInfoComplementaria(
     codigoGrupo: string,
   ): Observable<RegistroCatalogo[]> {

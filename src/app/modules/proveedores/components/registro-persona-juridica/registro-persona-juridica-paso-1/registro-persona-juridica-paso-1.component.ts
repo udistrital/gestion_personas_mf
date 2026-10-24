@@ -143,6 +143,27 @@ export class RegistroPersonaJuridicaPaso1Component {
     this.formularioChange.emit(this.formulario);
   }
 
+  relacionarRepresentante(): void {
+    const documento = this.formulario.get('documentoRepresentante');
+    const cargo = this.formulario.get('cargoRepresentante');
+    documento?.markAsTouched();
+    cargo?.markAsTouched();
+
+    if (documento?.invalid || cargo?.invalid) {
+      return;
+    }
+
+    this.formulario.get('representanteRelacionado')?.setValue(true);
+    this.formularioChange.emit(this.formulario);
+  }
+
+  desmarcarRepresentanteRelacionado(): void {
+    if (this.formulario.get('representanteRelacionado')?.value) {
+      this.formulario.get('representanteRelacionado')?.setValue(false);
+      this.formularioChange.emit(this.formulario);
+    }
+  }
+
   private idsResponsabilidadesSeleccionadas(): number[] {
     const valor: unknown = this.formulario.get('responsabilidades')?.value;
     return Array.isArray(valor)

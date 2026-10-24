@@ -34,7 +34,6 @@ const CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TELEFONO = /^\+?\d[\d\s().-]*(?:Ext\.\s*\d+)?$/;
 const URL_HTTP = /^https?:\/\/[^\s]+$/;
 const CUENTA_BANCARIA = /^\d{8,20}$/;
-const ARCHIVO_PDF = /^[\wáéíóúüñ(). -]+\.pdf$/i;
 const OTP = /^\d{6}$/;
 
 // Validador que requiere al menos un elemento en un array
@@ -410,6 +409,7 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
     tamanoEmpresarial: new FormControl<number | null>(null, Validators.required),
     documentoRepresentante: new FormControl('80234567', [Validators.required, Validators.pattern(SOLO_DIGITOS)]),
     cargoRepresentante: new FormControl<number | null>(null, Validators.required),
+    representanteRelacionado: new FormControl(false),
     primerApellido: new FormControl('RODRÍGUEZ', Validators.required),
     segundoApellido: new FormControl('PATIÑO'),
     primerNombre: new FormControl('CARLOS', Validators.required),
@@ -465,14 +465,14 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
     prefijoFacturacion: new FormControl('SETT - 001 hasta 50000'),
     resolucionDian: new FormControl('18764039201934 del 14/01/2024'),
     monedaExtranjera: new FormControl<boolean | null>(null),
-    certificacionBancaria: new FormControl('Certificacion_Bancaria_BancoBogota_2025.pdf', Validators.pattern(ARCHIVO_PDF)),
-    rutArchivo: new FormControl('RUT_Integratech_2025.pdf', [Validators.required, Validators.pattern(ARCHIVO_PDF)]),
-    certificadoExistenciaArchivo: new FormControl('Certificado_CCB_Integratech_2025.pdf', [Validators.required, Validators.pattern(ARCHIVO_PDF)]),
-    cedulaRepresentanteArchivo: new FormControl('Cedula_Representante_Legal.pdf', [Validators.required, Validators.pattern(ARCHIVO_PDF)]),
+    certificacionBancaria: new FormControl<File | null>(null, Validators.required),
+    rutArchivo: new FormControl<File | null>(null, Validators.required),
+    certificadoExistenciaArchivo: new FormControl<File | null>(null, Validators.required),
+    cedulaRepresentanteArchivo: new FormControl<File | null>(null, Validators.required),
     tieneRup: new FormControl<boolean | null>(null, Validators.required),
-    rupArchivo: new FormControl('Certificado_RUP_Vigente_2025.pdf', [Validators.required, Validators.pattern(ARCHIVO_PDF)]),
-    vigenciaRup: new FormControl('2025-12-31', Validators.required),
-    certificadoParafiscales: new FormControl('Cert_Parafiscales_Feb2025.pdf', [Validators.required, Validators.pattern(ARCHIVO_PDF)]),
+    rupArchivo: new FormControl<File | null>(null),
+    vigenciaRup: new FormControl(''),
+    certificadoParafiscales: new FormControl<File | null>(null, Validators.required),
     aportesSeguridadSocial: new FormControl(true, Validators.requiredTrue),
     actividadesCiiu: new FormControl<number[]>([], Validators.required),
     unspscSeleccionados: new FormControl<number[]>([]),

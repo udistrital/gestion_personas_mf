@@ -10,10 +10,36 @@
           <div class="documento-icono"><mat-icon>{{ documento.icono }}</mat-icon></div>
           <h3>{{ nombreTipoDocumento(documento.codigoTipoDocumento) }}</h3>
           <p>{{ documento.descripcion }}</p>
-          <label class="campo"><span>Archivo cargado</span><input [formControlName]="documento.control" type="text" readonly></label>
+          <label class="campo"><span>Archivo cargado</span><input [value]="nombreArchivo(documento.control)" type="text" readonly></label>
+          <input
+            #archivoInput
+            type="file"
+            accept="application/pdf,.pdf"
+            hidden
+            (change)="seleccionarDocumento(documento.control, $event)"
+          >
+          @if (erroresCarga[documento.control]) {
+            <p role="alert">{{ erroresCarga[documento.control] }}</p>
+          }
           <div class="documento-acciones">
-            <button class="boton boton--secundario" type="button"><mat-icon>visibility</mat-icon> Ver visor PDF</button>
-            <button class="boton boton--ligero" type="button"><mat-icon>cached</mat-icon> {{ documento.accion }}</button>
+            <button
+              class="boton boton--secundario"
+              type="button"
+              [disabled]="!formulario.get(documento.control)?.value"
+              (click)="visualizarDocumento(documento.control)"
+            ><mat-icon>visibility</mat-icon> Ver visor PDF</button>
+            <button
+              class="boton boton--ligero"
+              type="button"
+              (click)="archivoInput.click()"
+            ><mat-icon>upload_file</mat-icon> {{ formulario.get(documento.control)?.value ? documento.accion : 'Cargar PDF' }}</button>
+            @if (formulario.get(documento.control)?.value) {
+              <button
+                class="boton boton--ligero"
+                type="button"
+                (click)="descargarDocumento(documento.control)"
+              ><mat-icon>download</mat-icon> Descargar copia</button>
+            }
           </div>
         </article>
       }
@@ -49,9 +75,35 @@
         </div>
         <div class="soporte-rup">
           <div class="documento-icono"><mat-icon>description</mat-icon></div>
-          <div><span class="etiqueta-documento">Soporte RUP adjunto</span><input formControlName="rupArchivo" type="text" readonly></div>
-          <button class="boton boton--secundario" type="button"><mat-icon>visibility</mat-icon> Ver certificado</button>
-          <button class="boton boton--ligero" type="button"><mat-icon>upload_file</mat-icon> Cargar nueva vigencia</button>
+          <div><span class="etiqueta-documento">Soporte RUP adjunto</span><input [value]="nombreArchivo('rupArchivo')" type="text" readonly></div>
+          <input
+            #rupArchivoInput
+            type="file"
+            accept="application/pdf,.pdf"
+            hidden
+            (change)="seleccionarDocumento('rupArchivo', $event)"
+          >
+          @if (erroresCarga['rupArchivo']) {
+            <p role="alert">{{ erroresCarga['rupArchivo'] }}</p>
+          }
+          <button
+            class="boton boton--secundario"
+            type="button"
+            [disabled]="!formulario.get('rupArchivo')?.value"
+            (click)="visualizarDocumento('rupArchivo')"
+          ><mat-icon>visibility</mat-icon> Ver certificado</button>
+          <button
+            class="boton boton--ligero"
+            type="button"
+            (click)="rupArchivoInput.click()"
+          ><mat-icon>upload_file</mat-icon> {{ formulario.get('rupArchivo')?.value ? 'Cargar nueva vigencia' : 'Cargar certificado RUP' }}</button>
+          @if (formulario.get('rupArchivo')?.value) {
+            <button
+              class="boton boton--ligero"
+              type="button"
+              (click)="descargarDocumento('rupArchivo')"
+            ><mat-icon>download</mat-icon> Descargar copia</button>
+          }
         </div>
       </div>
     }
@@ -70,10 +122,36 @@
           <div class="documento-icono"><mat-icon>{{ soporte.icono }}</mat-icon></div>
           <h3>{{ nombreTipoDocumento(soporte.codigoTipoDocumento) }}</h3>
           <p>{{ soporte.descripcion }}</p>
-          <label class="campo"><span>Archivo cargado</span><input [formControlName]="soporte.control" type="text" readonly></label>
+          <label class="campo"><span>Archivo cargado</span><input [value]="nombreArchivo(soporte.control)" type="text" readonly></label>
+          <input
+            #archivoInput
+            type="file"
+            accept="application/pdf,.pdf"
+            hidden
+            (change)="seleccionarDocumento(soporte.control, $event)"
+          >
+          @if (erroresCarga[soporte.control]) {
+            <p role="alert">{{ erroresCarga[soporte.control] }}</p>
+          }
           <div class="documento-acciones">
-            <button class="boton boton--secundario" type="button"><mat-icon>visibility</mat-icon> Ver certificación</button>
-            <button class="boton boton--ligero" type="button"><mat-icon>cached</mat-icon> Reemplazar</button>
+            <button
+              class="boton boton--secundario"
+              type="button"
+              [disabled]="!formulario.get(soporte.control)?.value"
+              (click)="visualizarDocumento(soporte.control)"
+            ><mat-icon>visibility</mat-icon> Ver certificación</button>
+            <button
+              class="boton boton--ligero"
+              type="button"
+              (click)="archivoInput.click()"
+            ><mat-icon>upload_file</mat-icon> {{ formulario.get(soporte.control)?.value ? 'Reemplazar' : 'Cargar PDF' }}</button>
+            @if (formulario.get(soporte.control)?.value) {
+              <button
+                class="boton boton--ligero"
+                type="button"
+                (click)="descargarDocumento(soporte.control)"
+              ><mat-icon>download</mat-icon> Descargar copia</button>
+            }
           </div>
         </article>
       }

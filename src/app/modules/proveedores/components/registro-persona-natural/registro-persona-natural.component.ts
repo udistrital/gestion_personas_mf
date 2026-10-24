@@ -19,6 +19,10 @@ import {
 } from "rxjs/operators";
 import { BorradorRegistroService } from "../../services/borrador-registro.service";
 import {
+  OpcionCatalogo,
+  RegistroPersonaJuridicaCatalogosService,
+} from "../registro-persona-juridica/services/registro-persona-juridica-catalogos.service";
+import {
   CatalogosPersonaNaturalPaso1,
   CatalogosPersonaNaturalPaso2,
   OpcionNatural,
@@ -63,11 +67,16 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
   private readonly borradorRegistroService = inject(BorradorRegistroService);
   private readonly elementRef = inject(ElementRef<HTMLElement>);
   private readonly catalogosService = inject(RegistroPersonaNaturalCatalogosService);
+  private readonly catalogosProveedorService = inject(
+    RegistroPersonaJuridicaCatalogosService,
+  );
 
   catalogosPaso1: CatalogosPersonaNaturalPaso1 | null = null;
   estadoPaso1: EstadoCatalogoNatural = { cargando: false, error: null };
   catalogosPaso2: CatalogosPersonaNaturalPaso2 | null = null;
   estadoPaso2: EstadoCatalogoNatural = { cargando: false, error: null };
+  actividadesCiiu: OpcionCatalogo[] = [];
+  estadoCiiu: EstadoCatalogoNatural = { cargando: false, error: null };
 
   readonly geografia: Record<ClaveGeografiaNatural, EstadoListaNatural> = {
     departamentosExpedicion: { opciones: [], cargando: false, error: null },
@@ -431,6 +440,7 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
       // =======================================================
 
       actividadDeclaracion: this.fb.group({
+        actividadesCiiu: [[], Validators.required],
         portafolioCapacidadEntrega: [
           "",
           Validators.maxLength(2000),
@@ -715,9 +725,34 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
     this.restaurarBorrador();
     this.cargarCatalogosPaso1();
     this.cargarCatalogosPaso2();
+    this.cargarCatalogoCiiu();
     this.personaNaturalForm.valueChanges
       .pipe(debounceTime(800), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.persistirBorrador(true));
+  }
+
+  cargarCatalogoCiiu(): void {
+    if (this.estadoCiiu.cargando) {
+      return;
+    }
+
+    this.estadoCiiu = { cargando: true, error: null };
+    this.catalogosProveedorService
+      .obtenerActividadesEconomicasCiiu()
+      .pipe(observeOn(asapScheduler), takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (opciones) => {
+          this.actividadesCiiu = opciones;
+          this.estadoCiiu = { cargando: false, error: null };
+        },
+        error: (error: unknown) => {
+          console.error("No fue posible cargar el catálogo CIIU.", error);
+          this.estadoCiiu = {
+            cargando: false,
+            error: "No fue posible cargar el catálogo CIIU. Intente nuevamente.",
+          };
+        },
+      });
   }
 
   // =========================================================
