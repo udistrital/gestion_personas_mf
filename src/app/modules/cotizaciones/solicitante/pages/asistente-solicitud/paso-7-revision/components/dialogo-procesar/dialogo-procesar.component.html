@@ -1,0 +1,97 @@
+<section class="dialogo" aria-labelledby="dialogo-procesar-titulo">
+  <header class="dialogo__cabecera">
+    <span class="dialogo__icono" aria-hidden="true">
+      <mat-icon>warning_amber</mat-icon>
+    </span>
+
+    <h2 id="dialogo-procesar-titulo" class="dialogo__titulo">
+      ¿Procesar la solicitud?
+    </h2>
+
+    <span class="dialogo__sello">
+      <mat-icon aria-hidden="true">bookmark</mat-icon>
+      <span>
+        Convocatoria {{ resumen.numeroCotizacion }} · Vigencia
+        {{ resumen.vigencia }}
+      </span>
+    </span>
+  </header>
+
+  <div class="dialogo__cuerpo">
+    <p class="dialogo__aviso">
+      Se enviará a
+      <strong>{{ proveedoresTexto }}</strong
+      >. Después de procesada no podrá editarla ni cancelarla; solo podrá
+      solicitar modificaciones de ítems y de la fecha de cierre.
+    </p>
+
+    <div class="dialogo__nota">
+      <span class="dialogo__nota-icono" aria-hidden="true">
+        <mat-icon>info</mat-icon>
+      </span>
+      <p>
+        Al procesar la solicitud, se generará el consecutivo de radicación
+        oficial ante la Universidad Distrital y se notificarán automáticamente
+        por correo institucional los
+        {{ proveedoresTexto }} habilitados.
+      </p>
+    </div>
+
+    <div class="dialogo__resumen">
+      <span class="dialogo__resumen-titulo">Resumen de la convocatoria</span>
+
+      <div class="dialogo__fila">
+        <span class="dialogo__fila-etiqueta">
+          <mat-icon aria-hidden="true">category</mat-icon>
+          <span>Ítems clasificados</span>
+        </span>
+        <span class="dialogo__fila-valor">{{ resumen.itemsClasificados }}</span>
+      </div>
+
+      <div class="dialogo__fila">
+        <span class="dialogo__fila-etiqueta">
+          <mat-icon aria-hidden="true">schedule</mat-icon>
+          <span>Cierre de ofertas</span>
+        </span>
+        <span class="dialogo__fila-valor">{{ resumen.cierreOfertas }}</span>
+      </div>
+
+      <div class="dialogo__fila">
+        <span class="dialogo__fila-etiqueta">
+          <mat-icon aria-hidden="true">account_balance_wallet</mat-icon>
+          <span>Presupuesto sincronizado</span>
+        </span>
+        <span class="dialogo__fila-valor dialogo__fila-valor--vino">
+          {{ resumen.presupuesto }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <footer class="dialogo__pie">
+    <button
+      class="boton boton--secundario"
+      type="button"
+      [disabled]="radicando"
+      (click)="cancelar()"
+    >
+      <mat-icon aria-hidden="true">close</mat-icon>
+      <span>Cancelar</span>
+    </button>
+
+    <button
+      class="boton boton--primario dialogo__procesar"
+      type="button"
+      [disabled]="radicando"
+      (click)="procesar()"
+    >
+      @if (radicando) {
+        <mat-icon class="dialogo__girar" aria-hidden="true">autorenew</mat-icon>
+        <span>Radicando...</span>
+      } @else {
+        <span>Sí, procesar</span>
+        <mat-icon aria-hidden="true">send</mat-icon>
+      }
+    </button>
+  </footer>
+</section>

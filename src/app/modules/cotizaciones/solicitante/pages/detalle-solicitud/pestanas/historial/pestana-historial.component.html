@@ -1,0 +1,121 @@
+@if (solicitud(); as s) {
+  <encabezado-pestana
+    icono="history"
+    titulo="Historial"
+    descripcion="Bitácora de eventos del expediente: creación, vinculación presupuestal, radicación, notificaciones y modificaciones."
+  >
+    <ng-container acciones>
+      <button class="boton-recto" type="button" (click)="exportarCsv()">
+        <mat-icon aria-hidden="true">download</mat-icon>
+        <span>Exportar bitácora (CSV)</span>
+      </button>
+    </ng-container>
+  </encabezado-pestana>
+
+  @if (historial(); as h) {
+    <!-- ───────────── Barra de herramientas de auditoría ───────────── -->
+    <div class="auditoria">
+      <div class="auditoria__campo">
+        <label class="auditoria__etiqueta" for="filtro-tipo-evento">
+          Tipo de Evento
+        </label>
+        <div class="auditoria__control">
+          <mat-icon aria-hidden="true">filter_alt</mat-icon>
+          <select
+            id="filtro-tipo-evento"
+            [value]="tipoSeleccionado()"
+            (change)="filtrarPorTipo(selectTipo.value)"
+            #selectTipo
+          >
+            <option value="todos">Todos los eventos</option>
+            @for (tipo of tipos; track tipo.valor) {
+              <option [value]="tipo.valor">{{ tipo.etiqueta }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="auditoria__campo auditoria__campo--buscar">
+        <label class="auditoria__etiqueta" for="busqueda-bitacora">
+          Buscar en la bitácora
+        </label>
+        <div class="auditoria__control">
+          <mat-icon aria-hidden="true">search</mat-icon>
+          <input
+            id="busqueda-bitacora"
+            type="search"
+            placeholder="Buscar por usuario, radicado, detalle o palabra clave..."
+            [value]="busqueda()"
+            (input)="buscar(campoBusqueda.value)"
+            #campoBusqueda
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- ───────────── Línea de tiempo de eventos ───────────── -->
+    <tarjeta-seccion
+      icono="timeline"
+      titulo="Trazabilidad Cronológica de Eventos"
+      subtitulo="Registro inmutable en orden descendente (del más reciente al inicial)"
+    >
+      <ng-container acciones>
+        <span class="chip chip--recto">
+          <mat-icon aria-hidden="true">verified</mat-icon>
+          <span>{{ h.selloTiempo }}</span>
+        </span>
+      </ng-container>
+
+      @if (lineaTiempo().length > 0) {
+        <linea-tiempo
+          [eventos]="lineaTiempo()"
+          etiquetaLista="Eventos registrados en el expediente de la solicitud"
+        ></linea-tiempo>
+      } @else {
+        <div class="sin-coincidencias">
+          <mat-icon aria-hidden="true">search_off</mat-icon>
+          <p class="sin-coincidencias__texto">
+            Ningún evento coincide con el filtro aplicado. Ajuste el tipo de
+            evento o el texto buscado para ver el resto de la bitácora.
+          </p>
+        </div>
+      }
+    </tarjeta-seccion>
+
+    <!-- ───────────── Resumen estadístico de la bitácora ───────────── -->
+    <div class="resumen-bitacora" role="note">
+      <div class="resumen-bitacora__datos">
+        <span class="resumen-bitacora__total">
+          <mat-icon aria-hidden="true">info</mat-icon>
+          <span>Total Eventos Auditados: {{ eventos().length }}</span>
+        </span>
+        <span class="resumen-bitacora__separador" aria-hidden="true"></span>
+        <span class="resumen-bitacora__texto">
+          Tiempo transcurrido en trámite: {{ diasTramite() }} días calendario
+        </span>
+        @if (eventosFiltrados().length !== eventos().length) {
+          <span class="resumen-bitacora__separador" aria-hidden="true"></span>
+          <span class="resumen-bitacora__texto">
+            {{ eventosFiltrados().length }} eventos en pantalla
+          </span>
+        }
+      </div>
+      <span class="resumen-bitacora__integridad">
+        <mat-icon aria-hidden="true">shield</mat-icon>
+        <span>{{ h.notaIntegridad }}</span>
+      </span>
+    </div>
+  } @else {
+    <!-- ───────────── Estado: sin bitácora registrada ───────────── -->
+    <div class="estado-vacio">
+      <mat-icon class="estado-vacio__icono" aria-hidden="true">history</mat-icon>
+      <h2 class="estado-vacio__titulo">Sin eventos registrados</h2>
+      <p class="estado-vacio__texto">
+        Esta solicitud todavía no tiene bitácora: no hay registro de eventos
+        sobre su creación, la vinculación presupuestal ni la radicación. Cuando
+        el expediente avance, aquí se mostrará la trazabilidad cronológica de
+        cada actuación con su fecha, responsable y estado.
+      </p>
+    </div>
+  }
+}

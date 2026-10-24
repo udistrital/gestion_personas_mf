@@ -1,0 +1,669 @@
+<!-- ─────────────────────────── BANNER DEL PASO ─────────────────────────── -->
+<banner-paso
+  [icono]="banner().icono"
+  titulo="Paso 1: Necesidad y presupuesto"
+  [etiquetas]="banner().etiquetas"
+  [descripcion]="banner().descripcion"
+  [variante]="vista() === 'error' ? 'error' : 'neutro'"
+  [rol]="vista() === 'error' ? 'alert' : 'status'"
+>
+  @if (vista() === 'error') {
+    @let f = fallo()!;
+    <p class="banner-detalle">
+      <span>{{ resumenFallo() }}</span>
+      <span aria-hidden="true">•</span>
+      <span>Servicio SOAP: {{ f.servicio }}</span>
+    </p>
+    @if (intentos() > 1) {
+      <p class="banner-detalle banner-detalle--refuerzo">
+        Reintento fallido (Timeout 45s). Servidor SICAPITAL sigue inaccesible.
+        Verifique con el Ordenador del Gasto.
+      </p>
+    }
+  }
+
+  <ng-container acciones>
+    @switch (vista()) {
+      @case ('inicial') {
+        <span class="chip chip--neutro">
+          <mat-icon aria-hidden="true">verified_user</mat-icon>
+          <span>Interoperabilidad Financiera Activa</span>
+        </span>
+      }
+      @case ('cargando') {
+        <span class="chip chip--neutro">
+          <mat-icon class="gira" aria-hidden="true">cached</mat-icon>
+          <span>Cruce con SICAPITAL</span>
+        </span>
+      }
+      @case ('cargado') {
+        <span class="chip chip--neutro">
+          <mat-icon aria-hidden="true">cached</mat-icon>
+          <span>Cruce con SICAPITAL</span>
+        </span>
+      }
+      @case ('error') {
+        <button class="boton-recto boton-recto--vino" type="button" (click)="reintentar()">
+          <mat-icon aria-hidden="true">refresh</mat-icon>
+          <span>Reintentar conexión</span>
+        </button>
+      }
+    }
+  </ng-container>
+</banner-paso>
+
+<!-- ──────────────────────────── TARJETA 1 ───────────────────────────────── -->
+<plantilla-tarjeta-contenedora
+  icon="assignment"
+  title="1. Necesidad asociada"
+  [description]="descripcionTarjeta1"
+>
+  <ng-container acciones>
+    @if (vista() === 'cargado') {
+      <span class="chip chip--exito">
+        <mat-icon aria-hidden="true">check_circle</mat-icon>
+        <span>Sincronizado con SICAPITAL</span>
+      </span>
+    }
+    @if (vista() === 'cargando') {
+      <span class="chip chip--neutro">
+        <mat-icon class="gira" aria-hidden="true">cached</mat-icon>
+        <span>Cruzando con SICAPITAL</span>
+      </span>
+    }
+    <button class="boton-recto" type="button" (click)="limpiarNecesidad()">
+      <mat-icon aria-hidden="true">restart_alt</mat-icon>
+      <span>Limpiar necesidad</span>
+    </button>
+  </ng-container>
+
+  @if (vista() === 'error') {
+    @let f = fallo()!;
+    <!-- Estado de fallo: criterios de solo lectura -->
+    <div class="campo-grid campos-necesidad">
+      <div class="campo">
+        <label class="campo__etiqueta" for="necesidad-unidad-error">
+          Unidad ejecutora <b aria-hidden="true">*</b>
+        </label>
+        <span class="solo-lectura">
+          <mat-icon class="solo-lectura__icono" aria-hidden="true">domain</mat-icon>
+          <input
+            id="necesidad-unidad-error"
+            type="text"
+            readonly
+            [value]="unidadSeleccionada"
+          />
+          <mat-icon class="solo-lectura__candado" aria-hidden="true">lock</mat-icon>
+        </span>
+        <span class="campo__ayuda">Unidad administrativa responsable del gasto.</span>
+      </div>
+
+      <div class="campo">
+        <label class="campo__etiqueta" for="necesidad-vigencia-error">
+          Vigencia <b aria-hidden="true">*</b>
+        </label>
+        <span class="solo-lectura">
+          <mat-icon class="solo-lectura__icono" aria-hidden="true">event</mat-icon>
+          <input
+            id="necesidad-vigencia-error"
+            type="text"
+            readonly
+            [value]="valorVigencia"
+          />
+          <mat-icon class="solo-lectura__candado" aria-hidden="true">lock</mat-icon>
+        </span>
+        <span class="campo__ayuda">Año fiscal ordinario en curso.</span>
+      </div>
+
+      <div class="campo campo--fallo">
+        <label class="campo__etiqueta" for="necesidad-numero-error">
+          Número de la necesidad <b aria-hidden="true">*</b>
+          <span class="etiqueta-fallo">
+            <span class="etiqueta-fallo__punto" aria-hidden="true"></span>
+            No validado
+          </span>
+        </label>
+        <span class="solo-lectura solo-lectura--fallo">
+          <mat-icon class="solo-lectura__icono" aria-hidden="true">warning</mat-icon>
+          <input
+            id="necesidad-numero-error"
+            type="text"
+            readonly
+            [value]="valorNecesidad"
+          />
+          <button
+            class="boton-validar"
+            type="button"
+            aria-label="Reintentar la validación manualmente"
+            (click)="reintentar()"
+          >
+            <mat-icon aria-hidden="true">refresh</mat-icon>
+          </button>
+        </span>
+        <span class="campo__fallo">
+          <mat-icon aria-hidden="true">warning</mat-icon>
+          <span>
+            Error al validar disponibilidad en el webservice presupuestal de
+            SICAPITAL (Código {{ f.codigo }}).
+          </span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Resumen de auditoría del fallo -->
+    <div class="diagnostico" role="group" aria-labelledby="diagnostico-titulo">
+      <span class="diagnostico__icono" aria-hidden="true">
+        <mat-icon>info</mat-icon>
+      </span>
+      <div class="diagnostico__textos">
+        <span id="diagnostico-titulo" class="diagnostico__titulo">
+          Detalle técnico de la anomalía
+        </span>
+        <span class="diagnostico__detalle">{{ f.detalle }}</span>
+      </div>
+      <div class="diagnostico__chips">
+        <span class="chip-dato">Host: {{ f.host }}</span>
+        <span class="chip-dato chip-dato--fallo">
+          Estado: {{ f.estado > 0 ? f.estado : 'SIN HTTP' }}
+        </span>
+      </div>
+    </div>
+  } @else {
+    <!-- Criterios de búsqueda en SICAPITAL -->
+    <div class="campo-grid campos-necesidad" [formGroup]="form">
+      <div class="campo">
+        <label class="campo__etiqueta" for="necesidad-unidad">
+          Unidad ejecutora <b aria-hidden="true">*</b>
+          <span class="campo__marca">Requerido</span>
+        </label>
+        <span class="selector">
+          <mat-icon class="selector__icono" aria-hidden="true">domain</mat-icon>
+          <select id="necesidad-unidad" formControlName="unidadEjecutora">
+            <option value="">Seleccione la unidad ejecutora</option>
+            @for (unidad of unidades; track unidad.valor) {
+              <option [value]="unidad.valor">{{ unidad.etiqueta }}</option>
+            }
+          </select>
+          <mat-icon class="selector__flecha" aria-hidden="true">arrow_drop_down</mat-icon>
+        </span>
+        <span class="campo__ayuda">Unidad administrativa responsable del gasto.</span>
+      </div>
+
+      <div class="campo" [class.campo-bloqueado]="vigenciaDeshabilitada()">
+        <label class="campo__etiqueta" for="necesidad-vigencia">
+          Vigencia <b aria-hidden="true">*</b>
+        </label>
+        <span class="selector">
+          <mat-icon class="selector__icono" aria-hidden="true">event</mat-icon>
+          <select
+            id="necesidad-vigencia"
+            formControlName="vigencia"
+            [attr.disabled]="vigenciaDeshabilitada() ? true : null"
+            aria-describedby="ayuda-vigencia"
+          >
+            <option value="">Seleccione la vigencia</option>
+            @for (vigencia of vigencias; track vigencia.valor) {
+              <option [value]="vigencia.valor">{{ vigencia.etiqueta }}</option>
+            }
+          </select>
+          <mat-icon class="selector__flecha" aria-hidden="true">arrow_drop_down</mat-icon>
+        </span>
+        <span class="campo__ayuda" id="ayuda-vigencia">
+          Solo se habilita la vigencia actual para nuevas radicaciones.
+        </span>
+      </div>
+
+      <div class="campo" [class.campo-bloqueado]="necesidadDeshabilitada()">
+        <label class="campo__etiqueta" for="necesidad-numero">
+          Número de la necesidad <b aria-hidden="true">*</b>
+        </label>
+        <span class="selector">
+          <mat-icon class="selector__icono" aria-hidden="true">description</mat-icon>
+          <select
+            id="necesidad-numero"
+            formControlName="numeroNecesidad"
+            [attr.disabled]="necesidadDeshabilitada() ? true : null"
+          >
+            <option value="">
+              {{ cargandoOpciones() ? 'Consultando SICAPITAL…' : 'Seleccione la necesidad' }}
+            </option>
+            @for (opcion of opciones(); track opcion.valor) {
+              <option [value]="opcion.valor">{{ opcion.etiqueta }}</option>
+            }
+          </select>
+          <mat-icon class="selector__flecha" aria-hidden="true">arrow_drop_down</mat-icon>
+        </span>
+        <span class="campo__ayuda">
+          @if (cargandoOpciones()) {
+            Cargando necesidades aprobadas…
+          } @else if (unidadListo() && vigenciaListo() && opciones().length === 0) {
+            No hay necesidades aprobadas para esa unidad y vigencia.
+          } @else {
+            Necesidad aprobada en el sistema presupuestal.
+          }
+        </span>
+      </div>
+    </div>
+
+    <div class="acciones-tarjeta">
+      @switch (vista()) {
+        @case ('inicial') {
+          <span class="acciones-tarjeta__info">
+            <mat-icon aria-hidden="true">info</mat-icon>
+            <span>
+              El estado inicial requiere completar la secuencia jerárquica para
+              habilitar la consulta en tiempo real.
+            </span>
+          </span>
+          <span class="chip-codigo">SICAPITAL v4.8 :: Endpoint UD-CORE</span>
+        }
+        @case ('cargado') {
+          <span class="acciones-tarjeta__ayuda">
+            Borra los campos para realizar otra consulta en SICAPITAL.
+          </span>
+          <span class="acciones-tarjeta__info">
+            <mat-icon aria-hidden="true">info</mat-icon>
+            <span>Registro validado presupuestalmente</span>
+          </span>
+        }
+        @default {
+          <span class="acciones-tarjeta__ayuda">
+            Consultando SICAPITAL con los criterios seleccionados…
+          </span>
+        }
+      }
+    </div>
+  }
+</plantilla-tarjeta-contenedora>
+
+<!-- ───────────────────── TARJETAS 2 Y 3 / ESTADOS ───────────────────────── -->
+@if (vista() === 'inicial') {
+  <!-- Caja orientativa mientras no hay necesidad seleccionada -->
+  <section class="esperando" aria-labelledby="esperando-titulo">
+    <span class="esperando__icono" aria-hidden="true">
+      <mat-icon>search</mat-icon>
+    </span>
+    <h3 id="esperando-titulo" class="esperando__titulo">
+      Esperando selección de necesidad presupuestal
+    </h3>
+    <p class="esperando__texto">
+      Una vez seleccionada la necesidad aprobada, se consultará automáticamente
+      la información presupuestal y contractual asociada en
+      <strong>SICAPITAL</strong> para continuar con el formulario.
+    </p>
+
+    <div class="esperando__previas">
+      <div class="previa">
+        <span class="previa__icono" aria-hidden="true">
+          <mat-icon>payments</mat-icon>
+        </span>
+        <div class="previa__textos">
+          <span class="previa__titulo">2. Información presupuestal</span>
+          <span class="previa__texto">Rubros, CDP y asignación contable</span>
+        </div>
+      </div>
+      <div class="previa">
+        <span class="previa__icono" aria-hidden="true">
+          <mat-icon>description</mat-icon>
+        </span>
+        <div class="previa__textos">
+          <span class="previa__titulo">3. Información de la solicitud</span>
+          <span class="previa__texto">Objeto, vigencias futuras y modalidad</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="esperando__inactivos">
+      <mat-icon aria-hidden="true">block</mat-icon>
+      <span>Módulos 2 y 3 inactivos hasta validar número de necesidad</span>
+    </div>
+  </section>
+} @else if (vista() === 'cargando') {
+  <!-- Esqueleto de carga de las tarjetas 2 y 3 -->
+  <section class="esqueleto" role="status">
+    <span class="visually-oculto">
+      Cargando la información presupuestal y el resumen de la solicitud desde
+      SICAPITAL…
+    </span>
+    <div class="esqueleto__carta" aria-hidden="true">
+      <span class="esqueleto__bloque esqueleto__bloque--titulo"></span>
+      <span class="esqueleto__fila">
+        <span class="esqueleto__bloque"></span>
+        <span class="esqueleto__bloque"></span>
+        <span class="esqueleto__bloque"></span>
+      </span>
+      <span class="esqueleto__bloque esqueleto__bloque--ancho"></span>
+    </div>
+    <div class="esqueleto__carta" aria-hidden="true">
+      <span class="esqueleto__bloque esqueleto__bloque--titulo"></span>
+      <span class="esqueleto__bloque esqueleto__bloque--ancho"></span>
+      <span class="esqueleto__fila">
+        <span class="esqueleto__bloque"></span>
+        <span class="esqueleto__bloque"></span>
+      </span>
+    </div>
+  </section>
+} @else if (vista() === 'cargado') {
+  @let res = resultado()!;
+    <!-- ──────────────────────────── TARJETA 2 ───────────────────────────── -->
+    <plantilla-tarjeta-contenedora
+      icon="account_balance"
+      title="2. Información presupuestal"
+      description="Datos de disponibilidad y rubros presupuestales extraídos de SICAPITAL (Solo lectura)."
+    >
+      <ng-container acciones>
+        <span class="chip chip--neutro">
+          <mat-icon aria-hidden="true">lock</mat-icon>
+          <span>Solo lectura</span>
+        </span>
+        @if (acuerdoPendiente()) {
+          <button
+            class="chip chip--alerta"
+            type="button"
+            title="El avance está bloqueado hasta aceptar el acuerdo marco"
+            (click)="reabrirAcuerdo()"
+          >
+            <mat-icon aria-hidden="true">handshake</mat-icon>
+            <span>Acuerdo marco pendiente · Revisar</span>
+          </button>
+        }
+      </ng-container>
+
+      <div class="tabla-envoltura">
+        <table class="tabla">
+          <caption class="visually-oculto">
+            Disponibilidad presupuestal asociada a la necesidad seleccionada
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Vigencia</th>
+              <th scope="col">Solicitud de necesidad</th>
+              <th scope="col">N.° de disponibilidad</th>
+              <th scope="col" class="tabla__derecha">Valor (COP)</th>
+              <th scope="col">Dependencia</th>
+              <th scope="col">Rubro</th>
+              <th scope="col" class="tabla__centro">Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (disp of res.presupuesto.disponibilidades; track disp.numeroDisponibilidad) {
+              <tr>
+                <td class="tabla__vigencia">{{ disp.vigencia }}</td>
+                <td class="tabla__codigo">{{ disp.solicitudNecesidad }}</td>
+                <td>
+                  <span class="tabla__codigo tabla__codigo--destacado">
+                    <mat-icon aria-hidden="true">receipt_long</mat-icon>
+                    {{ disp.numeroDisponibilidad }}
+                  </span>
+                </td>
+                <td class="tabla__derecha tabla__valor">
+                  {{ formatoCop(disp.valor) }}
+                </td>
+                <td class="tabla__suave">{{ disp.dependencia }}</td>
+                <td class="tabla__suave">
+                  <span class="tabla__codigo">{{ disp.rubro }}</span>
+                  - {{ disp.rubroNombre }}
+                </td>
+                <td class="tabla__centro">
+                  <span class="chip chip--exito">
+                    <span class="chip__punto" aria-hidden="true"></span>
+                    <span>{{ disp.estado }}</span>
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="resumen-presupuestal">
+        <div class="cdp">
+          <div class="cdp__textos">
+            <span class="cdp__etiqueta">
+              <mat-icon aria-hidden="true">lock</mat-icon>
+              <span>Valor del CDP (COP)</span>
+            </span>
+            <p class="cdp__valor">{{ formatoCop(res.presupuesto.valorCdp) }} COP</p>
+            <span class="cdp__ayuda">
+              Monto certificado disponible para contratación.
+            </span>
+          </div>
+          <span class="cdp__icono" aria-hidden="true">
+            <mat-icon>payments</mat-icon>
+          </span>
+        </div>
+
+        <div class="aviso-contractual">
+          <span class="aviso-contractual__icono" aria-hidden="true">
+            <mat-icon>gavel</mat-icon>
+          </span>
+          <div>
+            <h3 class="aviso-contractual__titulo">
+              Aviso Contractual y Regulatorio
+            </h3>
+            <p class="aviso-contractual__texto">
+              Tenga en cuenta el Estatuto General de Contratación de la
+              Universidad Distrital Francisco José de Caldas y sus resoluciones
+              reglamentarias para adelantar las etapas de cotización y
+              solicitud de propuestas.
+            </p>
+          </div>
+        </div>
+      </div>
+    </plantilla-tarjeta-contenedora>
+
+    <!-- ──────────────────────────── TARJETA 3 ───────────────────────────── -->
+    <plantilla-tarjeta-contenedora
+      icon="receipt_long"
+      title="3. Información de la solicitud"
+      description="Resumen pre-diligenciado derivado del registro de necesidad en SICAPITAL."
+    >
+      <ng-container acciones>
+        <span class="chip chip--neutro">
+          <mat-icon aria-hidden="true">lock</mat-icon>
+          <span>Solo lectura</span>
+        </span>
+      </ng-container>
+
+      <div class="campo-grid resumen-campos">
+        <div class="campo">
+          <span class="campo__etiqueta">
+            Título de la cotización
+            <span class="campo__marca">
+              <mat-icon aria-hidden="true">lock</mat-icon>
+              Autocompletado
+            </span>
+          </span>
+          <p class="lectura lectura--texto">
+            <mat-icon aria-hidden="true">description</mat-icon>
+            <span>{{ res.solicitud.titulo }}</span>
+          </p>
+          <span class="campo__ayuda">
+            Información consultada directamente desde SICAPITAL; no editable en
+            esta fase.
+          </span>
+        </div>
+
+        <div class="campo">
+          <span class="campo__etiqueta">
+            Vigencia
+            <span class="campo__marca">
+              <mat-icon aria-hidden="true">lock</mat-icon>
+              CDP
+            </span>
+          </span>
+          <p class="lectura lectura--valor">
+            <mat-icon aria-hidden="true">event</mat-icon>
+            <span>{{ res.solicitud.vigencia }}</span>
+          </p>
+          <span class="campo__ayuda">Vigencia fiscal oficial asociada al CDP.</span>
+        </div>
+      </div>
+
+      <div class="campo-grid resumen-campos resumen-campos--mitad">
+        <div class="campo">
+          <span class="campo__etiqueta">Objeto de la contratación</span>
+          <p class="lectura lectura--parrafo">{{ res.solicitud.objeto }}</p>
+        </div>
+        <div class="campo">
+          <span class="campo__etiqueta">Justificación técnica y normativa</span>
+          <p class="lectura lectura--parrafo">{{ res.solicitud.justificacion }}</p>
+        </div>
+      </div>
+
+      <div class="metricas">
+        <div class="metrica">
+          <span class="metrica__icono" aria-hidden="true">
+            <mat-icon>domain</mat-icon>
+          </span>
+          <span class="metrica__textos">
+            <span class="metrica__etiqueta">Sede Principal</span>
+            <span class="metrica__valor">{{ res.solicitud.sede }}</span>
+          </span>
+        </div>
+        <div class="metrica">
+          <span class="metrica__icono" aria-hidden="true">
+            <mat-icon>event</mat-icon>
+          </span>
+          <span class="metrica__textos">
+            <span class="metrica__etiqueta">Plazo Tentativo</span>
+            <span class="metrica__valor">{{ res.solicitud.plazo }}</span>
+          </span>
+        </div>
+        <div class="metrica">
+          <span class="metrica__icono" aria-hidden="true">
+            <mat-icon>security</mat-icon>
+          </span>
+          <span class="metrica__textos">
+            <span class="metrica__etiqueta">Control Presupuestal</span>
+            <span class="metrica__valor">{{ res.solicitud.controlPresupuestal }}</span>
+          </span>
+        </div>
+      </div>
+    </plantilla-tarjeta-contenedora>
+} @else {
+  <!-- ───────────────── TARJETA 2 (BLOQUEADA POR FALLO) ──────────────────── -->
+  <plantilla-tarjeta-contenedora
+    icon="account_balance"
+    title="2. Información presupuestal"
+    description="Datos no disponibles temporalmente. Requiere validación exitosa en el paso 1."
+  >
+    <ng-container acciones>
+      <span class="chip chip--bloqueo">
+        <mat-icon aria-hidden="true">lock</mat-icon>
+        <span>Bloqueado por fallo de sincronización</span>
+      </span>
+    </ng-container>
+
+    <div class="contenido-bloqueado">
+      <div class="tiles">
+        <div class="tile">
+          <span class="tile__etiqueta">
+            Certificado de Disp. Presupuestal (CDP)
+          </span>
+          <span class="tile__valor">-- Sin Vincular --</span>
+          <span class="tile__ayuda">Dependiente de SICAPITAL</span>
+        </div>
+        <div class="tile">
+          <span class="tile__etiqueta">Rubro Presupuestal</span>
+          <span class="tile__valor">-- Sin Asignación --</span>
+          <span class="tile__ayuda">Requiere validación de objeto</span>
+        </div>
+        <div class="tile">
+          <span class="tile__etiqueta">Valor Asignado Disponible</span>
+          <span class="tile__valor">$ 0.00 M/CTE</span>
+          <span class="tile__ayuda">Saldo pendiente de cruce</span>
+        </div>
+      </div>
+
+      <p class="tile-nota">
+        <mat-icon aria-hidden="true">info</mat-icon>
+        <span>
+          Los rubros de inversión, código de proyecto y fuente de
+          financiamiento se cargarán automáticamente una vez se restablezca el
+          servicio del ordenador de gasto en SICAPITAL.
+        </span>
+      </p>
+    </div>
+  </plantilla-tarjeta-contenedora>
+
+  <!-- ───────────────── TARJETA 3 (BLOQUEADA POR FALLO) ──────────────────── -->
+  <plantilla-tarjeta-contenedora
+    icon="receipt_long"
+    title="3. Información de la solicitud"
+    description="Datos no disponibles temporalmente. Requiere validación exitosa en el paso 1."
+  >
+    <ng-container acciones>
+      <span class="chip chip--bloqueo">
+        <mat-icon aria-hidden="true">lock</mat-icon>
+        <span>Bloqueado por fallo de sincronización</span>
+      </span>
+    </ng-container>
+
+    <div class="contenido-bloqueado">
+      <div class="campo-grid resumen-campos resumen-campos--doble">
+        <div class="campo">
+          <span class="campo__etiqueta">Objeto de la contratación</span>
+          <p class="lectura lectura--parrafo lectura--vacia">
+            Esperando resolución de la necesidad en la base de datos central de
+            contratación…
+          </p>
+        </div>
+        <div class="campo">
+          <span class="campo__etiqueta">Justificación técnica y normativa</span>
+          <p class="lectura lectura--parrafo lectura--vacia">
+            El texto de sustentación de la necesidad no puede ser extraído hasta
+            verificar el registro presupuestal.
+          </p>
+        </div>
+      </div>
+
+      <div class="tiles tiles--resumen">
+        <div class="tile">
+          <span class="tile__etiqueta">Título de la cotización</span>
+          <span class="tile__valor tile__valor--largo">
+            -- Sin Vincular --
+          </span>
+          <span class="tile__ayuda">Requiere cruce con SICAPITAL</span>
+        </div>
+        <div class="tile">
+          <span class="tile__etiqueta">Vigencia</span>
+          <span class="tile__valor">-- Sin Asignación --</span>
+          <span class="tile__ayuda">Dependiente del CDP</span>
+        </div>
+      </div>
+    </div>
+  </plantilla-tarjeta-contenedora>
+
+  <!-- ───────────────────── PROTOCOLO DE CONTINGENCIA ────────────────────── -->
+  <section class="contingencia" aria-labelledby="contingencia-titulo">
+    <span class="contingencia__icono" aria-hidden="true">
+      <mat-icon>contact_phone</mat-icon>
+    </span>
+    <div class="contingencia__textos">
+      <h3 id="contingencia-titulo" class="contingencia__titulo">
+        ¿El error persiste por más de 15 minutos?
+      </h3>
+      <p class="contingencia__texto">
+        Comuníquese con la Oficina Asesora de Tecnologías y Sistemas de
+        Información (REDUDI) o la División Financiera.
+      </p>
+    </div>
+    <button class="boton-recto boton-recto--vino" type="button" (click)="reportarMesaAyuda()">
+      <mat-icon aria-hidden="true">mail</mat-icon>
+      <span>Reportar a Mesa de Ayuda</span>
+    </button>
+  </section>
+
+  <!-- ───────────────── AVANCE BLOQUEADO (REGIÓN VIVA) ───────────────────── -->
+  <div class="aviso-bloqueo" role="status" aria-live="polite">
+    <span class="aviso-bloqueo__texto">
+      <mat-icon aria-hidden="true">block</mat-icon>
+      <span>
+        El avance hacia el <strong>Paso 2 (Datos generales)</strong> permanece
+        inhabilitado hasta resolver la vinculación presupuestal.
+      </span>
+    </span>
+    <span class="aviso-bloqueo__accion">Acción requerida: Reintentar conexión</span>
+  </div>
+}

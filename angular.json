@@ -34,7 +34,9 @@
             "allowedCommonJsDependencies": [
               "sweetalert2",
               "crypto-js",
-              "style-loader"
+              "style-loader",
+              "quill",
+              "quill-delta"
             ]
           },
           "configurations": {

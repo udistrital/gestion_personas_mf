@@ -1,0 +1,97 @@
+@use "src/app/shared/styles/paso-asistente" as paso-asistente;
+
+@include paso-asistente.styles;
+
+:host {
+  display: block;
+  height: 100%;
+}
+
+.tarjeta-proveedor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  height: 100%;
+  padding: 1rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-surface);
+  box-shadow: var(--agora-sombra-xs);
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.tarjeta-proveedor:hover {
+  background: var(--agora-superficie-neutra);
+  box-shadow: var(--agora-sombra-tarjeta);
+}
+
+.tarjeta-proveedor__cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.tarjeta-proveedor__icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 2.5rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-primary);
+  color: var(--agora-surface);
+}
+
+.tarjeta-proveedor__icono mat-icon {
+  width: 1.375rem;
+  height: 1.375rem;
+  font-size: 1.375rem;
+}
+
+.tarjeta-proveedor__nombre {
+  margin: 0;
+  color: var(--agora-text);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.tarjeta-proveedor__nit {
+  margin: 0.125rem 0 0;
+  color: var(--agora-texto-neutro);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+}
+
+.tarjeta-proveedor__datos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-top: 0.25rem;
+}
+
+.tarjeta-proveedor__linea {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0;
+  color: var(--agora-texto-neutro);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.tarjeta-proveedor__linea mat-icon {
+  flex: 0 0 auto;
+  width: 0.9375rem;
+  height: 0.9375rem;
+  color: var(--agora-primary);
+  font-size: 0.9375rem;
+}
+
+.tarjeta-proveedor__linea--ciudad mat-icon {
+  color: var(--agora-texto-deshabilitado);
+}

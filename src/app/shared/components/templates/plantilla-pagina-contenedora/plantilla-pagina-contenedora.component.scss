@@ -42,7 +42,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 1.5rem;
-  padding: 0 0 1.5rem;
+  padding: 0 1.5rem 1.5rem 1.5rem;
 }
 
 .encabezado__contenido {
@@ -84,6 +84,23 @@
 
 .metadato strong {
   color: var(--agora-primary-dark);
+}
+
+/* Chip informativo junto al título (opcional). */
+.etiqueta {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  padding: 0.25rem 0.625rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: 999px;
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-primary);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .boton-regresar {

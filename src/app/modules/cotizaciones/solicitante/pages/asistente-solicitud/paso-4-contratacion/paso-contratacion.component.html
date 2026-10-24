@@ -1,0 +1,562 @@
+<!-- ─────────────────────────── BANNER DEL PASO ─────────────────────────── -->
+<banner-paso
+  icono="gavel"
+  titulo="Paso 4: Tipo de contratación e información de pago"
+  descripcion="Defina la modalidad jurídica de contratación institucional y configure el cronograma porcentual de pagos y desembolsos según las directrices presupuestales."
+>
+  <ng-container acciones>
+    <span class="chip chip--recto">
+      <mat-icon aria-hidden="true">policy</mat-icon>
+      <span>Resolución 067 de 2017</span>
+    </span>
+    <span class="chip chip--recto">
+      <mat-icon aria-hidden="true">account_balance</mat-icon>
+      <span>Estatuto Contractual UD</span>
+    </span>
+  </ng-container>
+</banner-paso>
+
+<!-- ─────────────── FILA 1: TARJETAS 1 y 2 (DOS COLUMNAS) ──────────────── -->
+<div class="rejilla-doble">
+  <!-- ──────────────────────────── TARJETA 1 ───────────────────────────── -->
+  <plantilla-tarjeta-contenedora
+    icon="gavel"
+    title="1. Tipo de contratación asociada"
+    description="Modalidad jurídica que ampara la contratación institucional."
+  >
+    <ng-container acciones>
+      <span class="chip chip--neutro">
+        <mat-icon aria-hidden="true">verified</mat-icon>
+        <span>Requerido</span>
+      </span>
+    </ng-container>
+
+    <div class="campo" [formGroup]="form">
+      <label class="campo__etiqueta" for="tipo-contrato">
+        Tipo de contrato <b aria-hidden="true">*</b>
+      </label>
+      <span class="selector">
+        <mat-icon class="selector__icono" aria-hidden="true">description</mat-icon>
+        <select id="tipo-contrato" formControlName="tipoContrato">
+          <option value="">Seleccione el tipo de contrato</option>
+          @for (opcion of tiposContrato; track opcion.valor) {
+            <option [value]="opcion.valor">{{ opcion.etiqueta }}</option>
+          }
+        </select>
+        <mat-icon class="selector__flecha" aria-hidden="true">
+          arrow_drop_down
+        </mat-icon>
+      </span>
+      @if (mostrarError("tipoContrato", form)) {
+        <span class="mensaje-error-formulario">
+          Seleccione el tipo de contrato que ampara la presente solicitud.
+        </span>
+      }
+      <span class="campo__ayuda">
+        <mat-icon aria-hidden="true">info</mat-icon>
+        Alineado con el Clasificador de Bienes y Servicios de Colombia Compra
+        Eficiente (UNSPSC).
+      </span>
+    </div>
+  </plantilla-tarjeta-contenedora>
+
+  <!-- ──────────────────────────── TARJETA 2 ───────────────────────────── -->
+  <plantilla-tarjeta-contenedora
+    icon="payments"
+    title="2. Detalle de información de pago"
+    description="Medio y forma de pago conforme a la normativa financiera."
+  >
+    <ng-container acciones>
+      <span class="chip chip--neutro">
+        <mat-icon aria-hidden="true">account_balance_wallet</mat-icon>
+        <span>Financiero</span>
+      </span>
+    </ng-container>
+
+    <div class="campo" [formGroup]="form">
+      <label class="campo__etiqueta" for="medio-pago">
+        Medio de pago <b aria-hidden="true">*</b>
+      </label>
+      <span class="selector">
+        <mat-icon class="selector__icono" aria-hidden="true">credit_card</mat-icon>
+        <select id="medio-pago" formControlName="medioPago">
+          <option value="">Seleccione el medio de pago</option>
+          @for (opcion of mediosPago; track opcion.valor) {
+            <option [value]="opcion.valor">{{ opcion.etiqueta }}</option>
+          }
+        </select>
+        <mat-icon class="selector__flecha" aria-hidden="true">
+          arrow_drop_down
+        </mat-icon>
+      </span>
+      @if (mostrarError("medioPago", form)) {
+        <span class="mensaje-error-formulario">
+          Seleccione el medio de pago autorizado por la Tesorería.
+        </span>
+      }
+    </div>
+
+    <!-- Aviso informativo institucional (normativa del medio de pago) -->
+    <div class="caja-normativa" role="note">
+      <mat-icon aria-hidden="true">info</mat-icon>
+      <div>
+        <span class="caja-normativa__titulo">
+          Normativa de Pago Institucional
+        </span>
+        <p class="caja-normativa__texto">
+          El medio de pago
+          <strong>{{ seleccion().medioPago || "seleccionado" }}</strong> está
+          regulado según lo dispuesto en la
+          <span class="caja-normativa__referencia">{{ normaMedioPago }}</span>.
+        </p>
+      </div>
+    </div>
+
+    <div class="campo" [formGroup]="form">
+      <label class="campo__etiqueta" for="forma-pago">
+        Tipo de forma de pago <b aria-hidden="true">*</b>
+      </label>
+      <span class="selector">
+        <mat-icon class="selector__icono" aria-hidden="true">tune</mat-icon>
+        <select id="forma-pago" formControlName="formaPago">
+          <option value="">Seleccione la forma de pago</option>
+          @for (opcion of formasPago; track opcion.valor) {
+            <option [value]="opcion.valor">{{ opcion.etiqueta }}</option>
+          }
+        </select>
+        <mat-icon class="selector__flecha" aria-hidden="true">
+          arrow_drop_down
+        </mat-icon>
+      </span>
+      @if (mostrarError("formaPago", form)) {
+        <span class="mensaje-error-formulario">
+          Seleccione la forma de pago del contrato.
+        </span>
+      }
+      <span class="campo__ayuda">
+        <mat-icon aria-hidden="true">lock_open</mat-icon>
+        Se habilita automáticamente al seleccionar el tipo de contrato y el medio
+        de pago.
+      </span>
+    </div>
+
+    <!-- Aviso de la forma de pago: la contraentrega admite un solo desembolso -->
+    @if (esContraentrega()) {
+      <div class="caja-normativa" role="note">
+        <mat-icon aria-hidden="true">lock</mat-icon>
+        <div>
+          <span class="caja-normativa__titulo">
+            Pago único al cumplimiento final
+          </span>
+          <p class="caja-normativa__texto">
+            La contraentrega se ejecuta como un único desembolso del 100 % del
+            valor pactado contra el acta de recibo final a satisfacción de la
+            interventoría. Registre únicamente la
+            <strong>condición del pago</strong>: el porcentaje queda fijo en
+            100 % y no se admiten parámetros adicionales.
+          </p>
+        </div>
+      </div>
+    }
+  </plantilla-tarjeta-contenedora>
+</div>
+
+<!-- ──────────────────────────── TARJETA 3 ───────────────────────────────── -->
+<plantilla-tarjeta-contenedora
+  icon="rule"
+  title="3. Parámetros de la forma de pago"
+  description="Configuración de hitos y actas de desembolso para el contratista."
+>
+  <ng-container acciones>
+    @if (completo()) {
+      <span class="chip chip--bloqueo">
+        <mat-icon aria-hidden="true">lock</mat-icon>
+        <span>Entrada Bloqueada (Límite 100%)</span>
+      </span>
+    } @else if (seleccion().formaPago) {
+      <span class="chip chip--neutro">
+        <mat-icon aria-hidden="true">tune</mat-icon>
+        <span>Modo: {{ seleccion().formaPago }}</span>
+      </span>
+    }
+  </ng-container>
+
+  <!-- Banner de cumplimiento (estado completo) -->
+  @if (completo()) {
+    <div class="aviso-cupo" role="status">
+      <span class="aviso-cupo__icono" aria-hidden="true">
+        <mat-icon>check_circle</mat-icon>
+      </span>
+      <div class="aviso-cupo__textos">
+        <span class="aviso-cupo__titulo">Cupo Porcentual Completo</span>
+        <p class="aviso-cupo__texto">
+          @if (esContraentrega()) {
+            El pago único contra el acta de recibo final quedó parametrizado y
+            cumple con el 100% reglamentario.
+          } @else {
+            Todos los desembolsos requeridos han sido parametrizados y cumplen con
+            el 100% reglamentario.
+          }
+        </p>
+      </div>
+      <span class="aviso-cupo__sello">100.0% Asignado</span>
+    </div>
+  } @else {
+    <!-- Regla de desembolso contractual -->
+    <div class="caja-normativa" role="note">
+      <mat-icon aria-hidden="true">assignment_turned_in</mat-icon>
+      <div>
+        <span class="caja-normativa__titulo">
+          Regla de desembolso contractual
+        </span>
+        <p class="caja-normativa__texto">{{ regla() }}</p>
+      </div>
+    </div>
+  }
+
+  <!-- Formulario de captura del parámetro -->
+  <div class="panel-formulario" [formGroup]="parametroForm">
+    <div class="campo">
+      <label class="campo__etiqueta" for="condicion-pago">
+        Condición del pago <b aria-hidden="true">*</b>
+      </label>
+      <div class="area-icono">
+        <mat-icon aria-hidden="true">
+          {{ completo() ? "block" : "description" }}
+        </mat-icon>
+        <textarea
+          id="condicion-pago"
+          class="campo__area"
+          rows="3"
+          formControlName="condicion"
+          [readonly]="completo()"
+          [placeholder]="placeholderCondicion()"
+        ></textarea>
+      </div>
+      @if (mostrarError("condicion", parametroForm)) {
+        <span class="mensaje-error-formulario">
+          Describa la condición del pago (mínimo {{ minCondicion }} caracteres).
+        </span>
+      }
+    </div>
+
+    <div class="campo campo--porcentaje">
+      <label class="campo__etiqueta" for="porcentaje-pago">
+        Porcentaje de pago <b aria-hidden="true">*</b>
+      </label>
+      <span class="numero-unidad">
+        <mat-icon class="numero-unidad__icono" aria-hidden="true">
+          {{ completo() || esContraentrega() ? "lock" : "percent" }}
+        </mat-icon>
+        <input
+          id="porcentaje-pago"
+          type="number"
+          min="1"
+          step="1"
+          [attr.max]="maximoPorcentaje()"
+          formControlName="porcentaje"
+          [readonly]="completo() || esContraentrega()"
+          [placeholder]="maximoPorcentaje()"
+        />
+        <span class="numero-unidad__sufijo">%</span>
+      </span>
+      @if (mostrarError("porcentaje", parametroForm)) {
+        <span class="mensaje-error-formulario">
+          @if (parametroForm.get("porcentaje")?.hasError("maximo")) {
+            El porcentaje no puede superar el disponible
+            ({{ maximoPorcentaje() }} %).
+          } @else {
+            Indique el porcentaje de pago (entre 1 y
+            {{ maximoPorcentaje() }} %).
+          }
+        </span>
+      }
+      @if (!completo()) {
+        <span class="campo__ayuda">
+          @if (esContraentrega()) {
+            Porcentaje fijo: el desembolso de la contraentrega es único y siempre
+            es del 100 %.
+          } @else {
+            Disponible: {{ maximoPorcentaje() }} % para asignar.
+          }
+        </span>
+      }
+    </div>
+
+    <div class="panel-formulario__acciones">
+      <button
+        class="boton-recto boton-recto--vino"
+        type="button"
+        [disabled]="completo()"
+        (click)="agregarParametro(parametroForm)"
+      >
+        <mat-icon aria-hidden="true">
+          {{ completo() ? "add" : "add_circle" }}
+        </mat-icon>
+        <span>
+          {{
+            completo()
+              ? "Agregar"
+              : esContraentrega()
+                ? "Registrar pago único"
+                : "Agregar parámetro de pago"
+          }}
+        </span>
+      </button>
+    </div>
+
+    @if (completo()) {
+      <span class="campo__ayuda campo__ayuda--bloque">
+        <mat-icon aria-hidden="true">info</mat-icon>
+        Criterio completado: el total suma 100 %. Para agregar nuevas
+        condiciones, elimine o ajuste uno de los ítems existentes en la tabla
+        inferior.
+      </span>
+    }
+  </div>
+</plantilla-tarjeta-contenedora>
+
+<!-- ──────────────────────────── TARJETA 4 ───────────────────────────────── -->
+<plantilla-tarjeta-contenedora
+  icon="receipt_long"
+  title="4. Formas de pago agregadas"
+  [description]="
+    esContraentrega()
+      ? 'Pago único del 100 % contra el acta de recibo final para ejecución presupuestal institucional.'
+      : 'Desglose de actas parciales para ejecución presupuestal institucional.'
+  "
+>
+  <ng-container acciones>
+    <span class="chip chip--neutro">
+      <mat-icon aria-hidden="true">list_alt</mat-icon>
+      <span>
+        {{ resumen().cantidad }} registrados
+        @if (completo()) {
+          · Total {{ formatoPorcentaje(resumen().total) }} %
+        }
+      </span>
+    </span>
+  </ng-container>
+
+  <div class="tabla-scroll">
+    <table class="tabla-paso">
+      <thead>
+        <tr>
+          <th scope="col" class="tabla-paso__num">#</th>
+          <th scope="col">Condición del pago</th>
+          <th scope="col" class="tabla-paso__centro">Porcentaje</th>
+          <th scope="col" class="tabla-paso__fin">Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (parametro of parametros(); track parametro.id; let indice = $index) {
+          <tr>
+            <td class="tabla-paso__num">{{ indice + 1 }}</td>
+            <td class="tabla-paso__fuerte">{{ parametro.condicion }}</td>
+            <td class="tabla-paso__centro tabla-paso__cantidad">
+              {{ formatoPorcentaje(parametro.porcentaje) }} %
+            </td>
+            <td class="tabla-paso__fin">
+              <button
+                class="boton-icono boton-icono--peligro"
+                type="button"
+                title="Eliminar parámetro"
+                aria-label="Eliminar parámetro de pago"
+                (click)="eliminarParametro(parametro.id)"
+              >
+                <mat-icon aria-hidden="true">delete</mat-icon>
+              </button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="4" class="tabla-paso__vacio">
+              <mat-icon aria-hidden="true">receipt_long</mat-icon>
+              <span>
+                @if (esContraentrega()) {
+                  Todavía no se ha registrado la condición del pago único.
+                  Diligencie el 100 % fijo en la tarjeta superior.
+                } @else {
+                  Todavía no hay parámetros de pago. Descríbalos en la tarjeta
+                  superior para cerrar la distribución porcentual.
+                }
+              </span>
+            </td>
+          </tr>
+        }
+      </tbody>
+      @if (parametros().length > 0) {
+        <tfoot>
+          <tr>
+            <td colspan="2" class="tabla-paso__total-etiqueta">
+              Total Acumulado de Desembolsos:
+            </td>
+            <td class="tabla-paso__centro tabla-paso__total-valor">
+              {{ formatoPorcentaje(resumen().total) }} %
+            </td>
+            <td></td>
+          </tr>
+        </tfoot>
+      }
+    </table>
+  </div>
+
+  <!-- Medidor porcentual (estado completo) -->
+  @if (completo()) {
+    <div class="consolidado">
+      <div class="consolidado__cabecera">
+        <span class="consolidado__titulo">
+          <mat-icon aria-hidden="true">task_alt</mat-icon>
+          <span>Consolidado de Distribución Financiera</span>
+        </span>
+        <span class="consolidado__valor">
+          {{ resumen().total.toFixed(2) }} %
+        </span>
+      </div>
+      <div class="barra-progreso barra-progreso--completa">
+        @for (parametro of parametros(); track parametro.id) {
+          <span
+            class="barra-progreso__segmento"
+            [style.flex-grow]="parametro.porcentaje"
+          ></span>
+        }
+      </div>
+      <div class="consolidado__pie">
+        <span class="consolidado__mensaje">
+          <mat-icon aria-hidden="true">verified_user</mat-icon>
+          <span>Forma de pago completa (100 %). Criterio normativo cumplido con éxito.</span>
+        </span>
+        <span class="consolidado__limite">Límite normativo máximo: 100%</span>
+      </div>
+    </div>
+  } @else {
+    <!-- Medidor porcentual (estado incompleto) -->
+    <div class="progreso">
+      <div class="progreso__cabecera">
+        <span class="progreso__titulo">
+          <mat-icon aria-hidden="true">donut_large</mat-icon>
+          <span>Subtotal acumulado de desembolsos</span>
+        </span>
+        <span class="progreso__valor">
+          <strong>{{ formatoPorcentaje(resumen().total) }}</strong> %
+          <span class="progreso__total">/ 100%</span>
+        </span>
+      </div>
+      <div class="barra-progreso">
+        <span
+          class="barra-progreso__relleno"
+          [style.width.%]="resumen().total"
+        ></span>
+      </div>
+      <div class="progreso__pie">
+        <span class="progreso__falta">
+          <mat-icon aria-hidden="true">schedule</mat-icon>
+          <span>
+            Falta {{ formatoPorcentaje(resumen().restante) }} % para cumplir el
+            criterio de contratación (requerido: 100 %).
+          </span>
+        </span>
+        <span class="progreso__limite">
+          <mat-icon aria-hidden="true">info</mat-icon>
+          <span>No se puede superar el 100% contractual</span>
+        </span>
+      </div>
+    </div>
+  }
+
+  <!-- Regla normativa al pie -->
+  <div class="regla-sistema">
+    <mat-icon aria-hidden="true">
+      {{ completo() ? "rule" : "verified_user" }}
+    </mat-icon>
+    <span>
+      @if (completo()) {
+        <strong>Regla del Sistema Financiero UD:</strong>
+        No se puede pagar más del 100 % del valor del contrato ni autorizar
+        anticipos no estipulados en la vigencia fiscal.
+      } @else {
+        <strong>Validación automática:</strong>
+        La distribución porcentual queda blindada presupuestalmente al completar
+        el 100%.
+      }
+    </span>
+  </div>
+</plantilla-tarjeta-contenedora>
+
+<!-- ───────────── REJILLA INFORMATIVA (ESTADO COMPLETO) ────────────────── -->
+@if (completo()) {
+  <div class="info-grid">
+    <article class="info-card">
+      <span class="info-card__icono" aria-hidden="true">
+        <mat-icon>fact_check</mat-icon>
+      </span>
+      <div>
+        <span class="info-card__titulo">Supervisor Designado</span>
+        <p class="info-card__texto">
+          Cada desembolso requerirá validación de aportes parafiscales y planilla
+          PILA.
+        </p>
+      </div>
+    </article>
+
+    <article class="info-card">
+      <span class="info-card__icono" aria-hidden="true">
+        <mat-icon>balance</mat-icon>
+      </span>
+      <div>
+        <span class="info-card__titulo">Modalidad Jurídica</span>
+        <p class="info-card__texto">
+          Amparado en el régimen especial universitario Ley 30 de 1992 y Estatuto
+          UD.
+        </p>
+      </div>
+    </article>
+
+    <article class="info-card">
+      <span class="info-card__icono" aria-hidden="true">
+        <mat-icon>security_update_good</mat-icon>
+      </span>
+      <div>
+        <span class="info-card__titulo">Validación Automática</span>
+        <p class="info-card__texto">
+          Parámetros validados en tiempo real con el módulo de Presupuesto Kronos.
+        </p>
+      </div>
+    </article>
+  </div>
+}
+
+<!-- ───────────── FRANJA DE ESTADO (ESTADO INCOMPLETO) ─────────────────── -->
+@if (!completo()) {
+  <section class="estado-paso" role="status" aria-live="polite">
+    <div class="estado-paso__info">
+      <span class="estado-paso__icono" aria-hidden="true">
+        <mat-icon>lock_clock</mat-icon>
+      </span>
+      <div>
+        <span class="estado-paso__titulo">
+          @if (esContraentrega()) {
+            Paso 4 incompleto (Pago único sin registrar)
+          } @else {
+            Paso 4 incompleto (Progreso:
+            {{ formatoPorcentaje(resumen().total) }}% de 100%)
+          }
+        </span>
+        <p class="estado-paso__texto">
+          @if (esContraentrega()) {
+            Debe registrar la condición del pago único (100 % fijo) en la tarjeta
+            superior para habilitar el botón "Continuar al Paso 5".
+          } @else {
+            Debe registrar el parámetro de pago restante
+            ({{ formatoPorcentaje(resumen().restante) }}%) en la tarjeta superior
+            para habilitar el botón "Continuar al Paso 5".
+          }
+        </p>
+      </div>
+    </div>
+    <span class="chip chip--pendiente">
+      <mat-icon aria-hidden="true">pending</mat-icon>
+      <span>En diligenciamiento</span>
+    </span>
+  </section>
+}

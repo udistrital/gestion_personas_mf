@@ -1,0 +1,754 @@
+@use "src/app/shared/styles/tokens" as t;
+@use "src/app/shared/styles/registro-formulario" as registro-formulario;
+@use "src/app/shared/styles/paso-asistente" as paso-asistente;
+
+@include registro-formulario.styles;
+@include paso-asistente.styles;
+
+:host {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Chips propios del paso 5 ────────────────────────────────────────────── */
+.chip--vino {
+  border-color: var(--agora-primary);
+  background: var(--agora-primary);
+  color: var(--agora-on-primary);
+}
+
+.chip--neutro {
+  border-color: var(--agora-borde-control);
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-texto-neutro);
+}
+
+.chip--pendiente {
+  border-color: var(--agora-warning-border);
+  background: var(--agora-warning-surface);
+  color: var(--agora-warning-text);
+}
+
+.chip--error {
+  border-color: var(--agora-error);
+  background: var(--agora-error-surface);
+  color: var(--agora-error);
+}
+
+/* ── Tarjeta 1: resumen de la solicitud ──────────────────────────────────── */
+.resumen-objeto {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-superficie-neutra);
+}
+
+.resumen-objeto__etiqueta {
+  color: var(--agora-texto-neutro);
+  font-size: t.$fuente-xs;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.resumen-objeto__texto {
+  margin: 0;
+  color: var(--agora-text);
+  font-size: t.$fuente-lg;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.resumen-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.875rem 1.5rem;
+}
+
+@media (min-width: t.$bp-md) {
+  .resumen-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.resumen-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.resumen-item__etiqueta {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--agora-texto-neutro);
+  font-size: t.$fuente-xs;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.resumen-item__etiqueta mat-icon {
+  width: 0.9375rem;
+  height: 0.9375rem;
+  color: var(--agora-primary);
+  font-size: 0.9375rem;
+}
+
+.resumen-item__valor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0;
+  color: var(--agora-text);
+  font-size: t.$fuente-md;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.resumen-item__valor--fecha {
+  color: var(--agora-texto-neutro);
+  font-variant-numeric: tabular-nums;
+}
+
+.resumen-item__separador {
+  color: var(--agora-texto-deshabilitado);
+}
+
+/* ── Fila 2: CIIU (7/12) + SNIES (5/12) ──────────────────────────────────── */
+.rejilla-config {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+  box-sizing: border-box;
+  width: min(100% - 3rem, 86.25rem);
+  margin: 0 auto;
+}
+
+.rejilla-config ::ng-deep .contenedor-tarjeta {
+  width: 100%;
+}
+
+@media (min-width: t.$bp-xl) {
+  .rejilla-config {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  }
+}
+
+/* ── Tarjeta 2: buscador y tabla CIIU ────────────────────────────────────── */
+.caja-buscador {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.buscador {
+  display: flex;
+  align-items: stretch;
+  gap: 0.625rem;
+}
+
+.buscador__entrada {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.tabla-bloque {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tabla-bloque__titulo {
+  color: var(--agora-texto-neutro);
+  font-size: t.$fuente-xs;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tabla-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-md);
+}
+
+.tabla-paso {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: t.$fuente-sm;
+}
+
+.tabla-paso thead th {
+  padding: 0.625rem 0.875rem;
+  border-bottom: 1px solid var(--agora-borde-tarjeta);
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-texto-neutro);
+  font-size: t.$fuente-xs;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tabla-paso tbody td {
+  padding: 0.75rem 0.875rem;
+  border-bottom: 1px solid var(--agora-borde-tarjeta);
+  color: var(--agora-text);
+  vertical-align: top;
+}
+
+.tabla-paso tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.tabla-paso__codigo {
+  width: 6.5rem;
+  white-space: nowrap;
+}
+
+.tabla-paso__clase {
+  width: 9rem;
+}
+
+.tabla-paso__fin {
+  width: 4rem;
+  text-align: right;
+}
+
+.tabla-paso__fuerte {
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.tabla-paso__vacio {
+  padding: 1.5rem 1rem;
+  color: var(--agora-texto-neutro);
+  text-align: center;
+}
+
+.tabla-paso__vacio mat-icon {
+  display: block;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin: 0 auto 0.5rem;
+  color: var(--agora-texto-deshabilitado);
+  font-size: 1.75rem;
+}
+
+.boton-icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  margin-left: auto;
+  padding: 0;
+  border: 1px solid var(--agora-borde-control);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-surface);
+  color: var(--agora-texto-neutro);
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.boton-icono mat-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  font-size: 1.125rem;
+}
+
+.boton-icono--peligro:hover {
+  border-color: var(--agora-error);
+  background: var(--agora-error-surface);
+  color: var(--agora-error);
+}
+
+.boton-icono:focus-visible {
+  outline: 2px solid var(--agora-primary);
+  outline-offset: 2px;
+}
+
+.nota-concurrencia,
+.nota-ayuda,
+.nota-normativa,
+.bloqueo-snies,
+.alerta-cero,
+.recomendacion,
+.recordatorio,
+.barra-contextual {
+  display: flex;
+  gap: 0.625rem;
+  padding: 0.75rem 0.875rem;
+  border-radius: var(--agora-radio-md);
+  font-size: t.$fuente-sm;
+  line-height: 1.5;
+}
+
+.nota-concurrencia {
+  border: 1px dashed var(--agora-borde-control);
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-texto-neutro);
+}
+
+.nota-concurrencia mat-icon,
+.nota-ayuda mat-icon,
+.nota-normativa mat-icon {
+  flex: 0 0 auto;
+  width: 1.125rem;
+  height: 1.125rem;
+  color: var(--agora-primary);
+  font-size: 1.125rem;
+}
+
+.nota-concurrencia p,
+.nota-ayuda p {
+  margin: 0;
+}
+
+.nota-concurrencia strong,
+.nota-ayuda strong {
+  color: var(--agora-text);
+}
+
+/* ── Tarjeta 3: selectores SNIES ─────────────────────────────────────────── */
+.perfil {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.875rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-superficie-neutra);
+}
+
+.perfil__etiqueta {
+  color: var(--agora-texto-neutro);
+  font-size: t.$fuente-xs;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.perfil__cuerpo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.perfil__icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 2.25rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-primary);
+  color: var(--agora-surface);
+}
+
+.perfil__icono mat-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  font-size: 1.25rem;
+}
+
+.perfil__titulo {
+  margin: 0;
+  color: var(--agora-text);
+  font-size: t.$fuente-md;
+  font-weight: 700;
+}
+
+.perfil__texto {
+  margin: 0.125rem 0 0;
+  color: var(--agora-texto-neutro);
+  font-size: t.$fuente-xs;
+  line-height: 1.45;
+}
+
+.nota-ayuda {
+  border: 1px solid var(--agora-borde-tarjeta);
+  background: var(--agora-surface);
+  color: var(--agora-texto-neutro);
+}
+
+.bloqueo-snies {
+  border: 1px solid var(--agora-borde-control);
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-texto-neutro);
+}
+
+.bloqueo-snies__icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 2.25rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  background: var(--agora-resalte-neutro);
+  color: var(--agora-texto-deshabilitado);
+}
+
+.bloqueo-snies__icono mat-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  font-size: 1.25rem;
+}
+
+.bloqueo-snies__titulo {
+  display: block;
+  color: var(--agora-text);
+  font-size: t.$fuente-md;
+  font-weight: 700;
+}
+
+.bloqueo-snies__texto {
+  margin: 0.25rem 0 0.5rem;
+}
+
+.bloqueo-snies__norma {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: 999px;
+  background: var(--agora-surface);
+  color: var(--agora-texto-neutro);
+  font-size: t.$fuente-xs;
+  font-weight: 600;
+}
+
+.bloqueo-snies__norma mat-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: var(--agora-primary);
+  font-size: 0.875rem;
+}
+
+/* ── Tarjeta 4: panel métrico ────────────────────────────────────────────── */
+.metrica {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--agora-success-border);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-success-surface);
+}
+
+.metrica--vacia {
+  border-color: var(--agora-borde-control);
+  background: var(--agora-superficie-neutra);
+}
+
+.metrica__numero {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 4rem;
+  height: 4rem;
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-primary);
+  color: var(--agora-surface);
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.metrica--vacia .metrica__numero {
+  background: var(--agora-texto-deshabilitado);
+}
+
+.metrica__textos {
+  min-width: 0;
+}
+
+.metrica__titulo {
+  display: block;
+  color: var(--agora-success);
+  font-size: t.$fuente-lg;
+  font-weight: 700;
+}
+
+.metrica--vacia .metrica__titulo {
+  color: var(--agora-text);
+}
+
+.metrica__texto {
+  margin: 0.15rem 0 0;
+  color: var(--agora-texto-neutro);
+  font-size: t.$fuente-sm;
+  line-height: 1.5;
+}
+
+/* ── Tarjeta 4: estado sin coincidencias ─────────────────────────────────── */
+.alerta-cero {
+  border: 1px solid var(--agora-error);
+  background: var(--agora-error-surface);
+  color: var(--agora-error);
+}
+
+.alerta-cero__icono {
+  flex: 0 0 auto;
+}
+
+.alerta-cero__icono mat-icon {
+  width: 1.375rem;
+  height: 1.375rem;
+  font-size: 1.375rem;
+}
+
+.alerta-cero__titulo {
+  display: block;
+  font-size: t.$fuente-lg;
+  font-weight: 700;
+}
+
+.alerta-cero__texto {
+  margin: 0.125rem 0 0;
+  line-height: 1.5;
+}
+
+.recomendacion {
+  flex-direction: column;
+  gap: 0.35rem;
+  border: 1px solid var(--agora-warning-border);
+  background: var(--agora-warning-surface);
+  color: var(--agora-warning-text);
+}
+
+.recomendacion__titulo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-weight: 700;
+}
+
+.recomendacion__titulo mat-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  font-size: 1.125rem;
+}
+
+.recomendacion p {
+  margin: 0;
+}
+
+.etiqueta-rf {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  border: 1px dashed var(--agora-borde-control);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-texto-neutro);
+  font-size: t.$fuente-sm;
+}
+
+.etiqueta-rf__marca {
+  padding: 0.125rem 0.5rem;
+  border: 1px solid var(--agora-borde-control);
+  border-radius: 999px;
+  background: var(--agora-surface);
+  color: var(--agora-texto-deshabilitado);
+  font-size: t.$fuente-xs;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.etiqueta-rf__texto {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.etiqueta-rf mat-icon {
+  flex: 0 0 auto;
+  width: 1rem;
+  height: 1rem;
+  color: var(--agora-texto-deshabilitado);
+  font-size: 1rem;
+}
+
+.nota-normativa {
+  border: 1px solid var(--agora-borde-tarjeta);
+  background: var(--agora-surface);
+  color: var(--agora-texto-neutro);
+}
+
+/* ── Tarjeta 4: estado con coincidencias ─────────────────────────────────── */
+.alcance {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-surface);
+}
+
+.alcance__info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.alcance__marca {
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  background: var(--agora-primary);
+  color: var(--agora-surface);
+  font-size: t.$fuente-xs;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.alcance__texto {
+  color: var(--agora-texto-neutro);
+  font-size: t.$fuente-sm;
+}
+
+.alcance__meta {
+  color: var(--agora-texto-neutro);
+  font-size: t.$fuente-xs;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.muestra {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.muestra__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.muestra__titulo {
+  color: var(--agora-text);
+  font-size: t.$fuente-md;
+  font-weight: 700;
+}
+
+.muestra__meta {
+  color: var(--agora-texto-neutro);
+  font-size: t.$fuente-xs;
+}
+
+.boton-recto--bloque {
+  width: 100%;
+}
+
+.boton-recto__chevron {
+  transition: transform 0.2s ease;
+}
+
+.boton-recto__chevron--abierto {
+  transform: rotate(180deg);
+}
+
+.proveedores-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.875rem;
+}
+
+@media (min-width: t.$bp-md) {
+  .proveedores-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* ── Pie del paso ────────────────────────────────────────────────────────── */
+.recordatorio {
+  align-items: center;
+  box-sizing: border-box;
+  width: min(100% - 3rem, 86.25rem);
+  margin: 0 auto;
+  border: 1px solid var(--agora-borde-tarjeta);
+  background: var(--agora-surface);
+  color: var(--agora-texto-neutro);
+}
+
+.recordatorio mat-icon {
+  flex: 0 0 auto;
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--agora-primary);
+  font-size: 1.25rem;
+}
+
+.recordatorio p {
+  flex: 1 1 auto;
+  margin: 0;
+}
+
+.recordatorio strong {
+  color: var(--agora-text);
+}
+
+.recordatorio__sello {
+  padding: 0.25rem 0.625rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: 999px;
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-texto-deshabilitado);
+  font-size: t.$fuente-xs;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.barra-contextual {
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  box-sizing: border-box;
+  width: min(100% - 3rem, 86.25rem);
+  margin: 0 auto;
+  border: 1px solid var(--agora-warning-border);
+  background: var(--agora-warning-surface);
+  color: var(--agora-warning-text);
+}
+
+.barra-contextual__info {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1 1 22rem;
+  min-width: 0;
+}
+
+.barra-contextual__info mat-icon {
+  flex: 0 0 auto;
+  width: 1.125rem;
+  height: 1.125rem;
+  font-size: 1.125rem;
+}
+
+.barra-contextual__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+}

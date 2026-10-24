@@ -1,6 +1,7 @@
 /* Estilos globales de agora-gestion-personas-mf */
 @use '@angular/material' as mat;
 @use 'src/app/shared/styles/tokens' as tokens;
+@use 'src/app/shared/styles/sweetalert';
 
 /* ---------------------------------------------------------------------------
    Bootstrap 5.3 — solo variables, mixins y utilities.
@@ -16,6 +17,10 @@
 @import "bootstrap/scss/mixins";
 @import "bootstrap/scss/utilities";
 @import "bootstrap/scss/utilities/api";
+
+/* Estilos base de Quill (editor enriquecido). Solo el tema `snow`: el editor
+   re-tematiza la barra y el área editable con los tokens de Ágora. */
+@import "quill/dist/quill.snow.css";
 
 /* Tokens de diseño compartidos (colores, tipografía, radios, sombras). */
 @include tokens.tokens;

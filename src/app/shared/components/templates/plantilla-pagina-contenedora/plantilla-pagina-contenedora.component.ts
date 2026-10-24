@@ -61,6 +61,13 @@ export class PlantillaPaginaContenedoraComponent {
   @Input() mostrarBotonRegresar: boolean = false;
 
   /**
+   * Etiqueta corta que se muestra como chip junto al título
+   * (p. ej. "Ágora v2.6", "Borrador UD-2025").
+   * @default ""
+   */
+  @Input() etiqueta: string = "";
+
+  /**
    * Evento emitido cuando se presiona el botón "Regresar".
    * Útil para manejar acciones en el componente padre, como la navegación.
    * @example

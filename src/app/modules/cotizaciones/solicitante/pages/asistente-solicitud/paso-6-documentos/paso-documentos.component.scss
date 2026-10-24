@@ -1,0 +1,651 @@
+@use "src/app/shared/styles/tokens" as t;
+@use "src/app/shared/styles/registro-formulario" as registro-formulario;
+@use "src/app/shared/styles/paso-asistente" as paso-asistente;
+
+@include registro-formulario.styles;
+@include paso-asistente.styles;
+
+:host {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Chips propios del paso 6 ────────────────────────────────────────────── */
+.chip--pendiente {
+  border-color: var(--agora-warning-border);
+  border-style: dashed;
+  background: var(--agora-warning-surface);
+  color: var(--agora-warning-text);
+}
+
+.chip--pendiente mat-icon {
+  animation: girar-lento 2.4s linear infinite;
+}
+
+@keyframes girar-lento {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chip--pendiente mat-icon {
+    animation: none;
+  }
+}
+
+/* ── Zona de carga (dropzone) ────────────────────────────────────────────── */
+.dropzone {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 2rem;
+  border: 2px dashed var(--agora-borde-control);
+  border-radius: t.$radio-xl;
+  background: var(--agora-superficie-neutra);
+  text-align: center;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.dropzone--listo {
+  border-color: var(--agora-primary);
+  background: var(--agora-surface);
+}
+
+.dropzone__entrada {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.dropzone__icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 999px;
+  background: var(--agora-primary);
+  color: var(--agora-surface);
+  transition: transform 0.2s ease;
+}
+
+.dropzone:hover .dropzone__icono {
+  transform: scale(1.05);
+}
+
+.dropzone__icono mat-icon {
+  width: 2rem;
+  height: 2rem;
+  font-size: 2rem;
+}
+
+.dropzone__textos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  max-width: 30rem;
+}
+
+.dropzone__titulo {
+  color: var(--agora-text);
+  font-size: t.$fuente-lg;
+  font-weight: 600;
+}
+
+.dropzone__pista {
+  color: var(--agora-texto-neutro);
+  font-size: t.$fuente-md;
+  line-height: 1.5;
+}
+
+.dropzone__boton {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: t.$radio-md;
+  background: var(--agora-surface);
+  color: var(--agora-primary);
+  cursor: pointer;
+  font: inherit;
+  font-size: t.$fuente-md;
+  font-weight: 600;
+  box-shadow: var(--agora-sombra-xs);
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.dropzone__boton mat-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  font-size: 1.125rem;
+}
+
+.dropzone__boton:hover {
+  background: var(--agora-resalte-neutro);
+}
+
+.dropzone__boton:focus-visible {
+  outline: 2px solid var(--agora-primary);
+  outline-offset: 2px;
+}
+
+.dropzone__pistas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem 1rem;
+  margin-top: 0.5rem;
+  color: var(--agora-texto-neutro);
+  font-size: t.$fuente-xs;
+}
+
+.dropzone__pista-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.dropzone__pista-item mat-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  font-size: 0.875rem;
+}
+
+.dropzone__separador {
+  color: var(--agora-texto-deshabilitado);
+}
+
+/* ── Lista de anexos ─────────────────────────────────────────────────────── */
+.anexos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.anexos__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 0;
+  color: var(--agora-primary);
+  font-size: t.$fuente-lg;
+  font-weight: 700;
+}
+
+.anexos__total {
+  color: var(--agora-texto-neutro);
+  font-size: t.$fuente-xs;
+  font-weight: 400;
+}
+
+.anexos__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.anexos__vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.75rem 1rem;
+  border: 1px dashed var(--agora-borde-control);
+  border-radius: t.$radio-lg;
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-texto-neutro);
+  font-size: t.$fuente-sm;
+  text-align: center;
+}
+
+.anexos__vacio mat-icon {
+  width: 1.75rem;
+  height: 1.75rem;
+  color: var(--agora-texto-deshabilitado);
+  font-size: 1.75rem;
+}
+
+/* ── Leyenda de clasificación (tarjeta 2) ────────────────────────────────── */
+.leyenda {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: t.$radio-lg;
+  background: var(--agora-superficie-neutra);
+}
+
+@media (min-width: t.$bp-md) {
+  .leyenda {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.leyenda__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.leyenda__marca {
+  flex: 0 0 auto;
+  padding: 0.25rem 0.625rem;
+  border-radius: t.$radio-sm;
+  font-size: t.$fuente-xs;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.leyenda__marca--obligatorio {
+  background: var(--agora-primary);
+  color: var(--agora-on-primary);
+}
+
+.leyenda__marca--complementario {
+  background: var(--agora-resalte-neutro);
+  color: var(--agora-text);
+}
+
+.leyenda__texto {
+  margin: 0;
+  color: var(--agora-texto-neutro);
+  font-size: t.$fuente-sm;
+  line-height: 1.5;
+}
+
+/* ── Tabla de la matriz documental ───────────────────────────────────────── */
+.tabla-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: t.$radio-lg;
+  box-shadow: var(--agora-sombra-xs);
+}
+
+.tabla-paso {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: t.$fuente-sm;
+}
+
+.tabla-paso thead th {
+  padding: 0.875rem 1.25rem;
+  border-bottom: 1px solid var(--agora-borde-tarjeta);
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-primary);
+  font-size: t.$fuente-xs;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tabla-paso tbody td {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--agora-borde-tarjeta);
+  color: var(--agora-text);
+  vertical-align: top;
+}
+
+.tabla-paso tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.tabla-paso tbody tr:hover {
+  background: var(--agora-superficie-neutra);
+}
+
+.matriz__fila--fija {
+  background: var(--agora-surface);
+}
+
+.matriz__clasificacion {
+  width: 13rem;
+}
+
+.matriz__documento {
+  min-width: 16rem;
+}
+
+.matriz__instruccion {
+  min-width: 18rem;
+}
+
+.tabla-paso__fin {
+  width: 5rem;
+  text-align: center;
+}
+
+.tabla-paso__vacio {
+  padding: 1.5rem 1rem;
+  color: var(--agora-texto-neutro);
+  text-align: center;
+}
+
+.tabla-paso__vacio mat-icon {
+  display: block;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin: 0 auto 0.5rem;
+  color: var(--agora-texto-deshabilitado);
+  font-size: 1.75rem;
+}
+
+/* Nombre y marca de norma de la fila fija */
+.matriz__fijo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.matriz__fijo-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.matriz__nombre {
+  color: var(--agora-primary);
+  font-size: t.$fuente-lg;
+  font-weight: 700;
+}
+
+.matriz__candado {
+  width: 1rem;
+  height: 1rem;
+  color: var(--agora-texto-neutro);
+  font-size: 1rem;
+}
+
+.matriz__marcas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.matriz__norma {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: t.$radio-sm;
+  background: var(--agora-resalte-neutro);
+  color: var(--agora-primary);
+  font-size: t.$fuente-xs;
+  font-weight: 600;
+}
+
+.matriz__norma mat-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  font-size: 0.875rem;
+}
+
+.matriz__por-definir {
+  padding: 0.125rem 0.5rem;
+  border: 1px dashed var(--agora-warning-border);
+  border-radius: t.$radio-sm;
+  background: var(--agora-warning-surface);
+  color: var(--agora-warning-text);
+  font-size: 0.625rem;
+  font-weight: 500;
+}
+
+/* Campos editables de la matriz */
+.matriz__campo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.matriz__campo mat-icon {
+  flex: 0 0 auto;
+  width: 1.125rem;
+  height: 1.125rem;
+  color: var(--agora-texto-neutro);
+  font-size: 1.125rem;
+}
+
+.matriz__campo input {
+  width: 100%;
+  padding: 0.375rem 0.625rem;
+  border: 1px solid transparent;
+  border-radius: t.$radio-md;
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-text);
+  font: inherit;
+  font-size: t.$fuente-lg;
+  font-weight: 600;
+}
+
+.matriz__campo input:focus {
+  border-color: var(--agora-borde-control);
+  background: var(--agora-surface);
+  outline: 2px solid var(--agora-primary);
+  outline-offset: 1px;
+}
+
+.matriz__selector {
+  width: 100%;
+}
+
+/* El select de la matriz reutiliza `.selector` del mixin compartido. */
+.matriz__selector select {
+  width: 100%;
+  padding: 0.5rem 2.25rem 0.5rem 0.75rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: t.$radio-md;
+  background-color: var(--agora-superficie-neutra);
+  color: var(--agora-primary);
+  font: inherit;
+  font-size: t.$fuente-md;
+  font-weight: 600;
+  appearance: none;
+  cursor: pointer;
+}
+
+.matriz__selector select:focus {
+  border-color: var(--agora-borde-control);
+  outline: 2px solid var(--agora-primary);
+  outline-offset: 1px;
+}
+
+.matriz__area {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: t.$radio-md;
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-texto-neutro);
+  font: inherit;
+  font-size: t.$fuente-md;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.matriz__area:focus {
+  border-color: var(--agora-borde-control);
+  background: var(--agora-surface);
+  outline: 2px solid var(--agora-primary);
+  outline-offset: 1px;
+}
+
+.matriz__sello {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: t.$radio-md;
+  background: var(--agora-primary);
+  color: var(--agora-on-primary);
+  font-size: t.$fuente-xs;
+  font-weight: 700;
+  box-shadow: var(--agora-sombra-xs);
+  white-space: nowrap;
+}
+
+.matriz__sello mat-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  font-size: 0.875rem;
+}
+
+.matriz__instruccion-texto {
+  margin: 0;
+  color: var(--agora-texto-neutro);
+  font-size: t.$fuente-md;
+  line-height: 1.6;
+}
+
+/* ── Botones de acción (matriz) ──────────────────────────────────────────── */
+.boton-icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: t.$radio-md;
+  background: transparent;
+  color: var(--agora-texto-neutro);
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.boton-icono mat-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  font-size: 1.25rem;
+}
+
+.boton-icono--peligro:hover {
+  background: var(--agora-error-surface);
+  color: var(--agora-error);
+}
+
+.boton-icono--bloqueado {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.boton-icono:focus-visible {
+  outline: 2px solid var(--agora-primary);
+  outline-offset: 2px;
+}
+
+/* ── Pie de la matriz ────────────────────────────────────────────────────── */
+.matriz__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 0.25rem;
+}
+
+.matriz__resumen {
+  color: var(--agora-texto-neutro);
+  font-size: t.$fuente-xs;
+  font-weight: 600;
+}
+
+/* ── Pie del paso ────────────────────────────────────────────────────────── */
+.nota-responsabilidad {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  box-sizing: border-box;
+  width: min(100% - 3rem, 86.25rem);
+  margin: 0 auto 1rem;
+  padding: 1rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-left: 3px solid var(--agora-primary);
+  border-radius: t.$radio-lg;
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-texto-neutro);
+}
+
+.nota-responsabilidad mat-icon {
+  flex: 0 0 auto;
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--agora-primary);
+  font-size: 1.25rem;
+}
+
+.nota-responsabilidad p {
+  margin: 0;
+  font-size: t.$fuente-sm;
+  line-height: 1.6;
+}
+
+.nota-responsabilidad strong {
+  color: var(--agora-text);
+}
+
+.recordatorio {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  box-sizing: border-box;
+  width: min(100% - 3rem, 86.25rem);
+  margin: 0 auto;
+  padding: 1rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: t.$radio-lg;
+  background: var(--agora-surface);
+  color: var(--agora-texto-neutro);
+  font-size: t.$fuente-sm;
+  line-height: 1.6;
+}
+
+.recordatorio mat-icon {
+  flex: 0 0 auto;
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--agora-primary);
+  font-size: 1.25rem;
+}
+
+.recordatorio p {
+  flex: 1 1 auto;
+  margin: 0;
+}
+
+.recordatorio strong {
+  color: var(--agora-text);
+}
+
+.recordatorio__sello {
+  flex: 0 0 auto;
+  padding: 0.25rem 0.625rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: 999px;
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-texto-deshabilitado);
+  font-size: t.$fuente-xs;
+  font-weight: 700;
+  white-space: nowrap;
+}

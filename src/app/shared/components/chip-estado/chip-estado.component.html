@@ -1,0 +1,12 @@
+<span class="chip" [class]="'chip chip--' + meta.tono">
+  @if (meta.icono) {
+    <mat-icon class="chip__icono" aria-hidden="true">{{ meta.icono }}</mat-icon>
+  } @else {
+    <span
+      class="chip__punto"
+      [class.chip__punto--pulso]="meta.pulso"
+      aria-hidden="true"
+    ></span>
+  }
+  <span class="chip__texto">{{ meta.etiqueta }}</span>
+</span>

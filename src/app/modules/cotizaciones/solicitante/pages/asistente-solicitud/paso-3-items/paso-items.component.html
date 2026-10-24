@@ -1,0 +1,721 @@
+<!-- ─────────────────────────── BANNER DEL PASO ─────────────────────────── -->
+<banner-paso
+  icono="verified_user"
+  titulo="Paso 3: Bienes y servicios a cotizar"
+  descripcion="Agregue los elementos de a uno o cárguelos masivamente desde la plantilla."
+>
+  <ng-container acciones>
+    <span class="chip chip--recto">
+      <mat-icon aria-hidden="true">file_download</mat-icon>
+      <span>RF-008 Cargue masivo</span>
+    </span>
+    <span class="chip chip--recto">
+      <mat-icon aria-hidden="true">policy</mat-icon>
+      <span>Resolución Rectoría 035 / UD</span>
+    </span>
+  </ng-container>
+</banner-paso>
+
+<!-- ──────────────────────────── TARJETA 1 ───────────────────────────────── -->
+<plantilla-tarjeta-contenedora
+  icon="inventory_2"
+  title="1. Forma de registro"
+  description="Defina la modalidad para incorporar los ítems al pliego de cotización"
+>
+  <div class="campo" [formGroup]="form">
+    <span class="campo__etiqueta" id="modo-registro-etiqueta">
+      Tipo de registro <b aria-hidden="true">*</b>
+    </span>
+
+    <!-- Selector de modo: dos tarjetas de radio -->
+    <div class="modos" role="radiogroup" aria-labelledby="modo-registro-etiqueta">
+      @for (modo of modos; track modo.valor) {
+        <button
+          type="button"
+          class="modo"
+          [class.modo--activo]="this.modo() === modo.valor"
+          role="radio"
+          [attr.aria-checked]="this.modo() === modo.valor"
+          (click)="seleccionarModo(modo.valor)"
+        >
+          <span class="modo__cabecera">
+            <span class="modo__icono" aria-hidden="true">
+              <mat-icon>{{ modo.icono }}</mat-icon>
+            </span>
+            <span class="modo__radio" aria-hidden="true">
+              @if (this.modo() === modo.valor) {
+                <span class="modo__punto"></span>
+              }
+            </span>
+          </span>
+          <span class="modo__titulo">{{ modo.titulo }}</span>
+          <p class="modo__texto">{{ modo.descripcion }}</p>
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- ── Vista individual: formulario de un elemento ── -->
+  @if (this.modo() === "individual") {
+    <div class="panel-formulario" [formGroup]="itemForm">
+      <div class="campo">
+        <span class="campo__etiqueta" id="tipo-necesidad-etiqueta">
+          Tipo de necesidad <b aria-hidden="true">*</b>
+        </span>
+        <div
+          class="segmentado"
+          role="radiogroup"
+          aria-labelledby="tipo-necesidad-etiqueta"
+        >
+          @for (tipo of tipos; track tipo.valor) {
+            <button
+              type="button"
+              class="segmentado__boton"
+              [class.segmentado__boton--activo]="itemForm.value.tipo === tipo.valor"
+              role="radio"
+              [attr.aria-checked]="itemForm.value.tipo === tipo.valor"
+              (click)="itemForm.patchValue({ tipo: tipo.valor })"
+            >
+              <mat-icon aria-hidden="true">{{ tipo.icono }}</mat-icon>
+              <span>{{ tipo.etiqueta }}</span>
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="campo">
+        <label class="campo__etiqueta" for="item-nombre">
+          Nombre del bien <b aria-hidden="true">*</b>
+        </label>
+        <span class="selector">
+          <mat-icon class="selector__icono" aria-hidden="true">category</mat-icon>
+          <input
+            id="item-nombre"
+            type="text"
+            formControlName="nombre"
+            placeholder="Ej. Computador portátil, Servidor, Licencia…"
+          />
+        </span>
+        @if (mostrarError("nombre", itemForm)) {
+          <span class="mensaje-error-formulario">
+            Indique el nombre del elemento (mínimo {{ minNombre }} caracteres).
+          </span>
+        }
+      </div>
+
+      <div class="campo">
+        <label class="campo__etiqueta" for="item-descripcion">
+          Descripción y ficha técnica <b aria-hidden="true">*</b>
+        </label>
+        <textarea
+          id="item-descripcion"
+          class="campo__area"
+          rows="4"
+          formControlName="descripcion"
+          placeholder="Detalle especificaciones técnicas, certificaciones requeridas…"
+        ></textarea>
+        @if (mostrarError("descripcion", itemForm)) {
+          <span class="mensaje-error-formulario">
+            Describa la ficha técnica (mínimo {{ minDescripcion }} caracteres).
+          </span>
+        }
+        <span class="campo__ayuda">
+          <mat-icon aria-hidden="true">info</mat-icon>
+          Incluya aquí toda la ficha técnica del elemento.
+        </span>
+      </div>
+
+      <div class="campo-grid campo-grid--two mb-0">
+        <div class="campo">
+          <label class="campo__etiqueta" for="item-unidad">
+            Unidad de medida <b aria-hidden="true">*</b>
+          </label>
+          <span class="selector">
+            <mat-icon class="selector__icono" aria-hidden="true">straighten</mat-icon>
+            <select id="item-unidad" formControlName="unidad">
+              @for (unidad of unidades; track unidad.valor) {
+                <option [value]="unidad.valor">{{ unidad.etiqueta }}</option>
+              }
+            </select>
+            <mat-icon class="selector__flecha" aria-hidden="true">
+              arrow_drop_down
+            </mat-icon>
+          </span>
+        </div>
+
+        <div class="campo">
+          <label class="campo__etiqueta" for="item-cantidad">
+            Cantidad <b aria-hidden="true">*</b>
+          </label>
+          <span class="selector">
+            <mat-icon class="selector__icono" aria-hidden="true">pin</mat-icon>
+            <input
+              id="item-cantidad"
+              type="number"
+              min="1"
+              step="1"
+              formControlName="cantidad"
+            />
+          </span>
+          <span class="campo__ayuda">Ingrese solo números enteros.</span>
+        </div>
+      </div>
+
+      <div class="panel-formulario__acciones">
+        @if (editandoId()) {
+          <button
+            class="boton-recto"
+            type="button"
+            (click)="cancelarEdicion()"
+          >
+            <mat-icon aria-hidden="true">close</mat-icon>
+            <span>Cancelar edición</span>
+          </button>
+        }
+        <button
+          class="boton-recto boton-recto--vino"
+          type="button"
+          (click)="agregarItem(itemForm)"
+        >
+          <mat-icon aria-hidden="true">
+            {{ editandoId() ? "edit_document" : "add_circle" }}
+          </mat-icon>
+          <span>{{ editandoId() ? "Actualizar ítem" : "Agregar ítem" }}</span>
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- ── Vista masiva: parámetros y archivo de cargue ── -->
+  @if (this.modo() === "masivo" && !hayResultado) {
+    <div class="panel-masivo">
+      <div class="panel-masivo__cabecera">
+        <div class="panel-masivo__titulo">
+          <span class="panel-masivo__icono" aria-hidden="true">
+            <mat-icon>settings_suggest</mat-icon>
+          </span>
+          <h3>Parámetros y archivo de cargue masivo</h3>
+        </div>
+        <div class="nota-por-definir">
+          <mat-icon aria-hidden="true">help_outline</mat-icon>
+          <div>
+            <span class="nota-por-definir__etiqueta">Por definir</span>
+            <p class="nota-por-definir__texto">
+              Se definirán las plantillas, las columnas, el tamaño máximo y qué
+              ocurre si el cargue es parcialmente válido.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Plantilla oficial -->
+      <div class="plantilla">
+        <div class="plantilla__info">
+          <span class="plantilla__icono" aria-hidden="true">
+            <mat-icon>table_view</mat-icon>
+          </span>
+          <div>
+            <span class="plantilla__nombre">{{ plantillaMasiva }}</span>
+            <span class="plantilla__texto">
+              Use la hoja BIEN o SERVICIO según corresponda. Para agregar filas
+              copie el formato; no extienda las celdas.
+            </span>
+          </div>
+        </div>
+        <button
+          class="boton-recto"
+          type="button"
+          (click)="descargarPlantilla('la plantilla oficial')"
+        >
+          <mat-icon aria-hidden="true">download</mat-icon>
+          <span>Descargar archivo plantilla (.xlsx)</span>
+        </button>
+      </div>
+
+      <!-- Estructuras de datos reconocidas -->
+      <div class="estructuras">
+        <span class="estructuras__titulo">
+          Estructuras de datos reconocidas por el parser ÁGORA
+        </span>
+        <div class="estructuras__grid">
+          @for (estructura of estructuras; track estructura.hoja) {
+            <div class="estructura">
+              <div class="estructura__cabecera">
+                <span class="estructura__hoja">
+                  <mat-icon aria-hidden="true">
+                    {{ estructura.esBien ? "widgets" : "handyman" }}
+                  </mat-icon>
+                  Hoja: {{ estructura.hoja }}
+                </span>
+                <span class="estructura__columnas">
+                  {{ estructura.resumenColumnas }}
+                </span>
+              </div>
+              <div
+                class="estructura__campos"
+                [style.grid-template-columns]="'repeat(' + estructura.columnas.length + ', minmax(0, 1fr))'"
+              >
+                @for (columna of estructura.columnas; track columna) {
+                  <span class="estructura__campo">{{ columna }}</span>
+                }
+              </div>
+              <span class="estructura__ejemplo">{{ estructura.ejemplo }}</span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Alerta normativa -->
+      <div class="alerta-normativa" role="note">
+        <mat-icon aria-hidden="true">report_problem</mat-icon>
+        <div>
+          <span class="alerta-normativa__titulo">
+            Importante: reglas de validación sintáctica y documental
+          </span>
+          <p class="alerta-normativa__texto">
+            No copie y pegue datos en la plantilla ni use caracteres especiales
+            en la descripción técnica (comillas dobles, saltos de carro sin
+            escapar o caracteres no UTF-8). Respete las columnas obligatorias sin
+            modificar los nombres de los encabezados.
+          </p>
+        </div>
+      </div>
+
+      <!-- Zona de carga -->
+      <div class="dropzone" [class.dropzone--listo]="hayArchivo">
+        <input
+          #archivo
+          class="dropzone__entrada"
+          type="file"
+          accept=".xlsx"
+          aria-label="Archivo de plantilla diligenciada"
+          (change)="alElegirArchivo($event)"
+        />
+        <span class="dropzone__icono" aria-hidden="true">
+          <mat-icon>cloud_upload</mat-icon>
+        </span>
+        <div class="dropzone__textos">
+          <span class="dropzone__titulo">
+            Arrastre y suelte su archivo de plantilla aquí, o examine en su
+            equipo
+          </span>
+          <span class="dropzone__pista">
+            Solo formato <strong>.xlsx</strong> (tamaño máx.
+            {{ maxArchivoMb }} MB)
+          </span>
+        </div>
+        <div class="dropzone__acciones">
+          <button class="boton-recto" type="button" (click)="seleccionarArchivo()">
+            Seleccionar archivo
+          </button>
+          @if (hayArchivo) {
+            <span class="dropzone__archivo">
+              <mat-icon aria-hidden="true">table_view</mat-icon>
+              {{ nombreArchivo() }}
+              <span class="dropzone__peso">{{ tamanoArchivo() }}</span>
+              <button
+                class="dropzone__quitar"
+                type="button"
+                aria-label="Quitar archivo seleccionado"
+                (click)="descartarArchivo()"
+              >
+                <mat-icon aria-hidden="true">close</mat-icon>
+              </button>
+            </span>
+          }
+        </div>
+        <span class="dropzone__sello">
+          <mat-icon aria-hidden="true">verified</mat-icon>
+          Verificación criptográfica de esquema contra el estándar UD-DITIC.
+        </span>
+      </div>
+
+      <!-- Acciones del cargue -->
+      <div class="acciones-carga">
+        <span class="acciones-carga__info">
+          <mat-icon aria-hidden="true">info</mat-icon>
+          Al cargar se preservarán los ítems previamente capturados si no
+          duplican ID o descripción idéntica.
+        </span>
+        <button
+          class="boton-recto boton-recto--vino"
+          type="button"
+          [disabled]="!hayArchivo || procesando()"
+          (click)="cargarItems()"
+        >
+          <mat-icon aria-hidden="true">file_upload</mat-icon>
+          <span>{{ procesando() ? "Procesando…" : "Cargar ítems" }}</span>
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- ── Vista resultado: balance del cargue masivo ── -->
+  @if (this.modo() === "masivo" && hayResultado) {
+    <div class="panel-resultado">
+      <div class="resultado-cabecera">
+        <div class="resultado-cabecera__titulo">
+          <mat-icon aria-hidden="true">analytics</mat-icon>
+          <h3>Balance de la importación masiva</h3>
+        </div>
+        <div class="resultado-cabecera__meta">
+          <span class="resultado-cabecera__archivo">
+            <mat-icon aria-hidden="true">table_view</mat-icon>
+            <span>{{ balance()?.archivo }}</span>
+            <span class="resultado-cabecera__peso">{{ balance()?.tamano }}</span>
+          </span>
+          <span class="resultado-cabecera__lote">
+            Lote: {{ balance()?.lote }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Métricas -->
+      <div class="metricas">
+        <article class="metrica metrica--exito">
+          <span class="metrica__icono" aria-hidden="true">
+            <mat-icon>check_circle</mat-icon>
+          </span>
+          <div class="metrica__textos">
+            <span class="metrica__numero">{{ balance()?.aceptados }}</span>
+            <span class="metrica__titulo">Registros aceptados y vinculados</span>
+            <span class="metrica__texto">
+              Cumplen el 100% de los lineamientos del catálogo.
+            </span>
+          </div>
+          <div class="metrica__porcentaje">
+            <span class="metrica__chip">{{ porcentajeExito() }}%</span>
+            <span class="metrica__leyenda">Efectividad</span>
+          </div>
+        </article>
+
+        <article class="metrica metrica--error">
+          <span class="metrica__icono" aria-hidden="true">
+            <mat-icon>cancel</mat-icon>
+          </span>
+          <div class="metrica__textos">
+            <span class="metrica__numero">{{ balance()?.rechazados }}</span>
+            <span class="metrica__titulo">
+              Registros rechazados por inconsistencias
+            </span>
+            <span class="metrica__texto">
+              Excluidos provisionalmente de la cotización.
+            </span>
+          </div>
+          <div class="metrica__porcentaje">
+            <span class="metrica__chip">{{ porcentajeRechazo() }}%</span>
+            <span class="metrica__leyenda">Para revisar</span>
+          </div>
+        </article>
+      </div>
+
+      <!-- Resumen con descarga de reporte -->
+      <div class="resumen-carga">
+        <div class="resumen-carga__info">
+          <span class="resumen-carga__icono" aria-hidden="true">
+            <mat-icon>info</mat-icon>
+          </span>
+          <p>
+            Se procesaron
+            <strong>{{ balance()?.total }} registros en total</strong>.
+            <strong class="texto-exito">
+              {{ balance()?.aceptados }} fueron incorporados</strong
+            >
+            a la lista de cotización y
+            <strong class="texto-error">
+              {{ balance()?.rechazados }} requieren corrección</strong
+            >
+            en la plantilla.
+          </p>
+        </div>
+        <button
+          class="boton-recto"
+          type="button"
+          (click)="descargarPlantilla('el reporte de errores')"
+        >
+          <mat-icon aria-hidden="true">file_download</mat-icon>
+          <span>Descargar reporte de errores (.xlsx)</span>
+        </button>
+      </div>
+
+      <!-- Tabla de rechazos -->
+      @if ((balance()?.rechazos?.length ?? 0) > 0) {
+        <div class="rechazos">
+          <div class="rechazos__cabecera">
+            <span class="rechazos__punto" aria-hidden="true"></span>
+            <h4>Detalle de registros no procesados</h4>
+            <span class="chip chip--error">
+              {{ balance()?.rechazos?.length }} filas inválidas
+            </span>
+          </div>
+
+          <div class="tabla-scroll">
+            <table class="tabla-paso">
+              <thead>
+                <tr>
+                  <th scope="col">Fila de plantilla</th>
+                  <th scope="col">Hoja</th>
+                  <th scope="col">Campo afectado</th>
+                  <th scope="col">Valor detectado</th>
+                  <th scope="col">Motivo del rechazo</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (rechazo of balance()?.rechazos; track rechazo.fila) {
+                  <tr>
+                    <td>
+                      <span class="chip-codigo">{{ rechazo.fila }}</span>
+                    </td>
+                    <td>
+                      <span class="chip chip--neutro">
+                        <mat-icon aria-hidden="true">
+                          {{ rechazo.hoja === "BIEN" ? "devices" : "handyman" }}
+                        </mat-icon>
+                        <span>{{ rechazo.hoja }}</span>
+                      </span>
+                    </td>
+                    <td class="tabla-paso__fuerte">{{ rechazo.campo }}</td>
+                    <td>
+                      <span class="tabla-paso__valor">
+                        {{ rechazo.valor || "[Vacío]" }}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="rechazo-motivo">
+                        <mat-icon aria-hidden="true">{{ rechazo.icono }}</mat-icon>
+                        <span>
+                          <strong>{{ rechazo.motivo }}</strong>
+                          {{ rechazo.detalle }}
+                        </span>
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      <!-- Aviso de validación parcial -->
+      <div class="aviso-parcial">
+        <div class="aviso-parcial__info">
+          <mat-icon aria-hidden="true">help_outline</mat-icon>
+          <div>
+            <span class="aviso-parcial__etiqueta">Por definir</span>
+            <span class="aviso-parcial__titulo">
+              Comportamiento de validación parcial
+            </span>
+            <p class="aviso-parcial__texto">
+              Actualmente se importan los registros válidos ({{
+                balance()?.aceptados
+              }}) y se permite continuar o reintentar la carga con los
+              {{ balance()?.rechazados }} corregidos en una nueva plantilla.
+            </p>
+          </div>
+        </div>
+        <button
+          class="boton-recto boton-recto--vino"
+          type="button"
+          (click)="cargarArchivoCorregido()"
+        >
+          <mat-icon aria-hidden="true">publish</mat-icon>
+          <span>Cargar archivo corregido</span>
+        </button>
+      </div>
+    </div>
+  }
+</plantilla-tarjeta-contenedora>
+
+<!-- ──────────────────────────── TARJETA 2 ───────────────────────────────── -->
+<plantilla-tarjeta-contenedora
+  icon="list_alt"
+  title="2. Detalle de productos o servicios"
+  description="Lista consolidada de bienes y servicios vinculados a la presente solicitud de cotización."
+>
+  <ng-container acciones>
+    <button
+      class="boton-icono"
+      type="button"
+      title="Exportar vista previa"
+      aria-label="Exportar vista previa"
+      (click)="descargarPlantilla('la vista previa del listado')"
+    >
+      <mat-icon aria-hidden="true">print</mat-icon>
+    </button>
+    <label class="buscador">
+      <mat-icon aria-hidden="true">search</mat-icon>
+      <input
+        type="text"
+        placeholder="Filtrar ítems cargados..."
+        aria-label="Filtrar ítems cargados"
+        [value]="filtro()"
+        (input)="alFiltrar($event)"
+      />
+    </label>
+    <span class="chip chip--neutro">
+      <mat-icon aria-hidden="true">verified</mat-icon>
+      <span>{{ resumen().totalItems }} ítems agregados</span>
+    </span>
+  </ng-container>
+
+  <div class="tabla-scroll">
+    <table class="tabla-paso">
+      <thead>
+        <tr>
+          <th scope="col" class="tabla-paso__num">#</th>
+          <th scope="col">Nombre</th>
+          <th scope="col">Descripción técnica</th>
+          <th scope="col" class="tabla-paso__centro">Tipo</th>
+          <th scope="col" class="tabla-paso__centro">Unidad</th>
+          <th scope="col" class="tabla-paso__centro">Cantidad</th>
+          <th scope="col" class="tabla-paso__fin">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of itemsPagina(); track item.id; let indice = $index) {
+          <tr>
+            <td class="tabla-paso__num">
+              {{ rangoPagina().desde + indice }}
+            </td>
+            <td class="tabla-paso__fuerte">
+              {{ item.nombre }}
+              @if (item.codigoUnspsc) {
+                <span class="tabla-paso__codigo">
+                  UNSPSC: {{ item.codigoUnspsc }}
+                </span>
+              }
+            </td>
+            <td class="tabla-paso__descripcion">{{ item.descripcion }}</td>
+            <td class="tabla-paso__centro">
+              <span
+                class="chip"
+                [class.chip--neutro]="item.tipo === 'bien'"
+                [class.chip--servicio]="item.tipo === 'servicio'"
+              >
+                <mat-icon aria-hidden="true">{{ iconoTipo(item.tipo) }}</mat-icon>
+                <span>{{ etiquetaTipo(item.tipo) }}</span>
+              </span>
+            </td>
+            <td class="tabla-paso__centro">{{ item.unidad }}</td>
+            <td class="tabla-paso__centro tabla-paso__cantidad">
+              {{ formatoCantidad(item.cantidad) }}
+            </td>
+            <td class="tabla-paso__fin">
+              <div class="tabla-paso__acciones">
+                <button
+                  class="boton-icono"
+                  type="button"
+                  title="Editar ítem"
+                  aria-label="Editar ítem"
+                  (click)="editarItem(item)"
+                >
+                  <mat-icon aria-hidden="true">edit</mat-icon>
+                </button>
+                <button
+                  class="boton-icono boton-icono--peligro"
+                  type="button"
+                  title="Eliminar ítem"
+                  aria-label="Eliminar ítem"
+                  (click)="eliminarItem(item.id)"
+                >
+                  <mat-icon aria-hidden="true">delete</mat-icon>
+                </button>
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="7" class="tabla-paso__vacio">
+              <mat-icon aria-hidden="true">inventory_2</mat-icon>
+              <span>
+                Todavía no hay ítems en la solicitud. Agréguelos de a uno o
+                cárguelos masivamente desde la plantilla.
+              </span>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Paginación -->
+  @if (itemsFiltrados().length > 5) {
+    <div class="paginacion">
+      <span class="paginacion__resumen">
+        Mostrando
+        <strong>{{ rangoPagina().desde }}–{{ rangoPagina().hasta }}</strong>
+        de <strong>{{ rangoPagina().total }}</strong> ítems cargados
+      </span>
+      <div class="paginacion__controles">
+        <button
+          class="paginacion__boton"
+          type="button"
+          aria-label="Página anterior"
+          [disabled]="pagina() === 1"
+          (click)="irAPagina(pagina() - 1)"
+        >
+          <mat-icon aria-hidden="true">chevron_left</mat-icon>
+        </button>
+        @for (numero of paginas(); track numero) {
+          <button
+            class="paginacion__boton"
+            type="button"
+            [class.paginacion__boton--activo]="pagina() === numero"
+            [attr.aria-current]="pagina() === numero ? 'page' : null"
+            (click)="irAPagina(numero)"
+          >
+            {{ numero }}
+          </button>
+        }
+        <button
+          class="paginacion__boton"
+          type="button"
+          aria-label="Página siguiente"
+          [disabled]="pagina() === totalPaginas()"
+          (click)="irAPagina(pagina() + 1)"
+        >
+          <mat-icon aria-hidden="true">chevron_right</mat-icon>
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Resumen de clasificación automática -->
+  <div class="resumen-items" role="status">
+    <div class="resumen-items__tipo">
+      <span class="resumen-items__icono" aria-hidden="true">
+        <mat-icon>auto_awesome</mat-icon>
+      </span>
+      <div>
+        <div class="resumen-items__linea">
+          <span class="resumen-items__etiqueta">
+            Tipo de necesidad de la solicitud:
+          </span>
+          <span class="resumen-items__valor">
+            {{ etiquetasTipo[resumen().tipo] }}
+          </span>
+        </div>
+        <p class="resumen-items__texto">
+          Se calcula automáticamente según la naturaleza de los ítems agregados
+          (solo bienes, solo servicios o mixta).
+        </p>
+      </div>
+    </div>
+
+    <div class="resumen-items__totales">
+      <div class="resumen-items__total">
+        <span class="resumen-items__total-etiqueta">Total ítems</span>
+        <span class="resumen-items__total-valor">{{ resumen().totalItems }}</span>
+      </div>
+      <span class="resumen-items__separador" aria-hidden="true"></span>
+      <div class="resumen-items__total">
+        <span class="resumen-items__total-etiqueta">Cantidad acumulada</span>
+        <span class="resumen-items__total-valor">
+          {{ resumen().totalCantidad }}
+          <span class="resumen-items__unidad">und/serv.</span>
+        </span>
+      </div>
+    </div>
+  </div>
+</plantilla-tarjeta-contenedora>

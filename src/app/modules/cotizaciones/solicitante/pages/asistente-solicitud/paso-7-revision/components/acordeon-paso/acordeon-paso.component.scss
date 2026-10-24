@@ -1,0 +1,418 @@
+@use "src/app/shared/styles/tokens" as t;
+
+:host {
+  display: block;
+}
+
+.acordeon {
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-surface);
+  box-shadow: var(--agora-sombra-xs);
+  transition: box-shadow 0.2s ease-in-out;
+}
+
+.acordeon[open] {
+  box-shadow: var(--agora-sombra-tarjeta);
+}
+
+/* ── Cabecera ────────────────────────────────────────────────────────────── */
+.acordeon__cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.acordeon__cabecera::-webkit-details-marker {
+  display: none;
+}
+
+.acordeon__identidad {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.acordeon__icono {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-primary);
+  color: var(--agora-surface);
+}
+
+.acordeon__icono mat-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  font-size: 1.25rem;
+}
+
+.acordeon__textos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.acordeon__titulo-fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.acordeon__titulo {
+  color: var(--agora-text);
+  font-size: t.$fuente-xl;
+  font-weight: 700;
+}
+
+.acordeon__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-sm);
+  background: var(--agora-superficie-neutra);
+  font-size: t.$fuente-xs;
+  font-weight: 700;
+}
+
+.acordeon__chip mat-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  font-size: 0.875rem;
+}
+
+.acordeon__chip--vino {
+  color: var(--agora-primary);
+}
+
+.acordeon__chip--neutro {
+  color: var(--agora-texto-neutro);
+}
+
+.acordeon__chip--exito {
+  border-color: var(--agora-success-border);
+  background: var(--agora-success-surface);
+  color: var(--agora-success);
+}
+
+.acordeon__descripcion {
+  overflow: hidden;
+  color: var(--agora-texto-neutro);
+  font-size: t.$fuente-sm;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.acordeon__acciones {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 1rem;
+}
+
+.acordeon__editar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--agora-primary);
+  font: inherit;
+  font-size: t.$fuente-md;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.acordeon__editar mat-icon {
+  width: 1rem;
+  height: 1rem;
+  font-size: 1rem;
+}
+
+.acordeon__editar:hover {
+  color: var(--agora-primary-dark);
+  text-decoration: underline;
+}
+
+.acordeon__editar:focus-visible {
+  outline: 2px solid var(--agora-primary);
+  outline-offset: 2px;
+  border-radius: var(--agora-radio-sm);
+}
+
+.acordeon__flecha {
+  color: var(--agora-texto-deshabilitado);
+  transition: transform 0.2s ease-in-out;
+}
+
+.acordeon[open] .acordeon__flecha {
+  transform: rotate(180deg);
+}
+
+/* ── Cuerpo ──────────────────────────────────────────────────────────────── */
+.acordeon__cuerpo {
+  padding: 0 1.25rem 1.25rem;
+}
+
+.acordeon__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-superficie-neutra);
+}
+
+.acordeon__grilla {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem 1rem;
+}
+
+@media (min-width: t.$bp-sm) {
+  .acordeon__grilla {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.acordeon__encabezado-etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.acordeon__etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.acordeon__pildora {
+  padding: 0.25rem 0.75rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: 999px;
+  background: var(--agora-surface);
+  color: var(--agora-text);
+  font-size: t.$fuente-sm;
+  font-weight: 500;
+}
+
+.dato {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.dato--ancho {
+  grid-column: 1 / -1;
+}
+
+.dato__etiqueta {
+  color: var(--agora-texto-neutro);
+  font-size: t.$fuente-xs;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.dato__valor {
+  color: var(--agora-text);
+  font-size: t.$fuente-md;
+  font-weight: 600;
+  line-height: 1.4;
+  /* Los valores que vienen de un editor enriquecido conservan sus saltos de
+     línea (por ejemplo, las listas con viñetas). */
+  white-space: pre-line;
+}
+
+.dato__valor--codigo {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 700;
+}
+
+.dato__valor--destacado {
+  color: var(--agora-primary);
+  font-weight: 700;
+}
+
+.dato__valor--fecha {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Bloques especiales ──────────────────────────────────────────────────── */
+.acordeon__bloque {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.acordeon__bloque-etiqueta {
+  color: var(--agora-texto-neutro);
+  font-size: t.$fuente-xs;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.acordeon__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.acordeon__lista-item {
+  color: var(--agora-text);
+  font-size: t.$fuente-sm;
+}
+
+.acordeon__plantilla {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-sm);
+  background: var(--agora-surface);
+}
+
+.acordeon__plantilla > mat-icon {
+  flex: 0 0 auto;
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--agora-primary);
+  font-size: 1.25rem;
+}
+
+.acordeon__plantilla-textos {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.acordeon__plantilla-nombre {
+  overflow: hidden;
+  color: var(--agora-text);
+  font-size: t.$fuente-sm;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.acordeon__plantilla-estado {
+  color: var(--agora-success);
+  font-size: t.$fuente-xs;
+  font-weight: 600;
+}
+
+.acordeon__archivos {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.5rem;
+}
+
+@media (min-width: t.$bp-sm) {
+  .acordeon__archivos {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.archivo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0.5rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-sm);
+  background: var(--agora-surface);
+}
+
+.archivo mat-icon {
+  flex: 0 0 auto;
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--agora-primary);
+  font-size: 1.25rem;
+}
+
+.archivo__textos {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.archivo__nombre {
+  overflow: hidden;
+  color: var(--agora-text);
+  font-size: t.$fuente-sm;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.archivo__peso {
+  color: var(--agora-texto-neutro);
+  font-size: t.$fuente-xs;
+  font-variant-numeric: tabular-nums;
+}
+
+.acordeon__requisitos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.acordeon__requisito {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.625rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-sm);
+  background: var(--agora-surface);
+  color: var(--agora-text);
+  font-size: t.$fuente-sm;
+  font-weight: 500;
+}
+
+.acordeon__requisito mat-icon {
+  width: 1rem;
+  height: 1rem;
+  color: var(--agora-success);
+  font-size: 1rem;
+}
+
+.acordeon__requisito-icono--suave {
+  color: var(--agora-texto-deshabilitado) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .acordeon,
+  .acordeon__flecha {
+    transition: none;
+  }
+}

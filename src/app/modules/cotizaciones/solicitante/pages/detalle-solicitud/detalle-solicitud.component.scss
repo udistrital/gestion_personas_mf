@@ -1,0 +1,282 @@
+@use "src/app/shared/styles/tokens" as t;
+@use "src/app/shared/styles/detalle-solicitud" as detalle;
+
+/* Chips, botones rectangulares y bloques comunes del detalle. */
+@include detalle.styles;
+
+:host {
+  display: block;
+}
+
+.detalle {
+  display: flex;
+  flex-direction: column;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  gap: 1.25rem;
+}
+
+/* ── Encabezado de página ───────────────────────────────────────────────── */
+.cabecera {
+  padding: 1.5rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-surface);
+  box-shadow: var(--agora-sombra-tarjeta);
+}
+
+.cabecera__principal {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+@media (min-width: t.$bp-xl) {
+  .cabecera__principal {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+}
+
+.cabecera__textos {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.cabecera__antetitulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.625rem;
+  margin-bottom: 0.75rem;
+}
+
+.cabecera__modulo {
+  padding: 0.2rem 0.625rem;
+  border-radius: var(--agora-radio-md);
+  background: color-mix(in srgb, var(--agora-primary) 10%, var(--agora-surface));
+  color: var(--agora-primary);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cabecera__sistema {
+  color: var(--agora-texto-neutro);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+}
+
+.cabecera__titulo {
+  margin: 0;
+  color: var(--agora-primary);
+  font-size: clamp(1.25rem, 3vw, 1.75rem);
+  font-weight: 700;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.cabecera__chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.875rem;
+}
+
+.cabecera__chip-etiqueta {
+  color: var(--agora-texto-neutro);
+  font-weight: 500;
+}
+
+.cabecera__chip-valor {
+  color: var(--agora-primary);
+  font-weight: 700;
+}
+
+.cabecera__lateral {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 0 0 auto;
+}
+
+@media (min-width: t.$bp-xl) {
+  .cabecera__lateral {
+    align-items: flex-end;
+  }
+}
+
+.metrica {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-superficie-neutra);
+}
+
+.metrica__icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-primary);
+  color: var(--agora-on-primary);
+}
+
+.metrica__icono mat-icon {
+  width: 1.625rem;
+  height: 1.625rem;
+  font-size: 1.625rem;
+}
+
+.metrica__valor {
+  color: var(--agora-primary);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.metrica__texto {
+  color: var(--agora-texto-neutro);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.cabecera__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+/* ── Barra de pestañas ──────────────────────────────────────────────────── */
+.pestanas {
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-surface);
+  box-shadow: var(--agora-sombra-xs);
+  overflow-x: auto;
+}
+
+.pestanas__lista {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0 1rem;
+  margin: 0;
+  list-style: none;
+  min-width: max-content;
+}
+
+.pestanas__li {
+  display: flex;
+}
+
+.pestanas__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 0.5rem;
+  border-bottom: 2px solid transparent;
+  color: var(--agora-text-muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.pestanas__item mat-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  font-size: 1.25rem;
+}
+
+.pestanas__item:hover {
+  color: var(--agora-primary);
+}
+
+.pestanas__item:focus-visible {
+  outline: 2px solid var(--agora-primary);
+  outline-offset: 2px;
+  border-radius: var(--agora-radio-md);
+}
+
+.pestanas__item--activa {
+  color: var(--agora-primary);
+  border-bottom-color: var(--agora-primary);
+  font-weight: 700;
+}
+
+.pestanas__contador {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  background: var(--agora-resalte-neutro);
+  color: var(--agora-text);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.detalle__contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* ── Estados (no encontrada / error) ────────────────────────────────────── */
+.estado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 4rem 1.5rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-surface);
+  box-shadow: var(--agora-sombra-xs);
+  text-align: center;
+}
+
+.estado__icono {
+  width: 2.5rem;
+  height: 2.5rem;
+  color: var(--agora-primary);
+  font-size: 2.5rem;
+}
+
+.estado__icono--error {
+  color: var(--agora-error);
+}
+
+.estado__titulo {
+  margin: 0;
+  color: var(--agora-text);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.estado__texto {
+  margin: 0;
+  max-width: 32rem;
+  color: var(--agora-text-muted);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+/* Marca en rojo el ítem destructivo del menú de acciones. */
+.detalle__menu-item--peligro {
+  color: var(--agora-error);
+}
