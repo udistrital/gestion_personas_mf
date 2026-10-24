@@ -337,6 +337,239 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
       && ciudades.some(ciudad => ciudad.id === idCiudad);
   }
 
+  reintentarCargaDepartamentos(): void {
+    this.cargarDepartamentos();
+  }
+
+  reintentarCatalogos(): void {
+    this.cargarCatalogos();
+  }
+
+  reintentarUnspsc(): void {
+    this.cargarUnspsc();
+  }
+
+  reintentarCiudadesDomicilio(): void {
+    this.cargarCiudades(this.formulario.get('departamento')?.value, 'domicilio');
+  }
+
+  reintentarCiudadesApertura(): void {
+    this.cargarCiudades(this.formulario.get('departamentoApertura')?.value, 'apertura');
+  }
+
+  private cargarDepartamentos(): void {
+    const solicitud = ++this.solicitudDepartamentos;
+    this.cargandoDepartamentos = true;
+    this.errorDepartamentos = null;
+    this.pais = null;
+    this.departamentos = [];
+
+    this.ubicacionesService.obtenerDepartamentos()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (catalogos: CatalogosUbicacionesPersonaJuridica) => {
+          if (solicitud !== this.solicitudDepartamentos) {
+            return;
+          }
+          this.pais = catalogos.pais;
+          this.departamentos = catalogos.departamentos;
+          this.cargandoDepartamentos = false;
+        },
+        error: error => {
+          if (solicitud !== this.solicitudDepartamentos) {
+            return;
+          }
+          console.error('No fue posible cargar los departamentos de Colombia.', error);
+          this.errorDepartamentos = 'No se pudieron cargar los departamentos. Intente nuevamente.';
+          this.cargandoDepartamentos = false;
+        },
+      });
+  }
+
+  private cargarCatalogos(): void {
+    this.suscripcionCatalogos?.unsubscribe();
+    this.cargandoCatalogos = true;
+    this.errorCatalogos = null;
+    this.catalogosSinRegistros = false;
+    this.catalogos = null;
+    const fallosUbicaciones: string[] = [];
+    const aOpcionesCatalogo = map((lugares: { id: number; nombre: string }[]) =>
+      lugares.map(lugar => ({ id: lugar.id, nombre: lugar.nombre })),
+    );
+    this.suscripcionCatalogos = forkJoin({
+      catalogos: this.catalogosService.obtenerCatalogos(),
+      tipoVia: this.ubicacionesService.obtenerTiposVia().pipe(
+        aOpcionesCatalogo,
+        catchError(error => {
+          console.error('No fue posible cargar los tipos de vía de Ubicaciones.', error);
+          fallosUbicaciones.push('tipos de vía');
+          return of([]);
+        }),
+      ),
+      tipoInterior: this.ubicacionesService.obtenerTiposInterior().pipe(
+        aOpcionesCatalogo,
+        catchError(error => {
+          console.error('No fue posible cargar los tipos de interior de Ubicaciones.', error);
+          fallosUbicaciones.push('tipos de interior');
+          return of([]);
+        }),
+      ),
+    })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: ({ catalogos, tipoVia, tipoInterior }) => {
+          this.catalogos = { ...catalogos, tipoVia, tipoInterior };
+          this.errorCatalogos = fallosUbicaciones.length
+            ? `No fue posible cargar los catálogos de Ubicaciones: ${fallosUbicaciones.join(' y ')}.`
+            : null;
+          this.catalogosSinRegistros = [
+            catalogos.procedencia,
+            tipoVia,
+            tipoInterior,
+            catalogos.tipoOrganizacion,
+            catalogos.tamanoEmpresa,
+            catalogos.tipoCapital,
+            catalogos.cargo,
+            catalogos.camaraComercio,
+            catalogos.entidadesBancarias,
+            catalogos.tiposCuentaBancaria,
+            catalogos.actividadEconomicaCiiu,
+          ].some(opciones => opciones.length === 0);
+          this.cargandoCatalogos = false;
+        },
+        error: error => {
+          console.error('No fue posible cargar los catálogos de Persona Jurídica.', error);
+          const detalle = error instanceof Error
+            ? error.message
+            : 'Verifique su conexión e intente nuevamente.';
+          this.errorCatalogos = `No se pudieron cargar uno o más catálogos. ${detalle}`;
+          this.catalogosSinRegistros = false;
+          this.cargandoCatalogos = false;
+        },
+      });
+  }
+
+  private cargarUnspsc(): void {
+    this.cargandoUnspsc = true;
+    this.errorUnspsc = null;
+    this.catalogoUnspsc = [];
+    this.unspscService.obtenerCatalogo()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: catalogo => {
+          this.catalogoUnspsc = catalogo;
+          this.cargandoUnspsc = false;
+        },
+        error: error => {
+          console.error('No fue posible cargar el catálogo UNSPSC de UNGM.', error);
+          this.errorUnspsc = 'No se pudo cargar el catálogo UNSPSC. Intente nuevamente.';
+          this.cargandoUnspsc = false;
+        },
+      });
+  }
+
+  private cargarCiudades(idDepartamento: unknown, destino: 'domicilio' | 'apertura'): void {
+    const solicitud = destino === 'domicilio'
+      ? ++this.solicitudCiudadesDomicilio
+      : ++this.solicitudCiudadesApertura;
+    const controlDepartamento = destino === 'domicilio' ? 'departamento' : 'departamentoApertura';
+    const controlCiudad = destino === 'domicilio' ? 'ciudad' : 'ciudadApertura';
+    const departamentoControl = this.formulario.get(controlDepartamento);
+    const ciudadControl = this.formulario.get(controlCiudad);
+
+    ciudadControl?.setValue(null, { emitEvent: false });
+    ciudadControl?.disable({ emitEvent: false });
+    if (destino === 'domicilio') {
+      this.ciudadesDomicilio = [];
+      this.cargandoCiudadesDomicilio = false;
+      this.errorCiudadesDomicilio = null;
+    } else {
+      this.ciudadesApertura = [];
+      this.cargandoCiudadesApertura = false;
+      this.errorCiudadesApertura = null;
+    }
+
+    if (typeof idDepartamento !== 'number' || !Number.isInteger(idDepartamento)) {
+      return;
+    }
+    const departamento = this.departamentos.find(opcion => opcion.id === idDepartamento);
+    if (!departamento) {
+      return;
+    }
+
+    if (destino === 'domicilio') {
+      this.cargandoCiudadesDomicilio = true;
+    } else {
+      this.cargandoCiudadesApertura = true;
+    }
+
+    // La caché del servicio reemite de forma síncrona; observeOn evita mutar
+    // ciudades durante el mismo ciclo de detección de cambios (NG0100).
+    this.ubicacionesService.obtenerCiudades(departamento)
+      .pipe(observeOn(asapScheduler), takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: ciudades => {
+          if (
+            !this.esSolicitudActual(solicitud, destino)
+            || departamentoControl?.value !== departamento.id
+          ) {
+            return;
+          }
+          if (destino === 'domicilio') {
+            this.ciudadesDomicilio = ciudades;
+            this.cargandoCiudadesDomicilio = false;
+          } else {
+            this.ciudadesApertura = ciudades;
+            this.cargandoCiudadesApertura = false;
+          }
+          ciudadControl?.enable({ emitEvent: false });
+        },
+        error: error => {
+          if (
+            !this.esSolicitudActual(solicitud, destino)
+            || departamentoControl?.value !== departamento.id
+          ) {
+            return;
+          }
+          console.error(
+            `No fue posible cargar las ciudades del departamento "${departamento.nombre}" (Id ${departamento.id}).`,
+            error,
+          );
+          if (destino === 'domicilio') {
+            this.errorCiudadesDomicilio = 'No se pudieron cargar las ciudades. Intente nuevamente.';
+            this.cargandoCiudadesDomicilio = false;
+          } else {
+            this.errorCiudadesApertura = 'No se pudieron cargar las ciudades. Intente nuevamente.';
+            this.cargandoCiudadesApertura = false;
+          }
+        },
+      });
+  }
+
+  private esSolicitudActual(solicitud: number, destino: 'domicilio' | 'apertura'): boolean {
+    return destino === 'domicilio'
+      ? solicitud === this.solicitudCiudadesDomicilio
+      : solicitud === this.solicitudCiudadesApertura;
+  }
+
+  // Los controles de ciudad deshabilitados se omiten en Angular, por lo que se validan explícitamente.
+  // Las listas se vacían al cambiar el departamento y solo se llenan para el departamento vigente.
+  private ciudadValida(destino: 'domicilio' | 'apertura'): boolean {
+    const domicilio = destino === 'domicilio';
+    const idDepartamento = this.formulario.get(domicilio ? 'departamento' : 'departamentoApertura')?.value;
+    const idCiudad = this.formulario.get(domicilio ? 'ciudad' : 'ciudadApertura')?.value;
+    const cargando = domicilio ? this.cargandoCiudadesDomicilio : this.cargandoCiudadesApertura;
+    const error = domicilio ? this.errorCiudadesDomicilio : this.errorCiudadesApertura;
+    const ciudades = domicilio ? this.ciudadesDomicilio : this.ciudadesApertura;
+
+    return !cargando
+      && !error
+      && typeof idDepartamento === 'number'
+      && this.departamentos.some(opcion => opcion.id === idDepartamento)
+      && typeof idCiudad === 'number'
+      && ciudades.some(ciudad => ciudad.id === idCiudad);
+  }
+
   pasos: PasoStepperVisual[] = [
     { numero: 1, icono: "person", nombre: "Datos Societarios y Representación" },
     { numero: 2, icono: "account_balance", nombre: "Información Financiera" },
