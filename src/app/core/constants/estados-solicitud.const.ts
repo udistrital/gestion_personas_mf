@@ -142,7 +142,7 @@ export const ACCIONES_SOLICITUD: Readonly<
   foro: {
     etiqueta: "Foro de observaciones",
     icono: "forum",
-    ruta: null, // S-06
+    ruta: "cotizaciones/solicitudes/:id/observaciones",
   },
   oferentes: {
     etiqueta: "Tablero de oferentes",

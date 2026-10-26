@@ -25,7 +25,9 @@ export class PermisosSolicitudService {
   ): readonly AccionSolicitud[] {
     const acciones = MATRIZ_ACCIONES_POR_ESTADO[solicitud.estado] ?? [];
     if (!this.rol.estaCargado()) {
-      return acciones.filter((accion) => accion !== "cancelar");
+      return acciones.filter(
+        (accion) => accion !== "cancelar" && accion !== "foro",
+      );
     }
 
     const esSolicitante = ROLES_SOLICITANTE.some((rol) =>
@@ -33,7 +35,7 @@ export class PermisosSolicitudService {
     );
     return esSolicitante
       ? acciones
-      : acciones.filter((accion) => accion !== "cancelar");
+      : acciones.filter((accion) => accion !== "cancelar" && accion !== "foro");
   }
 
   /** true si la acción está permitida en el estado de la solicitud. */

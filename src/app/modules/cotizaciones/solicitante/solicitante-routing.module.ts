@@ -3,6 +3,7 @@ import { Routes, RouterModule } from "@angular/router";
 import { ListadoSolicitudesComponent } from "./pages/listado-solicitudes/listado-solicitudes.component";
 import { AsistenteSolicitudComponent } from "./pages/asistente-solicitud/asistente-solicitud.component";
 import { EditarSolicitudComponent } from "./pages/editar-solicitud/editar-solicitud.component";
+import { ForoObservacionesPageComponent } from "./pages/foro-observaciones/foro-observaciones-page.component";
 
 /**
  * Rutas del área solicitante.
@@ -34,6 +35,11 @@ const routes: Routes = [
     component: EditarSolicitudComponent,
     title: "ÁGORA · Solicitar modificación",
     data: { titulo: "Solicitar modificación", pantalla: "S-04" },
+  },
+  {
+    path: ":id/observaciones",
+    component: ForoObservacionesPageComponent,
+    title: "ÁGORA · Foro de observaciones",
   },
   // Detalle de la solicitud (S-03) — módulo perezoso.
   {

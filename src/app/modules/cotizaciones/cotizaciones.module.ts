@@ -1,5 +1,9 @@
 import { NgModule } from "@angular/core";
 import { CotizacionesRoutingModule } from "./cotizaciones-routing.module";
+import {
+  ObservacionesService,
+  ObservacionesServiceMock,
+} from "./services/observaciones.service";
 
 /**
  * Módulo raíz del dominio de cotizaciones. Las áreas (solicitante,
@@ -7,5 +11,8 @@ import { CotizacionesRoutingModule } from "./cotizaciones-routing.module";
  */
 @NgModule({
   imports: [CotizacionesRoutingModule],
+  providers: [
+    { provide: ObservacionesService, useClass: ObservacionesServiceMock },
+  ],
 })
 export class CotizacionesModule {}

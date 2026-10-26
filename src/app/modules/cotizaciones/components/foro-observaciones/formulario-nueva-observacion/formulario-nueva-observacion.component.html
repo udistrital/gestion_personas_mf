@@ -1,0 +1,67 @@
+<form
+  class="formulario"
+  [formGroup]="formulario"
+  (ngSubmit)="confirmar()"
+  aria-labelledby="titulo-nueva-observacion"
+>
+  <div class="formulario__cabecera">
+    <h3 id="titulo-nueva-observacion">
+      <mat-icon aria-hidden="true">add_comment</mat-icon>
+      Formular una observación
+    </h3>
+    <etiqueta-por-definir
+      texto="Mínimo provisional"
+      detalle="20 caracteres"
+    ></etiqueta-por-definir>
+  </div>
+  <p class="formulario__ayuda">
+    Su observación y la respuesta institucional serán visibles para todos los
+    invitados.
+  </p>
+  <label class="formulario__etiqueta" id="etiqueta-nueva-observacion">
+    Texto de la observación <span aria-hidden="true">*</span>
+  </label>
+  <editor-enriquecido
+    etiqueta="Texto de la observación"
+    idEtiqueta="etiqueta-nueva-observacion"
+    pista="Escriba una pregunta clara sobre la solicitud."
+    [minCaracteres]="minimo"
+    [rows]="4"
+    formControlName="contenido"
+  ></editor-enriquecido>
+  @if (
+    formulario.controls.contenido.touched &&
+    formulario.controls.contenido.errors
+  ) {
+    <p class="formulario__error" role="alert" aria-live="assertive">
+      @if (formulario.controls.contenido.hasError("required")) {
+        Escriba la observación antes de enviarla.
+      } @else {
+        La observación debe tener al menos {{ minimo }} caracteres.
+      }
+    </p>
+  }
+  @if (error) {
+    <p class="formulario__error" role="alert" aria-live="assertive">
+      {{ error }}
+    </p>
+  }
+  <div class="formulario__acciones">
+    <button
+      class="boton"
+      type="submit"
+      [disabled]="formulario.invalid || enviando"
+    >
+      @if (enviando) {
+        <mat-spinner
+          diameter="18"
+          aria-label="Enviando observación"
+        ></mat-spinner>
+        Enviando…
+      } @else {
+        <mat-icon aria-hidden="true">send</mat-icon>
+        Enviar observación
+      }
+    </button>
+  </div>
+</form>
