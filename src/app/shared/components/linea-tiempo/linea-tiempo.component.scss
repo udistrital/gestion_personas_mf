@@ -1,0 +1,346 @@
+@use "src/app/shared/styles/tokens" as t;
+
+/**
+ * Línea de tiempo vertical.
+ *
+ * Los tamaños y espaciados siguen la misma escala del detalle de solicitud
+ * (`shared/styles/_detalle-solicitud.scss`) para que la bitácora se lea igual
+ * que el resto de las pestañas, pero el componente no depende de ese mixin:
+ * es genérico y vive en `shared/`.
+ */
+
+:host {
+  display: block;
+}
+
+.linea-tiempo {
+  /* Posición del riel y sangría de las fichas (se ajustan por breakpoint). */
+  --linea-tiempo-riel: 0.6875rem;
+  --linea-tiempo-sangria: 2.5rem;
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Riel vertical continuo. */
+.linea-tiempo::before {
+  content: "";
+  position: absolute;
+  top: 1.25rem;
+  bottom: 1.25rem;
+  left: var(--linea-tiempo-riel);
+  width: 2px;
+  border-radius: 1px;
+  background: var(--agora-warning-border);
+}
+
+@media (min-width: t.$bp-md) {
+  .linea-tiempo {
+    --linea-tiempo-riel: 1.1875rem;
+    --linea-tiempo-sangria: 4rem;
+  }
+}
+
+.linea-tiempo__evento {
+  position: relative;
+  padding-left: var(--linea-tiempo-sangria);
+}
+
+/* Nodo del riel. */
+.linea-tiempo__nodo {
+  position: absolute;
+  top: 0.5rem;
+  left: calc(var(--linea-tiempo-riel) - 0.75rem);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+}
+
+.linea-tiempo__nodo mat-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  font-size: 0.875rem;
+}
+
+.linea-tiempo__nodo--primario {
+  background: var(--agora-primary);
+  color: var(--agora-on-primary);
+}
+
+.linea-tiempo__nodo--destacado {
+  background: var(--agora-primary-dark);
+  color: var(--agora-on-primary);
+}
+
+.linea-tiempo__nodo--neutro {
+  background: var(--agora-resalte-neutro);
+  color: var(--agora-texto-neutro);
+}
+
+/* Ficha del evento. */
+.linea-tiempo__ficha {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.25rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-superficie-neutra);
+}
+
+/* Cabecera: chips a la izquierda, fecha a la derecha. */
+.linea-tiempo__cabecera {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+@media (min-width: t.$bp-lg) {
+  .linea-tiempo__cabecera {
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+  }
+}
+
+.linea-tiempo__etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+/* Ordinal del evento ("Evento 3 (Más reciente)"). */
+.linea-tiempo__ordinal {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-resalte-neutro);
+  color: var(--agora-primary);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.linea-tiempo__reciente {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+/* Chips de categoría y de resultado. */
+.linea-tiempo__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.linea-tiempo__chip--neutro {
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-texto-neutro);
+}
+
+.linea-tiempo__chip--primario {
+  background: var(--agora-resalte-neutro);
+  color: var(--agora-primary);
+}
+
+.linea-tiempo__chip--exito {
+  border-color: var(--agora-success-border);
+  background: var(--agora-success-surface);
+  color: var(--agora-success);
+}
+
+.linea-tiempo__chip--advertencia {
+  border-color: var(--agora-warning-border);
+  background: var(--agora-warning-surface);
+  color: var(--agora-warning-text);
+}
+
+.linea-tiempo__flecha {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: var(--agora-texto-deshabilitado);
+  font-size: 0.875rem;
+}
+
+/* Transición de estado: estado anterior → estado actual. */
+.linea-tiempo__transicion {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Texto solo para lectores de pantalla. */
+.linea-tiempo__oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Fecha y hora del evento. */
+.linea-tiempo__fecha {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--agora-texto-neutro);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
+.linea-tiempo__fecha mat-icon {
+  width: 1rem;
+  height: 1rem;
+  font-size: 1rem;
+}
+
+/* Título del evento. */
+.linea-tiempo__titulo {
+  margin: 0;
+  color: var(--agora-primary);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+/* Detalle funcional. */
+.linea-tiempo__detalle {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.625rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-surface);
+}
+
+@media (min-width: t.$bp-sm) {
+  .linea-tiempo__detalle {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.linea-tiempo__texto {
+  margin: 0;
+  color: var(--agora-text);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+.linea-tiempo__texto--vacio {
+  color: var(--agora-texto-deshabilitado);
+}
+
+/* Chip adicional del detalle ("SICAPITAL OK"). */
+.linea-tiempo__sello {
+  flex: 0 0 auto;
+  padding: 0.25rem 0.625rem;
+  border: 1px solid var(--agora-success-border);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-success-surface);
+  color: var(--agora-success);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* Pie: autoría y evidencia. */
+.linea-tiempo__pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--agora-borde-tarjeta);
+}
+
+.linea-tiempo__autor {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-width: 0;
+}
+
+.linea-tiempo__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--agora-resalte-neutro);
+  color: var(--agora-text);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.linea-tiempo__autor-datos {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.linea-tiempo__usuario {
+  color: var(--agora-text);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.linea-tiempo__nombre {
+  color: var(--agora-texto-neutro);
+  font-weight: 400;
+}
+
+.linea-tiempo__rol {
+  color: var(--agora-texto-neutro);
+  font-size: 0.75rem;
+}
+
+.linea-tiempo__evidencia {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+  color: var(--agora-texto-neutro);
+  font-size: 0.75rem;
+}
+
+.linea-tiempo__evidencia mat-icon {
+  flex: 0 0 auto;
+  width: 1rem;
+  height: 1rem;
+  color: var(--agora-primary);
+  font-size: 1rem;
+}

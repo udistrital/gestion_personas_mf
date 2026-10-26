@@ -1,11 +1,17 @@
-<nav class="stepper-visual" [attr.aria-label]="label">
+<nav class="stepper-visual" [attr.aria-label]="label" [attr.data-columnas]="columnas">
   <button
     *ngFor="let paso of pasos; let ultimo = last"
     class="paso"
-    [class.paso--activo]="pasoActual === paso.numero"
+    [class.paso--activo]="pasoActual === paso.numero && !hayError(paso.numero)"
     [class.paso--completado]="pasoActual > paso.numero"
+    [class.paso--error]="hayError(paso.numero)"
     type="button"
     [attr.aria-current]="pasoActual === paso.numero ? 'step' : null"
+    [attr.aria-disabled]="esNavegable(paso.numero) ? null : 'true'"
+    [attr.aria-label]="
+      'Paso ' + paso.numero + ': ' + paso.nombre +
+      (esNavegable(paso.numero) ? '' : ' (sin alcanzar)')
+    "
     (click)="seleccionarPaso(paso.numero)"
   >
     <span class="paso__etiqueta">Paso {{ paso.numero }}</span>
@@ -13,19 +19,25 @@
     <span class="paso__fila">
       <span class="paso__indicador">
 
-        <ng-container *ngIf="pasoActual > paso.numero">
-          <mat-icon aria-hidden="true">check</mat-icon>
+        <ng-container *ngIf="hayError(paso.numero); else indicadorRegular">
+          <mat-icon aria-hidden="true">priority_high</mat-icon>
         </ng-container>
 
-        <ng-container *ngIf="pasoActual <= paso.numero">
-          <ng-container *ngIf="paso.icono; else mostrarNumero">
-            <mat-icon aria-hidden="true">{{ paso.icono }}</mat-icon>
+        <ng-template #indicadorRegular>
+          <ng-container *ngIf="pasoActual > paso.numero">
+            <mat-icon aria-hidden="true">check</mat-icon>
           </ng-container>
 
-          <ng-template #mostrarNumero>
-            <span class="paso__numero">{{ paso.numero }}</span>
-          </ng-template>
-        </ng-container>
+          <ng-container *ngIf="pasoActual <= paso.numero">
+            <ng-container *ngIf="paso.icono; else mostrarNumero">
+              <mat-icon aria-hidden="true">{{ paso.icono }}</mat-icon>
+            </ng-container>
+
+            <ng-template #mostrarNumero>
+              <span class="paso__numero">{{ paso.numero }}</span>
+            </ng-template>
+          </ng-container>
+        </ng-template>
 
       </span>
 
@@ -37,5 +49,6 @@
     </span>
 
     <span class="paso__nombre">{{ paso.nombre }}</span>
+    <span *ngIf="paso.subtitulo" class="paso__subtitulo">{{ paso.subtitulo }}</span>
   </button>
 </nav>

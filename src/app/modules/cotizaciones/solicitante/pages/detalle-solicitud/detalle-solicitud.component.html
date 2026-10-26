@@ -1,0 +1,165 @@
+<plantilla-pagina-contenedora
+  [breadcrumb]="breadcrumb"
+  title="Detalle de la solicitud"
+  [mostrarBotonRegresar]="true"
+  (regresar)="volver()"
+>
+  <div class="detalle">
+    @if (solicitud(); as s) {
+      <!-- ───────────────── Encabezado de página ───────────────── -->
+      <header class="cabecera" aria-labelledby="objeto-solicitud">
+        <div class="cabecera__principal">
+          <div class="cabecera__textos">
+            <div class="cabecera__antetitulo">
+              <span class="cabecera__modulo">Módulo de Contratación</span>
+              <span class="cabecera__sistema">SISTEMA INTEGRADO ÁGORA</span>
+            </div>
+
+            <h2 id="objeto-solicitud" class="cabecera__titulo">
+              {{ s.titulo }}
+            </h2>
+
+            <div class="cabecera__chips">
+              <span class="chip chip--recto">
+                <span class="cabecera__chip-etiqueta">N.° Solicitud:</span>
+                <span class="cabecera__chip-valor">{{ s.id }}</span>
+              </span>
+              <span class="chip chip--recto">
+                <span class="cabecera__chip-etiqueta">Vigencia:</span>
+                <span class="cabecera__chip-valor">{{ s.vigencia }}</span>
+              </span>
+              <span class="chip chip--recto">
+                <span class="cabecera__chip-etiqueta">Unidad Ejecutora:</span>
+                <span class="cabecera__chip-valor">{{ etiquetaUnidad() }}</span>
+              </span>
+              <span class="chip chip--recto">
+                <span class="cabecera__chip-etiqueta">Tipo:</span>
+                <span class="cabecera__chip-valor">{{ etiquetaTipo() }}</span>
+              </span>
+              <chip-estado [estado]="s.estado"></chip-estado>
+            </div>
+          </div>
+
+          <div class="cabecera__lateral">
+            <div class="metrica">
+              <span class="metrica__icono" aria-hidden="true">
+                <mat-icon>groups</mat-icon>
+              </span>
+              <div>
+                <div class="metrica__valor">{{ s.cotizacionesRecibidas }}</div>
+                <div class="metrica__texto">cotizaciones recibidas</div>
+              </div>
+            </div>
+
+            <div class="cabecera__acciones">
+              @if (puedeVerObservaciones()) {
+                <button
+                  class="boton-recto boton-recto--vino"
+                  type="button"
+                  (click)="ejecutarAccion('foro')"
+                >
+                  <mat-icon aria-hidden="true">visibility</mat-icon>
+                  <span>Ver observaciones</span>
+                </button>
+              }
+
+              <button
+                class="boton-recto"
+                type="button"
+                [matMenuTriggerFor]="menuAcciones"
+                aria-haspopup="true"
+              >
+                <span>Más acciones</span>
+                <mat-icon aria-hidden="true">arrow_drop_down</mat-icon>
+              </button>
+
+              <mat-menu #menuAcciones="matMenu" xPosition="before">
+                @for (accion of acciones(); track accion) {
+                  <button
+                    mat-menu-item
+                    type="button"
+                    [class.detalle__menu-item--peligro]="esPeligro(accion)"
+                    (click)="ejecutarAccion(accion)"
+                  >
+                    <mat-icon aria-hidden="true" color="primary">
+                      {{ ACCIONES[accion].icono }}
+                    </mat-icon>
+                    <span>{{ ACCIONES[accion].etiqueta }}</span>
+                  </button>
+                }
+                <button mat-menu-item type="button" (click)="descargarPdf()">
+                  <mat-icon aria-hidden="true" color="primary">
+                    picture_as_pdf
+                  </mat-icon>
+                  <span>Descargar solicitud (PDF)</span>
+                </button>
+              </mat-menu>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- ───────────────── Barra de pestañas ───────────────── -->
+      <nav class="pestanas" aria-label="Secciones del detalle de la solicitud">
+        <ul class="pestanas__lista">
+          @for (pestana of pestanas; track pestana.id) {
+            <li class="pestanas__li">
+              <a
+                class="pestanas__item"
+                [routerLink]="[pestana.id]"
+                routerLinkActive="pestanas__item--activa"
+                #enlace="routerLinkActive"
+                [attr.aria-current]="enlace.isActive ? 'page' : null"
+              >
+                <mat-icon aria-hidden="true">{{ pestana.icono }}</mat-icon>
+                <span>{{ pestana.etiqueta }}</span>
+                @if (contadorDe(pestana); as contador) {
+                  <span class="pestanas__contador" aria-hidden="true">
+                    {{ contador }}
+                  </span>
+                }
+              </a>
+            </li>
+          }
+        </ul>
+      </nav>
+
+      <!-- ───────────────── Contenido de la pestaña ───────────────── -->
+      <div class="detalle__contenido">
+        <router-outlet></router-outlet>
+      </div>
+    } @else if (vista() === "error") {
+      <!-- ───────────────── Estado: error de carga ───────────────── -->
+      <div class="estado" role="alert">
+        <mat-icon class="estado__icono estado__icono--error" aria-hidden="true">
+          error_outline
+        </mat-icon>
+        <h2 class="estado__titulo">No pudimos cargar el detalle</h2>
+        <p class="estado__texto">
+          {{
+            mensajeError() ||
+              "Ocurrió un problema al consultar la solicitud. Intente nuevamente."
+          }}
+        </p>
+        <button class="boton-recto" type="button" (click)="reintentar()">
+          <mat-icon aria-hidden="true">refresh</mat-icon>
+          <span>Reintentar</span>
+        </button>
+      </div>
+    } @else {
+      <!-- ───────────────── Estado: solicitud no encontrada ───────── -->
+      <div class="estado">
+        <mat-icon class="estado__icono" aria-hidden="true">search_off</mat-icon>
+        <h2 class="estado__titulo">Solicitud no encontrada</h2>
+        <p class="estado__texto">
+          La solicitud que busca no existe o ya no está disponible. Verifique el
+          enlace o vuelva al listado.
+        </p>
+        <button class="boton-recto" type="button" (click)="volver()">
+          <mat-icon aria-hidden="true">arrow_back</mat-icon>
+          <span>Volver al listado</span>
+        </button>
+      </div>
+    }
+  </div>
+</plantilla-pagina-contenedora>

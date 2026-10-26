@@ -1,0 +1,20 @@
+<section class="tarjeta-seccion">
+  <header class="tarjeta-seccion__cabecera">
+    <span class="tarjeta-seccion__icono" aria-hidden="true">
+      <mat-icon>{{ icono }}</mat-icon>
+    </span>
+    <div class="tarjeta-seccion__textos">
+      <h2 class="tarjeta-seccion__titulo">{{ titulo }}</h2>
+      @if (subtitulo) {
+        <p class="tarjeta-seccion__subtitulo">{{ subtitulo }}</p>
+      }
+    </div>
+    <div class="tarjeta-seccion__acciones">
+      <ng-content select="[acciones]"></ng-content>
+    </div>
+  </header>
+
+  <div class="tarjeta-seccion__contenido">
+    <ng-content></ng-content>
+  </div>
+</section>

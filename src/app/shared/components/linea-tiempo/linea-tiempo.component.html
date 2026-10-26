@@ -1,0 +1,119 @@
+<ol class="linea-tiempo" [attr.aria-label]="etiquetaLista">
+  @for (evento of eventos; track evento.id; let indice = $index) {
+    <li class="linea-tiempo__evento">
+      <!-- Nodo del riel: decorativo, el estado lo comunica el chip-estado. -->
+      <span
+        [class]="'linea-tiempo__nodo linea-tiempo__nodo--' + evento.tono"
+        aria-hidden="true"
+      >
+        <mat-icon>{{ evento.icono }}</mat-icon>
+      </span>
+
+      <article class="linea-tiempo__ficha">
+        <!-- Cabecera: ordinal, categoría, estados y fecha -->
+        <div class="linea-tiempo__cabecera">
+          <div class="linea-tiempo__etiquetas">
+            <span class="linea-tiempo__ordinal">
+              {{ prefijoEvento }} {{ numero(indice) }}
+              @if (orden === "descendente" && indice === 0) {
+                <span class="linea-tiempo__reciente">(Más reciente)</span>
+              }
+            </span>
+
+            @for (etiqueta of evento.etiquetas ?? []; track etiqueta.texto) {
+              <span
+                [class]="
+                  'linea-tiempo__chip linea-tiempo__chip--' +
+                  (etiqueta.tono ?? 'neutro')
+                "
+              >
+                {{ etiqueta.texto }}
+              </span>
+            }
+
+            @if (cambiaEstado(evento)) {
+              <span class="linea-tiempo__transicion">
+                <span class="linea-tiempo__oculto">Estado anterior:</span>
+                <chip-estado [estado]="evento.estadoAnterior!"></chip-estado>
+                <mat-icon class="linea-tiempo__flecha" aria-hidden="true">
+                  arrow_forward
+                </mat-icon>
+              </span>
+            }
+            @if (evento.estado) {
+              <span class="linea-tiempo__transicion">
+                <span class="linea-tiempo__oculto">Estado actual:</span>
+                <chip-estado [estado]="evento.estado"></chip-estado>
+              </span>
+            }
+
+            @if (evento.resultado; as resultado) {
+              <span
+                [class]="
+                  'linea-tiempo__chip linea-tiempo__chip--' +
+                  (resultado.tono ?? 'neutro')
+                "
+              >
+                {{ resultado.texto }}
+              </span>
+            }
+          </div>
+
+          <div class="linea-tiempo__fecha">
+            <mat-icon aria-hidden="true">schedule</mat-icon>
+            <time [attr.datetime]="evento.fechaIso">{{ evento.fecha }}</time>
+          </div>
+        </div>
+
+        <h3 class="linea-tiempo__titulo">{{ evento.titulo }}</h3>
+
+        <!-- Detalle funcional: puede traer HTML del editor enriquecido -->
+        <div class="linea-tiempo__detalle">
+          @if (evento.detalle) {
+            <p
+              class="linea-tiempo__texto"
+              [innerHTML]="evento.detalle | htmlSeguro"
+            ></p>
+          } @else {
+            <p class="linea-tiempo__texto linea-tiempo__texto--vacio">—</p>
+          }
+
+          @if (evento.sello) {
+            <span class="linea-tiempo__sello">{{ evento.sello }}</span>
+          }
+        </div>
+
+        <!-- Pie: autoría y evidencia -->
+        @if (evento.autor || evento.evidencia) {
+          <footer class="linea-tiempo__pie">
+            @if (evento.autor; as autor) {
+              <div class="linea-tiempo__autor">
+                <span class="linea-tiempo__avatar" aria-hidden="true">
+                  {{ iniciales(autor) }}
+                </span>
+                <div class="linea-tiempo__autor-datos">
+                  <span class="linea-tiempo__usuario">
+                    {{ autor.usuario }}
+                    @if (autor.nombre) {
+                      <span class="linea-tiempo__nombre">
+                        ({{ autor.nombre }})
+                      </span>
+                    }
+                  </span>
+                  <span class="linea-tiempo__rol">Rol: {{ autor.rol }}</span>
+                </div>
+              </div>
+            }
+
+            @if (evento.evidencia; as evidencia) {
+              <span class="linea-tiempo__evidencia">
+                <mat-icon aria-hidden="true">{{ evidencia.icono }}</mat-icon>
+                <span>{{ evidencia.texto }}</span>
+              </span>
+            }
+          </footer>
+        }
+      </article>
+    </li>
+  }
+</ol>

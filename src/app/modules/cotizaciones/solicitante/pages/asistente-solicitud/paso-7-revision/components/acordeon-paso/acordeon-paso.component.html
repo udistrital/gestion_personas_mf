@@ -1,0 +1,147 @@
+<details class="acordeon" [attr.open]="resumen.abierto ? '' : null">
+  <summary class="acordeon__cabecera">
+    <span class="acordeon__identidad">
+      <span class="acordeon__icono" aria-hidden="true">
+        <mat-icon>{{ resumen.icono }}</mat-icon>
+      </span>
+
+      <span class="acordeon__textos">
+        <span class="acordeon__titulo-fila">
+          <span class="acordeon__titulo">{{ resumen.titulo }}</span>
+          @if (resumen.chip; as chip) {
+            <span class="acordeon__chip py-1 rounded" [class]="'acordeon__chip--' + (chip.tono ?? 'vino')">
+              <mat-icon aria-hidden="true">{{ chip.icono }}</mat-icon>
+              <span>{{ chip.texto }}</span>
+            </span>
+          }
+        </span>
+        <span class="acordeon__descripcion">{{ resumen.descripcion }}</span>
+      </span>
+    </span>
+
+    <span class="acordeon__acciones">
+      <button
+        class="acordeon__editar"
+        type="button"
+        [attr.aria-label]="'Editar ' + resumen.titulo"
+        (click)="editar.emit(resumen.numero); $event.preventDefault()"
+      >
+        <mat-icon aria-hidden="true">edit</mat-icon>
+        <span>Editar</span>
+      </button>
+      <mat-icon class="acordeon__flecha" aria-hidden="true">expand_more</mat-icon>
+    </span>
+  </summary>
+
+  <div class="acordeon__cuerpo">
+    <div class="acordeon__panel">
+      @if (resumen.etiquetas?.length) {
+        <div class="acordeon__encabezado-etiquetas">
+          @for (campo of resumen.campos; track campo.etiqueta) {
+            <div class="dato">
+              <span class="dato__etiqueta">{{ campo.etiqueta }}</span>
+              <span class="dato__valor" [class]="'dato__valor--' + (campo.tipo ?? 'texto')">
+                {{ campo.valor }}
+              </span>
+            </div>
+          }
+          <div class="acordeon__etiquetas">
+            @for (etiqueta of resumen.etiquetas; track etiqueta) {
+              <span class="acordeon__pildora">{{ etiqueta }}</span>
+            }
+          </div>
+        </div>
+      } @else {
+        <div class="acordeon__grilla">
+          @for (campo of resumen.campos; track campo.etiqueta) {
+            <div class="dato" [class.dato--ancho]="campo.tipo === 'destacado'">
+              <span class="dato__etiqueta">{{ campo.etiqueta }}</span>
+              <span class="dato__valor" [class]="'dato__valor--' + (campo.tipo ?? 'texto')">
+                {{ campo.valor }}
+              </span>
+            </div>
+          }
+        </div>
+      }
+
+      @if (resumen.codigos?.length) {
+        <div class="acordeon__bloque">
+          <span class="acordeon__bloque-etiqueta">Códigos CIIU vinculados</span>
+          <ul class="acordeon__lista">
+            @for (codigo of resumen.codigos; track codigo) {
+              <li class="acordeon__lista-item">{{ codigo }}</li>
+            }
+          </ul>
+        </div>
+      }
+
+      @if (resumen.plantilla; as plantilla) {
+        <div class="acordeon__bloque">
+          <span class="acordeon__bloque-etiqueta">Plantilla validada</span>
+          <span class="acordeon__plantilla">
+            <mat-icon aria-hidden="true">table_view</mat-icon>
+            <span class="acordeon__plantilla-textos">
+              <span class="acordeon__plantilla-nombre">{{ plantilla.nombre }}</span>
+              <span class="acordeon__plantilla-estado">{{ plantilla.estado }}</span>
+            </span>
+          </span>
+        </div>
+      }
+
+      @if (resumen.desembolsos?.length) {
+        <div class="acordeon__bloque">
+          <span class="acordeon__bloque-etiqueta">
+            Distribución porcentual de pagos (Total: 100%)
+          </span>
+          <ul class="acordeon__lista">
+            @for (desembolso of resumen.desembolsos; track desembolso) {
+              <li class="acordeon__lista-item">{{ desembolso }}</li>
+            }
+          </ul>
+        </div>
+      }
+
+      @if (resumen.archivos?.length) {
+        <div class="acordeon__bloque">
+          <span class="acordeon__bloque-etiqueta">
+            Archivos adjuntos institucionales ({{ resumen.archivos?.length }})
+          </span>
+          <div class="acordeon__archivos">
+            @for (archivo of resumen.archivos; track archivo.nombre) {
+              <span class="archivo">
+                <mat-icon aria-hidden="true">{{ archivo.icono }}</mat-icon>
+                <span class="archivo__textos">
+                  <span class="archivo__nombre">{{ archivo.nombre }}</span>
+                  <span class="archivo__peso">{{ archivo.peso }}</span>
+                </span>
+              </span>
+            }
+          </div>
+        </div>
+      }
+
+      @if (resumen.requisitos?.length) {
+        <div class="acordeon__bloque">
+          <span class="acordeon__bloque-etiqueta">
+            Requisitos exigidos al proponente
+          </span>
+          <div class="acordeon__requisitos">
+            @for (requisito of resumen.requisitos; track requisito.nombre) {
+              <span class="acordeon__requisito">
+                <mat-icon
+                  aria-hidden="true"
+                  [class.acordeon__requisito-icono--suave]="!requisito.obligatorio"
+                >
+                  {{ requisito.obligatorio ? "check" : "help_outline" }}
+                </mat-icon>
+                <span>
+                  {{ requisito.nombre }} ({{ requisito.clasificacion }})
+                </span>
+              </span>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</details>

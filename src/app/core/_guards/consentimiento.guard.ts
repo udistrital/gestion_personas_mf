@@ -12,6 +12,6 @@ export class ConsentimientoGuard implements CanActivate {
   canActivate(): boolean | UrlTree {
     return this.consentimientoService.aceptado()
       ? true
-      : this.router.createUrlTree(['/proveedores']);
+      : this.router.createUrlTree(['/proveedores/registro-inicio-persona']);
   }
 }

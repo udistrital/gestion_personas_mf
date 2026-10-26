@@ -7,7 +7,7 @@ import { RegistroPersonaNaturalComponent } from "./components/registro-persona-n
 
 const routes: Routes = [
   {
-    path: "",
+    path: "registro-inicio-persona",
     component: RegistroInicioComponent,
   },
   {

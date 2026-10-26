@@ -16,7 +16,7 @@
 }
 
 .rp-tarjeta-banda {
-  background-color: var(--agora-surface-highlight);
+  background-color: color-mix(in srgb, var(--agora-text-muted) 5%, var(--agora-surface));
   border-bottom: 1px solid color-mix(in srgb, var(--agora-border-strong) 30%, transparent);
 }
 
@@ -140,7 +140,7 @@
 
 .rp-tarjeta-pie {
   padding: 16px;
-  background-color: var(--agora-surface-highlight);
+  background-color: color-mix(in srgb, var(--agora-text-muted) 5%, var(--agora-surface));
   border-top: 1px solid color-mix(in srgb, var(--agora-border-strong) 30%, transparent);
 }
 

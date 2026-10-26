@@ -708,7 +708,7 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
   }
 
   regresarARegistroInicial(): void {
-    void this.router.navigateByUrl("/proveedores");
+    void this.router.navigateByUrl("/proveedores/registro-inicio-persona");
   }
 
   ngOnInit(): void {

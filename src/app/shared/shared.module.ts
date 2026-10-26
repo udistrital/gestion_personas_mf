@@ -12,6 +12,14 @@ import { BarraAccionesComponent } from "./components/formulario/barra-acciones/b
 import { DireccionGeneradaComponent } from "./components/formulario/direccion-generada/direccion-generada.component";
 import { CampoDineroComponent } from "./components/formulario/campo-dinero/campo-dinero.component";
 import { ValidacionCampoDirective } from "./directives/validacion-campo.directive";
+import { ChipEstadoComponent } from "./components/chip-estado/chip-estado.component";
+import { LineaTiempoComponent } from "./components/linea-tiempo/linea-tiempo.component";
+import { ListadoFiltrosComponent } from "./components/listado-filtros/listado-filtros.component";
+import { AsistentePasosComponent } from "./components/asistente-pasos/asistente-pasos.component";
+import { BannerPasoComponent } from "./components/banner-paso/banner-paso.component";
+import { EditorEnriquecidoComponent } from "./components/editor-enriquecido/editor-enriquecido.component";
+import { HtmlSeguroPipe } from "./pipes/html-seguro.pipe";
+import { QuillModule } from "ngx-quill";
 
 @NgModule({
   declarations: [
@@ -23,6 +31,13 @@ import { ValidacionCampoDirective } from "./directives/validacion-campo.directiv
     DireccionGeneradaComponent,
     CampoDineroComponent,
     ValidacionCampoDirective,
+    ChipEstadoComponent,
+    LineaTiempoComponent,
+    ListadoFiltrosComponent,
+    AsistentePasosComponent,
+    BannerPasoComponent,
+    EditorEnriquecidoComponent,
+    HtmlSeguroPipe,
   ],
   imports: [
     CommonModule,
@@ -30,6 +45,7 @@ import { ValidacionCampoDirective } from "./directives/validacion-campo.directiv
     ReactiveFormsModule,
     MaterialModule,
     IconosModule,
+    QuillModule.forRoot(),
   ],
   exports: [
     CommonModule,
@@ -46,6 +62,14 @@ import { ValidacionCampoDirective } from "./directives/validacion-campo.directiv
     DireccionGeneradaComponent,
     CampoDineroComponent,
     ValidacionCampoDirective,
+    ChipEstadoComponent,
+    LineaTiempoComponent,
+    ListadoFiltrosComponent,
+    AsistentePasosComponent,
+    BannerPasoComponent,
+    EditorEnriquecidoComponent,
+    QuillModule,
+    HtmlSeguroPipe,
   ],
 })
 export class SharedModule {}

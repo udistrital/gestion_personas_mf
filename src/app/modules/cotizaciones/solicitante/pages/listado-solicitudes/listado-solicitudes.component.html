@@ -1,0 +1,312 @@
+<plantilla-pagina-contenedora [breadcrumb]="breadcrumb">
+  <section class="listado" aria-labelledby="titulo-listado">
+    <!-- 1. Encabezado -->
+    <header class="listado__encabezado">
+      <div class="listado__textos">
+        <h1 id="titulo-listado" class="listado__titulo">
+          Mis solicitudes de cotización
+        </h1>
+        <p class="listado__descripcion">
+          Consulte, procese y haga seguimiento a sus solicitudes de contratación
+          y compras institucionales.
+        </p>
+      </div>
+      <button
+        class="listado__boton-nueva"
+        type="button"
+        (click)="nuevaSolicitud()"
+      >
+        <mat-icon aria-hidden="true">add</mat-icon>
+        <span>Nueva solicitud</span>
+      </button>
+    </header>
+
+    <!-- 2. Pestañas institucionales -->
+    <div class="listado__pestanas">
+      <div class="listado__pestanas-izquierda" role="tablist">
+        <button
+          class="listado__pestana listado__pestana--activa"
+          role="tab"
+          type="button"
+          aria-selected="true"
+        >
+          <span>Mis solicitudes</span>
+          <span class="listado__contador" aria-hidden="true">{{ total }}</span>
+        </button>
+        <button
+          class="listado__pestana"
+          role="tab"
+          type="button"
+          aria-selected="false"
+          (click)="pestanaPendientes()"
+        >
+          <span>Pendientes de validación</span>
+          <span class="listado__contador" aria-hidden="true">3</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 3. Filtros -->
+    <listado-filtros
+      [campos]="camposFiltro"
+      nota="Por defecto solo se muestra la vigencia actual (2026). Seleccione otra vigencia o el histórico consolidado para consultar solicitudes de años anteriores."
+      (filtrar)="filtrar($event)"
+      (limpiar)="limpiar()"
+    />
+
+    <!-- 4. Tabla -->
+    <div class="listado__tabla-bloque">
+      <div class="listado__tarjeta">
+        @if (vista() === "cargando") {
+          <div class="listado__carga" aria-busy="true" aria-live="polite">
+            <mat-spinner diameter="40"></mat-spinner>
+            <span class="listado__solo-lectura">Cargando solicitudes…</span>
+          </div>
+        } @else if (vista() === "error") {
+          <div class="listado__estado listado__estado--error" role="alert">
+            <mat-icon class="listado__estado-icono" aria-hidden="true">
+              error_outline
+            </mat-icon>
+            <h2 class="listado__estado-titulo">
+              No pudimos cargar tus solicitudes
+            </h2>
+            <p class="listado__estado-texto">
+              {{
+                mensajeError ||
+                  "Ocurrió un problema al consultar el listado. Intente nuevamente."
+              }}
+            </p>
+            <button
+              class="listado__boton-estado"
+              type="button"
+              (click)="cargar()"
+            >
+              <mat-icon aria-hidden="true">refresh</mat-icon>
+              <span>Reintentar</span>
+            </button>
+          </div>
+        } @else if (total === 0) {
+          <div class="listado__estado">
+            <mat-icon class="listado__estado-icono" aria-hidden="true">
+              assignment
+            </mat-icon>
+            <h2 class="listado__estado-titulo">
+              No se encontraron solicitudes
+            </h2>
+            <p class="listado__estado-texto">
+              No hay solicitudes que coincidan con los criterios de búsqueda.
+            </p>
+            <button
+              class="listado__boton-estado"
+              type="button"
+              (click)="limpiar()"
+            >
+              <mat-icon aria-hidden="true">restart_alt</mat-icon>
+              <span>Limpiar filtros</span>
+            </button>
+          </div>
+        } @else {
+          <div class="listado__scroll">
+            <table
+              class="listado__tabla"
+              aria-label="Listado de solicitudes de cotización"
+            >
+              <thead>
+                <tr>
+                  <th
+                    scope="col"
+                    class="listado__th listado__th--orden"
+                    [attr.aria-sort]="
+                      ordenNumero === 'desc' ? 'descending' : 'ascending'
+                    "
+                  >
+                    <button
+                      class="listado__orden"
+                      type="button"
+                      (click)="ordenarPorNumero()"
+                      title="Ordenar por número de solicitud"
+                    >
+                      <span>N.° Solicitud</span>
+                      <mat-icon aria-hidden="true">swap_vert</mat-icon>
+                    </button>
+                  </th>
+                  <th scope="col" class="listado__th">Vigencia</th>
+                  <th scope="col" class="listado__th">Unidad Ejecutora</th>
+                  <th scope="col" class="listado__th">
+                    Título / Objeto de la Solicitud
+                  </th>
+                  <th scope="col" class="listado__th">Apertura</th>
+                  <th scope="col" class="listado__th">Cierre</th>
+                  <th scope="col" class="listado__th">Dependencia</th>
+                  <th scope="col" class="listado__th">Tipo de Cotización</th>
+                  <th scope="col" class="listado__th">Estado</th>
+                  <th scope="col" class="listado__th listado__th--acciones">
+                    Acciones
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (fila of filasVisibles; track fila.id) {
+                  <tr class="listado__fila">
+                    <td class="listado__td listado__td--numero">{{ fila.id }}</td>
+                    <td class="listado__td listado__td--muted">
+                      {{ fila.vigencia }}
+                    </td>
+                    <td class="listado__td listado__td--muted">
+                      {{ etiquetaUnidad(fila.unidadEjecutora) }}
+                    </td>
+                    <td class="listado__td listado__td--titulo">
+                      {{ fila.titulo }}
+                    </td>
+                    <td class="listado__td listado__td--muted">
+                      {{ fila.apertura || "-" }}
+                    </td>
+                    <td class="listado__td listado__td--muted">
+                      {{ fila.cierre || "-" }}
+                    </td>
+                    <td class="listado__td listado__td--muted">
+                      {{ fila.dependencia }}
+                    </td>
+                    <td class="listado__td">
+                      <span class="listado__tipo">
+                        {{ etiquetaTipo(fila.tipoCotizacion) }}
+                      </span>
+                    </td>
+                    <td class="listado__td">
+                      <chip-estado [estado]="fila.estado" />
+                    </td>
+                    <td class="listado__td listado__td--acciones">
+                      <button
+                        mat-icon-button
+                        type="button"
+                        class="listado__boton-acciones"
+                        [class.listado__boton-acciones--activo]="
+                          filaMenuAbierto === fila.id
+                        "
+                        [matMenuTriggerFor]="menuAcciones"
+                        [attr.aria-label]="'Acciones de la solicitud ' + fila.id"
+                        (menuOpened)="abrirMenuAcciones(fila.id)"
+                        (menuClosed)="cerrarMenuAcciones()"
+                      >
+                        <mat-icon aria-hidden="true" color="primary">more_vert</mat-icon>
+                      </button>
+                      <mat-menu
+                        #menuAcciones="matMenu"
+                        panelClass="listado__menu-acciones"
+                        xPosition="before"
+                      >
+                        @for (accion of accionesDe(fila); track accion) {
+                          <button
+                            mat-menu-item
+                            type="button"
+                            [class.listado__menu-item--peligro]="esPeligro(accion)"
+                            (click)="ejecutarAccion(accion, fila)"
+                          >
+                            <mat-icon aria-hidden="true" color="primary">
+                              {{ ACCIONES[accion].icono }}
+                            </mat-icon>
+                            <span>{{ ACCIONES[accion].etiqueta }}</span>
+                          </button>
+                        }
+                      </mat-menu>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <div
+            class="listado__paginador"
+            *ngIf="total > 0 || vista() === 'listo'"
+            [class.listado__paginador--oculto]="vista() !== 'listo'"
+          >
+            <div class="listado__paginador-info">
+              <span>Mostrar:</span>
+              <div class="listado__paginador-select">
+                <select
+                  [value]="porPagina"
+                  (change)="cambiarPorPagina($event)"
+                  aria-label="Número de solicitudes por página"
+                >
+                  @for (opcion of opcionesPorPagina; track opcion) {
+                    <option [value]="opcion">{{ opcion }}</option>
+                  }
+                </select>
+                <mat-icon aria-hidden="true">arrow_drop_down</mat-icon>
+              </div>
+              <span>por página</span>
+            </div>
+
+            <div class="listado__paginador-rango">
+              Mostrando
+              <span class="listado__paginador-rango-valor">{{
+                rangoInicio
+              }}</span
+              >–<span class="listado__paginador-rango-valor">{{ rangoFin }}</span>
+              de
+              <span class="listado__paginador-rango-valor">{{ total }}</span>
+              solicitudes
+            </div>
+
+            <nav
+              class="listado__paginador-navegacion"
+              aria-label="Paginación de solicitudes"
+            >
+              <button
+                class="listado__paginador-boton"
+                type="button"
+                title="Primera página"
+                [disabled]="pagina === 0"
+                (click)="primeraPagina()"
+              >
+                <mat-icon aria-hidden="true">first_page</mat-icon>
+              </button>
+              <button
+                class="listado__paginador-boton"
+                type="button"
+                title="Anterior"
+                [disabled]="pagina === 0"
+                (click)="paginaAnterior()"
+              >
+                <mat-icon aria-hidden="true">chevron_left</mat-icon>
+              </button>
+
+              @for (p of paginasVisibles; track p) {
+                <button
+                  class="listado__paginador-boton listado__paginador-boton--pagina"
+                  type="button"
+                  [class.listado__paginador-boton--activo]="
+                    p === pagina + 1
+                  "
+                  (click)="irAPagina(p - 1)"
+                >
+                  {{ p }}
+                </button>
+              }
+
+              <button
+                class="listado__paginador-boton"
+                type="button"
+                title="Siguiente"
+                [disabled]="pagina + 1 >= totalPaginas"
+                (click)="paginaSiguiente()"
+              >
+                <mat-icon aria-hidden="true">chevron_right</mat-icon>
+              </button>
+              <button
+                class="listado__paginador-boton"
+                type="button"
+                title="Última página"
+                [disabled]="pagina + 1 >= totalPaginas"
+                (click)="ultimaPagina()"
+              >
+                <mat-icon aria-hidden="true">last_page</mat-icon>
+              </button>
+            </nav>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+</plantilla-pagina-contenedora>

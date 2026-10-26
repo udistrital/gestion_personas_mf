@@ -1,0 +1,593 @@
+@use "src/app/shared/styles/tokens" as t;
+@use "src/app/shared/styles/registro-formulario" as registro-formulario;
+@use "src/app/shared/styles/paso-asistente" as paso-asistente;
+
+@include registro-formulario.styles;
+@include paso-asistente.styles;
+
+:host {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Aviso: el plazo se calculó sin el calendario de festivos ─────────────── */
+.revision__aviso-calendario {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  box-sizing: border-box;
+  width: min(100% - 3rem, 86.25rem);
+  margin: 0 auto;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--agora-warning-border);
+  border-left: 3px solid var(--agora-warning-border);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-warning-surface);
+  color: var(--agora-warning-text);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.revision__aviso-calendario mat-icon {
+  flex: 0 0 auto;
+  width: 1.125rem;
+  height: 1.125rem;
+  font-size: 1.125rem;
+}
+
+/* ── Rejilla principal de la revisión (8/12 + 4/12) ──────────────────────── */
+.rejilla-revision {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+  box-sizing: border-box;
+  width: min(100% - 3rem, 86.25rem);
+  margin: 0 auto;
+  align-items: start;
+}
+
+@media (min-width: t.$bp-xl) {
+  .rejilla-revision {
+    grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
+  }
+}
+
+.revision__acordeones {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.revision__lateral {
+  min-width: 0;
+}
+
+@media (min-width: t.$bp-xl) {
+  .revision__lateral {
+    position: sticky;
+    top: 4.5rem;
+  }
+}
+
+/* ── Chips propios del paso 7 ────────────────────────────────────────────── */
+.chip--vino {
+  border-color: var(--agora-primary);
+  background: var(--agora-primary);
+  color: var(--agora-on-primary);
+}
+
+.chip--neutro {
+  border-color: var(--agora-borde-control);
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-texto-neutro);
+}
+
+.chip--pendiente {
+  border-color: var(--agora-warning-border);
+  background: var(--agora-warning-surface);
+  color: var(--agora-warning-text);
+}
+
+/* ══════════════════════ VISTA: REVISIÓN Y PROCESAR ═════════════════════════ */
+
+/* ═════════════════════ VISTA: SOLICITUD PROCESADA CON ÉXITO ════════════════ */
+
+.exito {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  box-sizing: border-box;
+  width: min(100% - 3rem, 64rem);
+  margin: 0 auto;
+}
+
+.exito__principal {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  padding: 2rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-surface);
+  box-shadow: var(--agora-sombra-xs);
+  text-align: center;
+}
+
+.exito__halo {
+  position: absolute;
+  top: -6rem;
+  right: -6rem;
+  width: 20rem;
+  height: 20rem;
+  border-radius: 50%;
+  background: var(--agora-surface-highlight);
+  filter: blur(3rem);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.exito__sello {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 5rem;
+  height: 5rem;
+  margin-bottom: 1.5rem;
+  border: 2px solid var(--agora-success-border);
+  border-radius: 999px;
+  background: var(--agora-success-surface);
+  color: var(--agora-success);
+  box-shadow: var(--agora-sombra-xs);
+}
+
+.exito__sello mat-icon {
+  width: 2.625rem;
+  height: 2.625rem;
+  font-size: 2.625rem;
+}
+
+.exito__titulo {
+  margin: 0;
+  color: var(--agora-text);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.exito__subtitulo {
+  max-width: 42rem;
+  margin: 0.25rem 0 1.5rem;
+  color: var(--agora-texto-neutro);
+  font-size: t.$fuente-lg;
+  line-height: 1.6;
+}
+
+.exito__radicado {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 1.25rem;
+  border-radius: 999px;
+  background: var(--agora-primary);
+  color: var(--agora-on-primary);
+  box-shadow: var(--agora-sombra-xs);
+  font-size: t.$fuente-xl;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.exito__radicado mat-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  font-size: 1.125rem;
+}
+
+.exito__separador {
+  width: 1px;
+  height: 1rem;
+  margin: 0 0.25rem;
+  background: rgb(255 255 255 / 30%);
+}
+
+.exito__copiar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--agora-primary-light);
+  font: inherit;
+  font-size: t.$fuente-xs;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.exito__copiar:hover {
+  color: var(--agora-on-primary);
+}
+
+.exito__copiar mat-icon {
+  width: 1rem;
+  height: 1rem;
+  font-size: 1rem;
+}
+
+.exito__aviso-copia {
+  margin-top: 0.5rem;
+  color: var(--agora-primary);
+  font-size: t.$fuente-xs;
+}
+
+.exito__timeline {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1rem;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 42rem;
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-superficie-neutra);
+  text-align: left;
+}
+
+@media (min-width: t.$bp-sm) {
+  .exito__timeline {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.exito__timeline-bloque {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.exito__timeline-icono {
+  flex: 0 0 auto;
+  padding: 0.375rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-sm);
+  background: var(--agora-surface);
+  color: var(--agora-primary);
+}
+
+.exito__timeline-divisor {
+  width: 100%;
+  height: 1px;
+  background: var(--agora-border);
+}
+
+@media (min-width: t.$bp-sm) {
+  .exito__timeline-divisor {
+    width: 1px;
+    height: 2rem;
+  }
+}
+
+.exito__timeline-etiqueta {
+  display: block;
+  color: var(--agora-texto-neutro);
+  font-size: t.$fuente-xs;
+  text-transform: uppercase;
+}
+
+.exito__timeline-valor {
+  display: block;
+  color: var(--agora-text);
+  font-size: t.$fuente-xl;
+  font-weight: 600;
+}
+
+.exito__timeline-valor--codigo {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: t.$fuente-lg;
+}
+
+/* ── Resumen de la radicación ────────────────────────────────────────────── */
+.exito__resumen {
+  padding: 2rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-surface);
+  box-shadow: var(--agora-sombra-xs);
+}
+
+.exito__resumen-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.exito__resumen-titulo-grupo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.exito__resumen-icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-primary);
+}
+
+.exito__resumen-titulo {
+  margin: 0;
+  color: var(--agora-primary);
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.exito__datos {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.5rem;
+  margin: 0;
+}
+
+@media (min-width: t.$bp-md) {
+  .exito__datos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: t.$bp-xl) {
+  .exito__datos {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.exito__dato {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-superficie-neutra);
+}
+
+.exito__dato--ancho {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: t.$bp-md) {
+  .exito__dato--ancho {
+    grid-column: span 2;
+  }
+}
+
+@media (min-width: t.$bp-xl) {
+  .exito__dato--ancho {
+    grid-column: span 3;
+  }
+}
+
+.exito__dato-etiqueta {
+  color: var(--agora-texto-neutro);
+  font-size: t.$fuente-xs;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.exito__dato-valor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0;
+  color: var(--agora-text);
+  font-size: t.$fuente-xl;
+  font-weight: 600;
+}
+
+.exito__dato-valor--vino {
+  color: var(--agora-primary);
+}
+
+.exito__dato-valor--parrafo {
+  font-size: t.$fuente-md;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.exito__dato-nota {
+  color: var(--agora-texto-neutro);
+  font-size: t.$fuente-sm;
+  font-weight: 400;
+}
+
+.exito__plazo {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+@media (max-width: t.$bp-md) {
+  .exito__plazo {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+.exito__plazo-texto {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--agora-text);
+  font-size: t.$fuente-md;
+}
+
+.exito__plazo-texto mat-icon {
+  color: var(--agora-primary);
+}
+
+.exito__plazo-texto strong {
+  color: var(--agora-primary);
+  font-weight: 700;
+}
+
+.exito__plazo-chip {
+  padding: 0.25rem 0.625rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: 999px;
+  background: var(--agora-surface);
+  color: var(--agora-primary);
+  font-size: t.$fuente-xs;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ── Notificaciones despachadas ──────────────────────────────────────────── */
+.exito__notificaciones {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.5rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-surface);
+  box-shadow: var(--agora-sombra-xs);
+}
+
+.exito__notificaciones-icono {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-primary);
+}
+
+.exito__notificaciones-cuerpo {
+  min-width: 0;
+}
+
+.exito__notificaciones-titulo {
+  margin: 0 0 0.25rem;
+  color: var(--agora-text);
+  font-size: t.$fuente-xl;
+  font-weight: 700;
+}
+
+.exito__notificaciones-texto {
+  margin: 0;
+  color: var(--agora-texto-neutro);
+  font-size: t.$fuente-md;
+  line-height: 1.55;
+}
+
+.exito__etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.exito__etiqueta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-sm);
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-text);
+  font-size: t.$fuente-xs;
+}
+
+.exito__etiqueta mat-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: var(--agora-success);
+  font-size: 0.875rem;
+}
+
+/* ── Acciones y aviso técnico ────────────────────────────────────────────── */
+.exito__acciones {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+@media (min-width: t.$bp-sm) {
+  .exito__acciones {
+    flex-direction: row;
+  }
+}
+
+.exito__acciones .boton-recto {
+  width: 100%;
+  justify-content: center;
+}
+
+@media (min-width: t.$bp-sm) {
+  .exito__acciones .boton-recto {
+    width: auto;
+    min-height: 2.625rem;
+    font-size: t.$fuente-xl;
+  }
+}
+
+.boton-recto--plano {
+  border-color: transparent;
+  background: transparent;
+}
+
+.exito__aviso-tecnico {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-left: 3px solid var(--agora-primary);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-superficie-neutra);
+  box-shadow: var(--agora-sombra-xs);
+}
+
+.exito__aviso-tecnico mat-icon {
+  flex: 0 0 auto;
+  color: var(--agora-primary);
+}
+
+.exito__aviso-tecnico p {
+  margin: 0;
+  color: var(--agora-texto-neutro);
+  font-size: t.$fuente-sm;
+  line-height: 1.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .exito__halo {
+    filter: none;
+  }
+}

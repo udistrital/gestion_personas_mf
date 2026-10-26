@@ -1,0 +1,226 @@
+@if (solicitud(); as s) {
+  <encabezado-pestana
+    icono="payments"
+    titulo="Presupuesto"
+    descripcion="Certificado de disponibilidad presupuestal, imputación del rubro y avales electrónicos sincronizados con SICAPITAL."
+  >
+    <ng-container acciones>
+      <button
+        class="boton-recto"
+        type="button"
+        (click)="descargarCertificado()"
+      >
+        <mat-icon aria-hidden="true">download</mat-icon>
+        <span>Descargar Certificado CDP (.pdf)</span>
+      </button>
+    </ng-container>
+  </encabezado-pestana>
+
+  @if (presupuesto(); as p) {
+    <!-- ───────────── Cifra destacada: valor del CDP ───────────── -->
+    <tarjeta-seccion
+      icono="account_balance_wallet"
+      titulo="Disponibilidad presupuestal"
+      subtitulo="Certificado expedido por SICAPITAL para esta contratación"
+    >
+      <div class="spotlight">
+        <div class="spotlight__principal">
+          <div class="bloque-cifra">
+            <span class="bloque-cifra__rotulo">
+              <mat-icon aria-hidden="true">account_balance_wallet</mat-icon>
+              <span>Valor del CDP (Certificado de Disponibilidad
+                Presupuestal)</span>
+            </span>
+            <span class="bloque-cifra__valor">{{ moneda(p.valorCdp) }}</span>
+          </div>
+
+          @if (p.sincronizado) {
+            <span class="chip chip--exito">
+              <mat-icon aria-hidden="true">verified</mat-icon>
+              <span>{{ p.mensajeSincronizacion }}</span>
+            </span>
+          }
+
+          <p class="spotlight__descripcion">{{ p.descripcionCdp }}</p>
+        </div>
+
+        <dl class="panel-metadatos">
+          <div class="panel-metadatos__item">
+            <dt class="dato__etiqueta">N.° CDP</dt>
+            <dd class="panel-metadatos__valor">{{ p.saldo.numeroCdp }}</dd>
+          </div>
+          <div class="panel-metadatos__item">
+            <dt class="dato__etiqueta">Fecha de Expedición</dt>
+            <dd class="panel-metadatos__valor">
+              {{ p.saldo.fechaExpedicion }}
+            </dd>
+          </div>
+          <div class="panel-metadatos__item">
+            <dt class="dato__etiqueta">Saldo Disponible Rubro</dt>
+            <dd class="panel-metadatos__valor panel-metadatos__valor--saldo">
+              {{ moneda(p.saldo.saldoDisponible) }}
+            </dd>
+          </div>
+        </dl>
+      </div>
+    </tarjeta-seccion>
+
+    <!-- ───────────── Imputación y desagregación ───────────── -->
+    <tarjeta-seccion
+      icono="table_chart"
+      titulo="Imputación y Desagregación Presupuestal"
+      subtitulo="Detalle del rubro oficial asociado en el Sistema Integrado de Presupuesto (SICAPITAL)"
+    >
+      <ng-container acciones>
+        <span class="chip">Solo lectura</span>
+      </ng-container>
+
+      <div class="tabla-detalle__scroll">
+        <table
+          class="tabla-detalle"
+          aria-label="Imputación y desagregación presupuestal"
+        >
+          <thead>
+            <tr>
+              <th scope="col" class="tabla-detalle__th">Vigencia</th>
+              <th scope="col" class="tabla-detalle__th">
+                Solicitud Necesidad
+              </th>
+              <th scope="col" class="tabla-detalle__th">N.° CDP</th>
+              <th scope="col" class="tabla-detalle__th tabla-detalle__th--numero">
+                Valor (COP)
+              </th>
+              <th scope="col" class="tabla-detalle__th">Dependencia</th>
+              <th scope="col" class="tabla-detalle__th">Rubro Presupuestal</th>
+              <th
+                scope="col"
+                class="tabla-detalle__th tabla-detalle__th--numero"
+              >
+                Estado
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (fila of p.imputaciones; track fila.numeroCdp) {
+              <tr class="tabla-detalle__fila">
+                <td class="tabla-detalle__td tabla-detalle__celda-titulo">
+                  {{ fila.vigencia }}
+                </td>
+                <td class="tabla-detalle__td tabla-detalle__td--fuerte">
+                  {{ fila.solicitudNecesidad }}
+                </td>
+                <td class="tabla-detalle__td tabla-detalle__celda-titulo">
+                  {{ fila.numeroCdp }}
+                </td>
+                <td
+                  class="tabla-detalle__td tabla-detalle__td--numero tabla-detalle__td--fuerte"
+                >
+                  {{ moneda(fila.valor) }}
+                </td>
+                <td class="tabla-detalle__td">
+                  <span class="tabla-detalle__celda-titulo">
+                    {{ fila.dependencia }}
+                  </span>
+                  <span class="tabla-detalle__celda-nota">
+                    {{ fila.dependenciaArea }}
+                  </span>
+                </td>
+                <td class="tabla-detalle__td">
+                  <span class="tabla-detalle__celda-titulo">
+                    {{ fila.rubro }}
+                  </span>
+                  <span class="tabla-detalle__celda-nota">
+                    {{ fila.rubroNombre }}
+                  </span>
+                </td>
+                <td class="tabla-detalle__td tabla-detalle__td--numero">
+                  <span [class]="claseEstado(fila.tono)">
+                    {{ fila.estado }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="tabla-detalle__pie">
+        <span>Total presupuestado asignado para esta contratación:</span>
+        <span class="tabla-detalle__total">
+          {{ moneda(totalPresupuestado()) }}
+        </span>
+      </div>
+    </tarjeta-seccion>
+
+    <!-- ───────────── Banner normativo ───────────── -->
+    <div class="banner-normativo" role="note">
+      <mat-icon class="banner-normativo__icono" aria-hidden="true">
+        warning
+      </mat-icon>
+      <div class="banner-normativo__textos">
+        <span class="banner-normativo__titulo">Atención normativa:</span>
+        <p class="banner-normativo__texto">{{ p.textoNormativo }}</p>
+      </div>
+    </div>
+
+    <!-- ───────────── Firmas y aval presupuestal ───────────── -->
+    <tarjeta-seccion
+      icono="draw"
+      titulo="Firmas y Aval Presupuestal Electrónico"
+      subtitulo="Validación y refrendación digital conforme a la infraestructura PKI institucional de la Universidad"
+    >
+      <div class="panel-firmas">
+        @for (firma of p.firmas; track firma.rol) {
+          <article class="firma">
+            <div class="firma__cabecera">
+              <div class="firma__datos">
+                <span class="dato__etiqueta">{{ firma.rol }}</span>
+                <span class="firma__nombre">{{ firma.nombre }}</span>
+                <span class="firma__cargo">{{ firma.cargo }}</span>
+              </div>
+              <mat-icon class="firma__icono" aria-hidden="true">
+                {{ firma.icono }}
+              </mat-icon>
+            </div>
+
+            <div class="firma__sello">
+              <span
+                class="firma__sello-estado"
+                [class.firma__sello-estado--rechazado]="!firma.aprobado"
+              >
+                <mat-icon aria-hidden="true">verified_user</mat-icon>
+                <span>
+                  {{ firma.aprobado ? "Firma Digital PKI Válida" : "Firma no válida" }}
+                </span>
+              </span>
+              <span class="firma__hash">{{ firma.hash }}</span>
+            </div>
+
+            <div class="firma__pie">
+              <span>Fecha refrendación: {{ firma.fechaRefrendacion }}</span>
+              <span
+                class="firma__resultado"
+                [class.firma__resultado--rechazado]="!firma.aprobado"
+              >
+                {{ firma.aprobado ? "Aprobado" : "Rechazado" }}
+              </span>
+            </div>
+          </article>
+        }
+      </div>
+    </tarjeta-seccion>
+  } @else {
+    <!-- ───────────── Estado: sin información presupuestal ───────────── -->
+    <div class="estado-vacio">
+      <mat-icon class="estado-vacio__icono" aria-hidden="true">
+        account_balance_wallet
+      </mat-icon>
+      <h2 class="estado-vacio__titulo">Sin información presupuestal</h2>
+      <p class="estado-vacio__texto">
+        Esta solicitud aún no tiene un Certificado de Disponibilidad
+        Presupuestal (CDP) asociado. Cuando el proceso avance en SICAPITAL, aquí
+        se mostrará la imputación del rubro y las firmas de aval electrónico.
+      </p>
+    </div>
+  }
+}

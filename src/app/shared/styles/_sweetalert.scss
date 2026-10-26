@@ -1,0 +1,40 @@
+.alertaConfirmarBoton {
+  background-color: var(--md-primary-500) !important;
+}
+
+.alertaCancelarBoton {
+  background-color: #f3ebeb !important;
+  color: var(--md-primary-500) !important;
+}
+
+.alertaIconoConfirmacion {
+  color: #af7978 !important;
+  border-color: #af7978 !important;
+}
+
+.alertaIconoSuccess {
+  color: #9ebf77 !important;
+  border-color: #9ebf77 !important;
+}
+
+.alertaIconoWarn {
+  color: #fbbb3e !important;
+  border-color: #fbbb3e !important;
+}
+
+.anchoModal {
+  width: 650px !important;  
+}
+
+.barraModal {
+  max-height: 250px !important;
+  overflow: auto !important;
+  text-align: left !important;
+}
+
+
+// SweetAlert por detras de los MatDialog. Se eleva el contenedor de SweetAlert por
+// encima del overlay del CDK. Respalda el ajuste aplicado en AlertService (didOpen).
+.swal2-container {
+  z-index: 20000 !important;
+}
