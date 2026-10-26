@@ -1,4 +1,8 @@
 import { EstadoSolicitud } from "src/app/core/constants/estados-solicitud.const";
+import type {
+  DatosEdicionSolicitud,
+  ModificacionPendiente,
+} from "./edicion-solicitud.model";
 import {
   ContadoresPestanas,
   ContratacionDetalle,
@@ -27,6 +31,14 @@ export interface Solicitud {
   readonly dependencia: string;
   readonly tipoCotizacion: TipoCotizacion;
   readonly estado: EstadoSolicitud;
+  /** Versión visible del expediente ("v1.0"); las filas antiguas la omiten. */
+  readonly version?: string;
+  /** Número de revisión monotónico; arranca en 1. */
+  readonly revision?: number;
+  /** Última modificación formateada ("14/02/2026 09:12 COT"). */
+  readonly ultimaModificacion?: string;
+  /** Modificación restringida enviada y aún no aprobada (S-08). */
+  readonly modificacionPendiente?: ModificacionPendiente;
 }
 
 /** Criterios del formulario de filtros de S-01. */
@@ -76,6 +88,13 @@ export interface SolicitudDetalle extends Solicitud {
   /** Bitácora de la pestaña 7; `null` si la solicitud aún no tiene eventos. */
   readonly historial: HistorialDetalle | null;
   readonly contadores: ContadoresPestanas;
+  /**
+   * Fotografía editable de la solicitud (S-04).
+   *
+   * La capa de datos la entrega armada para que el asistente de edición no
+   * tenga que reconstruir el formulario desde las vistas de solo lectura.
+   */
+  readonly edicion?: DatosEdicionSolicitud;
 }
 
 export interface UnidadEjecutora {

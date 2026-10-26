@@ -7,13 +7,24 @@ import { ROLES_DISPONIBLES } from "../constants/roles.const";
 })
 export class RolService {
   private roles: string[] = [];
+  /** true cuando la carga de roles terminó (con o sin roles). */
+  private cargado = false;
 
   constructor(private readonly autenticationService: ImplicitAutenticationService) { }
 
   async cargarRoles() {
-    const rolesObtenidos: any = await this.autenticationService.getRole();
-    
-    this.roles = ROLES_DISPONIBLES.filter((rol) => rolesObtenidos.includes(rol));
+    try {
+      const rolesObtenidos: any = await this.autenticationService.getRole();
+
+      this.roles = ROLES_DISPONIBLES.filter((rol) => rolesObtenidos.includes(rol));
+    } finally {
+      this.cargado = true;
+    }
+  }
+
+  /** true si los roles ya se consultaron al proveedor de identidad. */
+  estaCargado(): boolean {
+    return this.cargado;
   }
 
   getRoles(): string[] {

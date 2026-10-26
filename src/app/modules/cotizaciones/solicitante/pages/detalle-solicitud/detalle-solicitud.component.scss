@@ -280,3 +280,60 @@
 .detalle__menu-item--peligro {
   color: var(--agora-error);
 }
+
+/* ── Modificación pendiente de aprobación (S-04 / S-08) ──────────────────── */
+.pendiente {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--agora-warning-border);
+  border-left: 4px solid var(--agora-warning-border);
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-warning-surface);
+  box-shadow: var(--agora-sombra-xs);
+}
+
+.pendiente__icono {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  background: var(--agora-surface);
+  color: var(--agora-warning-text);
+}
+
+.pendiente__textos {
+  min-width: 0;
+}
+
+.pendiente__titulo {
+  margin: 0 0 0.25rem;
+  color: var(--agora-warning-text);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.pendiente__texto {
+  margin: 0;
+  color: var(--agora-text);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.pendiente__chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+@media (max-width: t.$bp-sm) {
+  .pendiente {
+    flex-direction: column;
+  }
+}

@@ -36,6 +36,14 @@
                 <span class="cabecera__chip-etiqueta">Tipo:</span>
                 <span class="cabecera__chip-valor">{{ etiquetaTipo() }}</span>
               </span>
+              @if (versionActual(); as version) {
+                <span class="chip chip--recto">
+                  <span class="cabecera__chip-etiqueta">Versión:</span>
+                  <span class="cabecera__chip-valor">
+                    {{ version }} · Rev. {{ revisionActual() }}
+                  </span>
+                </span>
+              }
               <chip-estado [estado]="s.estado"></chip-estado>
             </div>
           </div>
@@ -84,7 +92,7 @@
                     <mat-icon aria-hidden="true" color="primary">
                       {{ ACCIONES[accion].icono }}
                     </mat-icon>
-                    <span>{{ ACCIONES[accion].etiqueta }}</span>
+                    <span>{{ etiquetaAccion(accion) }}</span>
                   </button>
                 }
                 <button mat-menu-item type="button" (click)="descargarPdf()">
@@ -98,6 +106,50 @@
           </div>
         </div>
       </header>
+
+      @if (s.modificacionPendiente; as pendiente) {
+        <!--
+          Modificación restringida enviada y aún no aprobada (S-04/S-08).
+          El expediente conserva la versión publicada; esta tarjeta informa la
+          propuesta en curso para que el usuario sepa que hay un cambio en cola.
+        -->
+        <section
+          class="pendiente"
+          role="status"
+          aria-labelledby="pendiente-titulo"
+        >
+          <span class="pendiente__icono" aria-hidden="true">
+            <mat-icon>hourglass_top</mat-icon>
+          </span>
+          <div class="pendiente__textos">
+            <h3 id="pendiente-titulo" class="pendiente__titulo">
+              Modificación pendiente de aprobación
+            </h3>
+            <p class="pendiente__texto">
+              El {{ pendiente.solicitadaEl }} se radicó una propuesta de
+              modificación con
+              <strong>{{ pendiente.cambios }}</strong>
+              {{ pendiente.cambios === 1 ? "cambio" : "cambios" }}.
+              El expediente mantiene la versión publicada hasta que la Oficina
+              de Contratación la apruebe.
+            </p>
+            <div class="pendiente__chips">
+              <span class="chip chip--recto">
+                <mat-icon aria-hidden="true">history</mat-icon>
+                <span>Propuesta {{ pendiente.version }}</span>
+              </span>
+              <span class="chip chip--recto">
+                <mat-icon aria-hidden="true">badge</mat-icon>
+                <span>{{ pendiente.solicitadaPor }}</span>
+              </span>
+              <etiqueta-por-definir
+                texto="Aprobación RF-016 / S-08"
+                detalle="el flujo de aprobación aún no está implementado"
+              ></etiqueta-por-definir>
+            </div>
+          </div>
+        </section>
+      }
 
       <!-- ───────────────── Barra de pestañas ───────────────── -->
       <nav class="pestanas" aria-label="Secciones del detalle de la solicitud">

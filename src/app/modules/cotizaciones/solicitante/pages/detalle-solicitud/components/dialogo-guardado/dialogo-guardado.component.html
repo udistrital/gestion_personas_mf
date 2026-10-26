@@ -1,0 +1,112 @@
+<section class="dialogo" aria-labelledby="dialogo-guardado-titulo">
+  <header class="dialogo__cabecera">
+    <span class="dialogo__icono" aria-hidden="true">
+      <mat-icon>check</mat-icon>
+    </span>
+
+    <h2 id="dialogo-guardado-titulo" class="dialogo__titulo">
+      Cambios guardados correctamente
+    </h2>
+
+    <span class="dialogo__hash">
+      <mat-icon aria-hidden="true">verified_user</mat-icon>
+      <span>{{ resultado.hash }}</span>
+    </span>
+
+    <p class="dialogo__subtitulo">{{ tituloAccion }}</p>
+  </header>
+
+  <div class="dialogo__cuerpo">
+    <div class="dialogo__resumen">
+      <span class="dialogo__resumen-titulo">
+        Resumen de la versión actualizada
+      </span>
+
+      <div class="dialogo__fila">
+        <span class="dialogo__fila-etiqueta">
+          <mat-icon aria-hidden="true">description</mat-icon>
+          <span>Solicitud</span>
+        </span>
+        <span class="dialogo__fila-valor">{{ datos.solicitudId }}</span>
+      </div>
+
+      <div class="dialogo__fila">
+        <span class="dialogo__fila-etiqueta">
+          <mat-icon aria-hidden="true">history</mat-icon>
+          <span>Versión</span>
+        </span>
+        <span class="dialogo__fila-valor dialogo__fila-valor--vino">
+          {{ resultado.version }}
+          <span class="dialogo__revision">Revisión {{ resultado.revision }}</span>
+        </span>
+      </div>
+
+      <div class="dialogo__fila">
+        <span class="dialogo__fila-etiqueta">
+          <mat-icon aria-hidden="true">fact_check</mat-icon>
+          <span>Campos modificados</span>
+        </span>
+        <span class="dialogo__fila-valor">{{ resultado.cambios }}</span>
+      </div>
+
+      <div class="dialogo__fila">
+        <span class="dialogo__fila-etiqueta">
+          <mat-icon aria-hidden="true">schedule</mat-icon>
+          <span>Fecha del registro</span>
+        </span>
+        <span class="dialogo__fila-valor">{{ resultado.fecha }}</span>
+      </div>
+
+      @if (resultado.grupos.length) {
+        <ul class="dialogo__lista">
+          @for (grupo of resultado.grupos; track grupo.paso) {
+            <li class="dialogo__grupo">
+              <mat-icon aria-hidden="true">{{ grupo.icono }}</mat-icon>
+              <span>{{ grupo.titulo }}</span>
+              <span class="dialogo__grupo-contador">
+                {{ grupo.cambios.length }}
+              </span>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+
+    <div class="dialogo__nota" role="note">
+      <mat-icon aria-hidden="true">lock</mat-icon>
+      <p>
+        El registro quedó firmado con hash de integridad y cifrado SSL 256-bit
+        en el expediente electrónico de la Universidad Distrital.
+      </p>
+    </div>
+
+    <div class="dialogo__provisional">
+      <etiqueta-por-definir
+        texto="Descarga del certificado en PDF"
+        detalle="pendiente del gestor documental institucional"
+      ></etiqueta-por-definir>
+    </div>
+  </div>
+
+  <footer class="dialogo__pie">
+    @if (esBorrador) {
+      <button
+        class="boton boton--secundario"
+        type="button"
+        (click)="continuarEditando()"
+      >
+        <mat-icon aria-hidden="true">edit</mat-icon>
+        <span>Continuar editando borrador</span>
+      </button>
+    }
+
+    <button
+      class="boton boton--primario"
+      type="button"
+      (click)="volverAlDetalle()"
+    >
+      <span>Volver al detalle de la solicitud</span>
+      <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+    </button>
+  </footer>
+</section>

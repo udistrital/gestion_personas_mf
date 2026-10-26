@@ -1,0 +1,131 @@
+<section class="dialogo" aria-labelledby="dialogo-descartar-titulo">
+  <header class="dialogo__cabecera">
+    <span class="dialogo__icono" aria-hidden="true">
+      <mat-icon>history</mat-icon>
+    </span>
+
+    <h2 id="dialogo-descartar-titulo" class="dialogo__titulo">
+      Descartar cambios de la edición
+    </h2>
+
+    <span class="dialogo__sello">
+      <mat-icon aria-hidden="true">description</mat-icon>
+      <span>{{ datos.solicitudId }} · {{ etiquetaModo }}</span>
+    </span>
+  </header>
+
+  <div class="dialogo__cuerpo">
+    <p class="dialogo__aviso">
+      Elija qué desea conservar. El avance de esta sesión que aún no se ha
+      guardado se descarta siempre; si elige una versión anterior, también se
+      descartan los guardados posteriores.
+    </p>
+
+    <fieldset class="versiones">
+      <legend class="versiones__titulo">Versiones de la solicitud</legend>
+
+      @for (version of versiones; track version.version) {
+        <label
+          class="version"
+          [class.version--activa]="seleccion() === version.version"
+          [class.version--actual]="version.actual"
+        >
+          <input
+            class="version__radio"
+            type="radio"
+            name="version-descarte"
+            [value]="version.version"
+            [checked]="seleccion() === version.version"
+            (change)="seleccionar(version.version)"
+          />
+
+          <span class="version__texto">
+            <span class="version__cabecera">
+              <span class="version__nombre">{{ version.version }}</span>
+              <span class="version__etiqueta">{{ version.etiqueta }}</span>
+            </span>
+            <span class="version__detalle">
+              Revisión {{ version.revision }} · {{ version.fecha || "Sin fecha" }}
+            </span>
+          </span>
+
+          @if (version.actual) {
+            <span class="version__chip version__chip--neutro">
+              {{ datos.diferencias.total }} sin guardar
+            </span>
+          } @else {
+            <span class="version__chip">
+              {{ version.diferencias.total }} guardados
+            </span>
+          }
+        </label>
+      }
+    </fieldset>
+
+    @if (!hayVersionesAnteriores) {
+      <p class="versiones__aviso">
+        <mat-icon aria-hidden="true">info</mat-icon>
+        <span>
+          No hay versiones anteriores a las que volver: el descarte solo elimina
+          el avance de esta sesión y conserva la versión vigente.
+        </span>
+      </p>
+    }
+
+    <div class="dialogo__riesgo">
+      <h3 id="dialogo-descartar-riesgo" class="dialogo__riesgo-titulo">
+        {{ tituloCambios }}
+      </h3>
+
+      @if (cambios.total === 0) {
+        <p class="dialogo__vacio">
+          @if (esVigente) {
+            No se detectaron cambios sin guardar en esta sesión.
+          } @else {
+            La versión elegida es equivalente a la vigente en los campos
+            comparados.
+          }
+        </p>
+      } @else {
+        <ul class="dialogo__lista" aria-labelledby="dialogo-descartar-riesgo">
+          @for (grupo of cambios.grupos; track grupo.paso) {
+            <li class="dialogo__grupo">
+              <span class="dialogo__grupo-titulo">
+                <mat-icon aria-hidden="true">{{ grupo.icono }}</mat-icon>
+                <span>{{ grupo.titulo }}</span>
+                <span class="dialogo__grupo-contador">
+                  {{ grupo.cambios.length }}
+                </span>
+              </span>
+              <ul class="dialogo__sublista">
+                @for (cambio of grupo.cambios; track cambio.etiqueta) {
+                  <li class="dialogo__cambio">{{ cambio.etiqueta }}</li>
+                }
+              </ul>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  </div>
+
+  <footer class="dialogo__pie">
+    <button
+      class="boton boton--secundario dialogo__seguir"
+      type="button"
+      (click)="seguirEditando()"
+    >
+      <mat-icon aria-hidden="true">edit</mat-icon>
+      <span>Seguir editando</span>
+    </button>
+
+    <button
+      class="boton boton--peligro dialogo__descartar"
+      type="button"
+      (click)="descartar()"
+    >
+      <mat-icon aria-hidden="true">{{ iconoAccion }}</mat-icon>
+      <span>{{ tituloAccion }}</span>
+    </button>
+  </footer>
+</section>

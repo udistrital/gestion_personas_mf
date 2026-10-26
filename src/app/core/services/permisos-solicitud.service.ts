@@ -1,6 +1,8 @@
 import { Injectable } from "@angular/core";
 import {
+  ACCIONES_SOLICITUD,
   AccionSolicitud,
+  AccionSolicitudMeta,
   ESTADOS_SOLICITUD,
   EstadoSolicitud,
   MATRIZ_ACCIONES_POR_ESTADO,
@@ -26,5 +28,34 @@ export class PermisosSolicitudService {
   /** Texto visible de un estado (para `aria-label` y textos de apoyo). */
   etiquetaEstado(estado: EstadoSolicitud): string {
     return ESTADOS_SOLICITUD[estado]?.etiqueta ?? estado;
+  }
+
+  /**
+   * Etiqueta contextual de una acción.
+   *
+   * S-04 necesita distinguir "Modificar" (borrador) de "Solicitar
+   * modificación" (solicitud ya enviada) sin duplicar esa regla en las
+   * pantallas.
+   */
+  etiquetaAccion(
+    accion: AccionSolicitud,
+    solicitud: SolicitudPermisable,
+  ): string {
+    const meta = ACCIONES_SOLICITUD[accion];
+    return meta.etiquetaPorEstado?.[solicitud.estado] ?? meta.etiqueta;
+  }
+
+  /**
+   * Ruta contextual de una acción.
+   *
+   * Devuelve la plantilla con `:id` para que la pantalla sustituya el
+   * identificador; `null` cuando la acción todavía no tiene destino.
+   */
+  rutaAccion(
+    accion: AccionSolicitud,
+    solicitud: SolicitudPermisable,
+  ): string | null {
+    const meta: AccionSolicitudMeta = ACCIONES_SOLICITUD[accion];
+    return meta.rutaPorEstado?.[solicitud.estado] ?? meta.ruta;
   }
 }

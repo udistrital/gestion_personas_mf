@@ -177,22 +177,69 @@
   </section>
 } @else {
   <!-- ═══════════════════════ VISTA: REVISIÓN Y PROCESAR ═══════════════════ -->
-  <banner-paso
-    icono="task_alt"
-    titulo="Paso 7: Revise la información antes de procesar"
-    descripcion="Al procesar, la solicitud se enviará a los proveedores que cumplan las características y quedará radicada formalmente ante la Universidad Distrital Francisco José de Caldas."
-  >
-    <ng-container acciones>
-      <span class="chip chip--recto">
-        <mat-icon aria-hidden="true">verified</mat-icon>
-        <span>RF-015 Cierre y Radicación</span>
-      </span>
-      <span class="chip chip--recto">
-        <mat-icon aria-hidden="true">school</mat-icon>
-        <span>Convocatoria Docente &amp; Administrativa</span>
-      </span>
-    </ng-container>
-  </banner-paso>
+  @if (esEdicion) {
+    <!-- Banner propio de la edición (S-04): no altera el de la creación. -->
+    <banner-paso
+      icono="edit_note"
+      [titulo]="tituloBannerEdicion"
+      [descripcion]="descripcionBannerEdicion"
+    >
+      <ng-container acciones>
+        <span class="chip chip--recto">
+          <mat-icon aria-hidden="true">description</mat-icon>
+          <span>{{ solicitudId }}</span>
+        </span>
+        <span class="chip chip--neutro">
+          <mat-icon aria-hidden="true">history</mat-icon>
+          <span>{{ versionActual }}</span>
+        </span>
+        <span class="chip" [class.chip--bloqueo]="esRestringida">
+          <mat-icon aria-hidden="true">
+            {{ esRestringida ? "lock" : "edit_note" }}
+          </mat-icon>
+          <span>{{ modoEtiqueta }}</span>
+        </span>
+      </ng-container>
+    </banner-paso>
+
+    @if (esRestringida) {
+      <p class="revision__aviso-edicion" role="note">
+        <mat-icon aria-hidden="true">lock</mat-icon>
+        <span>
+          La modificación de una solicitud enviada queda
+          <strong>pendiente de aprobación</strong>. Solo se modifican los bienes
+          y servicios (paso 3) y la fecha de cierre (paso 2); el resto del
+          expediente se conserva sin cambios.
+        </span>
+        <etiqueta-por-definir
+          texto="Aprobación RF-016 / S-08"
+          detalle="el flujo de aprobación aún no está implementado"
+        ></etiqueta-por-definir>
+      </p>
+    }
+
+    <resumen-diferencias
+      [diferencias]="diferencias"
+      [modo]="modoEdicion ?? 'completa'"
+    ></resumen-diferencias>
+  } @else {
+    <banner-paso
+      icono="task_alt"
+      titulo="Paso 7: Revise la información antes de procesar"
+      descripcion="Al procesar, la solicitud se enviará a los proveedores que cumplan las características y quedará radicada formalmente ante la Universidad Distrital Francisco José de Caldas."
+    >
+      <ng-container acciones>
+        <span class="chip chip--recto">
+          <mat-icon aria-hidden="true">verified</mat-icon>
+          <span>RF-015 Cierre y Radicación</span>
+        </span>
+        <span class="chip chip--recto">
+          <mat-icon aria-hidden="true">school</mat-icon>
+          <span>Convocatoria Docente &amp; Administrativa</span>
+        </span>
+      </ng-container>
+    </banner-paso>
+  }
 
   <!-- Aviso: el plazo se calculó sin el calendario de festivos -->
   @if (calendarioDegradado()) {
@@ -211,6 +258,7 @@
       @for (acordeon of acordeones(); track acordeon.numero) {
         <acordeon-paso
           [resumen]="acordeon"
+          [editable]="pasoEditable(acordeon.numero)"
           (editar)="alEditar($event)"
         ></acordeon-paso>
       }
@@ -224,4 +272,92 @@
       ></lista-verificacion>
     </div>
   </div>
+
+  @if (esEdicion) {
+    <!-- Justificación obligatoria del cambio (S-04, mínimo provisional) -->
+    <section class="justificacion" aria-labelledby="justificacion-titulo">
+      <header class="justificacion__cabecera">
+        <h3 id="justificacion-titulo" class="justificacion__titulo">
+          <mat-icon aria-hidden="true">history_edu</mat-icon>
+          <span>Justificación de la modificación</span>
+        </h3>
+        <etiqueta-por-definir
+          texto="Reglas de trazabilidad de cambios (RF-016)"
+          detalle="el registro de auditoría del cambio aún no está definido"
+        ></etiqueta-por-definir>
+      </header>
+
+      <p class="justificacion__descripcion">
+        @if (sinCambios) {
+          No hay cambios respecto de la versión guardada: no se solicitará
+          justificación y la solicitud permanecerá igual.
+        } @else {
+          Explique el motivo de la modificación. La justificación es obligatoria
+          para habilitar el guardado; las reglas de trazabilidad del cambio
+          (RF-016) aún están por definir.
+        }
+      </p>
+
+      <span id="justificacion-etiqueta" class="justificacion__etiqueta">
+        Motivo de la modificación <b aria-hidden="true">*</b>
+      </span>
+      <editor-enriquecido
+        [formControl]="justificacion"
+        [idEtiqueta]="'justificacion-etiqueta'"
+        pista="Describa qué cambió y por qué."
+        [ayuda]="'Mínimo ' + minimoJustificacion + ' caracteres; el formato del editor no cuenta.'"
+        [minCaracteres]="minimoJustificacion"
+        [rows]="4"
+        (blur)="alSalirJustificacion()"
+      ></editor-enriquecido>
+
+      @if (justificacionInvalida) {
+        <p class="justificacion__error" role="alert">
+          <mat-icon aria-hidden="true">error</mat-icon>
+          <span>
+            La justificación es obligatoria y debe tener al menos
+            {{ minimoJustificacion }} caracteres (sin contar el formato).
+          </span>
+        </p>
+      }
+
+      @if (errorGuardado) {
+        <p class="justificacion__error" role="alert">
+          <mat-icon aria-hidden="true">error</mat-icon>
+          <span>{{ errorGuardado }}</span>
+        </p>
+      }
+
+      @if (guardando) {
+        <p class="justificacion__estado" role="status" aria-live="polite">
+          <mat-icon aria-hidden="true">hourglass_top</mat-icon>
+          <span>Guardando los cambios de la solicitud…</span>
+        </p>
+      }
+    </section>
+
+    <!-- Pie propio de la edición: el asistente oculta su barra en este paso. -->
+    <barra-acciones-formulario
+      [mostrarRegreso]="false"
+      [esUltimoPaso]="true"
+      [tituloFinal]="tituloGuardar"
+      [iconoFinal]="iconoGuardar"
+      [estadoMensaje]="
+        guardando
+          ? 'Guardando los cambios de la solicitud'
+          : sinCambios
+            ? 'Sin cambios: la solicitud no se modifica'
+            : 'Cambios listos para guardar'
+      "
+      estadoDetalle="La nueva versión se registra al confirmar · Sesión cifrada SSL 256-bit"
+      [deshabilitarContinuar]="guardadoDeshabilitado"
+      [ayudaContinuar]="ayudaGuardado"
+      [mostrarGuardar]="false"
+      [mostrarDescartar]="true"
+      tituloDescartar="Descartar cambios"
+      [deshabilitarDescartar]="guardando"
+      (descartar)="descartar()"
+      (finalizar)="guardar()"
+    ></barra-acciones-formulario>
+  }
 }
