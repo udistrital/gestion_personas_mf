@@ -9,13 +9,7 @@ import {
   signal,
 } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import {
-  AbstractControl,
-  FormControl,
-  ValidationErrors,
-  ValidatorFn,
-  Validators,
-} from "@angular/forms";
+import { FormControl, Validators } from "@angular/forms";
 import { MatDialog } from "@angular/material/dialog";
 import { formatoFechaCorta } from "../../../../models/datos-generales.model";
 import {
@@ -56,6 +50,10 @@ import {
 } from "../../../../models/documentos.model";
 import { AlertService } from "src/app/shared/services/alert.service";
 import { textoPlanoDesdeHtml } from "src/app/shared/utils/texto-plano";
+import {
+  justificacionMinima,
+  MIN_CARACTERES_JUSTIFICACION,
+} from "src/app/shared/validators/justificacion.validator";
 import { CalendarioFestivosService } from "../../../../services/calendario-festivos.service";
 import type {
   ModoEdicionSolicitud,
@@ -77,20 +75,7 @@ const ESPERA_RADICACION = 1200;
  * (RF-016) como "por definir", así que se adopta el mínimo de S-02 para los
  * textos largos.
  */
-export const MIN_JUSTIFICACION_EDICION = 20;
-
-/**
- * Valida que la justificación tenga el mínimo de caracteres.
- *
- * El editor enriquecido entrega HTML: se cuenta el texto sin etiquetas para no
- * dar por válida una justificación vacía con formato.
- */
-export function justificacionMinima(minimo: number): ValidatorFn {
-  return (control: AbstractControl): ValidationErrors | null => {
-    const texto = textoPlanoDesdeHtml(String(control.value ?? "")).trim();
-    return texto.length >= minimo ? null : { justificacionCorta: { minimo } };
-  };
-}
+export const MIN_JUSTIFICACION_EDICION = MIN_CARACTERES_JUSTIFICACION;
 
 /**
  * Paso 7 del asistente: "Revisión y procesar".

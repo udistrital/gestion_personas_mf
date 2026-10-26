@@ -1,11 +1,15 @@
 import { Injectable } from "@angular/core";
 import { Observable, of, throwError, delay } from "rxjs";
-import { EstadoSolicitud } from "src/app/core/constants/estados-solicitud.const";
+import {
+  EstadoSolicitud,
+  MATRIZ_ACCIONES_POR_ESTADO,
+} from "src/app/core/constants/estados-solicitud.const";
 import {
   FiltroSolicitudes,
   ResultadoListado,
   Solicitud,
   SolicitudDetalle,
+  DatosCancelacionSolicitud,
   TipoCotizacion,
   tipoNecesidad,
 } from "../models/solicitud.model";
@@ -68,6 +72,7 @@ import {
 } from "../models/datos-generales.model";
 import { DiferenciasSolicitudService } from "./diferencias-solicitud.service";
 import { textoPlanoDesdeHtml } from "src/app/shared/utils/texto-plano";
+import { MIN_CARACTERES_JUSTIFICACION } from "src/app/shared/validators/justificacion.validator";
 
 /**
  * Capa de datos de solicitudes.
@@ -111,6 +116,12 @@ export abstract class SolicitudesService {
     valores: DatosEdicionSolicitud,
     modo: ModoEdicionSolicitud,
   ): Observable<ResultadoGuardadoSolicitud>;
+
+  /** Cancela una solicitud permitida por la matriz y registra su auditoría. */
+  abstract cancelarSolicitud(
+    id: string,
+    justificacion: string,
+  ): Observable<SolicitudDetalle>;
 
   /**
    * Versiones guardadas de la edición de una solicitud (S-04).
@@ -267,7 +278,8 @@ const DATOS_MOCK: readonly Solicitud[] = [
     id: "SOL-2026-0021",
     vigencia: 2026,
     unidadEjecutora: "2",
-    titulo: "Renovación de pólizas institucionales de seguros de bienes muebles",
+    titulo:
+      "Renovación de pólizas institucionales de seguros de bienes muebles",
     apertura: "16/01/2026",
     cierre: "22/01/2026",
     dependencia: "Secretaría General",
@@ -320,6 +332,16 @@ const DATOS_MOCK: readonly Solicitud[] = [
     version: "v1.0",
     revision: 1,
     ultimaModificacion: "28/01/2026 09:05 COT",
+    cancelacion: {
+      estadoAnterior: "enviada-proveedores",
+      justificacion:
+        "La necesidad institucional fue replanteada antes del cierre del proceso.",
+      fecha: "28/01/2026 09:05 COT",
+      usuario: "raquimbayap",
+      autor: "Raúl Quimbaya",
+      rol: "Solicitante",
+      destinatariosNotificados: 12,
+    },
   },
   {
     id: "SOL-2025-0117",
@@ -362,6 +384,16 @@ const DATOS_MOCK: readonly Solicitud[] = [
     version: "v1.0",
     revision: 1,
     ultimaModificacion: "10/10/2025 11:20 COT",
+    cancelacion: {
+      estadoAnterior: "enviada-proveedores",
+      justificacion:
+        "Se canceló el proceso por ajuste de la planeación institucional.",
+      fecha: "10/10/2025 11:20 COT",
+      usuario: "mpulido",
+      autor: "Martha Patricia Pulido",
+      rol: "Solicitante",
+      destinatariosNotificados: 8,
+    },
   },
   {
     id: "SOL-2024-0061",
@@ -378,7 +410,6 @@ const DATOS_MOCK: readonly Solicitud[] = [
     ultimaModificacion: "20/09/2024 16:30 COT",
   },
 ];
-
 
 const MAPA_TIPOS: Readonly<Record<string, TipoCotizacion>> = {
   bienes: "BIEN",
@@ -591,7 +622,11 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
     codigoUnspsc: "43211501",
     notaTecnica: "Garantía 36 meses NBD",
     iconoNota: "format_image_left",
-    especificaciones: ["Dual Redundant PSU", "IPMI 2.0 / iDRAC9", "Hardware RAID 1"],
+    especificaciones: [
+      "Dual Redundant PSU",
+      "IPMI 2.0 / iDRAC9",
+      "Hardware RAID 1",
+    ],
   },
   {
     id: "2",
@@ -1002,7 +1037,9 @@ const NOTIFICACION_BIENES = { vistos: 18, descargaron: 14, cotizaron: 8 };
  * usa el buscador del paso 5 (S-02), de modo que el detalle y el asistente
  * muestran exactamente el mismo texto.
  */
-function actividadesDesde(codigos: readonly string[]): readonly ActividadVinculada[] {
+function actividadesDesde(
+  codigos: readonly string[],
+): readonly ActividadVinculada[] {
   return codigos
     .map((codigo) => ACTIVIDADES_CIIU.find((a) => a.codigo === codigo))
     .filter((actividad): actividad is ActividadCiiu => !!actividad)
@@ -1041,7 +1078,9 @@ function segmentacionProveedores(
  * registrada (borrador o expediente sin cruce registral): así la pestaña
  * muestra su estado vacío sin inventar cifras.
  */
-function proveedoresDetalle(solicitud: Solicitud): ProveedoresObjetivoDetalle | null {
+function proveedoresDetalle(
+  solicitud: Solicitud,
+): ProveedoresObjetivoDetalle | null {
   if (!tieneExpediente(solicitud) || SIN_SEGMENTACION.includes(solicitud.id)) {
     return null;
   }
@@ -1623,6 +1662,37 @@ function eventoCierre(
   });
 }
 
+/** Evento de cancelación; la justificación queda en la bitácora interna. */
+function eventoCancelacion(solicitud: Solicitud): EventoHistorial | null {
+  const cancelacion = solicitud.cancelacion;
+  if (!cancelacion) {
+    return null;
+  }
+  const [fecha, hora = "00:00"] = cancelacion.fecha.split(" ");
+
+  return eventoHistorial({
+    id: `evento-${solicitud.id}-cancelacion`,
+    fecha,
+    hora: hora.slice(0, 5),
+    tipo: "estado",
+    titulo: "Solicitud cancelada",
+    detalle: `Justificación interna: ${cancelacion.justificacion}`,
+    usuario: cancelacion.usuario,
+    nombreUsuario: cancelacion.autor,
+    rol: cancelacion.rol,
+    estadoAnterior: cancelacion.estadoAnterior,
+    estadoNuevo: "cancelada",
+    icono: "cancel",
+    tono: "destacado",
+    resultado: "Cancelación registrada",
+    tonoResultado: "advertencia",
+    evidencia: {
+      icono: "groups",
+      texto: `${cancelacion.destinatariosNotificados} destinatarios de notificación (envío simulado)`,
+    },
+  });
+}
+
 /**
  * Bitácoras específicas por solicitud (semilla del detalle).
  *
@@ -1708,6 +1778,17 @@ function historialPorDefecto(
   solicitud: Solicitud,
   totalProveedores: number,
 ): readonly EventoHistorial[] {
+  if (solicitud.estado === "cancelada") {
+    const evento = eventoCancelacion(solicitud);
+    const estadoAnterior =
+      solicitud.cancelacion?.estadoAnterior ?? "enviada-proveedores";
+    const eventosPrevios = historialPorDefecto(
+      { ...solicitud, estado: estadoAnterior },
+      totalProveedores,
+    );
+    return evento ? [evento, ...eventosPrevios] : eventosPrevios;
+  }
+
   const apertura = solicitud.apertura ?? "15/02/2026";
   const [dia, mes] = apertura.split("/");
   const anio = "2026";
@@ -1856,11 +1937,13 @@ function historialDetalle(
   const totalProveedores = proveedores ? contarProveedores(proveedores) : 0;
 
   const semilla = HISTORIAL_POR_SOLICITUD[solicitud.id];
+  const base = semilla
+    ? semilla(totalProveedores)
+    : historialPorDefecto(solicitud, totalProveedores);
   const eventos = [
-    ...extras,
-    ...(semilla
-      ? semilla(totalProveedores)
-      : historialPorDefecto(solicitud, totalProveedores)),
+    ...new Map(
+      [...base, ...extras].map((evento) => [evento.id, evento]),
+    ).values(),
   ].sort((a, b) => Date.parse(b.fechaIso) - Date.parse(a.fechaIso));
 
   return {
@@ -1903,7 +1986,6 @@ function fechaIsoDesdeCorta(fecha: string | null | undefined): string {
     ? `${coincidencia[3]}-${coincidencia[2]}-${coincidencia[1]}`
     : (fecha ?? "");
 }
-
 
 /** Hash abreviado de integridad para la confirmación de guardado (mock). */
 function hashIntegridad(semilla: string): string {
@@ -2269,6 +2351,7 @@ interface VersionGuardada {
  * - `?mockRetardo=3000` → retardo en ms (ver el skeleton más tiempo)
  * - `?mockDetalle=error` → falla la carga del detalle (estado de error de S-03)
  * - `?mockGuardar=error` → falla el guardado de la edición (S-04)
+ * - `?mockCancelar=error` → falla una cancelación (S-05)
  */
 @Injectable()
 export class SolicitudesServiceMock extends SolicitudesService {
@@ -2464,6 +2547,91 @@ export class SolicitudesServiceMock extends SolicitudesService {
       cambios: resumen.total,
       grupos: resumen.grupos,
     }).pipe(delay(retardo));
+  }
+
+  cancelarSolicitud(
+    id: string,
+    justificacion: string,
+  ): Observable<SolicitudDetalle> {
+    const params = new URLSearchParams(window.location.search);
+    const retardo = Number(params.get("mockRetardo")) || 700;
+
+    if (params.get("mockCancelar") === "error") {
+      return throwError(
+        () =>
+          new Error(
+            "No fue posible cancelar la solicitud. Verifique su conexión e intente nuevamente.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const actual = this.fila(id);
+    if (!actual) {
+      return throwError(
+        () => new Error("La solicitud ya no existe en el expediente."),
+      ).pipe(delay(retardo));
+    }
+
+    if (!MATRIZ_ACCIONES_POR_ESTADO[actual.estado].includes("cancelar")) {
+      return throwError(
+        () =>
+          new Error("La solicitud cambió de estado y ya no se puede cancelar."),
+      ).pipe(delay(retardo));
+    }
+
+    const motivo = textoPlanoDesdeHtml(justificacion).trim();
+    if (motivo.length < MIN_CARACTERES_JUSTIFICACION) {
+      return throwError(
+        () =>
+          new Error(
+            `La justificación debe tener al menos ${MIN_CARACTERES_JUSTIFICACION} caracteres.`,
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const detalleActual = comoDetalle(
+      actual,
+      this.edicionBase(actual),
+      this.historialEdiciones.get(id) ?? [],
+    );
+    // El mock solo conoce el total del segmento; el registro real de entregas
+    // por destinatario se conectará cuando exista NotificacionesService.
+    const destinatariosNotificados =
+      actual.estado === "borrador" ? 0 : detalleActual.contadores.proveedores;
+    const ahora = new Date();
+    const fecha = fechaHoraExpediente(ahora);
+    const cancelacion: DatosCancelacionSolicitud = {
+      estadoAnterior: actual.estado,
+      justificacion: motivo,
+      fecha,
+      usuario: "sesion",
+      autor: "Usuario autenticado",
+      rol: "Solicitante (JD u OG)",
+      destinatariosNotificados,
+    };
+    const actualizada: Solicitud = {
+      ...actual,
+      estado: "cancelada",
+      ultimaModificacion: fecha,
+      cancelacion,
+    };
+    const evento = eventoCancelacion(actualizada);
+
+    this.filasEditadas.set(id, actualizada);
+    if (evento) {
+      this.historialEdiciones.set(id, [
+        ...(this.historialEdiciones.get(id) ?? []),
+        evento,
+      ]);
+    }
+
+    return of(
+      comoDetalle(
+        actualizada,
+        this.edicionBase(actualizada),
+        this.historialEdiciones.get(id) ?? [],
+      ),
+    ).pipe(delay(retardo));
   }
 
   /**

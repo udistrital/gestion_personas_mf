@@ -16,24 +16,25 @@ $texto: #251819;
 $texto-suave: #5f5d5e;
 
 /* Danger — main para bordes/texto, superficie derivada de base */
-$error: #b03d3f;
+$error: #B22222;
+$error-dark: #961313;
 $error-superficie: #faf0f0;
 $error-borde: #ecc8c8;
 
 /* Success — main como tono visible */
-$exito: #218b22;
+$exito: #147314;
 $exito-superficie: #eff7ea;
 $exito-borde: #c9e0c1;
 
 /* Warning — accent como tono visible (main es muy claro sobre superficies
    claras); texto derivado en tono oscuro para contraste AA */
-$advertencia: #ff9311;
+$advertencia: #faa500;
 $advertencia-texto: #a35400;
 $advertencia-superficie: #fff7ed;
 $advertencia-borde: #ffe3c2;
 
 /* Info (others) */
-$info: #4867a3;
+$info: #143873;
 $info-superficie: #f1f4f9;
 $info-borde: #d2daeb;
 
@@ -90,6 +91,7 @@ $fuente-xl: 1rem; /* 16px — títulos de tarjeta */
     --agora-text-muted: #{$texto-suave};
 
     --agora-error: #{$error};
+    --agora-error-dark: #{$error-dark};
     --agora-error-surface: #{$error-superficie};
     --agora-error-border: #{$error-borde};
 

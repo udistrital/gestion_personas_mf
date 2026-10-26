@@ -2,9 +2,16 @@ import { NgModule } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { MatPaginatorIntl } from "@angular/material/paginator";
 import { SharedModule } from "src/app/shared/shared.module";
-import { SolicitudesServiceMock, SolicitudesService } from "../services/solicitudes.service";
-import { SicapitalService, SicapitalServiceMock } from "../services/sicapital.service";
+import {
+  SolicitudesServiceMock,
+  SolicitudesService,
+} from "../services/solicitudes.service";
+import {
+  SicapitalService,
+  SicapitalServiceMock,
+} from "../services/sicapital.service";
 import { SolicitanteRoutingModule } from "./solicitante-routing.module";
+import { SolicitanteComponentsModule } from "./solicitante-components.module";
 import { ListadoSolicitudesComponent } from "./pages/listado-solicitudes/listado-solicitudes.component";
 import { AsistenteSolicitudComponent } from "./pages/asistente-solicitud/asistente-solicitud.component";
 import { DialogoAcuerdoComponent } from "./pages/asistente-solicitud/paso-1-necesidad/components/dialogo-acuerdo/dialogo-acuerdo.component";
@@ -48,7 +55,12 @@ import { paginadorEnEspanol } from "./mat-paginator-intl-es";
     DialogoDescartarComponent,
     EditarSolicitudComponent,
   ],
-  imports: [CommonModule, SharedModule, SolicitanteRoutingModule],
+  imports: [
+    CommonModule,
+    SharedModule,
+    SolicitanteComponentsModule,
+    SolicitanteRoutingModule,
+  ],
   providers: [
     // ÚNICO punto de enlace de la capa de datos simulada.
     // Cambiar `useClass` por `SolicitudesServiceHttp` cuando exista el backend.

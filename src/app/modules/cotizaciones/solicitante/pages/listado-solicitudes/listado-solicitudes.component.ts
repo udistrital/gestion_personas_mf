@@ -1,6 +1,7 @@
 import { Component, DestroyRef, OnInit, signal } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { Router } from "@angular/router";
+import { MatDialog } from "@angular/material/dialog";
 import { Subscription } from "rxjs";
 import { map } from "rxjs";
 import {
@@ -16,6 +17,7 @@ import {
   etiquetaUnidadEjecutora,
   FiltroSolicitudes,
   Solicitud,
+  SolicitudDetalle,
   ResultadoListado,
   UNIDADES_EJECUTORAS,
   VIGENCIAS,
@@ -23,6 +25,10 @@ import {
 import { versionSolicitud } from "../../../models/edicion-solicitud.model";
 import { SolicitudesService } from "../../../services/solicitudes.service";
 import { RegistroPersonaJuridicaCatalogosService } from "src/app/modules/proveedores/components/registro-persona-juridica/services/registro-persona-juridica-catalogos.service";
+import {
+  DialogoCancelarSolicitudComponent,
+  DialogoCancelarSolicitudDatos,
+} from "../../components/dialogo-cancelar-solicitud/dialogo-cancelar-solicitud.component";
 
 type EstadoVista = "cargando" | "listo" | "error";
 
@@ -40,7 +46,8 @@ export class ListadoSolicitudesComponent implements OnInit {
     private readonly router: Router,
     private readonly alerta: AlertService,
     private readonly destroyRef: DestroyRef,
-  ) { }
+    private readonly dialogo: MatDialog,
+  ) {}
 
   /** Acceso a la matriz desde la plantilla (etiquetas, iconos, peligro). */
   readonly ACCIONES = ACCIONES_SOLICITUD;
@@ -368,6 +375,11 @@ export class ListadoSolicitudesComponent implements OnInit {
   }
 
   ejecutarAccion(accion: AccionSolicitud, solicitud: Solicitud): void {
+    if (accion === "cancelar") {
+      this.abrirDialogoCancelacion(solicitud);
+      return;
+    }
+
     // La ruta depende del estado (borrador → /editar; enviada →
     // /solicitar-modificacion); la resuelve la matriz, no la plantilla.
     const ruta = this.permisos.rutaAccion(accion, solicitud);
@@ -383,6 +395,31 @@ export class ListadoSolicitudesComponent implements OnInit {
       this.etiquetaAccion(accion, solicitud),
       "Esta pantalla aún no está implementada. Corresponde a una fase posterior del módulo.",
     );
+  }
+
+  private abrirDialogoCancelacion(solicitud: Solicitud): void {
+    const ref = this.dialogo.open<
+      DialogoCancelarSolicitudComponent,
+      DialogoCancelarSolicitudDatos,
+      SolicitudDetalle
+    >(DialogoCancelarSolicitudComponent, {
+      data: { solicitudId: solicitud.id, origen: "listado" },
+      width: "38rem",
+      maxWidth: "96vw",
+      autoFocus: ".dialogo__cerrar",
+      restoreFocus: true,
+      ariaLabelledBy: "dialogo-cancelacion-titulo",
+      ariaDescribedBy: "dialogo-cancelacion-descripcion",
+    });
+
+    ref
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((resultado) => {
+        if (resultado?.estado === "cancelada") {
+          this.cargar();
+        }
+      });
   }
 
   nuevaSolicitud(): void {

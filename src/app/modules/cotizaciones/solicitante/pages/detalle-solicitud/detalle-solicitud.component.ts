@@ -15,9 +15,7 @@ import {
 } from "src/app/core/constants/estados-solicitud.const";
 import { PermisosSolicitudService } from "src/app/core/services/permisos-solicitud.service";
 import { AlertService } from "src/app/shared/services/alert.service";
-import {
-  ResultadoResolverSolicitud,
-} from "../../../resolvers/solicitud.resolver";
+import { ResultadoResolverSolicitud } from "../../../resolvers/solicitud.resolver";
 import {
   etiquetaUnidadEjecutora,
   SolicitudDetalle,
@@ -37,6 +35,10 @@ import {
   DialogoGuardadoComponent,
   DialogoGuardadoDatos,
 } from "./components/dialogo-guardado/dialogo-guardado.component";
+import {
+  DialogoCancelarSolicitudComponent,
+  DialogoCancelarSolicitudDatos,
+} from "../../components/dialogo-cancelar-solicitud/dialogo-cancelar-solicitud.component";
 
 /** Estados de vista del armazón del detalle. */
 type EstadoVista = "listo" | "no-encontrada" | "error";
@@ -85,8 +87,8 @@ export class DetalleSolicitudComponent implements OnInit {
   readonly mensajeError = signal("");
 
   /** Solicitud resuelta; `null` = no encontrada o error. */
-  readonly solicitud = computed<SolicitudDetalle | null>(
-    () => this.store.solicitud(),
+  readonly solicitud = computed<SolicitudDetalle | null>(() =>
+    this.store.solicitud(),
   );
 
   /** Acciones permitidas por el estado actual de la solicitud. */
@@ -203,6 +205,31 @@ export class DetalleSolicitudComponent implements OnInit {
   ejecutarAccion(accion: AccionSolicitud): void {
     const meta = ACCIONES_SOLICITUD[accion];
     const solicitud = this.store.solicitud();
+    if (accion === "cancelar" && solicitud) {
+      const ref = this.dialogo.open<
+        DialogoCancelarSolicitudComponent,
+        DialogoCancelarSolicitudDatos,
+        SolicitudDetalle
+      >(DialogoCancelarSolicitudComponent, {
+        data: { solicitudId: solicitud.id, origen: "detalle" },
+        width: "38rem",
+        maxWidth: "96vw",
+        autoFocus: ".dialogo__cerrar",
+        restoreFocus: true,
+        ariaLabelledBy: "dialogo-cancelacion-titulo",
+        ariaDescribedBy: "dialogo-cancelacion-descripcion",
+      });
+      ref
+        .afterClosed()
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe((resultado) => {
+          if (resultado?.estado === "cancelada") {
+            this.store.establecer(resultado);
+          }
+        });
+      return;
+    }
+
     // La ruta la resuelve la matriz: en un borrador `modificar` apunta a la
     // edición completa y en una solicitud enviada a la modificación restringida.
     const ruta = solicitud
