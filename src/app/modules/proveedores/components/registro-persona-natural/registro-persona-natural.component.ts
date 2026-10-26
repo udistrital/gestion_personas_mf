@@ -8,16 +8,33 @@ import {
   ValidatorFn,
   Validators,
 } from "@angular/forms";
-import { Router } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
+import { HttpErrorResponse, HttpResponse } from "@angular/common/http";
 import { asapScheduler, of, Subject } from "rxjs";
 import {
   catchError,
   debounceTime,
+  map,
   observeOn,
   switchMap,
   tap,
 } from "rxjs/operators";
 import { BorradorRegistroService } from "../../services/borrador-registro.service";
+import {
+  ErrorRelacionMid,
+  ProveedorMidRespuesta,
+  RespuestaEscrituraProveedorMid,
+  RespuestaProveedorMid,
+} from "../../models/gestion-personas-mid.model";
+import {
+  mapearActualizacionPersonaNatural,
+  mapearCreacionPersonaNatural,
+} from "../../mappers/gestion-personas-mid.mapper";
+import {
+  CAMPOS_PROVEEDOR_NATURAL_MID_PARA_EDICION,
+  GestionPersonasMidService,
+} from "../../services/gestion-personas-mid.service";
+import { AlertService } from "src/app/shared/services/alert.service";
 import {
   OpcionCatalogo,
   RegistroPersonaJuridicaCatalogosService,
@@ -70,6 +87,9 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
   private readonly catalogosProveedorService = inject(
     RegistroPersonaJuridicaCatalogosService,
   );
+  private readonly gestionPersonasMidService = inject(GestionPersonasMidService);
+  private readonly alertaService = inject(AlertService);
+  private readonly route = inject(ActivatedRoute);
 
   catalogosPaso1: CatalogosPersonaNaturalPaso1 | null = null;
   estadoPaso1: EstadoCatalogoNatural = { cargando: false, error: null };
@@ -99,7 +119,18 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
   estadoMensaje = "Aún no hay un borrador guardado";
   estadoDetalle =
     "Los cambios se guardarán en este navegador al escribir o al pulsar Guardar Borrador";
+  estadoMid = "";
+  mensajeMid = "";
+  cargandoMid = false;
+  idProveedorMid: number | null = null;
+  private idTerceroMid: number | null = null;
+  private idTipoRegistroMid: number | null = null;
+  private idTipoContribuyenteMid: number | null = null;
+  private idProveedorEdicion: number | null = null;
+  private solicitudEdicionMid = 0;
+  erroresMid: ErrorRelacionMid[] = [];
   private suspenderAutoguardado = false;
+  private modoEdicionMid = false;
 
   readonly pasosStepper = [
     {
@@ -240,7 +271,7 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
           genero: ["", Validators.required],
           paisNacimiento: ["", Validators.required],
 
-          perfilRolPrincipal: ["", Validators.required],
+          perfilRolPrincipal: [""],
         },
         {
           validators: [
@@ -722,13 +753,355 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
   }
 
   ngOnInit(): void {
-    this.restaurarBorrador();
+    this.modoEdicionMid = this.route.snapshot.queryParamMap.has("id");
+    if (!this.modoEdicionMid) {
+      this.restaurarBorrador();
+    }
     this.cargarCatalogosPaso1();
     this.cargarCatalogosPaso2();
     this.cargarCatalogoCiiu();
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
+        const idTexto = params.get("id");
+        if (idTexto === null) {
+          return;
+        }
+        this.modoEdicionMid = true;
+        const id = Number(idTexto);
+        if (!Number.isSafeInteger(id) || id <= 0) {
+          this.solicitudEdicionMid++;
+          this.idProveedorEdicion = null;
+          this.idProveedorMid = null;
+          this.idTerceroMid = null;
+          this.idTipoRegistroMid = null;
+          this.idTipoContribuyenteMid = null;
+          this.erroresMid = [];
+          this.cargandoMid = false;
+          this.estadoMid = "error";
+          this.mensajeMid = "El ID de proveedor para editar debe ser un entero positivo.";
+          return;
+        }
+        if (this.idProveedorEdicion !== id) {
+          this.idProveedorEdicion = id;
+          this.cargarProveedorParaEdicion(id, ++this.solicitudEdicionMid);
+        }
+      });
     this.personaNaturalForm.valueChanges
       .pipe(debounceTime(800), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.persistirBorrador(true));
+  }
+
+  finalizar(): void {
+    if (this.cargandoMid) {
+      return;
+    }
+    if (this.modoEdicionMid && !this.idProveedorEdicion) {
+      void this.alertaService.showErrorAlert(
+        "No se puede guardar: el ID de proveedor para editar no es válido.",
+      );
+      return;
+    }
+    if (!this.idProveedorEdicion && this.personaNaturalForm.invalid) {
+      this.personaNaturalForm.markAllAsTouched();
+      this.alertaService.showAlert(
+        "Formulario incompleto",
+        "Corrija los campos obligatorios antes de enviar el registro.",
+      );
+      return;
+    }
+    if (this.idProveedorEdicion && !this.idTerceroMid) {
+      void this.alertaService.showErrorAlert(
+        "La consulta no entregó el ID del tercero; no es seguro actualizar este proveedor.",
+      );
+      return;
+    }
+
+    this.cargandoMid = true;
+    this.estadoMid = "loading";
+    this.mensajeMid = this.idProveedorEdicion
+      ? "Actualizando proveedor en Gestión de Personas MID..."
+      : "Creando proveedor en Gestión de Personas MID...";
+    this.catalogosProveedorService
+      .obtenerIdTipoContribuyente("P_NATURAL")
+      .pipe(
+        switchMap((tipoContribuyenteId) => {
+          this.idTipoContribuyenteMid = tipoContribuyenteId;
+          const payload = this.idProveedorEdicion
+            ? mapearActualizacionPersonaNatural(
+                this.personaNaturalForm.getRawValue(),
+                this.exigirTipoRegistroEdicion(),
+                tipoContribuyenteId,
+                this.exigirIdTerceroEdicion(),
+              )
+            : mapearCreacionPersonaNatural(
+                this.personaNaturalForm.getRawValue(),
+                tipoContribuyenteId,
+                tipoContribuyenteId,
+              );
+          return this.idProveedorEdicion
+            ? this.gestionPersonasMidService.actualizar(payload)
+            : this.gestionPersonasMidService.crear(payload);
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (response) => this.procesarRespuestaEscritura(response),
+        error: (error: unknown) => this.procesarErrorEscritura(error),
+      });
+  }
+
+  private cargarProveedorParaEdicion(id: number, solicitud: number): void {
+    this.idProveedorMid = null;
+    this.idTerceroMid = null;
+    this.idTipoRegistroMid = null;
+    this.idTipoContribuyenteMid = null;
+    this.erroresMid = [];
+    this.cargandoMid = true;
+    this.estadoMid = "loading";
+    this.mensajeMid = "Cargando los datos disponibles del proveedor...";
+    this.gestionPersonasMidService
+      .consultar(id, CAMPOS_PROVEEDOR_NATURAL_MID_PARA_EDICION)
+      .pipe(
+        switchMap((response) =>
+          this.catalogosProveedorService
+            .obtenerIdTipoContribuyente("P_NATURAL")
+            .pipe(map((tipoContribuyenteId) => ({
+              response,
+              tipoContribuyenteId,
+            }))),
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: ({ response, tipoContribuyenteId }) => {
+          if (solicitud !== this.solicitudEdicionMid) {
+            return;
+          }
+          this.cargandoMid = false;
+          const envelope = response.body;
+          if (
+            !envelope
+            || !envelope.Success
+            || !envelope.Data
+            || (response.status !== 200 && response.status !== 206)
+            || envelope.Status !== String(response.status)
+          ) {
+            this.estadoMid = "error";
+            this.mensajeMid = envelope?.Message
+              || "El MID devolvió una respuesta inesperada al consultar el proveedor.";
+            return;
+          }
+          const tipoRegistroId = envelope.Data.TipoRegistroId;
+          const tipoContribuyenteRespuesta =
+            envelope.Data.Tercero?.TipoContribuyenteId;
+          if (
+            envelope.Data.Id !== id
+            || typeof tipoRegistroId !== "number"
+            || !Number.isSafeInteger(tipoRegistroId)
+            || tipoRegistroId <= 0
+            || tipoRegistroId !== tipoContribuyenteId
+            || tipoContribuyenteRespuesta !== tipoContribuyenteId
+          ) {
+            this.estadoMid = "error";
+            this.mensajeMid =
+              "El proveedor consultado no tiene tipos de registro y contribuyente válidos para persona natural.";
+            return;
+          }
+          this.idProveedorMid = envelope.Data.Id ?? id;
+          this.idTerceroMid = envelope.Data.Tercero?.Id ?? null;
+          this.idTipoRegistroMid = tipoRegistroId;
+          this.idTipoContribuyenteMid = tipoContribuyenteId;
+          this.erroresMid = envelope.MetaData?.Errors ?? [];
+          this.hidratarFormulario(envelope.Data);
+          this.estadoMid = response.status === 206 ? "partial" : "success";
+          this.mensajeMid = response.status === 206
+            ? `${envelope.Message} Revise los datos disponibles antes de actualizar.`
+            : "Se cargaron los datos del proveedor disponibles en el contrato del MID.";
+        },
+        error: (error: unknown) => {
+          if (solicitud === this.solicitudEdicionMid) {
+            this.procesarErrorEscritura(error);
+          }
+        },
+      });
+  }
+
+  private hidratarFormulario(proveedor: ProveedorMidRespuesta): void {
+    const identificacion = proveedor.Tercero?.DatosIdentificacion?.[0];
+    this.personaNaturalForm.patchValue(
+      {
+        identificacion: {
+          ...(identificacion?.Numero
+            ? {
+                numeroDocumento: identificacion.Numero,
+                confirmarNumeroDocumento: identificacion.Numero,
+              }
+            : {}),
+          ...(identificacion?.TipoDocumentoId
+            ? {
+                tipoDocumento: identificacion.TipoDocumentoId,
+                confirmarTipoDocumento: identificacion.TipoDocumentoId,
+              }
+            : {}),
+          ...(identificacion?.CiudadExpedicion
+            ? { ciudadExpedicion: identificacion.CiudadExpedicion }
+            : {}),
+        },
+        experiencia: {
+          ...(proveedor.ProveedorNatural?.ExperienciaLaboralMeses !== undefined
+            ? {
+                experienciaLaboralTotal:
+                  proveedor.ProveedorNatural.ExperienciaLaboralMeses,
+              }
+            : {}),
+          ...(proveedor.ProveedorNatural?.ExperienciaProfesionalMeses !== undefined
+            ? {
+                experienciaProfesional:
+                  proveedor.ProveedorNatural.ExperienciaProfesionalMeses,
+              }
+            : {}),
+        },
+      },
+      { emitEvent: false },
+    );
+  }
+
+  private exigirIdTerceroEdicion(): number {
+    if (!this.idTerceroMid || !Number.isSafeInteger(this.idTerceroMid)) {
+      throw new Error(
+        "La consulta no entregó el ID del tercero; no es seguro actualizar este proveedor.",
+      );
+    }
+    return this.idTerceroMid;
+  }
+
+  private exigirTipoRegistroEdicion(): number {
+    if (
+      this.idTipoRegistroMid === null
+      || !Number.isSafeInteger(this.idTipoRegistroMid)
+      || this.idTipoRegistroMid <= 0
+    ) {
+      throw new Error(
+        "La consulta no entregó un TipoRegistroId válido; no es seguro actualizar este proveedor.",
+      );
+    }
+    return this.idTipoRegistroMid;
+  }
+
+  private procesarRespuestaEscritura(
+    response: HttpResponse<RespuestaEscrituraProveedorMid>,
+  ): void {
+    this.cargandoMid = false;
+    const envelope = response.body;
+    if (
+      !envelope
+      || !envelope.Success
+      || (response.status !== 200 && response.status !== 206)
+      || envelope.Status !== String(response.status)
+      || !envelope.Data
+    ) {
+      this.estadoMid = "error";
+      this.mensajeMid = envelope?.Message
+        || "El MID devolvió una respuesta inesperada al guardar el proveedor.";
+      void this.alertaService.showErrorAlert(this.mensajeMid);
+      return;
+    }
+
+    const idProveedorRespuesta = envelope.Data.Id;
+    const idTerceroRespuesta = envelope.Data.Tercero?.Id;
+    const tipoRegistroRespuesta = envelope.Data.TipoRegistroId;
+    if (
+      typeof idProveedorRespuesta !== "number"
+      || !Number.isSafeInteger(idProveedorRespuesta)
+      || idProveedorRespuesta <= 0
+      || typeof idTerceroRespuesta !== "number"
+      || !Number.isSafeInteger(idTerceroRespuesta)
+      || idTerceroRespuesta <= 0
+      || (tipoRegistroRespuesta !== undefined
+        && (typeof tipoRegistroRespuesta !== "number"
+          || !Number.isSafeInteger(tipoRegistroRespuesta)
+          || tipoRegistroRespuesta <= 0))
+    ) {
+      this.estadoMid = "error";
+      this.mensajeMid =
+        "El MID no devolvió IDs válidos de proveedor y tercero; no se puede confirmar la operación.";
+      void this.alertaService.showErrorAlert(this.mensajeMid);
+      return;
+    }
+    if (
+      (this.idProveedorEdicion !== null
+        && idProveedorRespuesta !== this.idProveedorEdicion)
+      || (this.idTerceroMid !== null && idTerceroRespuesta !== this.idTerceroMid)
+      || (this.idTipoRegistroMid !== null
+        && tipoRegistroRespuesta !== undefined
+        && tipoRegistroRespuesta !== this.idTipoRegistroMid)
+      || (this.idTipoContribuyenteMid !== null
+        && tipoRegistroRespuesta !== undefined
+        && tipoRegistroRespuesta !== this.idTipoContribuyenteMid)
+      || (this.idTipoContribuyenteMid !== null
+        && envelope.Data.Tercero?.TipoContribuyenteId !== undefined
+        && envelope.Data.Tercero.TipoContribuyenteId !== this.idTipoContribuyenteMid)
+    ) {
+      this.estadoMid = "error";
+      this.mensajeMid =
+        "Los IDs devueltos por el MID no coinciden con el proveedor y tercero consultados.";
+      void this.alertaService.showErrorAlert(this.mensajeMid);
+      return;
+    }
+
+    this.idProveedorMid = idProveedorRespuesta;
+    this.idTerceroMid = idTerceroRespuesta;
+    if (typeof tipoRegistroRespuesta === "number") {
+      this.idTipoRegistroMid = tipoRegistroRespuesta;
+    }
+    this.idProveedorEdicion = idProveedorRespuesta;
+    this.erroresMid = envelope.MetaData?.Errors ?? [];
+    const respuestaParcial = response.status === 206;
+    this.estadoMid = respuestaParcial ? "partial" : "success";
+    this.mensajeMid = envelope.Message;
+    if (respuestaParcial) {
+      const detalleErrores = this.erroresMid
+        .map((error) => `${error.path ?? "Relación"}: ${error.message ?? "materialización parcial"}`)
+        .join("; ");
+      void this.alertaService.showAlert(
+        "Registro parcial",
+        detalleErrores || envelope.Message,
+      );
+      return;
+    }
+    void this.alertaService.showSuccessAlert(
+      `${envelope.Message}${this.idProveedorMid ? ` ID del proveedor: ${this.idProveedorMid}.` : ""}`,
+    );
+  }
+
+  private procesarErrorEscritura(error: unknown): void {
+    this.cargandoMid = false;
+    this.estadoMid = "error";
+    this.mensajeMid = error instanceof HttpErrorResponse
+      ? this.mensajeErrorHttp(error)
+      : error instanceof Error
+        ? error.message
+        : "No fue posible completar la operación con Gestión de Personas MID.";
+    void this.alertaService.showErrorAlert(this.mensajeMid);
+  }
+
+  private mensajeErrorHttp(error: HttpErrorResponse): string {
+    const body: unknown = error.error;
+    if (
+      body
+      && typeof body === "object"
+      && !Array.isArray(body)
+      && typeof (body as Record<string, unknown>)["Message"] === "string"
+    ) {
+      const mensaje = (body as Record<string, unknown>)["Message"];
+      if (typeof mensaje === "string") {
+        return mensaje;
+      }
+    }
+    return error.status === 0
+      ? "No fue posible conectar con Gestión de Personas MID. Verifique URL, red y autenticación."
+      : `Gestión de Personas MID respondió HTTP ${error.status}.`;
   }
 
   cargarCatalogoCiiu(): void {
@@ -804,6 +1177,13 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
   }
 
   guardarBorrador(): void {
+    if (this.modoEdicionMid) {
+      this.alertaService.showAlert(
+        "Edición de proveedor",
+        "El borrador local de un nuevo registro se conserva sin cambios mientras edita un proveedor existente.",
+      );
+      return;
+    }
     this.persistirBorrador(false);
   }
 
@@ -1046,7 +1426,7 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
   }
 
   persistirBorrador(esAutoguardado: boolean): void {
-    if (this.suspenderAutoguardado) {
+    if (this.suspenderAutoguardado || this.modoEdicionMid) {
       return;
     }
 

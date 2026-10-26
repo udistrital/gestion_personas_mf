@@ -231,13 +231,13 @@ importers:
     devDependencies:
       '@angular-builders/custom-webpack':
         specifier: ^21.1.0
-        version: 21.1.0(@angular/compiler-cli@21.2.24(@angular/compiler@21.2.24)(supports-color@8.1.1)(typescript@5.9.3))(@angular/compiler@21.2.24)(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1))(@angular/platform-browser@21.2.24(@angular/animations@21.2.24(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1)))(@angular/common@21.2.24(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1)))(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.9.8)(chokidar@5.0.0)(debug@4.4.3(supports-color@8.1.1))(jest@30.5.2(@types/node@25.9.8)(supports-color@8.1.1)(ts-node@10.9.2(@types/node@25.9.8)(typescript@5.9.3)))(jiti@2.7.0)(less@4.9.0(supports-color@8.1.1))(postcss@8.5.28)(rxjs@7.8.2)(supports-color@8.1.1)(terser@5.51.2)(tslib@2.8.1)(typescript@5.9.3)(uglify-js@3.19.3)
+        version: 21.1.0(@angular/compiler-cli@21.2.24(@angular/compiler@21.2.24)(supports-color@8.1.1)(typescript@5.9.3))(@angular/compiler@21.2.24)(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1))(@angular/platform-browser@21.2.24(@angular/animations@21.2.24(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1)))(@angular/common@21.2.24(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1)))(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.9.8)(chokidar@5.0.0)(debug@4.4.3(supports-color@8.1.1))(jest-environment-jsdom@30.5.2(supports-color@8.1.1))(jest@30.5.2(@types/node@25.9.8)(supports-color@8.1.1)(ts-node@10.9.2(@types/node@25.9.8)(typescript@5.9.3)))(jiti@2.7.0)(less@4.9.0(supports-color@8.1.1))(postcss@8.5.28)(rxjs@7.8.2)(supports-color@8.1.1)(terser@5.51.2)(tslib@2.8.1)(typescript@5.9.3)(uglify-js@3.19.3)
       '@angular-builders/jest':
         specifier: ^21.0.4
-        version: 21.0.4(dafa2bfb935cfdcb663e4282e21bf3bc)
+        version: 21.0.4(733e3ed7cd471f5f680934a4a4c6ed16)
       '@angular-devkit/build-angular':
         specifier: ^21.2.24
-        version: 21.2.24(@angular/compiler-cli@21.2.24(@angular/compiler@21.2.24)(supports-color@8.1.1)(typescript@5.9.3))(@angular/compiler@21.2.24)(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1))(@angular/platform-browser@21.2.24(@angular/animations@21.2.24(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1)))(@angular/common@21.2.24(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1)))(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.9.8)(chokidar@5.0.0)(debug@4.4.3(supports-color@8.1.1))(jest@30.5.2(@types/node@25.9.8)(supports-color@8.1.1)(ts-node@10.9.2(@types/node@25.9.8)(typescript@5.9.3)))(jiti@2.7.0)(supports-color@8.1.1)(typescript@5.9.3)(uglify-js@3.19.3)
+        version: 21.2.24(@angular/compiler-cli@21.2.24(@angular/compiler@21.2.24)(supports-color@8.1.1)(typescript@5.9.3))(@angular/compiler@21.2.24)(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1))(@angular/platform-browser@21.2.24(@angular/animations@21.2.24(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1)))(@angular/common@21.2.24(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1)))(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.9.8)(chokidar@5.0.0)(debug@4.4.3(supports-color@8.1.1))(jest-environment-jsdom@30.5.2(supports-color@8.1.1))(jest@30.5.2(@types/node@25.9.8)(supports-color@8.1.1)(ts-node@10.9.2(@types/node@25.9.8)(typescript@5.9.3)))(jiti@2.7.0)(supports-color@8.1.1)(typescript@5.9.3)(uglify-js@3.19.3)
       '@angular/cli':
         specifier: ^21.2.24
         version: 21.2.24(@types/node@25.9.8)(chokidar@5.0.0)(supports-color@8.1.1)
@@ -274,6 +274,9 @@ importers:
       jest:
         specifier: ^30.5.2
         version: 30.5.2(@types/node@25.9.8)(supports-color@8.1.1)(ts-node@10.9.2(@types/node@25.9.8)(typescript@5.9.3))
+      jest-environment-jsdom:
+        specifier: ^30.5.2
+        version: 30.5.2(supports-color@8.1.1)
       jest-preset-angular:
         specifier: ^16.2.0
         version: 16.2.0(d8e54c445d3e2b07b8f1cb54435882d0)
@@ -663,6 +666,9 @@ packages:
       '@angular/core': 21.2.24
       '@angular/platform-browser': 21.2.24
       rxjs: ^6.5.3 || ^7.4.0
+
+  '@asamuzakjp/css-color@3.2.0':
+    resolution: {integrity: sha512-K1A6z8tS3XsmCMM86xoWdn7Fkdn9m6RSVtocUrJYIwZnFVkng/PvkEoWtOWmP+Scc6saYWHWZYbndEEXxl24jw==}
 
   '@asamuzakjp/css-color@7.1.2':
     resolution: {integrity: sha512-99DHAnXDB5z6EEK+9GMpVI7Mw4oxj97dY5bpOzMnjADQWxI8rN6TvTduuFLUhUMlS7/CfVZ06tcZsus6cltnNw==}
@@ -1281,9 +1287,20 @@ packages:
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
     engines: {node: '>=12'}
 
+  '@csstools/color-helpers@5.1.0':
+    resolution: {integrity: sha512-S11EXWJyy0Mz5SYvRmY8nJYTFFd1LCNV+7cXyAgQtOOuzb4EsgfqDufL+9esx72/eLhsRdGZwaldu/h+E4t4BA==}
+    engines: {node: '>=18'}
+
   '@csstools/color-helpers@6.1.2':
     resolution: {integrity: sha512-grhRy3OKmniaAEKXMjua5z/EODX0MSqBGjunw8+j/3HQjOnahs2AGhvEOIYVUWcU6ScApbhLhVrQTX8XqrMrow==}
     engines: {node: '>=20.19.0'}
+
+  '@csstools/css-calc@2.1.4':
+    resolution: {integrity: sha512-3N8oaj+0juUw/1H3YwmDDJXCgTB1gKU6Hc/bB502u9zR0q2vd786XJH9QfrKIEgFlZmhZiq6epXl4rHqhzsIgQ==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@csstools/css-parser-algorithms': ^3.0.5
+      '@csstools/css-tokenizer': ^3.0.4
 
   '@csstools/css-calc@3.4.1':
     resolution: {integrity: sha512-EtC7SoN1j6J4E4DCwg5QgbO5TGxgxIA1RXqe+W+qUM+BUcezx9wT+/tiQ/WO2yCX4i5X+Cuf9ciJ22aP4UEwWw==}
@@ -1292,12 +1309,25 @@ packages:
       '@csstools/css-parser-algorithms': ^4.0.1
       '@csstools/css-tokenizer': ^4.0.2
 
+  '@csstools/css-color-parser@3.1.0':
+    resolution: {integrity: sha512-nbtKwh3a6xNVIp/VRuXV64yTKnb1IjTAEEh3irzS+HkKjAOYLTGNb9pmVNntZ8iVBHcWDA2Dof0QtPgFI1BaTA==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@csstools/css-parser-algorithms': ^3.0.5
+      '@csstools/css-tokenizer': ^3.0.4
+
   '@csstools/css-color-parser@4.2.4':
     resolution: {integrity: sha512-DyefytAZ735mX4Dq/WcDAXFtXhaEFvme0ZS9tVEBAc2whxUthXr0R0L2rmEPm59SrMBkGrFzQviBXMs/UtnABQ==}
     engines: {node: '>=20.19.0'}
     peerDependencies:
       '@csstools/css-parser-algorithms': ^4.0.1
       '@csstools/css-tokenizer': ^4.0.2
+
+  '@csstools/css-parser-algorithms@3.0.5':
+    resolution: {integrity: sha512-DaDeUkXZKjdGhgYaHNJTV9pV7Y9B3b644jCLs9Upc3VeNGg6LWARAT6O+Q+/COo+2gg/bM5rhpMAtf70WqfBdQ==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@csstools/css-tokenizer': ^3.0.4
 
   '@csstools/css-parser-algorithms@4.0.1':
     resolution: {integrity: sha512-ShL8BqPfbKJrJiKFH0xBbN0i7Nrh9HXYRuF+pzyj93R/BL2YAsUxJeqANErzqM+0JGl7vjHp+3OIgd/DL69YIA==}
@@ -1312,6 +1342,10 @@ packages:
     peerDependenciesMeta:
       css-tree:
         optional: true
+
+  '@csstools/css-tokenizer@3.0.4':
+    resolution: {integrity: sha512-Vd/9EVDiu6PPJt9yAh6roZP6El1xHrdvIVGjyBsHR0RYwNHgL7FJPyIIW4fANJNG6FtyZfvlRPpFI4ZM/lubvw==}
+    engines: {node: '>=18'}
 
   '@csstools/css-tokenizer@4.0.2':
     resolution: {integrity: sha512-OoKoR0f76dCY666JlcbhmVTs2drYj1GUXZTYTcbUgJjh9Nv41aFfZ21bPQTERm5+L5cBDo466NltB2lplS5GBw==}
@@ -2709,6 +2743,9 @@ packages:
   '@types/jest@30.0.0':
     resolution: {integrity: sha512-XTYugzhuwqWjws0CVz8QpM36+T+Dz5mTEBKhNs/esGLnCIlGdRy+Dq78NRjd7ls7r8BC8ZRMOrKlkO1hU0JOwA==}
 
+  '@types/jsdom@21.1.7':
+    resolution: {integrity: sha512-yOriVnggzrnQ3a9OKOCxaVuSug3w3/SbOj5i7VwXWZEyUNl3bLF9V3MfxGbZKuwqJOQyRfqXyROBB1CoZLFWzA==}
+
   '@types/jsdom@30.0.0':
     resolution: {integrity: sha512-uAHGxujGE0cDaKGdK28zgDotFtNA7MKq5DXl8LrfdxdCI8VHcg15oJz+amHTChPNI5JpgEPQWc2xFdrw3em/nQ==}
 
@@ -3548,6 +3585,14 @@ packages:
     engines: {node: '>=4'}
     hasBin: true
 
+  cssstyle@4.6.0:
+    resolution: {integrity: sha512-2z+rWdzbbSZv6/rhtvzvqeZQHrBaqgogqt85sqFNbabZOuFbCVFb8kPeEtZjiKkbrm395irpNKiYeFeLiQnFPg==}
+    engines: {node: '>=18'}
+
+  data-urls@5.0.0:
+    resolution: {integrity: sha512-ZYP5VBHshaDAiVZxjbRVcFJpc+4xGgT0bK3vzy1HLN8jTO975HEbuYzZJcHoQEY5K1a0z8YayJkyVETa08eNTg==}
+    engines: {node: '>=18'}
+
   data-urls@7.0.0:
     resolution: {integrity: sha512-23XHcCF+coGYevirZceTVD7NdJOqVn+49IHyxgszm+JIiHLoB2TkmPtsYkNWT1pvRSGkc35L6NHs0yHkN2SumA==}
     engines: {node: ^20.19.0 || ^22.12.0 || >=24.0.0}
@@ -4104,6 +4149,10 @@ packages:
   hpack.js@2.1.6:
     resolution: {integrity: sha512-zJxVehUdMGIKsRaNt7apO2Gqp0BdqW5yaiGHXXmbpvxgBYVZnAql+BJb4RO5ad2MgpbZKn5G6nMnegrH1FcNYQ==}
 
+  html-encoding-sniffer@4.0.0:
+    resolution: {integrity: sha512-Y22oTqIU4uuPgEemfz7NDJz6OeKf12Lsu+QC+s3BVpda64lTiMYCyGwg5ki4vFxkMwQdeZDl2adZoqUgdFuTgQ==}
+    engines: {node: '>=18'}
+
   html-encoding-sniffer@7.0.0:
     resolution: {integrity: sha512-UikN5yr7xsCDAq87Or5or0PAlD3HJJOKVzM05az588WnpDJ4Ux7a2A53Qi6gofGg2/EtvF/H4hCi/TXfCW4Y6w==}
     engines: {node: ^22.13.0 || >=24.0.0}
@@ -4406,6 +4455,15 @@ packages:
     resolution: {integrity: sha512-GRrW+7fmmgmkvyfEBqc1QFdWnF1Ex5yG6Y6AWL4TTxnkWlKIT98dsKh3P3UuWm6v4XsQwVE6DEzXIPMzWJ3ZbA==}
     engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
 
+  jest-environment-jsdom@30.5.2:
+    resolution: {integrity: sha512-6NOZjEP+WNi4WXjbxb/1ROnfaMxn6Dhqu6uSC22o0H28z+uppejs/jZ9KCVoLepqqoCjcNZujtzQqC9jSV15jg==}
+    engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
+    peerDependencies:
+      canvas: ^3.0.0
+    peerDependenciesMeta:
+      canvas:
+        optional: true
+
   jest-environment-node@30.5.2:
     resolution: {integrity: sha512-Ciz4KgTGIbojxSKpuFImgWJj5EyqfE8xMq9NxWmOXnQywHHS03H9Mv+vaCB29J5pr3JBrY27WbRV18rBdjh8Dg==}
     engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
@@ -4513,6 +4571,15 @@ packages:
   js-yaml@4.3.2:
     resolution: {integrity: sha512-SFNOvSJ+Dgf/9An904Yx+CgSlIPCkIpao4qo51lpee25TIRejdH3rhR4EZMGoNx3/TP3O+wzWuiTFl4sqbltzA==}
     hasBin: true
+
+  jsdom@26.1.0:
+    resolution: {integrity: sha512-Cvc9WUhxSMEo4McES3P7oK3QaXldCfNWp7pl2NNeiIFlCoLr3kfq9kb1fxftiwk1FLV7CvpvDfonxtzUDeSOPg==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      canvas: ^3.0.0
+    peerDependenciesMeta:
+      canvas:
+        optional: true
 
   jsdom@30.1.1:
     resolution: {integrity: sha512-FahmoPK5vbPc+jxV1iErMHmAZypCZ942NHF4+qqaWAuvaKKTBZxawnmAtrbGWLU7MtlxfqIP0qw6aSI+aWGtLg==}
@@ -4989,6 +5056,9 @@ packages:
   nth-check@2.1.1:
     resolution: {integrity: sha512-lqjrjmaOoAnWfMmBPL+XNnynZh2+swxiX3WUE0s4yEHI6m+AwrK2UZOimIRl3X/4QctVqS8AiZjFqyOGrMXb/w==}
 
+  nwsapi@2.2.28:
+    resolution: {integrity: sha512-IlVB7OS7qrOsVYlpnFIkETjMwT9jwvmocJmmM+GZU/PAB3uGi9Ezd7vcWhWBUnSc0ya4ppmQITOyP1ez9gg8cg==}
+
   object-assign@4.1.1:
     resolution: {integrity: sha512-rJgTQnkUnH1sFw8yT6VSU3zD3sWmu6sZhIseY8VX+GRu3P6F7Fu+JNDoXfklElbLJSnc3FUQHVe4cU5hj+BcUg==}
     engines: {node: '>=0.10.0'}
@@ -5091,6 +5161,9 @@ packages:
 
   parse5-sax-parser@8.0.0:
     resolution: {integrity: sha512-/dQ8UzHZwnrzs3EvDj6IkKrD/jIZyTlB+8XrHJvcjNgRdmWruNdN9i9RK/JtxakmlUdPwKubKPTCqvbTgzGhrw==}
+
+  parse5@7.3.0:
+    resolution: {integrity: sha512-IInvU7fabl34qmi9gY8XOVxhYyMyuH2xUNpb2q8/Y+7552KlejkRvqvD19nMoUW/uQGGbqNpA6Tufu5FL5BZgw==}
 
   parse5@8.0.1:
     resolution: {integrity: sha512-z1e/HMG90obSGeidlli3hj7cbocou0/wa5HacvI3ASx34PecNjNQeaHNo5WIZpWofN9kgkqV1q5YvXe3F0FoPw==}
@@ -5396,6 +5469,9 @@ packages:
   router@2.2.0:
     resolution: {integrity: sha512-nLTrUKm2UyiL7rlhapu/Zl45FwNgkZGaCpZbIHajDYgwlJCOzLSk+cIPAnsEqV955GjILJnKbdQC1nVPz+gAYQ==}
     engines: {node: '>= 18'}
+
+  rrweb-cssom@0.8.0:
+    resolution: {integrity: sha512-guoltQEx+9aMf2gDZ0s62EcV8lsXR+0w8915TC3ITdn2YueuNjdAYh/levpU9nFaoChh9RUS5ZdQMrKfVEN9tw==}
 
   run-applescript@7.1.0:
     resolution: {integrity: sha512-DPe5pVFaAsinSaV6QjQ6gdiedWDcRCbUuiQfQa2wmWV7+xC9bGulGI8+TdRmoFkAPaBXk8CrAbnlY2ISniJ47Q==}
@@ -5722,6 +5798,9 @@ packages:
   sweetalert2@11.26.25:
     resolution: {integrity: sha512-+hunCOJdJ6FLj04T9YSLvvZXRjsvIkTeTKP2e4VF8CaBias961BTnWiSFAy7F/CM5eq3QK2Rraoc5Gzftslvkg==}
 
+  symbol-tree@3.2.4:
+    resolution: {integrity: sha512-9QNk5KwDF+Bvz+PyObkmSYjI5ksVUYtjW7AU22r2NKcfLJcXp96hkDWU3+XndOsUb+AQ9QhfzfCT2O+CNWT5Tw==}
+
   synckit@0.11.13:
     resolution: {integrity: sha512-eNRKgb3z66Yp3D2CixVujOUvXLFUTij/zVnV8KRyvFdQwpz7I5DS8UfRkTeLzb64u+dkzDSdelE24izu+zSSUg==}
     engines: {node: ^14.18.0 || >=16.0.0}
@@ -5765,8 +5844,15 @@ packages:
     resolution: {integrity: sha512-wXR/dYpcqKmfWpEdZjiKJOwCNFndD0DMnrW/cYjVGttEkBfVgcLFHoNrlj47mjOVic9yyNu65alsgF4NQyTa2g==}
     engines: {node: '>=12.0.0'}
 
+  tldts-core@6.1.86:
+    resolution: {integrity: sha512-Je6p7pkk+KMzMv2XXKmAE3McmolOQFdxkKw0R8EYNr7sELW46JqnNeTX8ybPiQgvg1ymCoF8LXs5fzFaZvJPTA==}
+
   tldts-core@7.4.16:
     resolution: {integrity: sha512-MDolfaSJtlSK5Y0A1xl3277ekubZwobpBjugknDizI9O5Rm60a1m8k4ICK+MRsCDzPygT81mp3BBf5RKDlFRfA==}
+
+  tldts@6.1.86:
+    resolution: {integrity: sha512-WMi/OQ2axVTf/ykqCQgXiIct+mSQDFdH2fkwhPwgEwvJ1kSzZRiinb0zF2Xb8u4+OqPChmyI6MEu4EezNJz+FQ==}
+    hasBin: true
 
   tldts@7.4.16:
     resolution: {integrity: sha512-QwBER5KMR86IIjpIiO7H/Z3IMJPsZ1A6RKPAqzTTgOyUQUSt9FdnKcqhTaJmkY6HVrgouZHZR0ncK5QxvmnQeg==}
@@ -5780,9 +5866,17 @@ packages:
     resolution: {integrity: sha512-o5sSPKEkg/DIQNmH43V0/uerLrpzVedkUh8tGNvaeXpfpuwjKenlSox/2O/BTlZUtEe+JG7s5YhEz608PlAHRA==}
     engines: {node: '>=0.6'}
 
+  tough-cookie@5.1.2:
+    resolution: {integrity: sha512-FVDYdxtnj0G6Qm/DhNPSb8Ju59ULcup3tuJxkFb5K8Bv2pUXILbf0xZWU8PX8Ov19OXljbUyveOFwRMwkXzO+A==}
+    engines: {node: '>=16'}
+
   tough-cookie@6.0.2:
     resolution: {integrity: sha512-exgYmnmL/sJpR3upZfXG5PoatXQii55xAiXGXzY+sROLZ/Y+SLcp9PgJNI9Vz37HpQ74WvDcLT8eqm+kV3FzrA==}
     engines: {node: '>=16'}
+
+  tr46@5.1.1:
+    resolution: {integrity: sha512-hdF5ZgjTqgAntKkklYw0R03MG2x/bSzTtkxmIRw/sTNV8YXsCJ1tfLAX23lhxhHJlEf3CRCOCGGWw3vI3GaSPw==}
+    engines: {node: '>=18'}
 
   tr46@6.0.0:
     resolution: {integrity: sha512-bLVMLPtstlZ4iMQHpFHTR7GAGj2jxi8Dg0s2h2MafAE4uSWF98FC/3MomU51iQAMf8/qDUbKWf5GxuvvVcXEhw==}
@@ -6021,6 +6115,10 @@ packages:
       yaml:
         optional: true
 
+  w3c-xmlserializer@5.0.0:
+    resolution: {integrity: sha512-o8qghlI8NZHU1lLPrpi2+Uq7abh4GGPpYANlalzWxyWteJOCsr/P+oPBA49TOLu5FTZO4d3F9MnWJfiMo4BkmA==}
+    engines: {node: '>=18'}
+
   w3c-xmlserializer@6.0.0:
     resolution: {integrity: sha512-4Nsy8K5Tr6SPDH9jhKJOHf7ChDrc1zufZTVSF7x72hwuEXBqxqk9G6cK+K2NRUtB3iELRJqjXb4JPDMBjMTl2Q==}
     engines: {node: ^22.22.2 || ^24.15.0 || >=26.0.0}
@@ -6038,6 +6136,10 @@ packages:
 
   weak-lru-cache@1.2.2:
     resolution: {integrity: sha512-DEAoo25RfSYMuTGc9vPJzZcZullwIqRDSI9LOy+fkCJPi6hykCnfKaXTuPBDuXAUcqHXyOgFtHNp/kB2FjYHbw==}
+
+  webidl-conversions@7.0.0:
+    resolution: {integrity: sha512-VwddBukDzu71offAQR975unBIGqfKZpM+8ZX6ySk8nYhVoo5CYaZyzt3YBvYtRtO+aoGlqxPg/B87NGVZ/fu6g==}
+    engines: {node: '>=12'}
 
   webidl-conversions@8.0.1:
     resolution: {integrity: sha512-BMhLD/Sw+GbJC21C/UgyaZX41nPt8bUTg+jWyDeg7e7YN4xOM05YPSIXceACnXVtqyEw/LMClUQMtMZ+PGGpqQ==}
@@ -6101,9 +6203,22 @@ packages:
     resolution: {integrity: sha512-OqedPIGOfsDlo31UNwYbCFMSaO9m9G/0faIHj5/dZFDMFqPTcx6UwqyOy3COEaEOg/9VsGIpdqn62W5KhoKSpg==}
     engines: {node: '>=0.8.0'}
 
+  whatwg-encoding@3.1.1:
+    resolution: {integrity: sha512-6qN4hJdMwfYBtE3YBTTHhoeuUrDBPZmbQaxWAqSALV/MeEnR5z1xd8UKud2RAkFoPkmB+hli1TZSnyi84xz1vQ==}
+    engines: {node: '>=18'}
+    deprecated: Use @exodus/bytes instead for a more spec-conformant and faster implementation
+
+  whatwg-mimetype@4.0.0:
+    resolution: {integrity: sha512-QaKxh0eNIi2mE9p2vEdzfagOKHCcj1pJ56EEHGQOVxp8r9/iszLUUV7v89x9O1p/T+NlTM5W7jW6+cz4Fq1YVg==}
+    engines: {node: '>=18'}
+
   whatwg-mimetype@5.0.0:
     resolution: {integrity: sha512-sXcNcHOC51uPGF0P/D4NVtrkjSU2fNsm9iog4ZvZJsL3rjoDAzXZhkm2MWt1y+PUdggKAYVoMAIYcs78wJ51Cw==}
     engines: {node: '>=20'}
+
+  whatwg-url@14.2.0:
+    resolution: {integrity: sha512-De72GdQZzNTUBBChsXueQUnPKDkg/5A5zp7pFDuQAj5UFoENpiACU0wlCvzpAGnTkj++ihpKwKyYewn/XNUbKw==}
+    engines: {node: '>=18'}
 
   whatwg-url@16.0.1:
     resolution: {integrity: sha512-1to4zXBxmXHV3IiSSEInrreIlu02vUOvrhxJJH5vcxYTBDAx51cqZiKdyTxlecdKNSjj8EcxGBxNf6Vg+945gw==}
@@ -6347,11 +6462,11 @@ snapshots:
       - chokidar
       - typescript
 
-  '@angular-builders/custom-webpack@21.1.0(@angular/compiler-cli@21.2.24(@angular/compiler@21.2.24)(supports-color@8.1.1)(typescript@5.9.3))(@angular/compiler@21.2.24)(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1))(@angular/platform-browser@21.2.24(@angular/animations@21.2.24(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1)))(@angular/common@21.2.24(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1)))(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.9.8)(chokidar@5.0.0)(debug@4.4.3(supports-color@8.1.1))(jest@30.5.2(@types/node@25.9.8)(supports-color@8.1.1)(ts-node@10.9.2(@types/node@25.9.8)(typescript@5.9.3)))(jiti@2.7.0)(less@4.9.0(supports-color@8.1.1))(postcss@8.5.28)(rxjs@7.8.2)(supports-color@8.1.1)(terser@5.51.2)(tslib@2.8.1)(typescript@5.9.3)(uglify-js@3.19.3)':
+  '@angular-builders/custom-webpack@21.1.0(@angular/compiler-cli@21.2.24(@angular/compiler@21.2.24)(supports-color@8.1.1)(typescript@5.9.3))(@angular/compiler@21.2.24)(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1))(@angular/platform-browser@21.2.24(@angular/animations@21.2.24(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1)))(@angular/common@21.2.24(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1)))(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.9.8)(chokidar@5.0.0)(debug@4.4.3(supports-color@8.1.1))(jest-environment-jsdom@30.5.2(supports-color@8.1.1))(jest@30.5.2(@types/node@25.9.8)(supports-color@8.1.1)(ts-node@10.9.2(@types/node@25.9.8)(typescript@5.9.3)))(jiti@2.7.0)(less@4.9.0(supports-color@8.1.1))(postcss@8.5.28)(rxjs@7.8.2)(supports-color@8.1.1)(terser@5.51.2)(tslib@2.8.1)(typescript@5.9.3)(uglify-js@3.19.3)':
     dependencies:
       '@angular-builders/common': 5.0.4(@types/node@25.9.8)(chokidar@5.0.0)(typescript@5.9.3)
       '@angular-devkit/architect': 0.2102.24(chokidar@5.0.0)
-      '@angular-devkit/build-angular': 21.2.24(@angular/compiler-cli@21.2.24(@angular/compiler@21.2.24)(supports-color@8.1.1)(typescript@5.9.3))(@angular/compiler@21.2.24)(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1))(@angular/platform-browser@21.2.24(@angular/animations@21.2.24(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1)))(@angular/common@21.2.24(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1)))(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.9.8)(chokidar@5.0.0)(debug@4.4.3(supports-color@8.1.1))(jest@30.5.2(@types/node@25.9.8)(supports-color@8.1.1)(ts-node@10.9.2(@types/node@25.9.8)(typescript@5.9.3)))(jiti@2.7.0)(supports-color@8.1.1)(typescript@5.9.3)(uglify-js@3.19.3)
+      '@angular-devkit/build-angular': 21.2.24(@angular/compiler-cli@21.2.24(@angular/compiler@21.2.24)(supports-color@8.1.1)(typescript@5.9.3))(@angular/compiler@21.2.24)(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1))(@angular/platform-browser@21.2.24(@angular/animations@21.2.24(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1)))(@angular/common@21.2.24(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1)))(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.9.8)(chokidar@5.0.0)(debug@4.4.3(supports-color@8.1.1))(jest-environment-jsdom@30.5.2(supports-color@8.1.1))(jest@30.5.2(@types/node@25.9.8)(supports-color@8.1.1)(ts-node@10.9.2(@types/node@25.9.8)(typescript@5.9.3)))(jiti@2.7.0)(supports-color@8.1.1)(typescript@5.9.3)(uglify-js@3.19.3)
       '@angular-devkit/core': 21.2.24(chokidar@5.0.0)
       '@angular/build': 21.2.24(@angular/compiler-cli@21.2.24(@angular/compiler@21.2.24)(supports-color@8.1.1)(typescript@5.9.3))(@angular/compiler@21.2.24)(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1))(@angular/platform-browser@21.2.24(@angular/animations@21.2.24(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1)))(@angular/common@21.2.24(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1)))(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.9.8)(chokidar@5.0.0)(jiti@2.7.0)(less@4.9.0(supports-color@8.1.1))(postcss@8.5.28)(supports-color@8.1.1)(terser@5.51.2)(tslib@2.8.1)(typescript@5.9.3)
       '@angular/compiler-cli': 21.2.24(@angular/compiler@21.2.24)(supports-color@8.1.1)(typescript@5.9.3)
@@ -6414,11 +6529,11 @@ snapshots:
       - webpack-cli
       - yaml
 
-  '@angular-builders/jest@21.0.4(dafa2bfb935cfdcb663e4282e21bf3bc)':
+  '@angular-builders/jest@21.0.4(733e3ed7cd471f5f680934a4a4c6ed16)':
     dependencies:
       '@angular-builders/common': 5.0.4(@types/node@25.9.8)(chokidar@5.0.0)(typescript@5.9.3)
       '@angular-devkit/architect': 0.2102.24(chokidar@5.0.0)
-      '@angular-devkit/build-angular': 21.2.24(@angular/compiler-cli@21.2.24(@angular/compiler@21.2.24)(supports-color@8.1.1)(typescript@5.9.3))(@angular/compiler@21.2.24)(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1))(@angular/platform-browser@21.2.24(@angular/animations@21.2.24(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1)))(@angular/common@21.2.24(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1)))(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.9.8)(chokidar@5.0.0)(debug@4.4.3(supports-color@8.1.1))(jest@30.5.2(@types/node@25.9.8)(supports-color@8.1.1)(ts-node@10.9.2(@types/node@25.9.8)(typescript@5.9.3)))(jiti@2.7.0)(supports-color@8.1.1)(typescript@5.9.3)(uglify-js@3.19.3)
+      '@angular-devkit/build-angular': 21.2.24(@angular/compiler-cli@21.2.24(@angular/compiler@21.2.24)(supports-color@8.1.1)(typescript@5.9.3))(@angular/compiler@21.2.24)(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1))(@angular/platform-browser@21.2.24(@angular/animations@21.2.24(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1)))(@angular/common@21.2.24(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1)))(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.9.8)(chokidar@5.0.0)(debug@4.4.3(supports-color@8.1.1))(jest-environment-jsdom@30.5.2(supports-color@8.1.1))(jest@30.5.2(@types/node@25.9.8)(supports-color@8.1.1)(ts-node@10.9.2(@types/node@25.9.8)(typescript@5.9.3)))(jiti@2.7.0)(supports-color@8.1.1)(typescript@5.9.3)(uglify-js@3.19.3)
       '@angular-devkit/core': 21.2.24(chokidar@5.0.0)
       '@angular/compiler-cli': 21.2.24(@angular/compiler@21.2.24)(supports-color@8.1.1)(typescript@5.9.3)
       '@angular/core': 21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1)
@@ -6449,7 +6564,7 @@ snapshots:
     transitivePeerDependencies:
       - chokidar
 
-  '@angular-devkit/build-angular@21.2.24(@angular/compiler-cli@21.2.24(@angular/compiler@21.2.24)(supports-color@8.1.1)(typescript@5.9.3))(@angular/compiler@21.2.24)(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1))(@angular/platform-browser@21.2.24(@angular/animations@21.2.24(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1)))(@angular/common@21.2.24(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1)))(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.9.8)(chokidar@5.0.0)(debug@4.4.3(supports-color@8.1.1))(jest@30.5.2(@types/node@25.9.8)(supports-color@8.1.1)(ts-node@10.9.2(@types/node@25.9.8)(typescript@5.9.3)))(jiti@2.7.0)(supports-color@8.1.1)(typescript@5.9.3)(uglify-js@3.19.3)':
+  '@angular-devkit/build-angular@21.2.24(@angular/compiler-cli@21.2.24(@angular/compiler@21.2.24)(supports-color@8.1.1)(typescript@5.9.3))(@angular/compiler@21.2.24)(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1))(@angular/platform-browser@21.2.24(@angular/animations@21.2.24(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1)))(@angular/common@21.2.24(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1)))(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.9.8)(chokidar@5.0.0)(debug@4.4.3(supports-color@8.1.1))(jest-environment-jsdom@30.5.2(supports-color@8.1.1))(jest@30.5.2(@types/node@25.9.8)(supports-color@8.1.1)(ts-node@10.9.2(@types/node@25.9.8)(typescript@5.9.3)))(jiti@2.7.0)(supports-color@8.1.1)(typescript@5.9.3)(uglify-js@3.19.3)':
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@angular-devkit/architect': 0.2102.24(chokidar@5.0.0)
@@ -6512,6 +6627,7 @@ snapshots:
       '@angular/platform-browser': 21.2.24(@angular/animations@21.2.24(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1)))(@angular/common@21.2.24(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1))
       esbuild: 0.25.12
       jest: 30.5.2(@types/node@25.9.8)(supports-color@8.1.1)(ts-node@10.9.2(@types/node@25.9.8)(typescript@5.9.3))
+      jest-environment-jsdom: 30.5.2(supports-color@8.1.1)
     transitivePeerDependencies:
       - '@angular/compiler'
       - '@emnapi/core'
@@ -6867,6 +6983,14 @@ snapshots:
       '@angular/platform-browser': 21.2.24(@angular/animations@21.2.24(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1)))(@angular/common@21.2.24(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@21.2.24(@angular/compiler@21.2.24)(rxjs@7.8.2)(zone.js@0.15.1))
       rxjs: 7.8.2
       tslib: 2.8.1
+
+  '@asamuzakjp/css-color@3.2.0':
+    dependencies:
+      '@csstools/css-calc': 2.1.4(@csstools/css-parser-algorithms@3.0.5(@csstools/css-tokenizer@3.0.4))(@csstools/css-tokenizer@3.0.4)
+      '@csstools/css-color-parser': 3.1.0(@csstools/css-parser-algorithms@3.0.5(@csstools/css-tokenizer@3.0.4))(@csstools/css-tokenizer@3.0.4)
+      '@csstools/css-parser-algorithms': 3.0.5(@csstools/css-tokenizer@3.0.4)
+      '@csstools/css-tokenizer': 3.0.4
+      lru-cache: 10.4.3
 
   '@asamuzakjp/css-color@7.1.2':
     dependencies:
@@ -7655,12 +7779,26 @@ snapshots:
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
 
+  '@csstools/color-helpers@5.1.0': {}
+
   '@csstools/color-helpers@6.1.2': {}
+
+  '@csstools/css-calc@2.1.4(@csstools/css-parser-algorithms@3.0.5(@csstools/css-tokenizer@3.0.4))(@csstools/css-tokenizer@3.0.4)':
+    dependencies:
+      '@csstools/css-parser-algorithms': 3.0.5(@csstools/css-tokenizer@3.0.4)
+      '@csstools/css-tokenizer': 3.0.4
 
   '@csstools/css-calc@3.4.1(@csstools/css-parser-algorithms@4.0.1(@csstools/css-tokenizer@4.0.2))(@csstools/css-tokenizer@4.0.2)':
     dependencies:
       '@csstools/css-parser-algorithms': 4.0.1(@csstools/css-tokenizer@4.0.2)
       '@csstools/css-tokenizer': 4.0.2
+
+  '@csstools/css-color-parser@3.1.0(@csstools/css-parser-algorithms@3.0.5(@csstools/css-tokenizer@3.0.4))(@csstools/css-tokenizer@3.0.4)':
+    dependencies:
+      '@csstools/color-helpers': 5.1.0
+      '@csstools/css-calc': 2.1.4(@csstools/css-parser-algorithms@3.0.5(@csstools/css-tokenizer@3.0.4))(@csstools/css-tokenizer@3.0.4)
+      '@csstools/css-parser-algorithms': 3.0.5(@csstools/css-tokenizer@3.0.4)
+      '@csstools/css-tokenizer': 3.0.4
 
   '@csstools/css-color-parser@4.2.4(@csstools/css-parser-algorithms@4.0.1(@csstools/css-tokenizer@4.0.2))(@csstools/css-tokenizer@4.0.2)':
     dependencies:
@@ -7669,6 +7807,10 @@ snapshots:
       '@csstools/css-parser-algorithms': 4.0.1(@csstools/css-tokenizer@4.0.2)
       '@csstools/css-tokenizer': 4.0.2
 
+  '@csstools/css-parser-algorithms@3.0.5(@csstools/css-tokenizer@3.0.4)':
+    dependencies:
+      '@csstools/css-tokenizer': 3.0.4
+
   '@csstools/css-parser-algorithms@4.0.1(@csstools/css-tokenizer@4.0.2)':
     dependencies:
       '@csstools/css-tokenizer': 4.0.2
@@ -7676,6 +7818,8 @@ snapshots:
   '@csstools/css-syntax-patches-for-csstree@1.1.14(css-tree@3.2.1)':
     optionalDependencies:
       css-tree: 3.2.1
+
+  '@csstools/css-tokenizer@3.0.4': {}
 
   '@csstools/css-tokenizer@4.0.2': {}
 
@@ -8044,6 +8188,17 @@ snapshots:
       - ts-node
 
   '@jest/diff-sequences@30.5.0': {}
+
+  '@jest/environment-jsdom-abstract@30.5.2(@types/jsdom@21.1.7)(jsdom@26.1.0(supports-color@8.1.1))':
+    dependencies:
+      '@jest/environment': 30.5.2
+      '@jest/fake-timers': 30.5.2
+      '@jest/types': 30.5.1
+      '@types/jsdom': 21.1.7
+      '@types/node': 25.9.8
+      jest-mock: 30.5.2
+      jest-util: 30.5.1
+      jsdom: 26.1.0(supports-color@8.1.1)
 
   '@jest/environment-jsdom-abstract@30.5.2(@types/jsdom@30.0.0)(jsdom@30.1.1(@noble/hashes@1.8.0))':
     dependencies:
@@ -9006,6 +9161,12 @@ snapshots:
       expect: 30.5.2
       pretty-format: 30.5.1
 
+  '@types/jsdom@21.1.7':
+    dependencies:
+      '@types/node': 25.9.8
+      '@types/tough-cookie': 4.0.5
+      parse5: 7.3.0
+
   '@types/jsdom@30.0.0':
     dependencies:
       '@types/node': 25.9.8
@@ -9937,6 +10098,16 @@ snapshots:
 
   cssesc@3.0.0: {}
 
+  cssstyle@4.6.0:
+    dependencies:
+      '@asamuzakjp/css-color': 3.2.0
+      rrweb-cssom: 0.8.0
+
+  data-urls@5.0.0:
+    dependencies:
+      whatwg-mimetype: 4.0.0
+      whatwg-url: 14.2.0
+
   data-urls@7.0.0(@noble/hashes@1.8.0):
     dependencies:
       whatwg-mimetype: 5.0.0
@@ -10532,6 +10703,10 @@ snapshots:
       readable-stream: 2.3.8
       wbuf: 1.7.3
 
+  html-encoding-sniffer@4.0.0:
+    dependencies:
+      whatwg-encoding: 3.1.1
+
   html-encoding-sniffer@7.0.0(@noble/hashes@1.8.0):
     dependencies:
       '@exodus/bytes': 1.16.0(@noble/hashes@1.8.0)
@@ -10876,6 +11051,17 @@ snapshots:
       jest-util: 30.5.1
       pretty-format: 30.5.1
 
+  jest-environment-jsdom@30.5.2(supports-color@8.1.1):
+    dependencies:
+      '@jest/environment': 30.5.2
+      '@jest/environment-jsdom-abstract': 30.5.2(@types/jsdom@21.1.7)(jsdom@26.1.0(supports-color@8.1.1))
+      '@types/jsdom': 21.1.7
+      jsdom: 26.1.0(supports-color@8.1.1)
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+
   jest-environment-node@30.5.2:
     dependencies:
       '@jest/environment': 30.5.2
@@ -11127,6 +11313,33 @@ snapshots:
   js-yaml@4.3.2:
     dependencies:
       argparse: 2.0.1
+
+  jsdom@26.1.0(supports-color@8.1.1):
+    dependencies:
+      cssstyle: 4.6.0
+      data-urls: 5.0.0
+      decimal.js: 10.6.0
+      html-encoding-sniffer: 4.0.0
+      http-proxy-agent: 7.0.2(supports-color@8.1.1)
+      https-proxy-agent: 7.0.6(supports-color@8.1.1)
+      is-potential-custom-element-name: 1.0.1
+      nwsapi: 2.2.28
+      parse5: 7.3.0
+      rrweb-cssom: 0.8.0
+      saxes: 6.0.0
+      symbol-tree: 3.2.4
+      tough-cookie: 5.1.2
+      w3c-xmlserializer: 5.0.0
+      webidl-conversions: 7.0.0
+      whatwg-encoding: 3.1.1
+      whatwg-mimetype: 4.0.0
+      whatwg-url: 14.2.0
+      ws: 8.22.0
+      xml-name-validator: 5.0.0
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
 
   jsdom@30.1.1(@noble/hashes@1.8.0):
     dependencies:
@@ -11608,6 +11821,8 @@ snapshots:
     dependencies:
       boolbase: 1.0.0
 
+  nwsapi@2.2.28: {}
+
   object-assign@4.1.1: {}
 
   object-inspect@1.13.4: {}
@@ -11743,6 +11958,10 @@ snapshots:
   parse5-sax-parser@8.0.0:
     dependencies:
       parse5: 8.0.1
+
+  parse5@7.3.0:
+    dependencies:
+      entities: 6.0.1
 
   parse5@8.0.1:
     dependencies:
@@ -12081,6 +12300,8 @@ snapshots:
       path-to-regexp: 8.4.2
     transitivePeerDependencies:
       - supports-color
+
+  rrweb-cssom@0.8.0: {}
 
   run-applescript@7.1.0: {}
 
@@ -12452,6 +12673,8 @@ snapshots:
 
   sweetalert2@11.26.25: {}
 
+  symbol-tree@3.2.4: {}
+
   synckit@0.11.13:
     dependencies:
       '@pkgr/core': 0.3.6
@@ -12502,7 +12725,13 @@ snapshots:
       fdir: 6.5.0(picomatch@4.0.7)
       picomatch: 4.0.7
 
+  tldts-core@6.1.86: {}
+
   tldts-core@7.4.16: {}
+
+  tldts@6.1.86:
+    dependencies:
+      tldts-core: 6.1.86
 
   tldts@7.4.16:
     dependencies:
@@ -12514,9 +12743,17 @@ snapshots:
 
   toidentifier@1.0.1: {}
 
+  tough-cookie@5.1.2:
+    dependencies:
+      tldts: 6.1.86
+
   tough-cookie@6.0.2:
     dependencies:
       tldts: 7.4.16
+
+  tr46@5.1.1:
+    dependencies:
+      punycode: 2.3.1
 
   tr46@6.0.0:
     dependencies:
@@ -12738,6 +12975,10 @@ snapshots:
       sass: 1.97.3
       terser: 5.51.2
 
+  w3c-xmlserializer@5.0.0:
+    dependencies:
+      xml-name-validator: 5.0.0
+
   w3c-xmlserializer@6.0.0:
     dependencies:
       xml-name-validator: 5.0.0
@@ -12757,6 +12998,8 @@ snapshots:
 
   weak-lru-cache@1.2.2:
     optional: true
+
+  webidl-conversions@7.0.0: {}
 
   webidl-conversions@8.0.1: {}
 
@@ -12904,7 +13147,18 @@ snapshots:
 
   websocket-extensions@0.1.4: {}
 
+  whatwg-encoding@3.1.1:
+    dependencies:
+      iconv-lite: 0.6.3
+
+  whatwg-mimetype@4.0.0: {}
+
   whatwg-mimetype@5.0.0: {}
+
+  whatwg-url@14.2.0:
+    dependencies:
+      tr46: 5.1.1
+      webidl-conversions: 7.0.0
 
   whatwg-url@16.0.1(@noble/hashes@1.8.0):
     dependencies:

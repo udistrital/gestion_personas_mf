@@ -80,6 +80,120 @@
           ></app-opciones-registro>
         </fieldset>
 
+        <section class="rp-consulta-mid" aria-labelledby="rp-consulta-mid-titulo">
+          <div class="rp-consulta-mid__encabezado">
+            <h3 id="rp-consulta-mid-titulo">Consultar proveedor existente</h3>
+            <p>
+              Consulta de solo lectura. Ingrese el ID de un proveedor autorizado
+              para este ambiente; la respuesta no modifica ni rellena el formulario.
+            </p>
+          </div>
+          <form
+            class="rp-consulta-mid__formulario"
+            (submit)="consultarProveedorExistente($event, idProveedor.valueAsNumber)"
+          >
+            <label for="rp-id-proveedor">ID del proveedor</label>
+            <div class="rp-consulta-mid__controles">
+              <input
+                #idProveedor
+                id="rp-id-proveedor"
+                type="number"
+                step="any"
+                inputmode="numeric"
+                autocomplete="off"
+                aria-describedby="rp-id-proveedor-ayuda"
+                [disabled]="consentimientoPendiente || consultaMidEnCurso"
+                (input)="limpiarResultadoConsulta()"
+              />
+              <button
+                type="submit"
+                [disabled]="consentimientoPendiente || consultaMidEnCurso"
+              >
+                @if (consultaMidEnCurso) {
+                  Consultando...
+                } @else {
+                  Consultar
+                }
+              </button>
+            </div>
+            <span id="rp-id-proveedor-ayuda">
+              Debe ser un entero positivo existente en el ambiente configurado.
+            </span>
+          </form>
+
+          @if (consentimientoPendiente) {
+            <p class="rp-consulta-mid__bloqueo" role="status">
+              Acepte el consentimiento para habilitar la consulta.
+            </p>
+          }
+
+          @if (estadoConsultaMid !== "idle") {
+            <div
+              class="rp-consulta-mid__estado"
+              [class.rp-consulta-mid__estado--error]="estadoConsultaMid === 'error'"
+              [class.rp-consulta-mid__estado--parcial]="estadoConsultaMid === 'partial'"
+              [class.rp-consulta-mid__estado--exito]="estadoConsultaMid === 'success'"
+              [attr.role]="estadoConsultaMid === 'error' ? 'alert' : 'status'"
+              aria-live="polite"
+            >
+              <p>{{ mensajeConsultaMid }}</p>
+              @if (codigoHttpConsultaMid !== null) {
+                <span>HTTP {{ codigoHttpConsultaMid }}</span>
+              }
+              @if (proveedorConsultado) {
+                <dl>
+                  <div>
+                    <dt>ID del proveedor</dt>
+                    <dd>{{ proveedorConsultado.Id ?? "No informado" }}</dd>
+                  </div>
+                  <div>
+                    <dt>Tipo de registro</dt>
+                    <dd>{{ proveedorConsultado.TipoRegistroId ?? "No informado" }}</dd>
+                  </div>
+                  <div>
+                    <dt>Activo</dt>
+                    <dd>
+                      @if (proveedorConsultado.Activo === true) {
+                        Sí
+                      } @else if (proveedorConsultado.Activo === false) {
+                        No
+                      } @else {
+                        No informado
+                      }
+                    </dd>
+                  </div>
+                </dl>
+              }
+              @if (
+                proveedorConsultado?.Id
+                && (estadoConsultaMid === "success" || estadoConsultaMid === "partial")
+              ) {
+                <button
+                  type="button"
+                  [disabled]="consentimientoPendiente || editandoProveedorMid"
+                  (click)="editarProveedorConsultado()"
+                >
+                  @if (editandoProveedorMid) {
+                    Preparando edición...
+                  } @else {
+                    Editar proveedor consultado
+                  }
+                </button>
+              }
+              @if (erroresExpansionMid.length > 0) {
+                <ul>
+                  @for (error of erroresExpansionMid; track $index) {
+                    <li>
+                      {{ error.path ?? "Relación" }}:
+                      {{ error.message ?? "No fue posible expandirla." }}
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+          }
+        </section>
+
         <app-boton-tratamiento-informacion
           [consentimientoAceptado]="consentimientoAceptado()"
           (solicitarConsentimiento)="consultarConsentimiento()"

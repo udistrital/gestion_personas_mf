@@ -13,6 +13,25 @@
     (pasoActualChange)="irAlPaso($event)"
   ></stepper-visual>
 
+  @if (estadoMid) {
+    <section
+      [attr.role]="estadoMid === 'error' ? 'alert' : 'status'"
+      [attr.aria-live]="estadoMid === 'error' ? 'assertive' : 'polite'"
+    >
+      <strong>{{ mensajeMid }}</strong>
+      @if (idProveedorMid) {
+        <span>ID del proveedor: {{ idProveedorMid }}</span>
+      }
+      @if (erroresMid.length > 0) {
+        <ul>
+          @for (error of erroresMid; track $index) {
+            <li>{{ error.path ?? "Relación" }}: {{ error.message ?? "Resultado parcial" }}</li>
+          }
+        </ul>
+      }
+    </section>
+  }
+
   <section class="contenido-pasos" aria-label="Información del registro">
     <registro-persona-juridica-estado-catalogos
       [cargando]="cargandoCatalogos"

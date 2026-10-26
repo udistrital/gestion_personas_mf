@@ -173,6 +173,56 @@ export class RegistroPersonaJuridicaCatalogosService {
     );
   }
 
+  obtenerIdTipoContribuyente(
+    codigo: "P_NATURAL" | "P_JURIDICA",
+  ): Observable<number> {
+    const url = `${this.tercerosUrl}/tipo_contribuyente`;
+    return this.obtenerPaginado(
+      url,
+      `CodigoAbreviacion:${codigo},Activo:true`,
+      false,
+    ).pipe(
+      map((registros) => {
+        const coincidencias = registros.filter(
+          (registro) =>
+            registro.Activo === true
+            && registro.CodigoAbreviacion === codigo
+            && Number.isSafeInteger(registro.Id)
+            && registro.Id > 0,
+        );
+        if (coincidencias.length !== 1) {
+          throw new Error(
+            `No se pudo resolver de forma única el tipo de contribuyente ${codigo}.`,
+          );
+        }
+        return coincidencias[0].Id;
+      }),
+    );
+  }
+
+  obtenerIdTipoDocumentoNit(): Observable<number | undefined> {
+    const codigo = "NIT";
+    const url = `${this.tercerosUrl}/tipo_documento`;
+    return this.obtenerPaginado(
+      url,
+      `CodigoAbreviacion:${codigo},Activo:true`,
+      false,
+    ).pipe(
+      map((registros) => {
+        const coincidencias = registros.filter(
+          (registro) =>
+            registro.Activo === true
+            && registro.CodigoAbreviacion === codigo
+            && Number.isSafeInteger(registro.Id)
+            && registro.Id > 0,
+        );
+        return coincidencias.length === 1
+          ? coincidencias[0].Id
+          : undefined;
+      }),
+    );
+  }
+
   private obtenerInfoComplementaria(
     codigoGrupo: string,
   ): Observable<RegistroCatalogo[]> {

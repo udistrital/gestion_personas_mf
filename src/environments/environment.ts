@@ -3,6 +3,7 @@ export const environment = {
 
   AUTENTICACION_MID_SERVICE:
     "https://autenticacion.portaloas.udistrital.edu.co/apioas/autenticacion_mid/v1/",
+  GESTION_PERSONAS_MID_SERVICE: "/mid-api",
   PARAMETROS_SERVICE:
     "https://autenticacion.portaloas.udistrital.edu.co/apioas/parametros/v1/",
   TERCEROS_SERVICE:

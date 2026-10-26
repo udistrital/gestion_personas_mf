@@ -51,6 +51,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
     "jest": "^30.5.2",
+    "jest-environment-jsdom": "^30.5.2",
     "jest-preset-angular": "^16.2.0",
     "picomatch": "^4.0.4",
     "prettier": "^3.8.1",
