@@ -1,5 +1,14 @@
-import { Component, OnInit, computed, inject, signal } from "@angular/core";
+import {
+  Component,
+  DestroyRef,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { ActivatedRoute, Router } from "@angular/router";
+import { MatDialog } from "@angular/material/dialog";
 import {
   ACCIONES_SOLICITUD,
   AccionSolicitud,
@@ -14,10 +23,20 @@ import {
   SolicitudDetalle,
 } from "../../../models/solicitud.model";
 import {
+  ResultadoGuardadoSolicitud,
+  revisionSolicitud,
+  versionSolicitud,
+} from "../../../models/edicion-solicitud.model";
+import {
   PESTANAS_DETALLE,
   PestanaDetalleMeta,
 } from "./detalle-solicitud.const";
 import { SolicitudDetalleStore } from "./solicitud-detalle.store";
+import {
+  AccionDialogoGuardado,
+  DialogoGuardadoComponent,
+  DialogoGuardadoDatos,
+} from "./components/dialogo-guardado/dialogo-guardado.component";
 
 /** Estados de vista del armazón del detalle. */
 type EstadoVista = "listo" | "no-encontrada" | "error";
@@ -46,6 +65,8 @@ export class DetalleSolicitudComponent implements OnInit {
   private readonly permisos = inject(PermisosSolicitudService);
   private readonly alerta = inject(AlertService);
   private readonly store = inject(SolicitudDetalleStore);
+  private readonly dialogo = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
 
   /** Catálogo de pestañas que pinta la barra. */
   readonly pestanas = PESTANAS_DETALLE;
@@ -88,6 +109,7 @@ export class DetalleSolicitudComponent implements OnInit {
 
     if (resultado.estado === "ok") {
       this.store.establecer(resultado.solicitud);
+      this.abrirConfirmacionGuardado();
       return;
     }
 
@@ -133,6 +155,36 @@ export class DetalleSolicitudComponent implements OnInit {
     return ACCIONES_SOLICITUD[accion].peligro === true;
   }
 
+  /** Etiqueta contextual de la acción ("Modificar" / "Solicitar modificación"). */
+  etiquetaAccion(accion: AccionSolicitud): string {
+    const solicitud = this.store.solicitud();
+    return solicitud
+      ? this.permisos.etiquetaAccion(accion, solicitud)
+      : ACCIONES_SOLICITUD[accion].etiqueta;
+  }
+
+  /** Versión vigente del expediente ("" si aún no se cargó). */
+  versionActual(): string {
+    const solicitud = this.store.solicitud();
+    return solicitud ? versionSolicitud(solicitud) : "";
+  }
+
+  /** Revisión vigente del expediente (0 si aún no se cargó). */
+  revisionActual(): number {
+    const solicitud = this.store.solicitud();
+    return solicitud ? revisionSolicitud(solicitud) : 0;
+  }
+
+  /**
+   * true si hay una modificación restringida esperando aprobación (S-08).
+   *
+   * El detalle sigue mostrando la versión publicada: la propuesta vive en
+   * `modificacionPendiente` hasta que la Oficina de Contratación la apruebe.
+   */
+  readonly tieneModificacionPendiente = computed<boolean>(
+    () => !!this.store.solicitud()?.modificacionPendiente,
+  );
+
   /**
    * true si el estado permite abrir el foro de observaciones.
    *
@@ -150,19 +202,64 @@ export class DetalleSolicitudComponent implements OnInit {
    */
   ejecutarAccion(accion: AccionSolicitud): void {
     const meta = ACCIONES_SOLICITUD[accion];
-    if (meta.ruta) {
-      const solicitud = this.store.solicitud();
-      const comandos = meta.ruta
+    const solicitud = this.store.solicitud();
+    // La ruta la resuelve la matriz: en un borrador `modificar` apunta a la
+    // edición completa y en una solicitud enviada a la modificación restringida.
+    const ruta = solicitud
+      ? this.permisos.rutaAccion(accion, solicitud)
+      : meta.ruta;
+    if (ruta && solicitud) {
+      const comandos = ruta
         .split("/")
-        .map((segmento) => (segmento === ":id" ? solicitud?.id ?? "" : segmento));
+        .map((segmento) => (segmento === ":id" ? solicitud.id : segmento));
       void this.router.navigate(comandos);
       return;
     }
-    // TODO issue #34: destino aún no implementado (S-04…S-08).
+    // TODO issue #34: destino aún no implementado (S-05…S-08).
     void this.alerta.showAlert(
-      meta.etiqueta,
+      this.etiquetaAccion(accion),
       "Esta pantalla aún no está implementada. Corresponde a una fase posterior del módulo.",
     );
+  }
+
+  /**
+   * Abre la confirmación de guardado que dejó la edición en el estado de la
+   * navegación (S-04).
+   *
+   * Se limpia el estado enseguida para que el diálogo no reaparezca al recargar
+   * ni al volver atrás. "Continuar editando borrador" regresa al asistente.
+   */
+  private abrirConfirmacionGuardado(): void {
+    const solicitud = this.store.solicitud();
+    const estado = window.history.state as {
+      guardado?: ResultadoGuardadoSolicitud | null;
+    } | null;
+    const resultado = estado?.guardado;
+    if (!solicitud || !resultado) {
+      return;
+    }
+
+    window.history.replaceState({ ...estado, guardado: null }, "");
+
+    this.dialogo
+      .open<
+        DialogoGuardadoComponent,
+        DialogoGuardadoDatos,
+        AccionDialogoGuardado
+      >(DialogoGuardadoComponent, {
+        data: { solicitudId: solicitud.id, resultado },
+        autoFocus: "first-tabbable",
+        restoreFocus: true,
+        width: "34rem",
+        maxWidth: "95vw",
+      })
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((accion) => {
+        if (accion === "continuar") {
+          this.ejecutarAccion("modificar");
+        }
+      });
   }
 
   /** Descarga provisional del expediente (no implementada). */

@@ -460,3 +460,27 @@
   line-height: 1.45;
   text-transform: none;
 }
+
+/* Avisos de campo en la edición restringida (S-04) */
+.campo__ayuda--bloqueo,
+.campo__ayuda--habilitado {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-weight: 600;
+}
+
+.campo__ayuda--bloqueo {
+  color: var(--agora-warning-text);
+}
+
+.campo__ayuda--habilitado {
+  color: var(--agora-success);
+}
+
+.campo__ayuda--bloqueo mat-icon,
+.campo__ayuda--habilitado mat-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  font-size: 0.875rem;
+}

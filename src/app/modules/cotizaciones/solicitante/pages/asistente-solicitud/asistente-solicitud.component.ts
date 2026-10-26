@@ -1,13 +1,17 @@
 import {
   Component,
   DestroyRef,
+  EventEmitter,
+  Input,
   OnInit,
+  Output,
   ViewChild,
   inject,
   signal,
 } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { FormBuilder, FormGroup, Validators } from "@angular/forms";
+import { MatDialog } from "@angular/material/dialog";
 import { Router } from "@angular/router";
 import { debounceTime } from "rxjs";
 import { AlertService } from "src/app/shared/services/alert.service";
@@ -17,6 +21,23 @@ import {
   BorradorSolicitudService,
 } from "../../../services/borrador-solicitud.service";
 import { CalendarioFestivosService } from "../../../services/calendario-festivos.service";
+import type {
+  ContextoEdicionSolicitud,
+  DatosEdicionSolicitud,
+  ModoEdicionSolicitud,
+  ResumenDiferencias,
+  ResultadoGuardadoSolicitud,
+  VersionEdicionSolicitud,
+} from "../../../models/edicion-solicitud.model";
+import { DiferenciasSolicitudService } from "../../../services/diferencias-solicitud.service";
+import { EdicionSolicitudService } from "../../../services/edicion-solicitud.service";
+import { ReglasEdicionSolicitudService } from "../../../services/reglas-edicion-solicitud.service";
+import { SolicitudesService } from "../../../services/solicitudes.service";
+import {
+  DialogoDescartarComponent,
+  type DialogoDescartarDatos,
+  type ResultadoDescartar,
+} from "./components/dialogo-descartar/dialogo-descartar.component";
 import { ResultadoCruce, formatoCop } from "../../../models/necesidad.model";
 import { aniosDelRango } from "../../../models/calendario.model";
 import {
@@ -89,6 +110,36 @@ interface ValidacionPaso extends ItemVerificacion {
 })
 export class AsistenteSolicitudComponent implements OnInit {
   readonly pasos = PASOS_SOLICITUD;
+
+  /**
+   * Contexto de edición (S-04). `null` cuando el asistente crea una solicitud.
+   *
+   * El armazón de edición entrega la solicitud, el modo habilitado por el
+   * estado y la fotografía editable ya armada; el asistente reutiliza el mismo
+   * formulario, los mismos pasos y las mismas validaciones de S-02.
+   */
+  @Input() contextoEdicion: ContextoEdicionSolicitud | null = null;
+
+  /** Notifica que la edición se guardó; el armazón navega al detalle. */
+  @Output() guardado = new EventEmitter<ResultadoGuardadoSolicitud>();
+
+  /** Notifica que el usuario descartó los cambios y quiere salir. */
+  @Output() descartado = new EventEmitter<void>();
+
+  /** true mientras se persiste la edición en la capa de datos. */
+  readonly guardando = signal(false);
+
+  /** Mensaje del último fallo al guardar la edición (vacío = sin error). */
+  readonly errorGuardado = signal("");
+
+  /** Cambios calculados contra la última versión guardada. */
+  readonly diferencias = signal<ResumenDiferencias>({ grupos: [], total: 0 });
+
+  private readonly reglas = inject(ReglasEdicionSolicitudService);
+  private readonly edicionDraft = inject(EdicionSolicitudService);
+  private readonly diferenciasSvc = inject(DiferenciasSolicitudService);
+  private readonly solicitudes = inject(SolicitudesService);
+  private readonly dialog = inject(MatDialog);
 
   readonly breadcrumb =
     "<p>Gestión Proveedor › Cotizaciones › Mis Solicitudes de Cotización › <b>Nueva solicitud</b></p>";
@@ -218,15 +269,427 @@ export class AsistenteSolicitudComponent implements OnInit {
       }),
     });
 
-    // Se restaura en el constructor para que los valores ya estén puestos
-    // antes de que el paso 1 se instancie y dispare el cruce.
-    this.restaurarBorrador();
+  }
+
+  // ── Edición de una solicitud existente (S-04) ────────────────────────────
+
+  /** true cuando el asistente modifica una solicitud existente. */
+  get esEdicion(): boolean {
+    return this.contextoEdicion !== null;
+  }
+
+  /** Modo habilitado por el estado de la solicitud (`null` al crear). */
+  get modoEdicion(): ModoEdicionSolicitud | null {
+    return this.contextoEdicion?.modo ?? null;
+  }
+
+  /** Pasos que admiten cambios en el modo actual. */
+  get pasosEditables(): readonly number[] {
+    const modo = this.modoEdicion;
+    return modo ? this.reglas.pasosEditables(modo) : [];
+  }
+
+  /** true si el paso admite cambios (siempre en creación). */
+  pasoEditable(paso: number): boolean {
+    const modo = this.modoEdicion;
+    return !modo || this.reglas.pasoEditable(paso, modo);
+  }
+
+  /** true si el paso se muestra en solo lectura durante la edición. */
+  pasoBloqueado(paso: number): boolean {
+    return this.esEdicion && !this.pasoEditable(paso);
+  }
+
+  /** true si el campo del paso 2 se puede modificar. */
+  campoDatosGeneralesEditable(campo: string): boolean {
+    const modo = this.modoEdicion;
+    return !modo || this.reglas.campoDatosGeneralesEditable(campo, modo);
+  }
+
+  /** true cuando no hay diferencias contra la versión guardada. */
+  get sinCambios(): boolean {
+    return this.diferencias().total === 0;
+  }
+
+  /** Título del modo de edición (cabecera del asistente). */
+  get tituloModoEdicion(): string {
+    return this.modoEdicion === "restringida"
+      ? "Modificación restringida"
+      : "Edición completa del borrador";
+  }
+
+  /** Texto de apoyo del modo de edición. */
+  get descripcionModoEdicion(): string {
+    return this.modoEdicion === "restringida"
+      ? "Esta solicitud ya fue enviada a proveedores: solo puede modificar los bienes y servicios (paso 3) y la fecha de cierre (paso 2). El cambio queda pendiente de aprobación."
+      : "Puede ajustar los pasos 2 a 6. La necesidad y el CDP de SICAPITAL (paso 1) se conservan sin cambios.";
+  }
+
+  /** Versión vigente del expediente. */
+  get versionEdicion(): string {
+    return this.contextoEdicion?.solicitud.version ?? "v1.0";
+  }
+
+  /**
+   * Habilita el guardado del paso 7.
+   *
+   * En la edición restringida se exige que el cronograma y los ítems sean
+   * válidos; en la edición completa se permite guardar avances parciales (es
+   * un borrador). La ausencia de cambios no deshabilita el botón: al pulsarlo
+   * el asistente explica que la solicitud no se modifica. La justificación del
+   * paso 7 se valida en su componente.
+   */
+  get puedeGuardarEdicion(): boolean {
+    if (!this.esEdicion || this.guardando()) {
+      return false;
+    }
+    if (this.modoEdicion === "restringida") {
+      return this.datosGeneralesForm.valid && this.itemsForm.valid;
+    }
+    return true;
+  }
+
+  /** Motivo por el que el guardado de la edición está deshabilitado. */
+  get ayudaGuardarEdicion(): string {
+    if (this.guardando()) {
+      return "Guardando los cambios de la solicitud…";
+    }
+    if (this.sinCambios) {
+      return "Sin cambios respecto de la versión guardada: al guardar se indicará que la solicitud no se modifica.";
+    }
+    if (this.modoEdicion === "restringida") {
+      if (!this.datosGeneralesForm.valid) {
+        return this.ayudaPaso2();
+      }
+      if (!this.itemsForm.valid) {
+        return this.ayudaPaso3();
+      }
+    }
+    return "";
+  }
+
+  /** Carga la fotografía editable (borrador local o expediente) en el formulario. */
+  private hidratarEdicion(): void {
+    const contexto = this.contextoEdicion;
+    if (!contexto) {
+      return;
+    }
+
+    const borrador = this.edicionDraft.cargar(contexto.solicitud.id);
+    const datos = borrador?.datos ?? contexto.valores;
+
+    this.asistenteForm.patchValue({
+      necesidad: datos.necesidad,
+      datosGenerales: datos.datosGenerales,
+      items: datos.items,
+      contratacion: datos.contratacion,
+      proveedores: datos.proveedores,
+      documentos: datos.documentos,
+    });
+
+    this.resultadoCruce.set(datos.resultadoCruce);
+    this.estadoCruce.set("cargado");
+    this.acuerdoAceptado.set(true);
+
+    const paso = borrador?.currentStep ?? SEGUNDO_PASO;
+    this.pasoActual = Math.min(ULTIMO_PASO, Math.max(PRIMER_PASO, paso));
+    this.pasoAlcanzado = ULTIMO_PASO;
+    this.borradorRestaurado.set(!!borrador);
+
+    if (borrador) {
+      const guardado = new Date(borrador.savedAt);
+      this.estadoMensaje = "Borrador de la edición restaurado";
+      this.estadoDetalle = isNaN(guardado.getTime())
+        ? "Última edición desconocida · Sesión cifrada SSL 256-bit"
+        : `Última edición: ${guardado.toLocaleString("es-CO")} · Sesión cifrada SSL 256-bit`;
+    } else {
+      this.estadoMensaje = "Edición en curso";
+      this.estadoDetalle =
+        "Los cambios se guardan automáticamente en este equipo · Sesión cifrada SSL 256-bit Universidad Distrital";
+    }
+
+    this.aplicarBloqueos();
+    this.actualizarDiferencias();
+    this.cargarCalendario();
+  }
+
+  /**
+   * Deshabilita los campos que no admite el modo de edición.
+   *
+   * En la modificación restringida solo queda activa la fecha de cierre del
+   * paso 2 y los ítems del paso 3; el resto de pasos se deshabilita en bloque.
+   * Los valores siguen disponibles con `getRawValue`, así que el borrador y el
+   * diff no pierden información.
+   */
+  private aplicarBloqueos(): void {
+    const modo = this.modoEdicion;
+    if (!modo) {
+      return;
+    }
+
+    if (modo === "restringida") {
+      [
+        "dependenciaSolicitante",
+        "dependenciaDestino",
+        "fechaApertura",
+        "criterioSeleccion",
+        "planAccion",
+      ].forEach((campo) =>
+        this.datosGeneralesForm.get(campo)?.disable({ emitEvent: false }),
+      );
+      this.datosGeneralesForm.get("fechaCierre")?.enable({ emitEvent: false });
+      this.contratacionForm.disable({ emitEvent: false });
+      this.proveedoresForm.disable({ emitEvent: false });
+      this.documentosForm.disable({ emitEvent: false });
+      return;
+    }
+
+    this.datosGeneralesForm.enable({ emitEvent: false });
+    this.contratacionForm.enable({ emitEvent: false });
+    this.proveedoresForm.enable({ emitEvent: false });
+    this.documentosForm.enable({ emitEvent: false });
+  }
+
+  /** Fotografía editable construida desde el formulario actual. */
+  private datosEdicionActuales(): DatosEdicionSolicitud {
+    const { necesidad, datosGenerales, items, contratacion, proveedores, documentos } =
+      this.asistenteForm.getRawValue() as Omit<
+        DatosEdicionSolicitud,
+        "resultadoCruce"
+      >;
+
+    return {
+      necesidad,
+      datosGenerales,
+      items,
+      contratacion,
+      proveedores,
+      documentos,
+      resultadoCruce: this.cruceEdicion(),
+    };
+  }
+
+  /** Cruce de SICAPITAL del expediente (la edición no consulta de nuevo). */
+  private cruceEdicion(): ResultadoCruce {
+    const cruce =
+      this.resultadoCruce() ?? this.contextoEdicion?.valores.resultadoCruce;
+    if (!cruce) {
+      throw new Error(
+        "La edición requiere el cruce de SICAPITAL guardado en el expediente.",
+      );
+    }
+    return cruce;
+  }
+
+  /** Recalcula el resumen de diferencias contra la versión guardada. */
+  private actualizarDiferencias(): void {
+    const base = this.contextoEdicion?.valores;
+    if (!base) {
+      return;
+    }
+    this.diferencias.set(
+      this.diferenciasSvc.calcular(base, this.datosEdicionActuales()),
+    );
+  }
+
+  /** Persiste el avance de la edición en el borrador local de la solicitud. */
+  private guardarBorradorEdicion(automatico = false): void {
+    const contexto = this.contextoEdicion;
+    if (!contexto) {
+      return;
+    }
+
+    if (
+      !this.edicionDraft.guardar(
+        contexto.solicitud.id,
+        this.datosEdicionActuales(),
+        this.pasoActual,
+      )
+    ) {
+      this.estadoMensaje = "No fue posible guardar el avance de la edición";
+      this.estadoDetalle =
+        "El almacenamiento del navegador no está disponible; continúe sin autoguardado.";
+      return;
+    }
+
+    const hora = new Date().toLocaleTimeString("es-CO", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    this.estadoMensaje = automatico
+      ? "Cambios de la edición autoguardados"
+      : "Avance de la edición guardado";
+    this.estadoDetalle = `Hoy a las ${hora} · Sesión cifrada SSL 256-bit Universidad Distrital`;
+
+    if (!automatico) {
+      void this.alerta.showAlert(
+        "Avance guardado",
+        "Los cambios diligenciados quedan guardados en este equipo. La solicitud se actualiza cuando guarde los cambios desde el paso 7.",
+      );
+    }
+  }
+
+  /**
+   * Guarda la edición en la capa de datos (paso 7).
+   *
+   * Al completarse emite `guardado` para que el armazón navegue al detalle; el
+   * detalle abre la confirmación con el resultado de la nueva versión.
+   */
+  guardarCambios(): void {
+    const contexto = this.contextoEdicion;
+    const modo = this.modoEdicion;
+    if (!contexto || !modo || this.guardando()) {
+      return;
+    }
+
+    // El diff se recalcula en el momento de guardar: el debounce del formulario
+    // puede no haber alcanzado a reflejar el último cambio antes de pulsar.
+    this.actualizarDiferencias();
+    this.errorGuardado.set("");
+
+    if (this.sinCambios) {
+      this.errorGuardado.set(
+        modo === "restringida"
+          ? "No se registró ninguna modificación. Ajuste al menos un ítem del paso 3 o la fecha de cierre del paso 2 antes de solicitar la modificación; la solicitud permanece sin cambios."
+          : "No se registró ningún cambio. Ajuste al menos un campo antes de guardar; la solicitud permanece igual.",
+      );
+      return;
+    }
+
+    if (!this.puedeGuardarEdicion) {
+      return;
+    }
+
+    this.guardando.set(true);
+
+    this.solicitudes
+      .guardarEdicion(contexto.solicitud.id, this.datosEdicionActuales(), modo)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (resultado) => {
+          this.guardando.set(false);
+          this.edicionDraft.eliminar(contexto.solicitud.id);
+          this.guardado.emit(resultado);
+        },
+        error: (error: Error) => {
+          this.guardando.set(false);
+          this.errorGuardado.set(
+            error.message ||
+              "No fue posible guardar los cambios de la solicitud. Intente nuevamente.",
+          );
+        },
+      });
+  }
+
+  /** Abre la confirmación de descarte de los cambios de la edición. */
+  abrirDescartar(): void {
+    const contexto = this.contextoEdicion;
+    const modo = this.modoEdicion;
+    if (!contexto || !modo) {
+      return;
+    }
+
+    this.solicitudes
+      .historialVersiones(contexto.solicitud.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (versiones) => this.abrirDialogoDescarte(versiones),
+        error: (error: Error) => {
+          void this.alerta.showAlert(
+            "No fue posible consultar las versiones",
+            error.message ||
+              "Vuelva al detalle e intente de nuevo el descarte de la edición.",
+          );
+        },
+      });
+  }
+
+  /**
+   * Muestra el diálogo de descarte con las versiones guardadas.
+   *
+   * El usuario puede conservar la versión vigente (solo se descarta el avance
+   * sin guardar) o volver a una anterior; en ese caso la capa de datos restaura
+   * la fotografía, la fila y la bitácora de esa versión.
+   */
+  private abrirDialogoDescarte(
+    versiones: readonly VersionEdicionSolicitud[],
+  ): void {
+    const contexto = this.contextoEdicion;
+    if (!contexto) {
+      return;
+    }
+
+    this.dialog
+      .open<
+        DialogoDescartarComponent,
+        DialogoDescartarDatos,
+        ResultadoDescartar
+      >(DialogoDescartarComponent, {
+        data: {
+          solicitudId: contexto.solicitud.id,
+          modo: this.modoEdicion ?? "completa",
+          diferencias: this.diferencias(),
+          versiones,
+        },
+        width: "680px",
+        maxWidth: "96vw",
+        autoFocus: ".dialogo__seguir",
+      })
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((resultado) => {
+        if (!resultado) {
+          return;
+        }
+        if (!resultado.version) {
+          this.edicionDraft.eliminar(contexto.solicitud.id);
+          this.descartado.emit();
+          return;
+        }
+        this.solicitudes
+          .revertirEdicion(contexto.solicitud.id, resultado.version)
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe({
+            next: () => {
+              this.edicionDraft.eliminar(contexto.solicitud.id);
+              void this.alerta.showSuccessAlert(
+                `La solicitud volvió a la versión ${resultado.version}. Los cambios guardados posteriores se descartaron.`,
+                "Versión restaurada",
+              );
+              this.descartado.emit();
+            },
+            error: (error: Error) => {
+              void this.alerta.showAlert(
+                "No fue posible restaurar la versión",
+                error.message ||
+                  "Los cambios de la edición se conservan; intente nuevamente.",
+              );
+            },
+          });
+      });
   }
 
   ngOnInit(): void {
+    // La hidratación ocurre antes de que los pasos se instancien (el
+    // `ngOnInit` del padre corre antes del de sus hijos), así que el paso 1 ya
+    // encuentra los valores del expediente o del borrador restaurado.
+    if (this.esEdicion) {
+      this.hidratarEdicion();
+    } else {
+      this.restaurarBorrador();
+    }
+
     this.asistenteForm.valueChanges
       .pipe(debounceTime(800), takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.guardarBorrador(true));
+      .subscribe(() => {
+        if (this.esEdicion) {
+          this.errorGuardado.set("");
+          this.guardarBorradorEdicion(true);
+          this.actualizarDiferencias();
+          return;
+        }
+        this.guardarBorrador(true);
+      });
 
     // Las fechas del cronograma determinan los años del calendario: al
     // cambiarlas se consultan los que falten.
@@ -358,7 +821,10 @@ export class AsistenteSolicitudComponent implements OnInit {
 
   /**
    * Habilita la acción del paso actual: en el paso 7 se exige que la validación
-   * final de todos los pasos y condiciones adicionales esté completa.
+   * final de los pasos editables esté completa.
+   *
+   * En edición, los pasos que el modo no permite modificar nunca bloquean el
+   * avance: se conservan tal como están en el expediente.
    */
   get pasoValido(): boolean {
     if (this.pasoActual === PRIMER_PASO) {
@@ -369,16 +835,20 @@ export class AsistenteSolicitudComponent implements OnInit {
       );
     }
     if (this.pasoActual === SEGUNDO_PASO) {
-      return !!this.datosGeneralesForm.valid;
+      return (
+        !this.pasoEditable(SEGUNDO_PASO) || !!this.datosGeneralesForm.valid
+      );
     }
     if (this.pasoActual === TERCER_PASO) {
-      return !!this.itemsForm.valid;
+      return !this.pasoEditable(TERCER_PASO) || !!this.itemsForm.valid;
     }
     if (this.pasoActual === CUARTO_PASO) {
-      return !!this.contratacionForm.valid;
+      return (
+        !this.pasoEditable(CUARTO_PASO) || !!this.contratacionForm.valid
+      );
     }
     if (this.pasoActual === QUINTO_PASO) {
-      return this.proveedoresCompleto;
+      return !this.pasoEditable(QUINTO_PASO) || this.proveedoresCompleto;
     }
     if (this.pasoActual === SEXTO_PASO) {
       // El paso 6 no exige validaciones: el diseño no marca documentos
@@ -392,8 +862,22 @@ export class AsistenteSolicitudComponent implements OnInit {
   }
 
   /**
+   * true si el paso cuenta como válido con el alcance de la edición actual.
+   *
+   * Un formulario deshabilitado (pasos 4 a 6 en la modificación restringida)
+   * informa `valid === false`; por eso los pasos fuera del alcance se excluyen
+   * de la validación en lugar de exigirles un estado que no pueden alcanzar.
+   */
+  private cumplePaso(paso: number, cumple: boolean): boolean {
+    return !this.pasoEditable(paso) || cumple;
+  }
+
+  /**
    * Validación final centralizada. El checklist y el procesamiento usan estos
    * mismos resultados para evitar que un paso editado quede sin revalidar.
+   *
+   * Con un modo de edición, los pasos fuera del alcance no se evalúan: el
+   * expediente ya los tiene aprobados y el formulario está deshabilitado.
    */
   get validacionFinal(): readonly ValidacionPaso[] {
     const cruce = this.resultadoCruce();
@@ -409,67 +893,96 @@ export class AsistenteSolicitudComponent implements OnInit {
       0,
     );
     const actividades = this.actividadesVinculadas.length;
+    const detalleFijo = (paso: number, detalle: string): string =>
+      this.pasoEditable(paso)
+        ? detalle
+        : "Se conserva sin cambios: este paso no forma parte de la modificación.";
 
     return [
       {
         paso: PRIMER_PASO,
         titulo: "Presupuesto asociado",
-        detalle: presupuestoValido
+        detalle: this.cumplePaso(
+          PRIMER_PASO,
+          presupuestoValido,
+        )
           ? "CDP vigente sincronizado con SICAPITAL"
           : "Revise los datos de la necesidad y el cruce presupuestal en el paso 1.",
-        cumple: presupuestoValido,
+        cumple: this.cumplePaso(PRIMER_PASO, presupuestoValido),
       },
       {
         paso: PRIMER_PASO,
         titulo: "Acuerdo marco aceptado",
-        detalle: !acuerdoMarcoAplica
-          ? "No aplica a esta necesidad"
-          : this.acuerdoAceptado()
-            ? "Acuerdo marco aceptado"
-            : "Debe aceptar el acuerdo marco en el paso 1.",
-        cumple: !acuerdoMarcoAplica || this.acuerdoAceptado(),
+        detalle: detalleFijo(
+          PRIMER_PASO,
+          !acuerdoMarcoAplica
+            ? "No aplica a esta necesidad"
+            : this.acuerdoAceptado()
+              ? "Acuerdo marco aceptado"
+              : "Debe aceptar el acuerdo marco en el paso 1.",
+        ),
+        cumple: this.cumplePaso(
+          PRIMER_PASO,
+          !acuerdoMarcoAplica || this.acuerdoAceptado(),
+        ),
       },
       {
         paso: SEGUNDO_PASO,
         titulo: "Datos generales y cronograma válidos",
-        detalle: this.datosGeneralesForm.valid
+        detalle: this.cumplePaso(
+          SEGUNDO_PASO,
+          this.datosGeneralesForm.valid,
+        )
           ? `Plazo mínimo legal cumplido${this.datosRevision.diasPlazo ? ` (${this.datosRevision.diasPlazo} días)` : ""}`
           : "Complete los campos obligatorios y corrija el cronograma en el paso 2.",
-        cumple: this.datosGeneralesForm.valid,
+        cumple: this.cumplePaso(SEGUNDO_PASO, this.datosGeneralesForm.valid),
       },
       {
         paso: TERCER_PASO,
         titulo: "Al menos un ítem registrado",
-        detalle: this.itemsForm.valid
+        detalle: this.cumplePaso(TERCER_PASO, this.itemsForm.valid)
           ? `${this.resumenItems.totalItems} ítems cargados exitosamente`
           : "Agregue al menos un ítem al pliego en el paso 3.",
-        cumple: this.itemsForm.valid,
+        cumple: this.cumplePaso(TERCER_PASO, this.itemsForm.valid),
       },
       {
         paso: CUARTO_PASO,
         titulo: "Contratación y forma de pago válidas",
-        detalle: this.contratacionForm.valid
-          ? "Consolidado financiero balanceado (100 %)"
-          : `Complete la contratación y ajuste los pagos al 100 % en el paso 4 (actual: ${totalPagos} %).`,
-        cumple: this.contratacionForm.valid,
+        detalle: detalleFijo(
+          CUARTO_PASO,
+          this.contratacionForm.valid
+            ? "Consolidado financiero balanceado (100 %)"
+            : `Complete la contratación y ajuste los pagos al 100 % en el paso 4 (actual: ${totalPagos} %).`,
+        ),
+        cumple: this.cumplePaso(
+          CUARTO_PASO,
+          this.contratacionForm.valid,
+        ),
       },
       {
         paso: QUINTO_PASO,
         titulo: "Proveedores objetivo definidos",
-        detalle: this.proveedoresCompleto
-          ? `${actividades} actividades CIIU${this.sniesAplicaProveedores ? " y criterios SNIES" : ""} definidos`
-          : "Complete las actividades CIIU y los criterios SNIES requeridos en el paso 5.",
-        cumple: this.proveedoresCompleto,
+        detalle: detalleFijo(
+          QUINTO_PASO,
+          this.proveedoresCompleto
+            ? `${actividades} actividades CIIU${this.sniesAplicaProveedores ? " y criterios SNIES" : ""} definidos`
+            : "Complete las actividades CIIU y los criterios SNIES requeridos en el paso 5.",
+        ),
+        cumple: this.cumplePaso(QUINTO_PASO, this.proveedoresCompleto),
       },
       {
         paso: SEXTO_PASO,
         titulo: "Documentos requeridos definidos",
-        detalle:
+        detalle: detalleFijo(
+          SEXTO_PASO,
           this.documentosForm.valid && this.documentosRequeridos.length > 0
             ? "Matriz de oferente parametrizada"
             : "Revise la matriz documental del paso 6.",
-        cumple:
+        ),
+        cumple: this.cumplePaso(
+          SEXTO_PASO,
           this.documentosForm.valid && this.documentosRequeridos.length > 0,
+        ),
       },
     ];
   }
@@ -777,9 +1290,12 @@ export class AsistenteSolicitudComponent implements OnInit {
       return;
     }
     this.pasoActual = paso;
+    if (this.esEdicion) {
+      this.actualizarDiferencias();
+    }
   }
 
-  /** Avanza tras validar el paso 1 (los demás pasos no avanzan aún). */
+  /** Avanza tras validar el paso actual. */
   continuar(): void {
     if (!this.pasoValido) {
       this.asistenteForm.markAllAsTouched();
@@ -787,18 +1303,30 @@ export class AsistenteSolicitudComponent implements OnInit {
     }
     this.pasoActual = Math.min(ULTIMO_PASO, this.pasoActual + 1);
     this.pasoAlcanzado = Math.max(this.pasoAlcanzado, this.pasoActual);
+    if (this.esEdicion) {
+      this.actualizarDiferencias();
+      this.guardarBorradorEdicion(true);
+      return;
+    }
     this.guardarBorrador(true);
   }
 
   /** Revalida el paso 3 tras una actualización de ítems desde su componente. */
   alCambiarItems(): void {
     this.itemsForm.updateValueAndValidity();
+    if (this.esEdicion) {
+      this.actualizarDiferencias();
+    }
   }
 
   /** Vuelve al paso anterior o al listado desde el paso 1. */
   regresar(): void {
     if (this.pasoActual > PRIMER_PASO) {
       this.pasoActual -= 1;
+      return;
+    }
+    if (this.esEdicion) {
+      this.abrirDescartar();
       return;
     }
     void this.router.navigate(["cotizaciones", "solicitudes"]);
@@ -809,6 +1337,14 @@ export class AsistenteSolicitudComponent implements OnInit {
    * en el componente de revisión, que abre el diálogo de confirmación.
    */
   finalizarPaso(): void {
+    if (this.esEdicion) {
+      // En la edición, el paso 7 tiene su propio pie (justificación y
+      // guardado); la barra del asistente no ofrece "Procesar solicitud".
+      if (this.pasoActual !== SEPTIMO_PASO) {
+        this.continuar();
+      }
+      return;
+    }
     if (this.pasoActual === SEPTIMO_PASO) {
       const pasoPendiente = this.pasoPendienteValidacion;
       if (pasoPendiente !== null) {
@@ -892,6 +1428,11 @@ export class AsistenteSolicitudComponent implements OnInit {
   }
 
   guardarBorrador(automatico = false): void {
+    if (this.esEdicion) {
+      this.guardarBorradorEdicion(automatico);
+      return;
+    }
+
     const borrador: BorradorSolicitudNueva = {
       version: 1,
       currentStep: this.pasoActual,

@@ -21,6 +21,7 @@ import {
   UNIDADES_EJECUTORAS,
   VIGENCIAS,
 } from "../../../models/solicitud.model";
+import { versionSolicitud } from "../../../models/edicion-solicitud.model";
 import { SolicitudesService } from "../../../services/solicitudes.service";
 
 type EstadoVista = "cargando" | "listo" | "error";
@@ -228,22 +229,34 @@ export class ListadoSolicitudesComponent implements OnInit {
     return this.permisos.accionesPermitidas(solicitud);
   }
 
+  /** Etiqueta contextual de la acción ("Modificar" / "Solicitar modificación"). */
+  etiquetaAccion(accion: AccionSolicitud, solicitud: Solicitud): string {
+    return this.permisos.etiquetaAccion(accion, solicitud);
+  }
+
+  /** Versión vigente del expediente ("v1.0" en las filas antiguas). */
+  versionDe(solicitud: Solicitud): string {
+    return versionSolicitud(solicitud);
+  }
+
   esPeligro(accion: AccionSolicitud): boolean {
     return ACCIONES_SOLICITUD[accion].peligro === true;
   }
 
   ejecutarAccion(accion: AccionSolicitud, solicitud: Solicitud): void {
-    const meta = ACCIONES_SOLICITUD[accion];
-    if (meta.ruta) {
-      const comandos = meta.ruta
+    // La ruta depende del estado (borrador → /editar; enviada →
+    // /solicitar-modificacion); la resuelve la matriz, no la plantilla.
+    const ruta = this.permisos.rutaAccion(accion, solicitud);
+    if (ruta) {
+      const comandos = ruta
         .split("/")
         .map((segmento) => (segmento === ":id" ? solicitud.id : segmento));
       void this.router.navigate(comandos);
       return;
     }
-    // TODO issue #34: destino aún no implementado (S-04…S-07).
+    // TODO issue #34: destino aún no implementado (S-05…S-08).
     void this.alerta.showAlert(
-      meta.etiqueta,
+      this.etiquetaAccion(accion, solicitud),
       "Esta pantalla aún no está implementada. Corresponde a una fase posterior del módulo.",
     );
   }

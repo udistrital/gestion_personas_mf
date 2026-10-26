@@ -562,3 +562,38 @@
     justify-content: center;
   }
 }
+
+/* ── Versión y modificación pendiente (S-04) ─────────────────────────────── */
+.listado__numero {
+  display: block;
+}
+
+.listado__version {
+  display: block;
+  margin-top: 0.125rem;
+  color: var(--agora-text-muted);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.listado__pendiente {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.375rem;
+  padding: 0.125rem 0.5rem;
+  border: 1px solid var(--agora-warning-border);
+  border-radius: 999px;
+  background: var(--agora-warning-surface);
+  color: var(--agora-warning-text);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.listado__pendiente mat-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  font-size: 0.875rem;
+}

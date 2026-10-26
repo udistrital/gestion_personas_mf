@@ -13,6 +13,7 @@ import { PestanaHistorialComponent } from "./pestanas/historial/pestana-historia
 import { PestanaItemsComponent } from "./pestanas/items/pestana-items.component";
 import { PestanaPresupuestoComponent } from "./pestanas/presupuesto/pestana-presupuesto.component";
 import { PestanaProveedoresObjetivoComponent } from "./pestanas/proveedores-objetivo/pestana-proveedores-objetivo.component";
+import { DialogoGuardadoComponent } from "./components/dialogo-guardado/dialogo-guardado.component";
 
 /**
  * Módulo del detalle de una solicitud (S-03).
@@ -37,6 +38,7 @@ import { PestanaProveedoresObjetivoComponent } from "./pestanas/proveedores-obje
     PestanaProveedoresObjetivoComponent,
     PestanaDocumentosComponent,
     PestanaHistorialComponent,
+    DialogoGuardadoComponent,
   ],
   imports: [CommonModule, SharedModule, DetalleSolicitudRoutingModule],
 })

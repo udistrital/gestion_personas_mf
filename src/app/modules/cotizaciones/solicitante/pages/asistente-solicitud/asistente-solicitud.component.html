@@ -1,32 +1,72 @@
-<plantilla-pagina-contenedora
-  [breadcrumb]="breadcrumb"
-  title="Nueva solicitud de cotización"
-  [mostrarBotonRegresar]="true"
-  (regresar)="regresar()"
->
+<ng-template #cuerpoAsistente>
   <div class="asistente">
+    @if (esEdicion) {
+      <section class="aviso-edicion" aria-labelledby="edicion-titulo">
+        <span class="aviso-edicion__icono" aria-hidden="true">
+          <mat-icon>{{ modoEdicion === "restringida" ? "lock_open" : "edit_note" }}</mat-icon>
+        </span>
+        <div class="aviso-edicion__textos">
+          <h2 id="edicion-titulo" class="aviso-edicion__titulo">
+            {{ tituloModoEdicion }}
+          </h2>
+          <p class="aviso-edicion__descripcion">{{ descripcionModoEdicion }}</p>
+        </div>
+        <div class="aviso-edicion__chips">
+          <span class="chip chip--recto">
+            <mat-icon aria-hidden="true">description</mat-icon>
+            <span>{{ contextoEdicion?.solicitud?.id }}</span>
+          </span>
+          <span class="chip chip--neutro">
+            <mat-icon aria-hidden="true">history</mat-icon>
+            <span>{{ versionEdicion }}</span>
+          </span>
+          <span class="chip chip--info">
+            <mat-icon aria-hidden="true">difference</mat-icon>
+            <span>{{ diferencias().total }} cambios</span>
+          </span>
+        </div>
+      </section>
+    }
+
     @if (borradorRestaurado()) {
       <section class="aviso-borrador" role="status" aria-live="polite">
         <div class="aviso-borrador__texto">
-          <strong>Se restauró un borrador anterior.</strong>
+          <strong>
+            {{
+              esEdicion
+                ? "Se restauró el avance de esta edición."
+                : "Se restauró un borrador anterior."
+            }}
+          </strong>
           <span>
-            Se recuperan los datos diligenciados; el cruce con SICAPITAL se
-            vuelve a ejecutar con la necesidad seleccionada.
+            @if (esEdicion) {
+              Se recuperan los cambios diligenciados en este equipo. La
+              solicitud se actualiza solo cuando guarde los cambios desde el
+              paso 7.
+            } @else {
+              Se recuperan los datos diligenciados; el cruce con SICAPITAL se
+              vuelve a ejecutar con la necesidad seleccionada.
+            }
           </span>
         </div>
         <button
           class="aviso-borrador__descartar"
           type="button"
-          (click)="descartarBorrador()"
+          (click)="esEdicion ? abrirDescartar() : descartarBorrador()"
         >
-          Descartar borrador
+          {{ esEdicion ? "Descartar cambios" : "Descartar borrador" }}
         </button>
       </section>
     }
 
     <p class="asistente__descripcion">
-      Diligencie los requisitos técnicos, presupuestales y contractuales para
-      iniciar el proceso de cotización institucional.
+      @if (esEdicion) {
+        Revise y ajuste la información del expediente. Los cambios se comparan
+        contra la versión guardada antes de confirmar.
+      } @else {
+        Diligencie los requisitos técnicos, presupuestales y contractuales para
+        iniciar el proceso de cotización institucional.
+      }
     </p>
 
     <div class="asistente__progreso">
@@ -43,6 +83,8 @@
       @if (pasoActual === 1) {
         <paso-necesidad
           [form]="necesidadForm"
+          [soloLectura]="esEdicion"
+          [resultadoInicial]="resultadoCruce()"
           (cambioEstado)="alCambiarEstadoCruce($event)"
           (cambioAcuerdo)="alCambiarAcuerdo($event)"
           (cambioResultado)="alCambiarResultadoCruce($event)"
@@ -51,6 +93,7 @@
         <paso-datos-generales
           [form]="datosGeneralesForm"
           [resultado]="resultadoCruce()"
+          [modoEdicion]="modoEdicion"
         ></paso-datos-generales>
       } @else if (pasoActual === 3) {
         <paso-items
@@ -58,14 +101,47 @@
           (itemsCambiados)="alCambiarItems()"
         ></paso-items>
       } @else if (pasoActual === 4) {
-        <paso-contratacion [form]="contratacionForm"></paso-contratacion>
+        @if (pasoBloqueado(4)) {
+          <p class="aviso-solo-lectura" role="note">
+            <mat-icon aria-hidden="true">lock</mat-icon>
+            <span>
+              La contratación y la forma de pago no se modifican en una
+              modificación restringida.
+            </span>
+          </p>
+        }
+        <div [attr.inert]="pasoBloqueado(4) ? '' : null">
+          <paso-contratacion [form]="contratacionForm"></paso-contratacion>
+        </div>
       } @else if (pasoActual === 5) {
-        <paso-proveedores
-          [form]="proveedoresForm"
-          [resumen]="resumenProveedores"
-        ></paso-proveedores>
+        @if (pasoBloqueado(5)) {
+          <p class="aviso-solo-lectura" role="note">
+            <mat-icon aria-hidden="true">lock</mat-icon>
+            <span>
+              Los proveedores objetivo no se modifican en una modificación
+              restringida.
+            </span>
+          </p>
+        }
+        <div [attr.inert]="pasoBloqueado(5) ? '' : null">
+          <paso-proveedores
+            [form]="proveedoresForm"
+            [resumen]="resumenProveedores"
+          ></paso-proveedores>
+        </div>
       } @else if (pasoActual === 6) {
-        <paso-documentos [form]="documentosForm"></paso-documentos>
+        @if (pasoBloqueado(6)) {
+          <p class="aviso-solo-lectura" role="note">
+            <mat-icon aria-hidden="true">lock</mat-icon>
+            <span>
+              Los documentos y anexos no se modifican en una modificación
+              restringida.
+            </span>
+          </p>
+        }
+        <div [attr.inert]="pasoBloqueado(6) ? '' : null">
+          <paso-documentos [form]="documentosForm"></paso-documentos>
+        </div>
       } @else if (pasoActual === 7) {
         <paso-revision
           [resumen]="resumenProveedores"
@@ -78,15 +154,45 @@
           [datosRevision]="datosRevision"
           [verificacionFinal]="validacionFinal"
           [yaRadicada]="vistaExitosa()"
+          [modoEdicion]="modoEdicion"
+          [diferencias]="diferencias()"
+          [pasosEditables]="pasosEditables"
+          [guardando]="guardando()"
+          [errorGuardado]="errorGuardado()"
+          [sinCambios]="sinCambios"
+          [puedeGuardar]="puedeGuardarEdicion"
+          [ayudaGuardar]="ayudaGuardarEdicion"
+          [solicitudId]="contextoEdicion?.solicitud?.id ?? ''"
+          [versionActual]="versionEdicion"
           (editarPaso)="irAlPaso($event)"
           (radicada)="alRadicar($event)"
           (vistaExitosa)="alCambiarVistaExitosa($event)"
           (irAMisSolicitudes)="irAMisSolicitudes()"
+          (guardarEdicion)="guardarCambios()"
+          (descartarEdicion)="abrirDescartar()"
         ></paso-revision>
       }
     </form>
 
-    @if (!(pasoActual === 7 && vistaExitosa())) {
+    @if (esEdicion) {
+      @if (pasoActual < 7) {
+        <barra-acciones-formulario
+          [mostrarRegreso]="true"
+          [tituloRegresar]="pasoActual > 1 ? 'Regresar' : 'Descartar cambios'"
+          [mostrarGuardar]="true"
+          [tituloGuardar]="'Guardar avance'"
+          [mostrarDescartar]="true"
+          [estadoMensaje]="estadoMensaje"
+          [estadoDetalle]="estadoDetalle"
+          [deshabilitarContinuar]="!pasoValido"
+          [ayudaContinuar]="ayudaContinuar"
+          (regreso)="regresar()"
+          (guardar)="guardarBorrador()"
+          (descartar)="abrirDescartar()"
+          (continuar)="continuar()"
+        ></barra-acciones-formulario>
+      }
+    } @else if (!(pasoActual === 7 && vistaExitosa())) {
       <barra-acciones-formulario
         [mostrarRegreso]="pasoActual > 1"
         [esUltimoPaso]="pasoActual === 7"
@@ -105,4 +211,17 @@
       ></barra-acciones-formulario>
     }
   </div>
-</plantilla-pagina-contenedora>
+</ng-template>
+
+@if (esEdicion) {
+  <ng-container [ngTemplateOutlet]="cuerpoAsistente"></ng-container>
+} @else {
+  <plantilla-pagina-contenedora
+    [breadcrumb]="breadcrumb"
+    title="Nueva solicitud de cotización"
+    [mostrarBotonRegresar]="true"
+    (regresar)="regresar()"
+  >
+    <ng-container [ngTemplateOutlet]="cuerpoAsistente"></ng-container>
+  </plantilla-pagina-contenedora>
+}

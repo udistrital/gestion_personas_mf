@@ -44,6 +44,10 @@ export type EstadoCruce =
  * de necesidad); al elegir la necesidad se ejecuta el cruce con SICAPITAL y
  * el resultado alimenta las tarjetas 2 y 3 en modo solo lectura. Si el cruce
  * falla, las tarjetas se bloquean y el avance queda inhabilitado.
+ *
+ * En la edición (S-04) el paso se hidrata con el cruce guardado en el
+ * expediente: no se vuelve a consultar SICAPITAL y los criterios quedan de
+ * solo lectura, igual que las tarjetas 2 y 3.
  */
 @Component({
   selector: "paso-necesidad",
@@ -58,6 +62,21 @@ export class PasoNecesidadComponent implements OnInit {
 
   /** Subgrupo `necesidad` del `FormGroup` raíz del asistente. */
   @Input({ required: true }) form!: FormGroup;
+
+  /** true en edición: hidrata el cruce guardado y no consulta SICAPITAL. */
+  @Input()
+  set soloLectura(valor: boolean) {
+    this.modoLectura.set(valor);
+  }
+  get soloLectura(): boolean {
+    return this.modoLectura();
+  }
+
+  /**
+   * Cruce original del expediente. Solo se usa con `soloLectura`; reemplaza la
+   * llamada a SICAPITAL para que la edición no altere la necesidad ni el CDP.
+   */
+  @Input() resultadoInicial: ResultadoCruce | null = null;
 
   /** Notifica al shell el estado del cruce (para habilitar el avance). */
   @Output() cambioEstado = new EventEmitter<EstadoCruce>();
@@ -86,11 +105,20 @@ export class PasoNecesidadComponent implements OnInit {
   readonly intentos = signal(0);
 
   private readonly acuerdoAceptado = signal(false);
+  private readonly modoLectura = signal(false);
   private readonly disparoCruce$ = new Subject<void>();
   private readonly disparoOpciones$ = new Subject<void>();
 
   /** Textos del banner según el estado del paso. */
   readonly banner = computed(() => {
+    if (this.modoLectura()) {
+      return {
+        icono: "verified_user",
+        etiquetas: [] as readonly string[],
+        descripcion:
+          "Cruce con SICAPITAL recuperado del expediente: la necesidad y el CDP no se pueden cambiar durante la edición.",
+      };
+    }
     switch (this.vista()) {
       case "error":
         return {
@@ -194,6 +222,11 @@ export class PasoNecesidadComponent implements OnInit {
     const vigencia = this.control("vigencia");
     const necesidad = this.control("numeroNecesidad");
 
+    if (this.soloLectura) {
+      this.hidratarDesdeExpediente();
+      return;
+    }
+
     unidad.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.alCambiarCriterio());
@@ -213,8 +246,39 @@ export class PasoNecesidadComponent implements OnInit {
     }
   }
 
+  /**
+   * Hidrata el paso con el cruce guardado (edición S-04).
+   *
+   * Los criterios y las tarjetas ya vienen del expediente, así que se evita la
+   * consulta a SICAPITAL y se emite el estado "cargado" para habilitar el
+   * avance. El acuerdo marco se asume aceptado: se aceptó al radicar la versión
+   * original.
+   */
+  private hidratarDesdeExpediente(): void {
+    const guardado = this.resultadoInicial;
+    if (!guardado) {
+      // Sin cruce no hay nada que hidratar: el armazón debió bloquear el paso.
+      this.reiniciarResultado();
+      return;
+    }
+
+    this.opciones.set([guardado.necesidad]);
+    this.cargandoOpciones.set(false);
+    this.fallo.set(null);
+    this.intentos.set(0);
+    this.resultado.set(guardado);
+    this.vista.set("cargado");
+    this.acuerdoAceptado.set(true);
+    this.cambioEstado.emit("cargado");
+    this.cambioResultado.emit(guardado);
+    this.cambioAcuerdo.emit(true);
+  }
+
   /** Texto de apoyo de la tarjeta 1 según el estado del paso. */
   get descripcionTarjeta1(): string {
+    if (this.soloLectura) {
+      return "Necesidad y CDP vinculados al expediente; no se modifican en la edición.";
+    }
     switch (this.vista()) {
       case "error":
         return "Identifique el código presupuestal expedido por la dependencia solicitante.";
@@ -252,12 +316,17 @@ export class PasoNecesidadComponent implements OnInit {
 
   /** El select de vigencia espera a que haya unidad ejecutora. */
   vigenciaDeshabilitada(): boolean {
-    return this.vista() === "cargando" || !this.control("unidadEjecutora").value;
+    return (
+      this.soloLectura ||
+      this.vista() === "cargando" ||
+      !this.control("unidadEjecutora").value
+    );
   }
 
   /** El select de necesidad espera a que haya vigencia. */
   necesidadDeshabilitada(): boolean {
     return (
+      this.soloLectura ||
       this.vista() === "cargando" ||
       this.cargandoOpciones() ||
       !this.control("vigencia").value
@@ -266,6 +335,9 @@ export class PasoNecesidadComponent implements OnInit {
 
   /** Ejecuta (o reejecuta) el cruce con SICAPITAL. */
   consultar(): void {
+    if (this.soloLectura) {
+      return;
+    }
     const criterios = this.criterios();
     if (
       !criterios.unidadEjecutora ||
@@ -280,6 +352,9 @@ export class PasoNecesidadComponent implements OnInit {
 
   /** Limpia los criterios y vuelve al estado inicial. */
   limpiarNecesidad(): void {
+    if (this.soloLectura) {
+      return;
+    }
     this.form.reset({
       unidadEjecutora: "",
       vigencia: "",

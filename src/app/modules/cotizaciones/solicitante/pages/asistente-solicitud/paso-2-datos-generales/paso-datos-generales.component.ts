@@ -34,6 +34,8 @@ import {
   CaracteristicasSolicitud,
   ResponsableSolicitud,
 } from "../../../../models/necesidad.model";
+import type { ModoEdicionSolicitud } from "../../../../models/edicion-solicitud.model";
+import { ReglasEdicionSolicitudService } from "../../../../services/reglas-edicion-solicitud.service";
 
 /**
  * Validador del cronograma: la fecha de cierre debe estar al menos
@@ -50,8 +52,11 @@ export function validadorCronograma(
   obtenerFestivos: () => FechasFestivas = () => new Set<string>(),
 ): ValidatorFn {
   return (grupo: AbstractControl): ValidationErrors | null => {
-    const apertura = String(grupo.get("fechaApertura")?.value ?? "");
-    const cierre = String(grupo.get("fechaCierre")?.value ?? "");
+    // Se lee el valor crudo: en la modificación restringida la apertura está
+    // deshabilitada y `.value` devolvería `null`, dejando la regla sin aplicar
+    // cuando el usuario cambia solo la fecha de cierre.
+    const apertura = String(grupo.get("fechaApertura")?.getRawValue() ?? "");
+    const cierre = String(grupo.get("fechaCierre")?.getRawValue() ?? "");
     if (!apertura || !cierre) {
       return null;
     }
@@ -110,7 +115,14 @@ export class PasoDatosGeneralesComponent implements OnInit {
    */
   @Input() resultado: RespuestaPaso2 | null = null;
 
+  /**
+   * Modo de edición (S-04). `null` en la creación; `restringida` deshabilita
+   * todos los campos del paso salvo la fecha de cierre.
+   */
+  @Input() modoEdicion: ModoEdicionSolicitud | null = null;
+
   private readonly destroyRef = inject(DestroyRef);
+  private readonly reglas = inject(ReglasEdicionSolicitudService);
 
   /**
    * Calendario de días festivos (raíz del inyector).
@@ -137,8 +149,10 @@ export class PasoDatosGeneralesComponent implements OnInit {
   /** Resumen calculado del cronograma (días hábiles y cumplimiento). */
   readonly cronograma = computed(() => {
     this.marcas();
-    const apertura = String(this.control("fechaApertura").value ?? "");
-    const cierre = String(this.control("fechaCierre").value ?? "");
+    // `getRawValue` conserva la apertura aunque el modo restringido la
+    // deshabilite: el resumen del cronograma debe seguir mostrando el rango.
+    const apertura = String(this.control("fechaApertura").getRawValue() ?? "");
+    const cierre = String(this.control("fechaCierre").getRawValue() ?? "");
     const dias = diasHabilesEntre(
       apertura,
       cierre,
@@ -235,6 +249,22 @@ export class PasoDatosGeneralesComponent implements OnInit {
   mostrarErrorPlan(): boolean {
     const control = this.control("planAccion");
     return control.invalid && (control.dirty || control.touched);
+  }
+
+  /** true cuando el paso se muestra dentro de una edición (S-04). */
+  get esEdicion(): boolean {
+    return this.modoEdicion !== null;
+  }
+
+  /** true en una modificación restringida (solo fecha de cierre). */
+  get esRestringida(): boolean {
+    return this.modoEdicion === "restringida";
+  }
+
+  /** true si el campo se puede modificar en el modo actual. */
+  campoEditable(campo: string): boolean {
+    const modo = this.modoEdicion;
+    return !modo || this.reglas.campoDatosGeneralesEditable(campo, modo);
   }
 
   private control(nombre: string): AbstractControl {

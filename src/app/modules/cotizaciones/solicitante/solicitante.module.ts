@@ -20,6 +20,10 @@ import { PasoRevisionComponent } from "./pages/asistente-solicitud/paso-7-revisi
 import { AcordeonPasoComponent } from "./pages/asistente-solicitud/paso-7-revision/components/acordeon-paso/acordeon-paso.component";
 import { ListaVerificacionComponent } from "./pages/asistente-solicitud/paso-7-revision/components/lista-verificacion/lista-verificacion.component";
 import { DialogoProcesarComponent } from "./pages/asistente-solicitud/paso-7-revision/components/dialogo-procesar/dialogo-procesar.component";
+import { DialogoConfirmarModificacionComponent } from "./pages/asistente-solicitud/paso-7-revision/components/dialogo-confirmar-modificacion/dialogo-confirmar-modificacion.component";
+import { ResumenDiferenciasComponent } from "./pages/asistente-solicitud/paso-7-revision/components/resumen-diferencias/resumen-diferencias.component";
+import { DialogoDescartarComponent } from "./pages/asistente-solicitud/components/dialogo-descartar/dialogo-descartar.component";
+import { EditarSolicitudComponent } from "./pages/editar-solicitud/editar-solicitud.component";
 import { paginadorEnEspanol } from "./mat-paginator-intl-es";
 
 @NgModule({
@@ -39,6 +43,10 @@ import { paginadorEnEspanol } from "./mat-paginator-intl-es";
     AcordeonPasoComponent,
     ListaVerificacionComponent,
     DialogoProcesarComponent,
+    DialogoConfirmarModificacionComponent,
+    ResumenDiferenciasComponent,
+    DialogoDescartarComponent,
+    EditarSolicitudComponent,
   ],
   imports: [CommonModule, SharedModule, SolicitanteRoutingModule],
   providers: [
