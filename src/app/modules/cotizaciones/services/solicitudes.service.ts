@@ -81,10 +81,6 @@ import {
   versionSolicitud,
 } from "../models/edicion-solicitud.model";
 import type { ResultadoCruce } from "../models/necesidad.model";
-import {
-  DEPENDENCIAS_DESTINO,
-  DEPENDENCIAS_SOLICITANTES,
-} from "../models/datos-generales.model";
 import { DiferenciasSolicitudService } from "./diferencias-solicitud.service";
 import { textoPlanoDesdeHtml } from "src/app/shared/utils/texto-plano";
 import { MIN_CARACTERES_JUSTIFICACION } from "src/app/shared/validators/justificacion.validator";
@@ -2173,21 +2169,15 @@ function hashIntegridad(semilla: string): string {
   return `SHA-256: ${hex.slice(0, 4)}...${hex.slice(4)}`;
 }
 
-/** Valor de catálogo de una dependencia a partir de su etiqueta visible. */
-function valorDependencia(
-  catalogo: readonly { readonly valor: string; readonly etiqueta: string }[],
-  etiqueta: string,
-): string {
-  return catalogo.find((opcion) => opcion.etiqueta === etiqueta)?.valor ?? "";
-}
-
-/** Etiqueta visible de una dependencia (para el listado y la cabecera). */
-function etiquetaDependencia(
-  catalogo: readonly { readonly valor: string; readonly etiqueta: string }[],
-  valor: string,
-  reserva: string,
-): string {
-  return catalogo.find((opcion) => opcion.valor === valor)?.etiqueta ?? reserva;
+/**
+ * Etiqueta visible de una dependencia (para el listado y la cabecera).
+ *
+ * El asistente persiste la etiqueta resuelta desde Oikos, no el identificador
+ * del catálogo. Aquí solo se conserva el valor editado y se cae al dato previo
+ * (`reserva`) cuando la edición no trae uno nuevo.
+ */
+function etiquetaDependencia(valor: string, reserva: string): string {
+  return valor || reserva;
 }
 
 /**
@@ -2275,14 +2265,8 @@ function datosEdicionDesdeDetalle(solicitud: Solicitud): DatosEdicionSolicitud {
       numeroNecesidad: resultadoCruceDesdeDetalle(solicitud).necesidad.valor,
     },
     datosGenerales: {
-      dependenciaSolicitante: valorDependencia(
-        DEPENDENCIAS_SOLICITANTES,
-        general.responsable.dependenciaSolicitante,
-      ),
-      dependenciaDestino: valorDependencia(
-        DEPENDENCIAS_DESTINO,
-        general.responsable.dependenciaDestino,
-      ),
+      dependenciaSolicitante: general.responsable.dependenciaSolicitante,
+      dependenciaDestino: general.responsable.dependenciaDestino,
       fechaApertura: fechaIsoDesdeCorta(solicitud.apertura),
       fechaCierre: fechaIsoDesdeCorta(solicitud.cierre),
       criterioSeleccion: general.caracteristicas.criterioSeleccion,
@@ -2333,12 +2317,10 @@ function generalDesdeEdicion(
     responsable: {
       ...base.responsable,
       dependenciaSolicitante: etiquetaDependencia(
-        DEPENDENCIAS_SOLICITANTES,
         edicion.datosGenerales.dependenciaSolicitante,
         base.responsable.dependenciaSolicitante,
       ),
       dependenciaDestino: etiquetaDependencia(
-        DEPENDENCIAS_DESTINO,
         edicion.datosGenerales.dependenciaDestino,
         base.responsable.dependenciaDestino,
       ),
@@ -2943,7 +2925,6 @@ export class SolicitudesServiceMock extends SolicitudesService {
           fechaCortaDesdeIso(valores.datosGenerales.fechaApertura) || null,
         cierre: fechaCortaDesdeIso(valores.datosGenerales.fechaCierre) || null,
         dependencia: etiquetaDependencia(
-          DEPENDENCIAS_DESTINO,
           valores.datosGenerales.dependenciaDestino,
           actual.dependencia,
         ),
@@ -3289,7 +3270,6 @@ export class SolicitudesServiceMock extends SolicitudesService {
       cierre:
         fechaCortaDesdeIso(version.valores.datosGenerales.fechaCierre) || null,
       dependencia: etiquetaDependencia(
-        DEPENDENCIAS_DESTINO,
         version.valores.datosGenerales.dependenciaDestino,
         semilla.dependencia,
       ),
