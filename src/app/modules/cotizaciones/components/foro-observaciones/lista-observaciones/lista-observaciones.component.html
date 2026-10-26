@@ -1,0 +1,36 @@
+@if (observaciones.length > 0) {
+  <ol
+    class="lista"
+    aria-label="Observaciones, ordenadas de la más reciente a la más antigua"
+  >
+    @for (observacion of observaciones; track observacion.id) {
+      <li>
+        <app-tarjeta-observacion
+          [observacion]="observacion"
+          [modo]="modo"
+          [puedeResponder]="puedeResponder"
+          [puedeEditarRespuesta]="puedeEditarRespuesta"
+          [enviando]="enviandoId === observacion.id"
+          [error]="errorId === observacion.id ? errorEnvio : ''"
+          [enfocar]="enfocarId === observacion.id"
+          (respuestaEnviada)="respuestaEnviada.emit($event)"
+        ></app-tarjeta-observacion>
+      </li>
+    }
+  </ol>
+} @else {
+  <section class="vacio" role="status" aria-live="polite">
+    <mat-icon aria-hidden="true">
+      {{ hayFiltros ? "search_off" : "forum" }}
+    </mat-icon>
+    <h2>{{ hayFiltros ? "Sin coincidencias" : "Aún no hay observaciones" }}</h2>
+    <p>
+      @if (hayFiltros) {
+        No hay observaciones que coincidan con los filtros. Ajuste los criterios
+        para ver resultados.
+      } @else {
+        Todavía no se han recibido observaciones para esta solicitud.
+      }
+    </p>
+  </section>
+}

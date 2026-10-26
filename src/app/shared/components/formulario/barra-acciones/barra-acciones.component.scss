@@ -78,13 +78,14 @@
   gap: 0.5rem;
   min-height: 2.75rem;
   padding: 0.625rem 1rem;
-  border: 0;
+  border: 2px solid;
+  border-color: transparent;
   border-radius: 0.5rem;
   font: inherit;
   font-size: 0.8125rem;
   font-weight: 700;
   cursor: pointer;
-  transition: background-color 160ms ease, box-shadow 160ms ease;
+  transition: .3s ease all !important;
 }
 
 .boton-borrador {
@@ -112,8 +113,8 @@
 
 .boton-acento {
   color: var(--agora-on-primary);
-  background: var(--agora-primary-dark);
-  box-shadow: 0 0.25rem 0.5rem color-mix(in srgb, var(--agora-primary) 20%, transparent);
+  background: var(--agora-primary);
+  box-shadow: 0 0.25rem 0.5rem color-mix(in srgb, var(--agora-primary-dark) 20%, transparent);
 }
 
 .boton-acento__textos {
@@ -132,7 +133,7 @@
 
 .boton-acento:hover,
 .boton-acento:focus-visible {
-  background: var(--agora-primary);
+  background: var(--agora-primary-dark);
 }
 
 :is(.boton-borrador, .boton-acento):focus-visible {

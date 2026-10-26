@@ -200,6 +200,7 @@ const DATOS_MOCK: readonly Solicitud[] = [
     version: "v1.0",
     revision: 1,
     ultimaModificacion: "02/02/2026 08:52 COT",
+    fechaLimiteObservaciones: "2026-11-02T18:00:00-05:00",
   },
   {
     id: "SOL-2026-0042",
@@ -273,6 +274,7 @@ const DATOS_MOCK: readonly Solicitud[] = [
     version: "v1.0",
     revision: 1,
     ultimaModificacion: "29/01/2026 10:45 COT",
+    fechaLimiteObservaciones: "2026-10-12T18:00:00-05:00",
   },
   {
     id: "SOL-2026-0021",
@@ -332,6 +334,7 @@ const DATOS_MOCK: readonly Solicitud[] = [
     version: "v1.0",
     revision: 1,
     ultimaModificacion: "28/01/2026 09:05 COT",
+    fechaLimiteObservaciones: "2026-01-28T18:00:00-05:00",
     cancelacion: {
       estadoAnterior: "enviada-proveedores",
       justificacion:

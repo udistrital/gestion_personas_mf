@@ -1,0 +1,121 @@
+<article
+  #tarjeta
+  class="tarjeta"
+  tabindex="-1"
+  [attr.aria-labelledby]="'titulo-' + observacion.id"
+>
+  <header class="tarjeta__cabecera">
+    <div class="tarjeta__autor">
+      <span class="tarjeta__avatar" aria-hidden="true">
+        {{ observacion.autor.nombre.slice(0, 2) | uppercase }}
+      </span>
+      <div class="tarjeta__identidad">
+        <h3 [id]="'titulo-' + observacion.id">
+          {{ observacion.autor.nombre }}
+        </h3>
+        <p>
+          <span>
+            {{
+              observacion.autor.tipo === "persona-juridica"
+                ? "Persona jurídica"
+                : "Persona natural"
+            }}
+          </span>
+          <span aria-hidden="true">·</span>
+          <span>{{ observacion.autor.identificacion }}</span>
+          <span aria-hidden="true">·</span>
+          <time [attr.datetime]="observacion.fechaIso">
+            {{ observacion.fecha }}
+          </time>
+          <span aria-hidden="true">·</span>
+          <span class="tarjeta__radicado"
+            >Radicado {{ observacion.radicado }}</span
+          >
+        </p>
+      </div>
+    </div>
+    <span
+      class="estado"
+      [class.estado--respondida]="!!observacion.respuesta"
+      [attr.aria-label]="
+        observacion.respuesta ? 'Respondida' : 'Pendiente de respuesta'
+      "
+    >
+      <span aria-hidden="true"></span>
+      {{ observacion.respuesta ? "Respondida" : "Pendiente de respuesta" }}
+    </span>
+  </header>
+
+  <div class="tarjeta__contenido">
+    <div [innerHTML]="observacion.contenidoHtml | htmlSeguro"></div>
+  </div>
+
+  @if (observacion.respuesta; as respuesta) {
+    <section class="respuesta" aria-labelledby="respuesta-{{ observacion.id }}">
+      <header class="respuesta__cabecera">
+        <div>
+          <h4 [id]="'respuesta-' + observacion.id">
+            <mat-icon aria-hidden="true">verified</mat-icon>
+            Respuesta institucional
+          </h4>
+          <p>
+            {{ respuesta.autor }} · {{ respuesta.rol }} ·
+            <time [attr.datetime]="respuesta.fechaIso">
+              {{ respuesta.fecha }}
+            </time>
+          </p>
+          @if (respuesta.autor === "Usuario autenticado") {
+            <etiqueta-por-definir
+              texto="Identidad del autor"
+              detalle="El mock no expone el usuario autenticado."
+            ></etiqueta-por-definir>
+          }
+        </div>
+        <span class="respuesta__publica">
+          <mat-icon aria-hidden="true">public</mat-icon>
+          Visible para todos los invitados
+        </span>
+      </header>
+      <div
+        class="respuesta__contenido"
+        [innerHTML]="respuesta.contenidoHtml | htmlSeguro"
+      ></div>
+      @if (modo === "solicitante" && puedeEditarRespuesta) {
+        <button
+          class="respuesta__editar"
+          type="button"
+          [disabled]="enviando"
+          (click)="abrirFormulario(true)"
+        >
+          <mat-icon aria-hidden="true">edit_note</mat-icon>
+          Editar respuesta (plazo vigente)
+        </button>
+      }
+    </section>
+  }
+
+  @if (!observacion.respuesta && modo === "solicitante" && puedeResponder) {
+    <div class="tarjeta__acciones">
+      <button
+        class="boton boton--primario"
+        type="button"
+        [disabled]="enviando"
+        (click)="abrirFormulario(false)"
+      >
+        <mat-icon aria-hidden="true">reply</mat-icon>
+        Responder
+      </button>
+    </div>
+  }
+
+  @if (formularioVisible) {
+    <app-formulario-respuesta-observacion
+      [inicial]="editar ? observacion.respuesta?.contenidoHtml || '' : ''"
+      [editar]="editar"
+      [enviando]="enviando"
+      [error]="error"
+      (enviar)="enviarRespuesta($event)"
+      (cancelar)="cerrarFormulario()"
+    ></app-formulario-respuesta-observacion>
+  }
+</article>

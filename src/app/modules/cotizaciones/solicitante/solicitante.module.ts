@@ -32,6 +32,8 @@ import { ResumenDiferenciasComponent } from "./pages/asistente-solicitud/paso-7-
 import { DialogoDescartarComponent } from "./pages/asistente-solicitud/components/dialogo-descartar/dialogo-descartar.component";
 import { EditarSolicitudComponent } from "./pages/editar-solicitud/editar-solicitud.component";
 import { paginadorEnEspanol } from "./mat-paginator-intl-es";
+import { ForoObservacionesModule } from "../components/foro-observaciones/foro-observaciones.module";
+import { ForoObservacionesPageComponent } from "./pages/foro-observaciones/foro-observaciones-page.component";
 
 @NgModule({
   declarations: [
@@ -54,12 +56,14 @@ import { paginadorEnEspanol } from "./mat-paginator-intl-es";
     ResumenDiferenciasComponent,
     DialogoDescartarComponent,
     EditarSolicitudComponent,
+    ForoObservacionesPageComponent,
   ],
   imports: [
     CommonModule,
     SharedModule,
     SolicitanteComponentsModule,
     SolicitanteRoutingModule,
+    ForoObservacionesModule,
   ],
   providers: [
     // ÚNICO punto de enlace de la capa de datos simulada.

@@ -1,0 +1,84 @@
+<form
+  class="formulario"
+  [formGroup]="formulario"
+  (ngSubmit)="confirmar()"
+  aria-labelledby="titulo-respuesta-observacion"
+>
+  <div class="formulario__cabecera">
+    <h4 id="titulo-respuesta-observacion">
+      <mat-icon aria-hidden="true">quickreply</mat-icon>
+      Respuesta oficial al proveedor
+    </h4>
+    <span class="formulario__publica">
+      <mat-icon aria-hidden="true">public</mat-icon>
+      Pública para todos los invitados
+    </span>
+  </div>
+
+  <p class="formulario__aviso" id="aviso-publicacion-respuesta">
+    La respuesta será visible para todas las personas invitadas a esta
+    solicitud.
+  </p>
+
+  <label class="formulario__etiqueta" id="etiqueta-respuesta-observacion">
+    Texto de la respuesta <span aria-hidden="true">*</span>
+  </label>
+  <editor-enriquecido
+    etiqueta="Texto de la respuesta"
+    idEtiqueta="etiqueta-respuesta-observacion"
+    pista="Escriba una respuesta clara para todos los invitados."
+    ayuda="La respuesta se publica en el expediente general."
+    [minCaracteres]="minimo"
+    [maxCaracteres]="maximo"
+    [rows]="4"
+    formControlName="contenido"
+  ></editor-enriquecido>
+  @if (
+    formulario.controls.contenido.touched &&
+    formulario.controls.contenido.errors
+  ) {
+    <p class="formulario__error" role="alert" aria-live="assertive">
+      @if (formulario.controls.contenido.hasError("required")) {
+        Escriba la respuesta antes de enviarla.
+      } @else if (
+        formulario.controls.contenido.hasError("contenidoForoCorto")
+      ) {
+        La respuesta debe tener al menos {{ minimo }} caracteres.
+      } @else {
+        La respuesta no puede superar {{ maximo }} caracteres.
+      }
+    </p>
+  }
+  @if (error) {
+    <p class="formulario__error" role="alert" aria-live="assertive">
+      {{ error }}
+    </p>
+  }
+
+  <div class="formulario__acciones">
+    <button
+      class="boton boton--secundario"
+      type="button"
+      [disabled]="enviando"
+      (click)="cancelar.emit()"
+    >
+      Cancelar
+    </button>
+    <button
+      class="boton boton--primario"
+      type="submit"
+      [disabled]="formulario.invalid || enviando"
+    >
+      @if (enviando) {
+        <mat-spinner
+          diameter="18"
+          aria-label="Enviando respuesta"
+        ></mat-spinner>
+        Enviando…
+      } @else {
+        <mat-icon aria-hidden="true">send</mat-icon>
+        {{ editar ? "Guardar cambios" : "Enviar respuesta oficial" }}
+      }
+    </button>
+  </div>
+</form>

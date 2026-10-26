@@ -1,0 +1,188 @@
+<div class="foro">
+  <header class="foro__cabecera">
+    <div>
+      <p class="foro__sobrelinea">Solicitud {{ solicitud.id }}</p>
+      <h2>Observaciones de los proveedores</h2>
+      <p class="foro__descripcion">
+        Espacio de aclaraciones de la convocatoria. Las respuestas
+        institucionales se publican para todas las personas invitadas.
+      </p>
+    </div>
+    <div class="foro__metricas" aria-label="Resumen de observaciones">
+      <strong>{{ observaciones.length }} recibidas</strong>
+      <span>{{ pendientes }} pendientes de respuesta</span>
+      <span>{{ respondidas }} respondidas y publicadas</span>
+    </div>
+  </header>
+
+  <section class="ficha" aria-labelledby="ficha-solicitud-titulo">
+    <header class="ficha__cabecera">
+      <h2 id="ficha-solicitud-titulo">
+        <mat-icon aria-hidden="true">assignment</mat-icon>
+        Ficha de la solicitud
+      </h2>
+      <span class="ficha__id">ID: {{ solicitud.id }}</span>
+    </header>
+    <dl class="ficha__datos">
+      <div class="ficha__objeto">
+        <dt>Objeto de contratación</dt>
+        <dd>{{ solicitud.titulo }}</dd>
+      </div>
+      <div>
+        <dt>Dependencia solicitante</dt>
+        <dd>{{ solicitud.dependencia }}</dd>
+      </div>
+      <div>
+        <dt>Vigencia fiscal</dt>
+        <dd>{{ solicitud.vigencia }}</dd>
+      </div>
+      <div>
+        <dt>Apertura</dt>
+        <dd>{{ solicitud.apertura || "No definida" }}</dd>
+      </div>
+      <div>
+        <dt>Cierre de la solicitud</dt>
+        <dd>{{ solicitud.cierre || "No definido" }}</dd>
+      </div>
+      <div
+        class="ficha__plazo"
+        [class.ficha__plazo--vencido]="fechaLimiteVencida"
+      >
+        <dt>Fecha límite para observaciones</dt>
+        <dd>
+          @if (solicitud.fechaLimiteObservaciones) {
+            <time [attr.datetime]="solicitud.fechaLimiteObservaciones">
+              {{
+                solicitud.fechaLimiteObservaciones
+                  | date: "dd/MM/yyyy HH:mm" : "-0500"
+              }}
+              COT
+            </time>
+          } @else {
+            <etiqueta-por-definir
+              texto="Fecha por definir"
+              detalle="El expediente no registra una fecha límite de observaciones."
+            ></etiqueta-por-definir>
+          }
+        </dd>
+        <p aria-live="polite">
+          @if (fechaLimiteVencida) {
+            El plazo para formular nuevas observaciones venció. El foro está en
+            modo de solo lectura para quienes observan.
+          } @else if (solicitud.fechaLimiteObservaciones) {
+            El plazo para formular observaciones sigue abierto.
+          }
+        </p>
+      </div>
+    </dl>
+  </section>
+
+  @if (mensajeExito) {
+    <p class="foro__exito" role="status" aria-live="polite" tabindex="-1">
+      <mat-icon aria-hidden="true">check_circle</mat-icon>
+      {{ mensajeExito }}
+    </p>
+  }
+
+  @if (modo === "proveedor") {
+    @if (puedeObservar) {
+      <app-formulario-nueva-observacion
+        [enviando]="enviandoObservacion"
+        [error]="errorNuevaObservacion"
+        (enviar)="observacionCreada.emit({ contenidoHtml: $event })"
+      ></app-formulario-nueva-observacion>
+    } @else {
+      <p class="foro__aviso" role="status">
+        <mat-icon aria-hidden="true">lock</mat-icon>
+        El plazo para formular observaciones venció. Puede consultar las
+        observaciones y respuestas publicadas.
+      </p>
+    }
+  } @else if (fechaLimiteVencida) {
+    <p class="foro__aviso" role="status">
+      <mat-icon aria-hidden="true">lock_clock</mat-icon>
+      El período para formular observaciones venció. Las respuestas pendientes
+      aún pueden ser atendidas por el solicitante.
+    </p>
+  }
+
+  <section class="filtros" aria-label="Filtros de observaciones">
+    <div class="filtros__campo filtros__busqueda">
+      <label for="foro-busqueda">Buscar observación</label>
+      <input
+        id="foro-busqueda"
+        type="search"
+        [(ngModel)]="busqueda"
+        placeholder="Palabra clave, radicado o identificación..."
+      />
+    </div>
+    <div class="filtros__campo">
+      <label for="foro-estado">Estado</label>
+      <select id="foro-estado" [(ngModel)]="estadoFiltro">
+        <option value="">Todos los estados</option>
+        <option value="pendiente">Pendientes</option>
+        <option value="respondida">Respondidas</option>
+      </select>
+    </div>
+    @if (modo === "solicitante" && autores.length > 0) {
+      <div class="filtros__campo">
+        <label for="foro-autor">Proveedor</label>
+        <select id="foro-autor" [(ngModel)]="autorFiltro">
+          <option value="">Todos los proveedores</option>
+          @for (autor of autores; track autor.identificacion) {
+            <option [value]="autor.identificacion">{{ autor.nombre }}</option>
+          }
+        </select>
+      </div>
+    }
+    <div class="filtros__campo">
+      <label for="foro-fecha-desde">Desde</label>
+      <input id="foro-fecha-desde" type="date" [(ngModel)]="fechaDesde" />
+    </div>
+    <div class="filtros__campo">
+      <label for="foro-fecha-hasta">Hasta</label>
+      <input id="foro-fecha-hasta" type="date" [(ngModel)]="fechaHasta" />
+    </div>
+    <button
+      class="filtros__limpiar"
+      type="button"
+      [disabled]="!hayFiltros"
+      (click)="limpiarFiltros()"
+    >
+      <mat-icon aria-hidden="true">restart_alt</mat-icon>
+      Limpiar filtros
+    </button>
+  </section>
+
+  @if (errorCarga) {
+    <div class="foro__error" role="alert" aria-live="assertive">
+      <mat-icon aria-hidden="true">error_outline</mat-icon>
+      <p>{{ errorCarga }}</p>
+      <button type="button" (click)="reintentar.emit()">
+        <mat-icon aria-hidden="true">refresh</mat-icon>
+        Reintentar
+      </button>
+    </div>
+  } @else if (cargando) {
+    <div class="foro__carga" role="status" aria-live="polite">
+      <mat-spinner
+        diameter="32"
+        aria-label="Cargando observaciones"
+      ></mat-spinner>
+      <span>Cargando observaciones…</span>
+    </div>
+  } @else {
+    <app-lista-observaciones
+      [observaciones]="observacionesFiltradas"
+      [modo]="modo"
+      [puedeResponder]="puedeResponder"
+      [puedeEditarRespuesta]="puedeEditarRespuesta"
+      [enviandoId]="enviandoId"
+      [errorId]="errorEnvioId"
+      [errorEnvio]="errorEnvio"
+      [enfocarId]="enfocarId"
+      [hayFiltros]="hayFiltros"
+      (respuestaEnviada)="respuestaEnviada.emit($event)"
+    ></app-lista-observaciones>
+  }
+</div>

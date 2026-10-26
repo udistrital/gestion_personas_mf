@@ -52,6 +52,8 @@ export interface Solicitud {
   readonly modificacionPendiente?: ModificacionPendiente;
   /** Registro de cancelación conservado en el expediente. */
   readonly cancelacion?: DatosCancelacionSolicitud;
+  /** Cierre para formular observaciones; distinto del cierre de la solicitud. */
+  readonly fechaLimiteObservaciones?: string | null;
 }
 
 /** Criterios del formulario de filtros de S-01. */
