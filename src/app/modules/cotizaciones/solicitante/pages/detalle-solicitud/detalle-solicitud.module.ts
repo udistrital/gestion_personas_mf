@@ -14,6 +14,7 @@ import { PestanaItemsComponent } from "./pestanas/items/pestana-items.component"
 import { PestanaPresupuestoComponent } from "./pestanas/presupuesto/pestana-presupuesto.component";
 import { PestanaProveedoresObjetivoComponent } from "./pestanas/proveedores-objetivo/pestana-proveedores-objetivo.component";
 import { DialogoGuardadoComponent } from "./components/dialogo-guardado/dialogo-guardado.component";
+import { SolicitanteComponentsModule } from "../../solicitante-components.module";
 
 /**
  * Módulo del detalle de una solicitud (S-03).
@@ -40,6 +41,11 @@ import { DialogoGuardadoComponent } from "./components/dialogo-guardado/dialogo-
     PestanaHistorialComponent,
     DialogoGuardadoComponent,
   ],
-  imports: [CommonModule, SharedModule, DetalleSolicitudRoutingModule],
+  imports: [
+    CommonModule,
+    SharedModule,
+    SolicitanteComponentsModule,
+    DetalleSolicitudRoutingModule,
+  ],
 })
 export class DetalleSolicitudModule {}

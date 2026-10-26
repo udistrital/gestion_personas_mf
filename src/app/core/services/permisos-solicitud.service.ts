@@ -1,4 +1,6 @@
-import { Injectable } from "@angular/core";
+import { Injectable, inject } from "@angular/core";
+import { ROLES_SOLICITANTE } from "../constants/roles.const";
+import { RolService } from "./rol.service";
 import {
   ACCIONES_SOLICITUD,
   AccionSolicitud,
@@ -15,9 +17,23 @@ export interface SolicitudPermisable {
 
 @Injectable({ providedIn: "root" })
 export class PermisosSolicitudService {
+  private readonly rol = inject(RolService);
+
   /** Acciones que el menú de la fila debe mostrar para esa solicitud. */
-  accionesPermitidas(solicitud: SolicitudPermisable): readonly AccionSolicitud[] {
-    return MATRIZ_ACCIONES_POR_ESTADO[solicitud.estado] ?? [];
+  accionesPermitidas(
+    solicitud: SolicitudPermisable,
+  ): readonly AccionSolicitud[] {
+    const acciones = MATRIZ_ACCIONES_POR_ESTADO[solicitud.estado] ?? [];
+    if (!this.rol.estaCargado()) {
+      return acciones.filter((accion) => accion !== "cancelar");
+    }
+
+    const esSolicitante = ROLES_SOLICITANTE.some((rol) =>
+      this.rol.tieneRol(rol),
+    );
+    return esSolicitante
+      ? acciones
+      : acciones.filter((accion) => accion !== "cancelar");
   }
 
   /** true si la acción está permitida en el estado de la solicitud. */

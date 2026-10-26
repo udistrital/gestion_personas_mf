@@ -17,6 +17,17 @@ import { ItemSolicitud, TipoNecesidadSolicitud } from "./items.model";
 
 export type TipoCotizacion = "BIEN" | "SERVICIO" | "BIEN_Y_SERVICIO";
 
+/** Datos de auditoría de una cancelación (el motivo es de uso interno). */
+export interface DatosCancelacionSolicitud {
+  readonly estadoAnterior: EstadoSolicitud;
+  readonly justificacion: string;
+  readonly fecha: string;
+  readonly usuario: string;
+  readonly autor: string;
+  readonly rol: string;
+  readonly destinatariosNotificados: number;
+}
+
 /** Modelo mínimo de una solicitud para el listado S-01 (y futuras pantallas). */
 export interface Solicitud {
   /** Identificador en URL; se usa también como número visible (SOL-2026-0042). */
@@ -39,6 +50,8 @@ export interface Solicitud {
   readonly ultimaModificacion?: string;
   /** Modificación restringida enviada y aún no aprobada (S-08). */
   readonly modificacionPendiente?: ModificacionPendiente;
+  /** Registro de cancelación conservado en el expediente. */
+  readonly cancelacion?: DatosCancelacionSolicitud;
 }
 
 /** Criterios del formulario de filtros de S-01. */
