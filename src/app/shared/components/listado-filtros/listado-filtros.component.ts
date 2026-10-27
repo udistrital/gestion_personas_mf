@@ -16,6 +16,12 @@ export interface CampoFiltro {
   readonly placeholder?: string;
 }
 
+export interface FiltroRapido {
+  readonly valor: string;
+  readonly etiqueta: string;
+  readonly conteo?: number;
+}
+
 /**
  * Barra de filtros de listados (S-01, P-01, O-01…): cabecera, grilla de
  * campos configurables, campo de búsqueda con botones Limpiar/Filtrar y
@@ -33,11 +39,14 @@ export interface CampoFiltro {
 })
 export class ListadoFiltrosComponent implements OnChanges {
   @Input({ required: true }) campos: readonly CampoFiltro[] = [];
+  @Input() filtrosRapidos: readonly FiltroRapido[] = [];
+  @Input() filtroRapidoActivo = "";
 
   /** Texto de la nota inferior (icono `info`), p. ej. la de vigencia por defecto. */
   @Input() nota = "";
 
   @Output() filtrar = new EventEmitter<Record<string, string>>();
+  @Output() filtroRapido = new EventEmitter<string>();
   @Output() limpiar = new EventEmitter<void>();
 
   valores: Record<string, string> = {};

@@ -1,0 +1,44 @@
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-lg);
+  background-color: var(--agora-surface);
+  box-shadow: var(--agora-sombra-xs);
+}
+
+.placeholder > mat-icon {
+  width: 2rem;
+  height: 2rem;
+  color: var(--agora-primary);
+  font-size: 2rem;
+}
+
+.placeholder h2 {
+  margin: 0;
+  color: var(--agora-text);
+  font-size: var(--agora-font-xl);
+}
+
+.placeholder p {
+  margin: 0;
+  color: var(--agora-text-muted);
+}
+
+.placeholder__volver {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.5rem;
+  color: var(--agora-primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.placeholder__volver:focus-visible {
+  outline: 2px solid var(--agora-primary);
+  outline-offset: 3px;
+}
