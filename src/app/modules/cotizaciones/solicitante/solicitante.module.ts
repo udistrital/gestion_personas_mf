@@ -3,10 +3,6 @@ import { CommonModule } from "@angular/common";
 import { MatPaginatorIntl } from "@angular/material/paginator";
 import { SharedModule } from "src/app/shared/shared.module";
 import {
-  SolicitudesServiceMock,
-  SolicitudesService,
-} from "../services/solicitudes.service";
-import {
   SicapitalService,
   SicapitalServiceMock,
 } from "../services/sicapital.service";
@@ -66,9 +62,6 @@ import { ForoObservacionesPageComponent } from "./pages/foro-observaciones/foro-
     ForoObservacionesModule,
   ],
   providers: [
-    // ÚNICO punto de enlace de la capa de datos simulada.
-    // Cambiar `useClass` por `SolicitudesServiceHttp` cuando exista el backend.
-    { provide: SolicitudesService, useClass: SolicitudesServiceMock },
     // Único punto de enlace de SICAPITAL (cruce del paso 1 del asistente).
     { provide: SicapitalService, useClass: SicapitalServiceMock },
     { provide: MatPaginatorIntl, useFactory: paginadorEnEspanol },

@@ -19,6 +19,7 @@ import { AsistentePasosComponent } from "./components/asistente-pasos/asistente-
 import { BannerPasoComponent } from "./components/banner-paso/banner-paso.component";
 import { EditorEnriquecidoComponent } from "./components/editor-enriquecido/editor-enriquecido.component";
 import { EtiquetaPorDefinirComponent } from "./components/etiqueta-por-definir/etiqueta-por-definir.component";
+import { ContadorRegresivoComponent } from "./components/contador-regresivo/contador-regresivo.component";
 import { HtmlSeguroPipe } from "./pipes/html-seguro.pipe";
 import { QuillModule } from "ngx-quill";
 
@@ -39,6 +40,7 @@ import { QuillModule } from "ngx-quill";
     BannerPasoComponent,
     EditorEnriquecidoComponent,
     EtiquetaPorDefinirComponent,
+    ContadorRegresivoComponent,
     HtmlSeguroPipe,
   ],
   imports: [
@@ -71,6 +73,7 @@ import { QuillModule } from "ngx-quill";
     BannerPasoComponent,
     EditorEnriquecidoComponent,
     EtiquetaPorDefinirComponent,
+    ContadorRegresivoComponent,
     QuillModule,
     HtmlSeguroPipe,
   ],

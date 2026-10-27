@@ -40,8 +40,8 @@ const routes: Routes = [
     path: ":id/observaciones",
     component: ForoObservacionesPageComponent,
     title: "ÁGORA · Foro de observaciones",
+    data: { titulo: "Foro de observaciones", pantalla: "S-06" },
   },
-  // Detalle de la solicitud (S-03) — módulo perezoso.
   {
     path: ":id",
     loadChildren: () =>

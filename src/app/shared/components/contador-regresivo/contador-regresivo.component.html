@@ -1,0 +1,10 @@
+<span
+  class="contador"
+  [class.contador--proximo]="estado === 'proximo'"
+  [class.contador--cerrado]="estado === 'cerrado'"
+  role="timer"
+  [attr.aria-label]="texto"
+>
+  <mat-icon aria-hidden="true">schedule</mat-icon>
+  <span>{{ texto }}</span>
+</span>

@@ -4,6 +4,15 @@ import {
   EstadoSolicitud,
   MATRIZ_ACCIONES_POR_ESTADO,
 } from "src/app/core/constants/estados-solicitud.const";
+import type {
+  ConteosFiltrosInvitaciones,
+  FiltroInvitacionesProveedor,
+  GrupoFiltroInvitacion,
+  InvitacionProveedor,
+  InvitacionProveedorConSolicitud,
+  ResultadoListadoInvitaciones,
+} from "../models/invitacion-proveedor.model";
+import { grupoDeInvitacion } from "../models/invitacion-proveedor.model";
 import {
   FiltroSolicitudes,
   ResultadoListado,
@@ -95,6 +104,13 @@ export abstract class SolicitudesService {
     pagina: number,
     porPagina: number,
   ): Observable<ResultadoListado>;
+
+  /** Listado paginado de invitaciones del proveedor y su solicitud asociada. */
+  abstract listarInvitacionesProveedor(
+    criterios: Partial<FiltroInvitacionesProveedor>,
+    pagina: number,
+    porPagina: number,
+  ): Observable<ResultadoListadoInvitaciones>;
 
   /**
    * Detalle de una solicitud por su identificador.
@@ -413,6 +429,191 @@ const DATOS_MOCK: readonly Solicitud[] = [
     ultimaModificacion: "20/09/2024 16:30 COT",
   },
 ];
+
+/**
+ * Solicitudes sintéticas exclusivas de la bandeja del proveedor. Se mantienen
+ * fuera de DATOS_MOCK para no alterar el listado del solicitante (S-01).
+ */
+const SOLICITUDES_PROVEEDOR_MOCK: readonly Solicitud[] = [
+  {
+    id: "SOL-2026-0142",
+    vigencia: 2026,
+    unidadEjecutora: "1",
+    titulo:
+      "Adquisición de equipamiento de servidores y virtualización para el centro de cómputo",
+    apertura: "01/10/2026",
+    cierre: "30/10/2026",
+    dependencia: "DIRTEI (Tecnología)",
+    tipoCotizacion: "BIEN",
+    estado: "enviada-proveedores",
+  },
+  {
+    id: "SOL-2026-0139",
+    vigencia: 2026,
+    unidadEjecutora: "1",
+    titulo:
+      "Renovación y licenciamiento de plataforma de gestión de laboratorios virtuales STEM",
+    apertura: "24/10/2026",
+    cierre: "02/11/2026",
+    dependencia: "Recursos Educativos",
+    tipoCotizacion: "SERVICIO",
+    estado: "enviada-con-modificaciones",
+  },
+  {
+    id: "SOL-2026-0135",
+    vigencia: 2026,
+    unidadEjecutora: "3",
+    titulo:
+      "Suministro de mobiliario ergonómico para aulas de posgrado Sede Macarena A",
+    apertura: "24/10/2026",
+    cierre: "08/11/2026",
+    dependencia: "División de Planta Física",
+    tipoCotizacion: "BIEN",
+    estado: "enviada-proveedores",
+  },
+  {
+    id: "SOL-2026-0128",
+    vigencia: 2026,
+    unidadEjecutora: "1",
+    titulo:
+      "Mantenimiento preventivo y actualización de UPS de media potencia en sedes Bogotá",
+    apertura: "25/10/2026",
+    cierre: "12/11/2026",
+    dependencia: "Vicerrectoría Académica",
+    tipoCotizacion: "SERVICIO",
+    estado: "enviada-proveedores",
+  },
+  {
+    id: "SOL-2026-0115",
+    vigencia: 2026,
+    unidadEjecutora: "2",
+    titulo:
+      "Implementación de sistema de cableado estructurado e infraestructura de red pasiva",
+    apertura: "01/10/2026",
+    cierre: "20/10/2026",
+    dependencia: "Red de Datos UD",
+    tipoCotizacion: "BIEN_Y_SERVICIO",
+    estado: "en-evaluacion",
+  },
+  {
+    id: "SOL-2026-0098",
+    vigencia: 2026,
+    unidadEjecutora: "1",
+    titulo:
+      "Adquisición de kits de robótica y sensores IoT para semilleros de investigación",
+    apertura: "01/10/2026",
+    cierre: "05/12/2026",
+    dependencia: "Centro de Investigaciones (CIDC)",
+    tipoCotizacion: "BIEN",
+    estado: "adjudicada",
+  },
+  {
+    id: "SOL-2026-0084",
+    vigencia: 2026,
+    unidadEjecutora: "2",
+    titulo:
+      "Servicio integral de conectividad WAN e internet dedicado para campus universitarios",
+    apertura: "01/09/2026",
+    cierre: "20/09/2026",
+    dependencia: "DIRTEI",
+    tipoCotizacion: "SERVICIO",
+    estado: "desierta",
+  },
+  {
+    id: "SOL-2026-0072",
+    vigencia: 2026,
+    unidadEjecutora: "4",
+    titulo:
+      "Suministro de reactivos químicos y material de vidrio para laboratorio central",
+    apertura: "01/10/2026",
+    cierre: "15/10/2026",
+    dependencia: "Facultad de Ciencias y Educación",
+    tipoCotizacion: "BIEN",
+    estado: "en-evaluacion",
+  },
+  {
+    id: "SOL-2026-0064",
+    vigencia: 2026,
+    unidadEjecutora: "3",
+    titulo: "Suministro de equipos y accesorios para salas de cómputo",
+    apertura: "01/10/2026",
+    cierre: "04/12/2026",
+    dependencia: "Facultad de Ingeniería",
+    tipoCotizacion: "BIEN",
+    estado: "enviada-proveedores",
+  },
+];
+
+const INVITACIONES_PROVEEDOR_MOCK: readonly InvitacionProveedor[] = [
+  { id: "INV-0142", solicitudId: "SOL-2026-0142", estado: "borrador" },
+  {
+    id: "INV-0139",
+    solicitudId: "SOL-2026-0139",
+    estado: "pendiente-ajuste",
+    fechaRadicacion: "2026-10-25T10:20:00-05:00",
+  },
+  {
+    id: "INV-0135",
+    solicitudId: "SOL-2026-0135",
+    estado: "enviada",
+    fechaRadicacion: "2026-10-25T14:35:00-05:00",
+  },
+  {
+    id: "INV-0128",
+    solicitudId: "SOL-2026-0128",
+    estado: "enviada",
+    fechaRadicacion: "2026-10-25T15:10:00-05:00",
+  },
+  {
+    id: "INV-0115",
+    solicitudId: "SOL-2026-0115",
+    estado: "excluida",
+    fechaRadicacion: "2026-10-15T08:30:00-05:00",
+  },
+  {
+    id: "INV-0098",
+    solicitudId: "SOL-2026-0098",
+    estado: "aceptada",
+    fechaRadicacion: "2026-10-18T09:00:00-05:00",
+  },
+  {
+    id: "INV-0084",
+    solicitudId: "SOL-2026-0084",
+    estado: "rechazada",
+    fechaRadicacion: "2026-09-10T11:00:00-05:00",
+  },
+  { id: "INV-0072", solicitudId: "SOL-2026-0072", estado: "vencida" },
+  {
+    id: "INV-0064",
+    solicitudId: "SOL-2026-0064",
+    estado: "declinada",
+    fechaRadicacion: "2026-10-19T13:15:00-05:00",
+  },
+];
+
+const ORDENADORES_PROVEEDOR_MOCK: Readonly<Record<string, string>> = {
+  "SOL-2026-0142": "Dr. Ricardo Gómez Morales",
+  "SOL-2026-0139": "Dr. Ricardo Gómez Morales",
+  "SOL-2026-0135": "Ing. Martha Cecilia Bello",
+  "SOL-2026-0128": "Dr. Carlos Julio González",
+  "SOL-2026-0115": "Dr. Ricardo Gómez Morales",
+  "SOL-2026-0098": "Dra. Elvia María Sanabria",
+  "SOL-2026-0084": "Dr. Ricardo Gómez Morales",
+  "SOL-2026-0072": "Lic. Fernando Triana",
+  "SOL-2026-0064": "Ing. Martha Cecilia Bello",
+};
+
+const NOTAS_PROVEEDOR_MOCK: Readonly<Record<string, string>> = {
+  "SOL-2026-0142": "ID Requisición: RQ-8841-UD · CDP 1402",
+  "SOL-2026-0139": "Adenda publicada: ajuste en cantidad de usuarios",
+  "SOL-2026-0135": "Lotes 1 y 2 · Especificaciones técnicas anexas",
+  "SOL-2026-0128": "Cotización enviada",
+  "SOL-2026-0115": "Plazo cerrado",
+  "SOL-2026-0098": "Oferta seleccionada",
+  "SOL-2026-0084": "Informe comparativo publicado",
+  "SOL-2026-0072": "Motivo de rechazo por definir",
+  "SOL-2026-0064": "Invitación declinada por el proveedor",
+};
 
 const MAPA_TIPOS: Readonly<Record<string, TipoCotizacion>> = {
   bienes: "BIEN",
@@ -2412,6 +2613,88 @@ export class SolicitudesServiceMock extends SolicitudesService {
     }).pipe(delay(retardo));
   }
 
+  listarInvitacionesProveedor(
+    criterios: Partial<FiltroInvitacionesProveedor>,
+    pagina: number,
+    porPagina: number,
+  ): Observable<ResultadoListadoInvitaciones> {
+    const params = new URLSearchParams(window.location.search);
+    const modo = params.get("mockInvitaciones");
+    const retardo = Number(params.get("mockRetardo")) || 900;
+
+    if (modo === "error") {
+      return throwError(
+        () =>
+          new Error(
+            "No fue posible consultar las solicitudes asignadas al proveedor.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    if (modo === "vacio") {
+      return of({
+        invitaciones: [],
+        total: 0,
+        conteos: conteosVacios(),
+        dependencias: [],
+      }).pipe(delay(retardo));
+    }
+
+    const solicitudes = new Map(
+      SOLICITUDES_PROVEEDOR_MOCK.map((solicitud) => [
+        solicitud.id,
+        solicitud,
+      ]),
+    );
+    const filas: InvitacionProveedorConSolicitud[] =
+      INVITACIONES_PROVEEDOR_MOCK.flatMap((invitacion) => {
+        const solicitud = solicitudes.get(invitacion.solicitudId);
+        if (!solicitud) {
+          return [];
+        }
+        return [
+          {
+            invitacion,
+            solicitud,
+            ordenadorGasto:
+              ORDENADORES_PROVEEDOR_MOCK[solicitud.id] ??
+              "Por definir",
+            nota: NOTAS_PROVEEDOR_MOCK[solicitud.id] ?? "",
+          },
+        ];
+      });
+
+    const base = filas.filter((fila) =>
+      this.coincideInvitacion(fila, criterios),
+    );
+    const conteos = contarInvitaciones(base);
+    const filtradas = base.filter(
+      ({ invitacion }) =>
+        !criterios.grupo ||
+        criterios.grupo === "todas" ||
+        grupoDeInvitacion(invitacion.estado) === criterios.grupo,
+    );
+    // Provisional: conserva el orden descendente por identificador del mockup.
+    const factor = criterios.ordenNumero === "asc" ? 1 : -1;
+    const ordenadas = [...filtradas].sort(
+      (a, b) => factor * a.solicitud.id.localeCompare(b.solicitud.id),
+    );
+    const desde = pagina * porPagina;
+
+    return of({
+      invitaciones: ordenadas.slice(desde, desde + porPagina),
+      total: ordenadas.length,
+      conteos,
+      dependencias: [
+        ...new Set(
+          SOLICITUDES_PROVEEDOR_MOCK.map(
+            (solicitud) => solicitud.dependencia,
+          ),
+        ),
+      ].sort((a, b) => a.localeCompare(b, "es-CO")),
+    }).pipe(delay(retardo));
+  }
+
   obtenerPorId(id: string): Observable<SolicitudDetalle | null> {
     const params = new URLSearchParams(window.location.search);
     const retardo = Number(params.get("mockRetardo")) || 700;
@@ -2937,4 +3220,75 @@ export class SolicitudesServiceMock extends SolicitudesService {
 
     return true;
   }
+
+  private coincideInvitacion(
+    fila: InvitacionProveedorConSolicitud,
+    criterios: Partial<FiltroInvitacionesProveedor>,
+  ): boolean {
+    const { invitacion, solicitud } = fila;
+    if (
+      criterios.vigencia &&
+      criterios.vigencia !== "todas" &&
+      String(solicitud.vigencia) !== criterios.vigencia
+    ) {
+      return false;
+    }
+    if (criterios.estado && invitacion.estado !== criterios.estado) {
+      return false;
+    }
+    if (
+      criterios.tipoCotizacion &&
+      solicitud.tipoCotizacion !== criterios.tipoCotizacion
+    ) {
+      return false;
+    }
+    if (
+      criterios.dependencia &&
+      solicitud.dependencia !== criterios.dependencia
+    ) {
+      return false;
+    }
+
+    const texto = criterios.busqueda?.trim().toLocaleLowerCase("es-CO");
+    if (
+      texto &&
+      ![
+        fila.invitacion.id,
+        solicitud.id,
+        solicitud.titulo,
+        solicitud.dependencia,
+        fila.ordenadorGasto,
+      ].some((valor) => valor.toLocaleLowerCase("es-CO").includes(texto))
+    ) {
+      return false;
+    }
+
+    return true;
+  }
+}
+
+function conteosVacios(): ConteosFiltrosInvitaciones {
+  return {
+    todas: 0,
+    "por-responder": 0,
+    respondidas: 0,
+    "con-modificaciones": 0,
+    cerradas: 0,
+  };
+}
+
+function contarInvitaciones(
+  filas: readonly InvitacionProveedorConSolicitud[],
+): ConteosFiltrosInvitaciones {
+  const conteos: Record<GrupoFiltroInvitacion, number> = {
+    todas: filas.length,
+    "por-responder": 0,
+    respondidas: 0,
+    "con-modificaciones": 0,
+    cerradas: 0,
+  };
+  for (const { invitacion } of filas) {
+    conteos[grupoDeInvitacion(invitacion.estado)] += 1;
+  }
+  return conteos;
 }

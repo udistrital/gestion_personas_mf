@@ -1,0 +1,15 @@
+<plantilla-pagina-contenedora [breadcrumb]="breadcrumb" [title]="titulo">
+  <section class="placeholder" aria-labelledby="placeholder-titulo">
+    <mat-icon aria-hidden="true">construction</mat-icon>
+    <h2 id="placeholder-titulo">{{ titulo }}</h2>
+    <etiqueta-por-definir
+      texto="Por definir"
+      detalle="La pantalla {{ pantalla }} está fuera del alcance de P-01."
+    />
+    <p>Esta funcionalidad se implementará en una fase posterior.</p>
+    <a class="placeholder__volver" routerLink="/cotizaciones/mis-solicitudes">
+      <mat-icon aria-hidden="true">arrow_back</mat-icon>
+      Volver a solicitudes de cotización
+    </a>
+  </section>
+</plantilla-pagina-contenedora>

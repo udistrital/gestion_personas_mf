@@ -17,12 +17,27 @@ export type EstadoSolicitud =
   | "desierta"
   | "cancelada";
 
+export type EstadoPostulacionProveedor =
+  | "borrador"
+  | "enviada"
+  | "pendiente-ajuste"
+  | "excluida"
+  | "aceptada"
+  | "rechazada"
+  | "declinada"
+  | "vencida";
+
 export type AccionSolicitud =
   | "ver-detalle"
   | "modificar"
   | "foro"
   | "oferentes"
   | "cancelar";
+
+export type AccionInvitacionProveedor =
+  | "ver-detalle-proveedor"
+  | "observar"
+  | "responder";
 
 export type TonoChip =
   | "primario"
@@ -117,6 +132,67 @@ export const ESTADOS_SOLICITUD: Readonly<
   },
 };
 
+export const ESTADOS_POSTULACION_PROVEEDOR: Readonly<
+  Record<EstadoPostulacionProveedor, EstadoSolicitudMeta>
+> = {
+  borrador: {
+    etiqueta: "Borrador",
+    tono: "advertencia",
+    icono: null,
+    pulso: false,
+  },
+  enviada: {
+    etiqueta: "Enviada",
+    tono: "info",
+    icono: null,
+    pulso: true,
+  },
+  "pendiente-ajuste": {
+    etiqueta: "Pendiente de Ajuste",
+    tono: "advertencia",
+    icono: "edit_note",
+    pulso: true,
+  },
+  excluida: {
+    etiqueta: "Excluida",
+    tono: "neutro",
+    icono: "block",
+    pulso: false,
+  },
+  aceptada: {
+    etiqueta: "Aceptada",
+    tono: "exito",
+    icono: "verified",
+    pulso: false,
+  },
+  rechazada: {
+    etiqueta: "Rechazada",
+    tono: "neutro",
+    icono: "cancel",
+    pulso: false,
+  },
+  declinada: {
+    etiqueta: "Declinada",
+    tono: "neutro",
+    icono: "do_not_disturb_on",
+    pulso: false,
+  },
+  vencida: {
+    etiqueta: "Vencida",
+    tono: "neutro",
+    icono: "schedule",
+    pulso: false,
+  },
+};
+
+/** Unificación de estados visibles para el chip compartido. */
+export const ESTADOS_CHIP: Readonly<
+  Record<EstadoSolicitud | EstadoPostulacionProveedor, EstadoSolicitudMeta>
+> = {
+  ...ESTADOS_SOLICITUD,
+  ...ESTADOS_POSTULACION_PROVEEDOR,
+};
+
 export const ACCIONES_SOLICITUD: Readonly<
   Record<AccionSolicitud, AccionSolicitudMeta>
 > = {
@@ -155,6 +231,50 @@ export const ACCIONES_SOLICITUD: Readonly<
     ruta: null, // S-05
     peligro: true,
   },
+};
+
+export interface AccionInvitacionProveedorMeta {
+  readonly etiqueta: string;
+  readonly icono: string;
+  readonly ruta: string | null;
+}
+
+export const ACCIONES_INVITACION_PROVEEDOR: Readonly<
+  Record<AccionInvitacionProveedor, AccionInvitacionProveedorMeta>
+> = {
+  "ver-detalle-proveedor": {
+    etiqueta: "Ver solicitud",
+    icono: "visibility",
+    ruta: "cotizaciones/mis-solicitudes/:id",
+  },
+  observar: {
+    etiqueta: "Observaciones",
+    icono: "chat_bubble_outline",
+    ruta: "cotizaciones/mis-solicitudes/:id/observaciones",
+  },
+  responder: {
+    etiqueta: "Responder",
+    icono: "edit_square",
+    ruta: "cotizaciones/mis-solicitudes/:id/responder",
+  },
+};
+
+/**
+ * Reglas provisionales de acciones por estado de postulación.
+ * La observación además depende de que la solicitud no esté cancelada y de su
+ * fecha de cierre; esa comprobación se centraliza en PermisosSolicitudService.
+ */
+export const MATRIZ_ACCIONES_INVITACION_PROVEEDOR: Readonly<
+  Record<EstadoPostulacionProveedor, readonly AccionInvitacionProveedor[]>
+> = {
+  borrador: ["ver-detalle-proveedor", "observar", "responder"],
+  enviada: ["ver-detalle-proveedor", "observar"],
+  "pendiente-ajuste": ["ver-detalle-proveedor", "observar", "responder"],
+  excluida: ["ver-detalle-proveedor", "observar"],
+  aceptada: ["ver-detalle-proveedor", "observar"],
+  rechazada: ["ver-detalle-proveedor", "observar"],
+  declinada: ["ver-detalle-proveedor", "observar"],
+  vencida: ["ver-detalle-proveedor", "observar"],
 };
 
 /**

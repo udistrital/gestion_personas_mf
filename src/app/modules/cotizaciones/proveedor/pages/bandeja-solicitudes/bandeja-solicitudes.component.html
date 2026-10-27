@@ -1,0 +1,314 @@
+<plantilla-pagina-contenedora [breadcrumb]="breadcrumb">
+  <section class="bandeja" aria-labelledby="titulo-bandeja">
+    <header class="bandeja__encabezado">
+      <div>
+        <h1 id="titulo-bandeja">Solicitudes de cotización</h1>
+        <p>
+          Consulte las solicitudes en las que puede participar, envíe
+          observaciones y responda dentro del plazo.
+        </p>
+      </div>
+      <div class="bandeja__vigencia" aria-label="Vigencia activa">
+        <mat-icon aria-hidden="true">verified</mat-icon>
+        <span>Vigencia activa: <strong>{{ vigenciaActual }}</strong></span>
+      </div>
+    </header>
+
+    <section class="bandeja__aviso" aria-labelledby="titulo-plazo">
+      <mat-icon aria-hidden="true">schedule</mat-icon>
+      <div>
+        <h2 id="titulo-plazo">Plazos y cierre de procesos</h2>
+        <p>
+          La fecha de cierre de cada solicitud indica el último día para
+          participar. La postulación cierra a las 23:59 de esa fecha.
+        </p>
+      </div>
+    </section>
+
+    <listado-filtros
+      [campos]="camposFiltro"
+      [filtrosRapidos]="filtrosRapidos"
+      [filtroRapidoActivo]="filtroRapidoActivo"
+      nota="La elegibilidad de las invitaciones depende del perfil del proveedor; el origen del criterio de elegibilidad está por definir."
+      (filtrar)="filtrar($event)"
+      (filtroRapido)="filtrarRapido($event)"
+      (limpiar)="limpiar()"
+    />
+
+    <section class="bandeja__tabla" aria-labelledby="titulo-registros">
+      <header class="bandeja__tabla-cabecera">
+        <h2 id="titulo-registros">
+          <mat-icon aria-hidden="true">assignment_turned_in</mat-icon>
+          Registro de solicitudes disponibles
+        </h2>
+        @if (vista() === "listo") {
+          <span class="bandeja__total">{{ total }} registros</span>
+        }
+      </header>
+
+      <p class="bandeja__solo-lectura" aria-live="polite">
+        {{ resultadoAnunciable }}
+      </p>
+
+      @if (vista() === "cargando") {
+        <div class="bandeja__carga" aria-busy="true" aria-live="polite">
+          <mat-spinner diameter="40"></mat-spinner>
+          <span class="bandeja__solo-lectura">
+            Cargando solicitudes…
+          </span>
+        </div>
+      } @else if (vista() === "error") {
+        <div class="bandeja__estado bandeja__estado--error" role="alert">
+          <mat-icon aria-hidden="true">error_outline</mat-icon>
+          <h3>No pudimos cargar las solicitudes</h3>
+          <p>
+            {{
+              mensajeError ||
+                "Ocurrió un problema al consultar la bandeja. Intente nuevamente."
+            }}
+          </p>
+          <button type="button" class="boton boton--secundario" (click)="cargar()">
+            <mat-icon aria-hidden="true">refresh</mat-icon>
+            Reintentar
+          </button>
+        </div>
+      } @else if (total === 0 && !hayFiltrosAplicados) {
+        <div class="bandeja__estado-vacio" role="status" aria-live="polite">
+          <mat-icon class="bandeja__vacio-icono" aria-hidden="true">
+            search_off
+          </mat-icon>
+          <h3>No hay solicitudes de cotización disponibles para su perfil</h3>
+          <p>
+            Actualmente no hay convocatorias asignadas a los códigos de
+            actividad económica (CIIU) o clasificación académica (SNIES)
+            registrados en su perfil.
+          </p>
+          <aside class="bandeja__recomendacion">
+            <mat-icon aria-hidden="true">verified_user</mat-icon>
+            <div>
+              <strong>Recomendación de registro institucional</strong>
+              <p>
+                Revise que su registro y certificados RUP estén vigentes y
+                actualizados para recibir nuevas invitaciones.
+              </p>
+            </div>
+          </aside>
+        </div>
+      } @else if (total === 0) {
+        <div class="bandeja__estado" role="status" aria-live="polite">
+          <mat-icon aria-hidden="true">filter_alt_off</mat-icon>
+          <h3>No hay solicitudes que coincidan con los filtros</h3>
+          <p>Pruebe con otros criterios o limpie los filtros aplicados.</p>
+          <button type="button" class="boton boton--secundario" (click)="limpiar()">
+            <mat-icon aria-hidden="true">restart_alt</mat-icon>
+            Limpiar filtros
+          </button>
+        </div>
+      } @else {
+        <div class="bandeja__tabla-scroll">
+          <table aria-label="Solicitudes de cotización disponibles para el proveedor">
+            <caption class="bandeja__solo-lectura">
+              Solicitudes de cotización disponibles para el proveedor
+            </caption>
+            <thead>
+              <tr>
+                <th
+                  scope="col"
+                  class="bandeja__th bandeja__th--orden"
+                  [attr.aria-sort]="criterios.ordenNumero === 'desc' ? 'descending' : 'ascending'"
+                >
+                  <button
+                    class="bandeja__orden"
+                    type="button"
+                    (click)="ordenarPorNumero()"
+                    title="Ordenar por número de solicitud"
+                  >
+                    <span>N.° Solicitud</span>
+                    <mat-icon aria-hidden="true">swap_vert</mat-icon>
+                  </button>
+                </th>
+                <th scope="col" class="bandeja__th">Vigencia</th>
+                <th scope="col" class="bandeja__th">Título / Objeto de la cotización</th>
+                <th scope="col" class="bandeja__th">Apertura</th>
+                <th scope="col" class="bandeja__th">Fecha de cierre / Plazo</th>
+                <th scope="col" class="bandeja__th">Dependencia</th>
+                <th scope="col" class="bandeja__th">Ordenador del gasto</th>
+                <th scope="col" class="bandeja__th">Tipo</th>
+                <th scope="col" class="bandeja__th">Estado</th>
+                <th scope="col" class="bandeja__th bandeja__th--acciones">
+                  Acciones
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (fila of invitaciones; track fila.invitacion.id) {
+                <tr>
+                  <td class="bandeja__td bandeja__td--numero">
+                    {{ fila.solicitud.id }}
+                  </td>
+                  <td class="bandeja__td bandeja__td--muted">
+                    {{ fila.solicitud.vigencia }}
+                  </td>
+                  <td class="bandeja__td bandeja__td--titulo">
+                    <span>{{ fila.solicitud.titulo }}</span>
+                    @if (fila.nota) {
+                      <small>{{ fila.nota }}</small>
+                    }
+                  </td>
+                  <td class="bandeja__td bandeja__td--muted">
+                    {{ fila.solicitud.apertura || "—" }}
+                  </td>
+                  <td class="bandeja__td bandeja__td--cierre">
+                    <time [attr.datetime]="fechaCierreIso(fila.solicitud.cierre)">
+                      {{ fila.solicitud.cierre || "—" }}
+                      @if (fila.solicitud.cierre) {
+                        <span>23:59</span>
+                      }
+                    </time>
+                    <contador-regresivo [fechaCierre]="fila.solicitud.cierre" />
+                  </td>
+                  <td class="bandeja__td bandeja__td--muted">
+                    {{ fila.solicitud.dependencia }}
+                  </td>
+                  <td class="bandeja__td bandeja__td--muted">
+                    {{ fila.ordenadorGasto }}
+                  </td>
+                  <td class="bandeja__td">
+                    <span class="bandeja__tipo">{{ etiquetaTipo(fila) }}</span>
+                  </td>
+                  <td class="bandeja__td">
+                    <chip-estado [estado]="fila.invitacion.estado" />
+                  </td>
+                  <td class="bandeja__td bandeja__td--acciones">
+                    <button
+                      mat-icon-button
+                      type="button"
+                      class="bandeja__boton-acciones"
+                      [class.bandeja__boton-acciones--activo]="
+                        filaMenuAbierto === fila.invitacion.id
+                      "
+                      [matMenuTriggerFor]="menuAcciones"
+                      [attr.aria-label]="
+                        'Acciones de la solicitud ' + fila.solicitud.id
+                      "
+                      (menuOpened)="abrirMenuAcciones(fila.invitacion.id)"
+                      (menuClosed)="cerrarMenuAcciones()"
+                    >
+                      <mat-icon aria-hidden="true" color="primary">
+                        more_vert
+                      </mat-icon>
+                    </button>
+                    <mat-menu
+                      #menuAcciones="matMenu"
+                      panelClass="bandeja__menu-acciones"
+                      xPosition="before"
+                    >
+                      @for (accion of accionesDe(fila); track accion) {
+                        <button
+                          mat-menu-item
+                          type="button"
+                          (click)="ejecutarAccion(accion, fila)"
+                        >
+                          <mat-icon aria-hidden="true" color="primary">
+                            {{ acciones[accion].icono }}
+                          </mat-icon>
+                          <span>
+                            {{ permisos.etiquetaAccionInvitacion(accion) }}
+                          </span>
+                        </button>
+                      }
+                    </mat-menu>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <footer class="bandeja__paginador">
+          <div class="bandeja__paginador-info">
+            <span>Mostrar:</span>
+            <div class="bandeja__paginador-select">
+              <select
+                [value]="porPagina"
+                (change)="cambiarPorPagina($event)"
+                aria-label="Número de solicitudes por página"
+              >
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+              </select>
+              <mat-icon aria-hidden="true">arrow_drop_down</mat-icon>
+            </div>
+            <span>por página</span>
+          </div>
+          <div class="bandeja__paginador-rango">
+            Mostrando
+            <span class="bandeja__paginador-rango-valor">
+              {{ rangoInicio }}
+            </span>–<span class="bandeja__paginador-rango-valor">
+              {{ rangoFin }}
+            </span>
+            de
+            <span class="bandeja__paginador-rango-valor">{{ total }}</span>
+            solicitudes
+          </div>
+          <nav
+            aria-label="Paginación de solicitudes"
+            class="bandeja__paginador-navegacion"
+          >
+            <button
+              class="bandeja__paginador-boton"
+              type="button"
+              title="Primera página"
+              [disabled]="pagina === 0"
+              (click)="irAPagina(0)"
+            >
+              <mat-icon aria-hidden="true">first_page</mat-icon>
+            </button>
+            <button
+              class="bandeja__paginador-boton"
+              type="button"
+              title="Anterior"
+              [disabled]="pagina === 0"
+              (click)="irAPagina(pagina - 1)"
+            >
+              <mat-icon aria-hidden="true">chevron_left</mat-icon>
+            </button>
+            @for (numero of paginasVisibles; track numero) {
+              <button
+                class="bandeja__paginador-boton bandeja__paginador-boton--pagina"
+                type="button"
+                [attr.aria-current]="numero === pagina + 1 ? 'page' : null"
+                [attr.aria-label]="'Página ' + numero"
+                [class.bandeja__paginador-boton--activo]="
+                  numero === pagina + 1
+                "
+                (click)="irAPagina(numero - 1)"
+              >
+                {{ numero }}
+              </button>
+            }
+            <button
+              class="bandeja__paginador-boton"
+              type="button"
+              title="Siguiente"
+              [disabled]="pagina + 1 >= totalPaginas"
+              (click)="irAPagina(pagina + 1)"
+            >
+              <mat-icon aria-hidden="true">chevron_right</mat-icon>
+            </button>
+            <button
+              class="bandeja__paginador-boton"
+              type="button"
+              title="Última página"
+              [disabled]="pagina + 1 >= totalPaginas"
+              (click)="irAPagina(totalPaginas - 1)"
+            >
+              <mat-icon aria-hidden="true">last_page</mat-icon>
+            </button>
+          </nav>
+        </footer>
+      }
+    </section>
+  </section>
+</plantilla-pagina-contenedora>
