@@ -90,6 +90,20 @@ export class PasoProveedoresComponent implements OnInit {
   /** Término del buscador de actividades. */
   readonly busqueda = signal("");
 
+  /** Código CIIU elegido para vincular a la solicitud. */
+  readonly actividadSeleccionada = signal("");
+
+  /** Actividades del catálogo que coinciden con el filtro. */
+  readonly actividadesFiltradas = computed(() => {
+    const termino = this.busqueda().trim().toLowerCase();
+    return this.catalogoCiiu.filter(
+      (actividad) =>
+        !termino ||
+        actividad.codigo.toLowerCase().includes(termino) ||
+        actividad.descripcion.toLowerCase().includes(termino),
+    );
+  });
+
   /** true cuando la muestra de proveedores está desplegada. */
   readonly mostrarProveedores = signal(false);
 
@@ -184,28 +198,33 @@ export class PasoProveedoresComponent implements OnInit {
   /** Refleja el texto del buscador CIIU en la señal local. */
   alBuscar(evento: Event): void {
     this.busqueda.set((evento.target as HTMLInputElement).value);
+    this.actividadSeleccionada.set("");
+  }
+
+  /** Registra el código elegido en el selector de actividades. */
+  alSeleccionarActividad(evento: Event): void {
+    this.actividadSeleccionada.set(
+      (evento.target as HTMLSelectElement).value,
+    );
   }
 
   // ── Acciones de la tarjeta 2 (CIIU) ──────────────────────────────────────
 
-  /** Vincula la actividad buscada (por código o palabra clave). */
+  /** Vincula la actividad seleccionada del catálogo CIIU. */
   agregarActividad(): void {
-    const consulta = this.busqueda().trim();
-    if (!consulta) {
+    const codigo = this.actividadSeleccionada();
+    if (!codigo) {
       return;
     }
 
     const objetivo = this.catalogoCiiu.find(
-      (actividad) =>
-        actividad.codigo === consulta ||
-        actividad.codigo.startsWith(consulta) ||
-        actividad.descripcion.toLowerCase().includes(consulta.toLowerCase()),
+      (actividad) => actividad.codigo === codigo,
     );
 
     if (!objetivo) {
       this.alerta.showAlert(
         "Actividad no encontrada",
-        "No se halló una actividad CIIU con ese código o palabra clave. Verifique el catálogo DANE (Revisión 4 A.C.).",
+        "No se halló la actividad CIIU seleccionada. Verifique el catálogo DANE (Revisión 4 A.C.).",
       );
       return;
     }
@@ -228,6 +247,7 @@ export class PasoProveedoresComponent implements OnInit {
     ]);
     this.sincronizarLista();
     this.busqueda.set("");
+    this.actividadSeleccionada.set("");
   }
 
   /** Quita una actividad de la tabla. */
@@ -249,6 +269,7 @@ export class PasoProveedoresComponent implements OnInit {
   restablecerFiltros(): void {
     this.actividades.set([]);
     this.busqueda.set("");
+    this.actividadSeleccionada.set("");
     this.controlOpcional("areaSnies")?.setValue("");
     this.controlOpcional("nucleoSnies")?.setValue("");
     this.mostrarProveedores.set(false);

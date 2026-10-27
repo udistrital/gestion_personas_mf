@@ -44,6 +44,8 @@ import {
 /** Máximo de ítems que caben en una página de la tabla (mockup: 5). */
 const ITEMS_POR_PAGINA = 5;
 
+type TipoBusquedaCatalogo = "CIIU" | "UNSPSC";
+
 /**
  * Validador del paso 3: exige al menos un ítem en el pliego.
  *
@@ -90,6 +92,32 @@ export function minCaracteresTexto(minimo: number): ValidatorFn {
 export class PasoItemsComponent implements OnInit {
   readonly tipos = TIPOS_ITEM;
   readonly unidades = UNIDADES_MEDIDA;
+  readonly catalogoBusqueda: readonly {
+    tipo: TipoBusquedaCatalogo;
+    codigo: string;
+    etiqueta: string;
+  }[] = [
+    {
+      tipo: "CIIU",
+      codigo: "6201",
+      etiqueta: "6201 - Desarrollo de sistemas informáticos",
+    },
+    {
+      tipo: "CIIU",
+      codigo: "6202",
+      etiqueta: "6202 - Consultoría informática",
+    },
+    {
+      tipo: "UNSPSC",
+      codigo: "43211500",
+      etiqueta: "43211500 - Computadores",
+    },
+    {
+      tipo: "UNSPSC",
+      codigo: "81111500",
+      etiqueta: "81111500 - Servicios de desarrollo de software",
+    },
+  ];
   readonly estructuras = ESTRUCTURAS_PLANTILLA;
   readonly plantillaMasiva = PLANTILLA_MASIVA;
   readonly maxArchivoMb = MAX_ARCHIVO_MB;
@@ -130,6 +158,12 @@ export class PasoItemsComponent implements OnInit {
 
   /** Ítems agregados al pliego (alimenta la tabla consolidada). */
   readonly items = signal<readonly ItemSolicitud[]>([]);
+
+  /** Catálogo asociado a la selección Bien/Servicio. */
+  readonly tipoBusqueda = signal<TipoBusquedaCatalogo>("CIIU");
+
+  /** Texto que filtra las opciones del catálogo local. */
+  readonly filtroCatalogo = signal("");
 
   /** Subformulario del ítem individual (creado una sola vez). */
   readonly itemForm: FormGroup;
@@ -215,6 +249,18 @@ export class PasoItemsComponent implements OnInit {
     );
   });
 
+  /** Opciones locales del catálogo según clasificación y filtro. */
+  readonly opcionesCatalogoFiltradas = computed(() => {
+    const termino = this.filtroCatalogo().trim().toLowerCase();
+    return this.catalogoBusqueda.filter(
+      (opcion) =>
+        opcion.tipo === this.tipoBusqueda() &&
+        (!termino ||
+          opcion.codigo.toLowerCase().includes(termino) ||
+          opcion.etiqueta.toLowerCase().includes(termino)),
+    );
+  });
+
   /** Número total de páginas de la tabla de resultados. */
   readonly totalPaginas = computed(() =>
     Math.max(1, Math.ceil(this.itemsFiltrados().length / ITEMS_POR_PAGINA)),
@@ -259,6 +305,37 @@ export class PasoItemsComponent implements OnInit {
   mostrarError(nombre: string, form: FormGroup): boolean {
     const control = form.get(nombre);
     return !!control && control.invalid && (control.dirty || control.touched);
+  }
+
+  /** Actualiza el catálogo según Bien/Servicio y limpia la selección anterior. */
+  seleccionarTipoNecesidad(tipo: string): void {
+    if (tipo !== "bien" && tipo !== "servicio") {
+      return;
+    }
+    const tipoBusqueda: TipoBusquedaCatalogo =
+      tipo === "bien" ? "CIIU" : "UNSPSC";
+    if (this.tipoBusqueda() !== tipoBusqueda) {
+      this.tipoBusqueda.set(tipoBusqueda);
+      this.filtroCatalogo.set("");
+      this.itemForm.get("nombre")?.setValue("");
+    }
+    this.itemForm.patchValue({ tipo });
+  }
+
+  /** Refleja el texto que filtra las opciones del catálogo local. */
+  alFiltrarCatalogo(evento: Event): void {
+    this.filtroCatalogo.set((evento.target as HTMLInputElement).value);
+  }
+
+  /** Conserva nombres existentes al editar ítems fuera del catálogo de ejemplo. */
+  mostrarNombreActual(): boolean {
+    const nombre = String(this.itemForm.get("nombre")?.value ?? "");
+    return (
+      !!nombre &&
+      !this.opcionesCatalogoFiltradas().some(
+        (opcion) => opcion.etiqueta === nombre,
+      )
+    );
   }
 
   /** true cuando el archivo del cargue ya fue elegido. */
@@ -338,6 +415,8 @@ export class PasoItemsComponent implements OnInit {
   editarItem(item: ItemSolicitud): void {
     this.controlOpcional("modo")?.setValue("individual");
     this.editandoId.set(item.id);
+    this.tipoBusqueda.set(item.tipo === "bien" ? "CIIU" : "UNSPSC");
+    this.filtroCatalogo.set("");
     this.itemForm.reset({
       tipo: item.tipo,
       nombre: item.nombre,

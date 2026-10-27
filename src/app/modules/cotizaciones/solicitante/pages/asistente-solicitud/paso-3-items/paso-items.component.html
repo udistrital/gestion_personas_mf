@@ -74,7 +74,7 @@
               [class.segmentado__boton--activo]="itemForm.value.tipo === tipo.valor"
               role="radio"
               [attr.aria-checked]="itemForm.value.tipo === tipo.valor"
-              (click)="itemForm.patchValue({ tipo: tipo.valor })"
+              (click)="seleccionarTipoNecesidad(tipo.valor)"
             >
               <mat-icon aria-hidden="true">{{ tipo.icono }}</mat-icon>
               <span>{{ tipo.etiqueta }}</span>
@@ -84,17 +84,42 @@
       </div>
 
       <div class="campo">
-        <label class="campo__etiqueta" for="item-nombre">
-          Nombre del bien <b aria-hidden="true">*</b>
+        <span class="campo__etiqueta" id="item-nombre-etiqueta">
+          Nombre del bien o servicio <b aria-hidden="true">*</b>
+        </span>
+        <label class="campo__etiqueta" for="item-filtro-catalogo">
+          Filtrar opciones {{ tipoBusqueda() }}
         </label>
         <span class="selector">
-          <mat-icon class="selector__icono" aria-hidden="true">category</mat-icon>
+          <mat-icon class="selector__icono" aria-hidden="true">search</mat-icon>
           <input
-            id="item-nombre"
+            id="item-filtro-catalogo"
             type="text"
-            formControlName="nombre"
-            placeholder="Ej. Computador portátil, Servidor, Licencia…"
+            [value]="filtroCatalogo()"
+            (input)="alFiltrarCatalogo($event)"
+            placeholder="Filtrar por código o descripción…"
           />
+        </span>
+        <span class="selector">
+          <mat-icon class="selector__icono" aria-hidden="true">list_alt</mat-icon>
+          <select
+            id="item-nombre"
+            formControlName="nombre"
+            aria-labelledby="item-nombre-etiqueta"
+          >
+            <option value="" disabled>Seleccione una opción</option>
+            @if (mostrarNombreActual()) {
+              <option [value]="itemForm.get('nombre')?.value">
+                {{ itemForm.get("nombre")?.value }}
+              </option>
+            }
+            @for (opcion of opcionesCatalogoFiltradas(); track opcion.codigo) {
+              <option [value]="opcion.etiqueta">{{ opcion.etiqueta }}</option>
+            }
+          </select>
+          <mat-icon class="selector__flecha" aria-hidden="true">
+            arrow_drop_down
+          </mat-icon>
         </span>
         @if (mostrarError("nombre", itemForm)) {
           <span class="mensaje-error-formulario">

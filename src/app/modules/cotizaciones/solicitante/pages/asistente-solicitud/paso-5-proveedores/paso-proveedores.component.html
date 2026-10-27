@@ -52,8 +52,8 @@
       </span>
       <p class="resumen-item__valor">
         <span>{{ resumen?.numeroCotizacion || "—" }}</span>
-        @if (resumen?.vigencia) {
-          <span class="chip chip--neutro">{{ resumen?.vigencia }}</span>
+        @if (resumen?.vigencia; as vigencia) {
+          <span class="chip chip--neutro">{{ vigencia }}</span>
         }
       </p>
     </div>
@@ -65,9 +65,9 @@
       </span>
       <p class="resumen-item__valor">
         {{ resumen?.unidadEjecutora || "—" }}
-        @if (resumen?.responsable) {
+        @if (resumen?.responsable; as responsable) {
           <span class="resumen-item__separador" aria-hidden="true">|</span>
-          {{ resumen?.responsable }}
+          {{ responsable }}
         }
       </p>
     </div>
@@ -130,21 +130,43 @@
     </ng-container>
 
     <div class="campo caja-buscador">
-      <label class="campo__etiqueta" for="ciiu-input">
+      <label class="campo__etiqueta" for="ciiu-filtro">
         Código o palabra clave CIIU <b aria-hidden="true">*</b>
       </label>
       <div class="buscador">
         <span class="selector buscador__entrada">
           <mat-icon class="selector__icono" aria-hidden="true">search</mat-icon>
           <input
-            id="ciiu-input"
+            id="ciiu-filtro"
             type="text"
             [value]="busqueda()"
             (input)="alBuscar($event)"
-            (keyup.enter)="agregarActividad()"
-            placeholder="Buscar por código (ej. 6201) o actividad tecnológica…"
+            placeholder="Filtrar por código o palabra clave…"
           />
         </span>
+      </div>
+      <label class="campo__etiqueta" for="ciiu-select">
+        Seleccionar actividad CIIU
+      </label>
+      <span class="selector">
+        <mat-icon class="selector__icono" aria-hidden="true">category</mat-icon>
+        <select
+          id="ciiu-select"
+          [value]="actividadSeleccionada()"
+          (change)="alSeleccionarActividad($event)"
+        >
+          <option value="" disabled>Seleccione una actividad</option>
+          @for (actividad of actividadesFiltradas(); track actividad.codigo) {
+            <option [value]="actividad.codigo">
+              {{ actividad.codigo }} - {{ actividad.descripcion }}
+            </option>
+          }
+        </select>
+        <mat-icon class="selector__flecha" aria-hidden="true">
+          arrow_drop_down
+        </mat-icon>
+      </span>
+      <div class="buscador">
         <button
           class="boton-recto boton-recto--vino"
           type="button"
