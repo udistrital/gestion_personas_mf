@@ -1,0 +1,802 @@
+@use 'src/app/shared/styles/tokens' as t;
+@use 'src/app/shared/styles/registro-formulario' as registro-formulario;
+@use 'src/app/shared/styles/paso-asistente' as paso-asistente;
+
+@include registro-formulario.styles;
+@include paso-asistente.styles;
+
+:host {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ajuste propio del paso 1 sobre el metadato de las tarjetas. */
+:host ::ng-deep .metadato {
+  text-transform: none;
+}
+
+
+/* ── Diagnóstico técnico del fallo ───────────────────────────────────────── */
+.diagnostico {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: 0.5rem;
+  background: var(--agora-superficie-neutra);
+}
+
+.diagnostico__icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 1.75rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.375rem;
+  background: var(--agora-resalte-neutro);
+  color: var(--agora-texto-neutro);
+}
+
+.diagnostico__icono mat-icon {
+  width: 1rem;
+  height: 1rem;
+  font-size: 1rem;
+}
+
+.diagnostico__textos {
+  display: flex;
+  flex: 1 1 16rem;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.diagnostico__titulo {
+  color: var(--agora-text);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.diagnostico__detalle {
+  color: var(--agora-texto-neutro);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.diagnostico__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.chip-dato {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--agora-borde-control);
+  border-radius: 0.25rem;
+  background: var(--agora-surface);
+  color: var(--agora-texto-neutro);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.625rem;
+  font-weight: 700;
+}
+
+.chip-dato--fallo {
+  border-color: var(--agora-error-border);
+  background: var(--agora-error-surface);
+  color: var(--agora-error);
+}
+
+/* ── Estado inicial: caja orientativa ────────────────────────────────────── */
+.esperando {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  width: min(100% - 3rem, 86.25rem);
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  border: 1px dashed var(--agora-borde-control);
+  border-radius: 0.75rem;
+  background: var(--agora-superficie-neutra);
+  text-align: center;
+}
+
+.esperando__icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: 999px;
+  background: var(--agora-surface);
+  color: var(--agora-texto-deshabilitado);
+}
+
+.esperando__icono mat-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  font-size: 1.5rem;
+}
+
+.esperando__titulo {
+  margin: 1rem 0 0;
+  color: var(--agora-texto-neutro);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.esperando__texto {
+  max-width: 42rem;
+  margin: 0.5rem 0 0;
+  color: var(--agora-texto-neutro);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+
+.esperando__texto strong {
+  color: var(--agora-primary);
+}
+
+.esperando__previas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 40rem;
+  margin-top: 1.25rem;
+}
+
+.previa {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: 0.5rem;
+  background: var(--agora-surface);
+  text-align: left;
+}
+
+.previa__icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 2rem;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.375rem;
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-texto-deshabilitado);
+}
+
+.previa__icono mat-icon {
+  width: 1rem;
+  height: 1rem;
+  font-size: 1rem;
+}
+
+.previa__textos {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.previa__titulo {
+  color: var(--agora-texto-deshabilitado);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.previa__texto {
+  color: var(--agora-texto-deshabilitado);
+  font-size: 0.6875rem;
+}
+
+/* Nota de inactividad de los módulos 2 y 3. */
+.esperando__inactivos {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  color: var(--agora-texto-neutro);
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.esperando__inactivos mat-icon {
+  width: 1rem;
+  height: 1rem;
+  color: var(--agora-primary);
+  font-size: 1rem;
+}
+
+/* ── Estado de carga: esqueleto ──────────────────────────────────────────── */
+.esqueleto {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.esqueleto__carta {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-sizing: border-box;
+  width: min(100% - 3rem, 86.25rem);
+  margin: 0 auto;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  background: var(--agora-surface);
+  box-shadow: var(--agora-sombra-tarjeta);
+}
+
+.esqueleto__fila {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.esqueleto__bloque {
+  height: 2.5rem;
+  border-radius: 0.5rem;
+  background: linear-gradient(
+    90deg,
+    var(--agora-resalte-neutro) 25%,
+    var(--agora-superficie-neutra) 50%,
+    var(--agora-resalte-neutro) 75%
+  );
+  background-size: 200% 100%;
+  animation: brillo 1.4s linear infinite;
+}
+
+.esqueleto__bloque--titulo {
+  width: 40%;
+  height: 1rem;
+}
+
+.esqueleto__bloque--ancho {
+  height: 4.5rem;
+}
+
+@keyframes brillo {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* ── Tarjeta 2: tabla presupuestal ───────────────────────────────────────── */
+.tabla-envoltura {
+  overflow-x: auto;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: 0.5rem;
+}
+
+.tabla {
+  width: 100%;
+  min-width: 52rem;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.tabla th {
+  padding: 0.625rem 0.75rem;
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-texto-neutro);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tabla td {
+  padding: 0.875rem 0.75rem;
+  border-top: 1px solid var(--agora-borde-tarjeta);
+  color: var(--agora-text);
+  vertical-align: middle;
+}
+
+.tabla tbody tr:hover {
+  background: var(--agora-superficie-neutra);
+}
+
+.tabla__derecha {
+  text-align: right;
+}
+
+.tabla__centro {
+  text-align: center;
+}
+
+.tabla__vigencia {
+  color: var(--agora-primary);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tabla__codigo {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.tabla__codigo--destacado {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--agora-primary);
+}
+
+.tabla__codigo--destacado mat-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  font-size: 0.875rem;
+}
+
+.tabla__valor {
+  color: var(--agora-primary);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tabla__suave {
+  color: var(--agora-texto-neutro);
+  font-size: 0.75rem;
+}
+
+.resumen-presupuestal {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 1rem;
+}
+
+.cdp {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: 0.5rem;
+  background: var(--agora-superficie-neutra);
+}
+
+.cdp__textos {
+  min-width: 0;
+}
+
+.cdp__etiqueta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--agora-texto-neutro);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.cdp__etiqueta mat-icon {
+  width: 0.75rem;
+  height: 0.75rem;
+  font-size: 0.75rem;
+}
+
+.cdp__valor {
+  margin: 0.25rem 0 0;
+  color: var(--agora-primary);
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.cdp__ayuda {
+  display: block;
+  margin-top: 0.125rem;
+  color: var(--agora-texto-neutro);
+  font-size: 0.6875rem;
+}
+
+.cdp__icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 2.25rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: 0.5rem;
+  background: var(--agora-primary);
+  color: var(--agora-surface);
+}
+
+.aviso-contractual {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--agora-warning-border);
+  border-radius: 0.5rem;
+  background: var(--agora-warning-surface);
+}
+
+.aviso-contractual__icono {
+  flex: 0 0 auto;
+  color: var(--agora-warning-text);
+}
+
+.aviso-contractual__titulo {
+  margin: 0;
+  color: var(--agora-warning-text);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.aviso-contractual__texto {
+  margin: 0.25rem 0 0;
+  color: var(--agora-warning-text);
+  font-size: 0.6875rem;
+  line-height: 1.5;
+}
+
+/* ── Tarjeta 3: resumen pre-diligenciado ─────────────────────────────────── */
+.resumen-campos {
+  grid-template-columns: minmax(0, 9fr) minmax(0, 3fr);
+}
+
+.resumen-campos--mitad,
+.resumen-campos--doble {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.lectura {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--agora-borde-control);
+  border-radius: 0.5rem;
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-text);
+  font-size: 0.875rem;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+  text-transform: none;
+}
+
+.lectura mat-icon {
+  flex: 0 0 auto;
+  width: 1rem;
+  height: 1rem;
+  color: var(--agora-texto-neutro);
+  font-size: 1rem;
+}
+
+.lectura--valor {
+  color: var(--agora-primary);
+  font-weight: 700;
+}
+
+.lectura--parrafo {
+  display: block;
+  color: var(--agora-texto-neutro);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+}
+
+.lectura--vacia {
+  color: var(--agora-texto-deshabilitado);
+  font-style: italic;
+}
+
+.metricas {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.metrica {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: 0.5rem;
+  background: var(--agora-surface);
+}
+
+.metrica__icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 2rem;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.375rem;
+  background: var(--agora-primary);
+  color: var(--agora-surface);
+}
+
+.metrica__icono mat-icon {
+  width: 1rem;
+  height: 1rem;
+  font-size: 1rem;
+}
+
+.metrica__textos {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.metrica__etiqueta {
+  color: var(--agora-texto-neutro);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.metrica__valor {
+  color: var(--agora-text);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: none;
+}
+
+/* ── Tarjetas bloqueadas por el fallo ────────────────────────────────────── */
+.contenido-bloqueado {
+  opacity: 0.5;
+  pointer-events: none;
+  user-select: none;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.tiles--resumen {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 1rem;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 1rem 0.75rem;
+  border: 1px dashed var(--agora-borde-control);
+  border-radius: 0.5rem;
+  background: var(--agora-superficie-neutra);
+  text-align: center;
+}
+
+.tile__etiqueta {
+  color: var(--agora-texto-neutro);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tile__valor {
+  color: var(--agora-texto-deshabilitado);
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.tile__valor--largo {
+  font-size: 0.8125rem;
+}
+
+.tile__ayuda {
+  color: var(--agora-texto-deshabilitado);
+  font-size: 0.625rem;
+  font-style: italic;
+}
+
+.tile-nota {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+  padding: 0.75rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: 0.5rem;
+  color: var(--agora-texto-neutro);
+  font-size: 0.6875rem;
+  line-height: 1.5;
+}
+
+.tile-nota mat-icon {
+  flex: 0 0 auto;
+  width: 1rem;
+  height: 1rem;
+  color: var(--agora-texto-deshabilitado);
+  font-size: 1rem;
+}
+
+/* ── Contingencia y aviso de bloqueo ─────────────────────────────────────── */
+.contingencia {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  box-sizing: border-box;
+  width: min(100% - 3rem, 86.25rem);
+  margin: 0 auto;
+  padding: 1rem 1.25rem;
+  border: 1px dashed var(--agora-borde-control);
+  border-radius: 0.75rem;
+  background: var(--agora-superficie-neutra);
+}
+
+.contingencia__icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 2.5rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: 999px;
+  background: var(--agora-surface);
+  color: var(--agora-primary);
+}
+
+.contingencia__textos {
+  flex: 1 1 18rem;
+  min-width: 0;
+}
+
+.contingencia__titulo {
+  margin: 0;
+  color: var(--agora-text);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.contingencia__texto {
+  margin: 0.125rem 0 0;
+  color: var(--agora-texto-neutro);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.aviso-bloqueo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  box-sizing: border-box;
+  width: min(100% - 3rem, 86.25rem);
+  margin: 0 auto;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--agora-borde-control);
+  border-left: 4px solid var(--agora-primary);
+  border-radius: 0.5rem;
+  background: var(--agora-resalte-neutro);
+  color: var(--agora-texto-neutro);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.aviso-bloqueo__texto {
+  display: inline-flex;
+  flex: 1 1 18rem;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.aviso-bloqueo__texto mat-icon {
+  flex: 0 0 auto;
+  width: 1rem;
+  height: 1rem;
+  color: var(--agora-primary);
+  font-size: 1rem;
+}
+
+.aviso-bloqueo__accion {
+  color: var(--agora-primary);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ── Utilidades ──────────────────────────────────────────────────────────── */
+.visually-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.gira {
+  animation: girar 900ms linear infinite;
+}
+
+.campos-necesidad {
+  grid-template-columns: minmax(0, 3fr) minmax(0, 3fr) minmax(0, 3fr);
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Adaptación a pantallas pequeñas ─────────────────────────────────────── */
+@media (max-width: t.$bp-md) {
+  .campos-necesidad,
+  .resumen-campos,
+  .resumen-campos--mitad,
+  .resumen-campos--doble {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .campos-necesidad > * {
+    grid-column: auto;
+  }
+
+  .resumen-presupuestal,
+  .metricas,
+  .tiles,
+  .tiles--resumen,
+  .esperando__previas {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: t.$bp-sm) {
+  .esperando,
+  .esqueleto__carta,
+  .contingencia,
+  .aviso-bloqueo {
+    width: min(100% - 1.5rem, 80rem);
+  }
+
+  .esperando {
+    padding: 1.5rem 1.25rem;
+  }
+
+  .esqueleto__fila {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gira,
+  .esqueleto__bloque {
+    animation: none;
+  }
+
+  .boton-recto {
+    transition: none;
+  }
+}

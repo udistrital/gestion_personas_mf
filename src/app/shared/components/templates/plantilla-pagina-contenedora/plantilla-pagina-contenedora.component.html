@@ -12,6 +12,9 @@
             {{ icon }}
           </mat-icon>
           {{ title }}
+          @if (etiqueta) {
+            <span class="etiqueta">{{ etiqueta }}</span>
+          }
         </h1>
         @if (subtitle || subtitleChild) {
           <div class="metadatos">

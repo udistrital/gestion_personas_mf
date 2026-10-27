@@ -1,0 +1,265 @@
+@use "src/app/shared/styles/tokens" as t;
+@use "src/app/shared/styles/paso-asistente" as paso-asistente;
+
+@include paso-asistente.styles;
+
+:host {
+  display: block;
+}
+
+/* ── Contenedor de la fila ────────────────────────────────────────────────── */
+.anexo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: t.$radio-lg;
+  background: var(--agora-superficie-neutra);
+  transition: background-color 0.2s ease;
+}
+
+.anexo:hover {
+  background: var(--agora-surface);
+}
+
+.anexo--subiendo {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.625rem;
+}
+
+.anexo--error {
+  align-items: flex-start;
+  border-color: var(--agora-error-border);
+  background: var(--agora-error-surface);
+}
+
+.anexo--error:hover {
+  background: var(--agora-error-surface);
+}
+
+.anexo__fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+/* ── Bloque de identidad ──────────────────────────────────────────────────── */
+.anexo__info {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  min-width: 0;
+}
+
+.anexo__textos {
+  min-width: 0;
+}
+
+.anexo__icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 2.5rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid var(--agora-success-border);
+  border-radius: t.$radio-md;
+  background: var(--agora-success-surface);
+  color: var(--agora-success);
+}
+
+.anexo__icono mat-icon {
+  width: 1.375rem;
+  height: 1.375rem;
+  font-size: 1.375rem;
+}
+
+/* Subiendo: la caja del icono mantiene el fondo de superficie institucional. */
+.anexo--subiendo .anexo__icono {
+  border-color: var(--agora-borde-tarjeta);
+  background: var(--agora-primary);
+  color: var(--agora-surface);
+}
+
+.anexo__icono--girando mat-icon {
+  animation: girar 1.4s linear infinite;
+}
+
+.anexo--error .anexo__icono--error {
+  border-color: var(--agora-error-border);
+  background: var(--agora-surface);
+  color: var(--agora-error);
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anexo__icono--girando mat-icon {
+    animation: none;
+  }
+}
+
+/* ── Cabecera: nombre + chip de estado ────────────────────────────────────── */
+.anexo__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.anexo__nombre {
+  color: var(--agora-text);
+  font-size: t.$fuente-lg;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.anexo__meta {
+  margin: 0.125rem 0 0;
+  color: var(--agora-texto-neutro);
+  font-size: t.$fuente-sm;
+}
+
+.anexo__detalle {
+  margin: 0.25rem 0 0;
+  color: var(--agora-error);
+  font-size: t.$fuente-sm;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.anexo__marca-error {
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  background: var(--agora-error);
+  color: var(--agora-on-primary);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ── Chip de progreso (subiendo) ──────────────────────────────────────────── */
+.chip--progreso {
+  border-color: var(--agora-primary);
+  background: var(--agora-resalte-neutro);
+  color: var(--agora-primary);
+}
+
+/* ── Acciones ─────────────────────────────────────────────────────────────── */
+.anexo__acciones {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex: 0 0 auto;
+}
+
+.anexo--error .anexo__acciones {
+  gap: 0.5rem;
+}
+
+.boton-icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: t.$radio-md;
+  background: transparent;
+  color: var(--agora-texto-neutro);
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.boton-icono mat-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  font-size: 1.25rem;
+}
+
+.boton-icono:hover {
+  background: var(--agora-surface);
+  color: var(--agora-primary);
+}
+
+.boton-icono--peligro:hover {
+  background: var(--agora-error-surface);
+  color: var(--agora-error);
+}
+
+.boton-icono:focus-visible {
+  outline: 2px solid var(--agora-primary);
+  outline-offset: 2px;
+}
+
+.anexo__cancelar {
+  flex: 0 0 auto;
+  padding: 0.25rem 0.75rem;
+  border: 0;
+  border-radius: t.$radio-md;
+  background: transparent;
+  color: var(--agora-texto-neutro);
+  cursor: pointer;
+  font: inherit;
+  font-size: t.$fuente-md;
+  font-weight: 500;
+}
+
+.anexo__cancelar:hover {
+  background: var(--agora-surface);
+  color: var(--agora-error);
+}
+
+/* Botón vino para "Reintentar otro" en el estado de error de formato. */
+.boton-recto--peligro {
+  border-color: var(--agora-error);
+  background: var(--agora-error);
+  color: var(--agora-on-primary);
+}
+
+.boton-recto--peligro:hover:not(:disabled) {
+  border-color: var(--agora-error);
+  background: var(--agora-error);
+  opacity: 0.9;
+}
+
+/* ── Barra de progreso de subida ──────────────────────────────────────────── */
+.barra-subida {
+  width: 100%;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--agora-resalte-neutro);
+  overflow: hidden;
+}
+
+.barra-subida__relleno {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--agora-primary);
+  transition: width 0.3s ease;
+}
+
+/* ── Responsive: apila las acciones bajo el archivo ───────────────────────── */
+@media (max-width: t.$bp-sm) {
+  .anexo,
+  .anexo__fila {
+    flex-wrap: wrap;
+  }
+
+  .anexo__acciones {
+    margin-left: 3.375rem;
+  }
+}

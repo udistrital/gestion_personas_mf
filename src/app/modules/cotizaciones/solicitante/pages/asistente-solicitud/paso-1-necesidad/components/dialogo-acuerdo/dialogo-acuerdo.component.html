@@ -1,0 +1,115 @@
+<section class="dialogo">
+  <header class="dialogo__cabecera">
+    <span class="dialogo__icono" aria-hidden="true">
+      <mat-icon>handshake</mat-icon>
+    </span>
+
+    <div class="dialogo__textos">
+      <span class="dialogo__antetitulo">Acuerdo Marco Institucional</span>
+      <h2 class="dialogo__titulo">
+        Acuerdo establecido para el proceso
+      </h2>
+      <p class="dialogo__descripcion">
+        Condiciones vinculantes sincronizadas desde SICAPITAL
+      </p>
+    </div>
+
+    <button
+      class="dialogo__cerrar"
+      type="button"
+      mat-icon-button
+      aria-label="Cerrar modal"
+      [disabled]="registrando"
+      (click)="cancelar()"
+    >
+      <mat-icon aria-hidden="true">close</mat-icon>
+    </button>
+  </header>
+
+  <div class="dialogo__cuerpo">
+    <dl class="dialogo__datos">
+      <div class="dato">
+        <dt class="dato__etiqueta">N.° de acuerdo</dt>
+        <dd class="dato__valor dato__valor--codigo">{{ acuerdo.numero }}</dd>
+      </div>
+
+      <div class="dato">
+        <dt class="dato__etiqueta">Año de Vigencia</dt>
+        <dd class="dato__valor dato__valor--neutro">{{ acuerdo.vigencia }}</dd>
+      </div>
+
+      <div class="dato dato--ancho">
+        <dt class="dato__etiqueta">Valor del CDP</dt>
+        <dd class="dato__renglon">
+          <span class="dato__moneda">
+            <mat-icon aria-hidden="true">payments</mat-icon>
+            {{ formatoCop(acuerdo.valorCdp) }} COP
+          </span>
+          <span class="dato__sello">Reserva Autorizada</span>
+        </dd>
+      </div>
+
+      <div class="dato dato--ancho">
+        <dt class="dato__etiqueta">Tipo de proceso</dt>
+        <dd class="dato__renglon">
+          <mat-icon class="dato__icono" aria-hidden="true">verified</mat-icon>
+          <span>{{ acuerdo.tipoProceso }}</span>
+        </dd>
+      </div>
+    </dl>
+
+    <section class="dialogo__explicacion">
+      <h3 class="dialogo__explicacion-titulo">
+        <mat-icon aria-hidden="true">info</mat-icon>
+        <span>Breve explicación del acuerdo:</span>
+      </h3>
+      <p>{{ acuerdo.explicacion }}</p>
+    </section>
+
+    <section class="dialogo__condicion" aria-labelledby="condicion-titulo">
+      <mat-icon aria-hidden="true">warning</mat-icon>
+      <div>
+        <span id="condicion-titulo" class="dialogo__condicion-etiqueta">
+          Condición Obligatoria
+        </span>
+        <p>
+          Para avanzar con la solicitud es de carácter obligatorio aceptar las
+          condiciones y compromisos estipulados en este acuerdo.
+        </p>
+      </div>
+    </section>
+  </div>
+
+  <footer class="dialogo__pie">
+    <span class="dialogo__validez">
+      <mat-icon aria-hidden="true">lock</mat-icon>
+      <span>Aceptación con validez jurídica institucional</span>
+    </span>
+
+    <div class="dialogo__acciones">
+      <button
+        class="boton boton--secundario"
+        type="button"
+        [disabled]="registrando"
+        (click)="cancelar()"
+      >
+        Cancelar / Cerrar
+      </button>
+
+      <button
+        class="boton boton--primario dialogo__aceptar"
+        type="button"
+        [disabled]="registrando"
+        (click)="aceptar()"
+      >
+        @if (registrando) {
+          <mat-icon class="dialogo__girar" aria-hidden="true">refresh</mat-icon>
+          <span>Registrando...</span>
+        } @else {
+          <mat-icon aria-hidden="true">check</mat-icon>
+          <span>Aceptar y Continuar</span>
+        }
+      </button>
+    </div>
+  </footer>
+</section>

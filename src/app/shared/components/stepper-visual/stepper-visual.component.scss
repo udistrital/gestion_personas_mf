@@ -23,6 +23,19 @@
   box-shadow: var(--agora-sombra-tarjeta);
 }
 
+/* Asistentes de más de 4 pasos: columnas extra en escritorio (ver media queries abajo). */
+.stepper-visual[data-columnas="5"] {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.stepper-visual[data-columnas="6"] {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.stepper-visual[data-columnas="7"] {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
 .paso {
 	min-width: 0;
 	padding: 0;
@@ -97,6 +110,25 @@
   white-space: normal;
 }
 
+.paso__subtitulo {
+  display: block;
+  width: min(100%, 13rem);
+  margin: 0.25rem auto 0;
+  color: var(--stepper-muted);
+  font-size: 0.6875rem;
+  line-height: 1.1rem;
+  text-align: center;
+}
+
+/* Pasos no alcanzados: visibles para lectores de pantalla, no navegables. */
+.paso[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+.paso[aria-disabled="true"] .paso__indicador {
+  opacity: 0.7;
+}
+
 .paso--activo .paso__indicador {
 	background: var(--stepper-primary);
 	box-shadow: 0 0 0 0.25rem var(--stepper-primary-light);
@@ -118,6 +150,19 @@
 	background: var(--stepper-success);
 }
 
+/* Estado de error del paso (cruce con SICAPITAL, por ejemplo). */
+.paso--error .paso__indicador {
+	background: var(--agora-error);
+	box-shadow: 0 0 0 0.25rem var(--agora-error-surface);
+	color: var(--agora-on-primary);
+}
+
+.paso--error .paso__etiqueta,
+.paso--error .paso__nombre,
+.paso--error .paso__subtitulo {
+	color: var(--agora-error);
+}
+
 .paso:focus-visible {
 	outline: 0.1875rem solid var(--stepper-primary-light);
 	outline-offset: 0.25rem;
@@ -128,8 +173,19 @@
 	gap: 1rem;
 }
 
+@media (max-width: t.$bp-xl) {
+	.stepper-visual[data-columnas="5"],
+	.stepper-visual[data-columnas="6"],
+	.stepper-visual[data-columnas="7"] {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+}
+
 @media (max-width: t.$bp-md) {
-	.stepper-visual {
+	.stepper-visual,
+	.stepper-visual[data-columnas="5"],
+	.stepper-visual[data-columnas="6"],
+	.stepper-visual[data-columnas="7"] {
 		grid-template-columns: 1fr;
 		gap: 0.75rem;
 		padding: 1.25rem;

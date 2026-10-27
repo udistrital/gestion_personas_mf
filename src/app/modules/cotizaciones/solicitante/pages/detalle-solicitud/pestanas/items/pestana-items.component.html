@@ -1,0 +1,292 @@
+@if (solicitud(); as s) {
+  <encabezado-pestana
+    icono="list_alt"
+    titulo="Ítems"
+    descripcion="Pliego consolidado de bienes y servicios a cotizar, con su clasificación y especificaciones técnicas."
+  >
+    <ng-container acciones>
+      <button class="boton-recto" type="button" (click)="exportar()">
+        <mat-icon aria-hidden="true">download</mat-icon>
+        <span>Exportar CSV / Excel</span>
+      </button>
+    </ng-container>
+  </encabezado-pestana>
+
+  @if (items().length > 0) {
+    <!-- ───────────── Resumen y unidad ejecutora ───────────── -->
+    <div class="cabecera-items">
+      <tarjeta-seccion
+        icono="dataset"
+        titulo="{{ resumen().totalItems }} ítems técnicos consolidados"
+        subtitulo="Clasificación automática según la naturaleza de los ítems del pliego"
+      >
+        <ng-container acciones>
+          <span class="chip chip--exito">
+            <mat-icon aria-hidden="true">verified</mat-icon>
+            <span>Tipo de necesidad: {{ etiquetaTipoNecesidad() }}</span>
+          </span>
+        </ng-container>
+
+        <div class="resumen">
+          <span class="resumen__dato resumen__dato--bien">
+            <span class="resumen__punto" aria-hidden="true"></span>
+            <span>{{ resumen().bienes }} Bienes</span>
+          </span>
+          <span class="resumen__separador" aria-hidden="true">•</span>
+          <span class="resumen__dato resumen__dato--servicio">
+            <span class="resumen__punto" aria-hidden="true"></span>
+            <span>{{ resumen().servicios }} Servicios</span>
+          </span>
+          <span class="resumen__separador" aria-hidden="true">•</span>
+          <span class="resumen__dato resumen__dato--suave">
+            Todos los ítems amparados en Banco DITIC
+          </span>
+        </div>
+      </tarjeta-seccion>
+
+      @if (cabecera(); as c) {
+        <tarjeta-seccion
+          icono="account_balance"
+          titulo="Unidad ejecutora"
+          subtitulo="Dependencia responsable y lugar de entrega"
+        >
+          <ng-container acciones>
+            <span class="chip chip--recto">{{ c.codigoDependencia }}</span>
+          </ng-container>
+
+          <div class="dato">
+            <span class="dato__valor">{{ c.unidadEjecutora }}</span>
+            <span class="dato__nota">{{ c.sede }}</span>
+          </div>
+        </tarjeta-seccion>
+      }
+    </div>
+
+    <!-- ───────────── Tabla de ítems ───────────── -->
+    <tarjeta-seccion
+      icono="list_alt"
+      titulo="Detalle de bienes y servicios"
+      subtitulo="Lista consolidada de los ítems vinculados a esta solicitud de cotización"
+    >
+      <ng-container acciones>
+        <span class="chip">Solo lectura</span>
+        <label class="buscador">
+          <mat-icon aria-hidden="true">search</mat-icon>
+          <input
+            type="text"
+            placeholder="Buscar por código, descripción técnica o palabra clave…"
+            aria-label="Buscar ítems por código, descripción o palabra clave"
+            [value]="filtro()"
+            (input)="alBuscar($event)"
+          />
+        </label>
+
+        <div class="filtro-tipo" role="group" aria-label="Filtrar por tipo de ítem">
+          <button
+            class="filtro-tipo__boton"
+            type="button"
+            [class.filtro-tipo__boton--activo]="tipoActivo() === 'todos'"
+            [attr.aria-pressed]="tipoActivo() === 'todos'"
+            (click)="filtrarPorTipo('todos')"
+          >
+            Todos ({{ resumen().totalItems }})
+          </button>
+          <button
+            class="filtro-tipo__boton"
+            type="button"
+            [class.filtro-tipo__boton--activo]="tipoActivo() === 'bien'"
+            [attr.aria-pressed]="tipoActivo() === 'bien'"
+            (click)="filtrarPorTipo('bien')"
+          >
+            Bienes ({{ resumen().bienes }})
+          </button>
+          <button
+            class="filtro-tipo__boton"
+            type="button"
+            [class.filtro-tipo__boton--activo]="tipoActivo() === 'servicio'"
+            [attr.aria-pressed]="tipoActivo() === 'servicio'"
+            (click)="filtrarPorTipo('servicio')"
+          >
+            Servicios ({{ resumen().servicios }})
+          </button>
+        </div>
+      </ng-container>
+
+      <div class="tabla-detalle__scroll">
+        <table class="tabla-detalle" aria-label="Ítems solicitados">
+          <thead>
+            <tr>
+              <th scope="col" class="tabla-detalle__th tabla-detalle__th--centro">
+                N.°
+              </th>
+              <th scope="col" class="tabla-detalle__th">Nombre del ítem</th>
+              <th scope="col" class="tabla-detalle__th">
+                Descripción técnica y especificaciones
+              </th>
+              <th scope="col" class="tabla-detalle__th tabla-detalle__th--centro">
+                Tipo
+              </th>
+              <th scope="col" class="tabla-detalle__th tabla-detalle__th--centro">
+                Unidad de medida
+              </th>
+              <th scope="col" class="tabla-detalle__th tabla-detalle__th--numero">
+                Cantidad
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of itemsPagina(); track item.id; let indice = $index) {
+              <tr class="tabla-detalle__fila">
+                <td
+                  class="tabla-detalle__td tabla-detalle__td--centro tabla-detalle__td--fuerte"
+                >
+                  {{ numeroFila(indice) }}
+                </td>
+                <td class="tabla-detalle__td">
+                  <span class="item__nombre">
+                    <span class="tabla-detalle__celda-titulo">
+                      {{ item.nombre }}
+                    </span>
+                    @if (item.codigoUnspsc) {
+                      <span class="tabla-detalle__celda-nota">
+                        UNSPSC: {{ item.codigoUnspsc }}
+                      </span>
+                    }
+                    @if (item.notaTecnica) {
+                      <span [class]="claseNota(item.tipo)">
+                        <mat-icon aria-hidden="true">
+                          {{ item.iconoNota || "verified" }}
+                        </mat-icon>
+                        <span>{{ item.notaTecnica }}</span>
+                      </span>
+                    }
+                  </span>
+                </td>
+                <td class="tabla-detalle__td">
+                  <p
+                    class="item__descripcion"
+                    [innerHTML]="item.descripcion | htmlSeguro"
+                  ></p>
+                  @if (item.especificaciones?.length) {
+                    <div class="item__etiquetas">
+                      @for (etiqueta of item.especificaciones; track etiqueta) {
+                        <span class="item__etiqueta">{{ etiqueta }}</span>
+                      }
+                    </div>
+                  }
+                </td>
+                <td class="tabla-detalle__td tabla-detalle__td--centro">
+                  <span [class]="claseTipo(item.tipo)">
+                    <mat-icon aria-hidden="true">{{ iconoTipo(item.tipo) }}</mat-icon>
+                    <span>{{ etiquetaTipo(item.tipo) }}</span>
+                  </span>
+                </td>
+                <td class="tabla-detalle__td tabla-detalle__td--centro">
+                  {{ item.unidad }}
+                </td>
+                <td
+                  class="tabla-detalle__td tabla-detalle__td--numero tabla-detalle__td--fuerte"
+                >
+                  {{ item.cantidad }}
+                </td>
+              </tr>
+            } @empty {
+              <tr class="tabla-detalle__fila">
+                <td colspan="6" class="tabla-detalle__vacio">
+                  <mat-icon aria-hidden="true">search_off</mat-icon>
+                  <span>
+                    Ningún ítem coincide con el filtro o la búsqueda aplicada.
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="tabla-detalle__pie">
+        <span>
+          Mostrando <strong>{{ rangoPagina().desde }}-{{ rangoPagina().hasta }}</strong>
+          de <strong>{{ rangoPagina().total }}</strong> ítems cargados
+        </span>
+
+        <div class="paginador">
+          <label class="paginador__por-pagina">
+            <span>Filas por página:</span>
+            <select
+              [value]="porPagina()"
+              aria-label="Número de filas por página"
+              (change)="cambiarPorPagina($event)"
+            >
+              @for (opcion of opcionesPorPagina; track opcion) {
+                <option [value]="opcion">{{ opcion }}</option>
+              }
+            </select>
+          </label>
+
+          <nav class="paginador__controles" aria-label="Paginación de ítems">
+            <button
+              class="paginador__boton"
+              type="button"
+              aria-label="Página anterior"
+              [disabled]="pagina() === 1"
+              (click)="irAPagina(pagina() - 1)"
+            >
+              <mat-icon aria-hidden="true">chevron_left</mat-icon>
+            </button>
+            @for (numero of paginas(); track numero) {
+              <button
+                class="paginador__boton"
+                type="button"
+                [class.paginador__boton--activo]="pagina() === numero"
+                [attr.aria-current]="pagina() === numero ? 'page' : null"
+                (click)="irAPagina(numero)"
+              >
+                {{ numero }}
+              </button>
+            }
+            <button
+              class="paginador__boton"
+              type="button"
+              aria-label="Página siguiente"
+              [disabled]="pagina() === totalPaginas()"
+              (click)="irAPagina(pagina() + 1)"
+            >
+              <mat-icon aria-hidden="true">chevron_right</mat-icon>
+            </button>
+          </nav>
+        </div>
+      </div>
+    </tarjeta-seccion>
+
+    <!-- ───────────── Banner de validación técnica ───────────── -->
+    <div class="banner-validacion" role="note">
+      <span class="banner-validacion__icono" aria-hidden="true">
+        <mat-icon>policy</mat-icon>
+      </span>
+      <div class="banner-validacion__textos">
+        <span class="banner-validacion__titulo">
+          Validación Técnica Institucional DITIC
+        </span>
+        <p class="banner-validacion__texto">
+          Fichas técnicas validadas con el estándar institucional de adquisición
+          de tecnología DITIC (Resolución 035 de 2024). Los proponentes deberán
+          adjuntar hoja de datos del fabricante (Datasheet) para cada uno de los
+          ítems cotizados.
+        </p>
+      </div>
+      <span class="banner-validacion__hash">HASH-VAL: 78F2A-UD2026</span>
+    </div>
+  } @else {
+    <!-- ───────────── Estado: sin ítems registrados ───────────── -->
+    <div class="estado-vacio">
+      <mat-icon class="estado-vacio__icono" aria-hidden="true">inventory_2</mat-icon>
+      <h2 class="estado-vacio__titulo">Sin ítems registrados</h2>
+      <p class="estado-vacio__texto">
+        Esta solicitud todavía no tiene bienes ni servicios vinculados a su
+        pliego. Cuando el proceso avance, aquí se mostrará la lista consolidada
+        de ítems con sus especificaciones técnicas.
+      </p>
+    </div>
+  }
+}

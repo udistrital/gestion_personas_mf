@@ -1,0 +1,95 @@
+@use "src/app/shared/styles/tokens" as t;
+@use "src/app/shared/styles/detalle-solicitud" as detalle;
+
+:host {
+  display: block;
+}
+
+.tarjeta-seccion {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-surface);
+  box-shadow: var(--agora-sombra-tarjeta);
+}
+
+.tarjeta-seccion__cabecera {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--agora-border);
+}
+
+.tarjeta-seccion__icono {
+  display: flex;
+  flex: 0 0 2.25rem;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-primary);
+  color: var(--agora-surface);
+}
+
+.tarjeta-seccion__icono mat-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  font-size: 1.25rem;
+}
+
+.tarjeta-seccion__textos {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.tarjeta-seccion__titulo {
+  margin: 0;
+  color: var(--agora-primary);
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.tarjeta-seccion__subtitulo {
+  margin: 0.125rem 0 0;
+  color: var(--agora-texto-neutro);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.tarjeta-seccion__acciones {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tarjeta-seccion__contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Clases compartidas del detalle dentro de las tarjetas de sección. */
+@include detalle.styles;
+
+@media (max-width: t.$bp-sm) {
+  .tarjeta-seccion {
+    padding: 1.25rem;
+  }
+
+  .tarjeta-seccion__cabecera {
+    flex-wrap: wrap;
+  }
+
+  .tarjeta-seccion__acciones {
+    width: 100%;
+  }
+}

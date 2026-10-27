@@ -1,0 +1,22 @@
+<div [class]="clase ? 'dato ' + clase : 'dato'">
+  <span
+    class="dato__etiqueta"
+    [class.dato__etiqueta--destacado]="formato === 'destacado'"
+  >
+    {{ etiqueta }}
+  </span>
+
+  <span
+    class="dato__valor"
+    [class.dato__valor--cuerpo]="formato === 'cuerpo'"
+  >
+    @if (icono) {
+      <mat-icon aria-hidden="true">{{ icono }}</mat-icon>
+    }
+    <span>{{ valorVisible }}</span>
+  </span>
+
+  @if (nota) {
+    <span class="dato__nota">{{ nota }}</span>
+  }
+</div>

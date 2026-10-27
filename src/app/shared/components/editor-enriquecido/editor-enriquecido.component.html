@@ -1,0 +1,42 @@
+<div class="editor">
+  <quill-editor
+    [modules]="editorModules"
+    [placeholder]="pista"
+    [attr.aria-labelledby]="idEtiqueta || null"
+    [attr.aria-describedby]="descritoPor"
+    [attr.aria-disabled]="deshabilitado ? 'true' : null"
+    [style.--editor-alto.rem]="rows * 1.5"
+    (onContentChanged)="alCambiarContenido($event.html)"
+    (onBlur)="alSalir()"
+  ></quill-editor>
+</div>
+
+@if (minCaracteres > 0 || nota) {
+  <div class="editor__pie">
+    @if (minCaracteres > 0) {
+      <span
+        [id]="idContador"
+        class="editor__contador"
+        aria-live="polite"
+        [class.editor__contador--excede]="excedeMaximo"
+      >
+        {{ contador }} caracteres
+        <span>· mínimo {{ minCaracteres }}</span>
+        @if (maxCaracteres > 0) {
+          <span>· máximo {{ maxCaracteres }}</span>
+        }
+      </span>
+    }
+
+    @if (nota) {
+      <span [id]="idNota" class="editor__nota">
+        <mat-icon aria-hidden="true">info</mat-icon>
+        <span>{{ nota }}</span>
+      </span>
+    }
+  </div>
+}
+
+@if (ayuda) {
+  <span [id]="idAyuda" class="campo__ayuda">{{ ayuda }}</span>
+}

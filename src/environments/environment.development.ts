@@ -11,4 +11,7 @@ export const environment = {
     "https://autenticacion.portaloas.udistrital.edu.co/apioas/ubicaciones_crud/v2/",
   UNGM_UNSPSC_SERVICE: "https://www.ungm.org/API/UNSPSCs",
 
+  /* API pública de días festivos (Nager.Date v3). */
+  CALENDARIO_FESTIVOS_URL:
+    "https://date.nager.at/api/v3/PublicHolidays",
 };

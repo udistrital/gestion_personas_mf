@@ -1,50 +1,36 @@
 import { Injectable } from "@angular/core";
 import { BorradorRegistroPersonaNatural } from "../models/borrador-registro.model";
+import { BorradorService } from "src/app/shared/services/borrador.service";
 
 export const BORRADOR_PERSONA_NATURAL_KEY =
   "agora.gestion-personas.borrador.persona-natural";
 
+/**
+ * Fachada del borrador de persona natural sobre `BorradorService<T>`.
+ *
+ * Conserva exactamente la API de siempre (`guardar`/`cargar`/`eliminar`) y
+ * añade lo propio de este formulario: los archivos no se serializan.
+ */
 @Injectable({ providedIn: "root" })
-export class BorradorRegistroService {
-  guardar(borrador: BorradorRegistroPersonaNatural): boolean {
-    try {
-      const serializable: BorradorRegistroPersonaNatural = {
-        ...borrador,
-        formValue: this.sinArchivos(borrador.formValue) as Record<
-          string,
-          unknown
-        >,
-      };
-      localStorage.setItem(
-        BORRADOR_PERSONA_NATURAL_KEY,
-        JSON.stringify(serializable),
-      );
-      return true;
-    } catch {
-      return false;
-    }
+export class BorradorRegistroService extends BorradorService<BorradorRegistroPersonaNatural> {
+  constructor() {
+    super(BORRADOR_PERSONA_NATURAL_KEY);
   }
 
-  cargar(): BorradorRegistroPersonaNatural | null {
-    try {
-      const crudo = localStorage.getItem(BORRADOR_PERSONA_NATURAL_KEY);
-      if (!crudo) {
-        return null;
-      }
-
-      const parsed = JSON.parse(crudo) as BorradorRegistroPersonaNatural;
-      if (parsed.version !== 1 || typeof parsed.formValue !== "object") {
-        return null;
-      }
-
-      return parsed;
-    } catch {
-      return null;
-    }
+  override guardar(borrador: BorradorRegistroPersonaNatural): boolean {
+    return super.guardar({
+      ...borrador,
+      formValue: this.sinArchivos(borrador.formValue) as Record<
+        string,
+        unknown
+      >,
+    });
   }
 
-  eliminar(): void {
-    localStorage.removeItem(BORRADOR_PERSONA_NATURAL_KEY);
+  protected override esValido(
+    borrador: BorradorRegistroPersonaNatural,
+  ): boolean {
+    return super.esValido(borrador) && typeof borrador.formValue === "object";
   }
 
   /**

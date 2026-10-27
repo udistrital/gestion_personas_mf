@@ -3,14 +3,14 @@
 .rp-seguridad {
   border: 1px solid transparent;
   border-radius: 8px;
-  background-color: var(--agora-surface-highlight);
+  background-color: color-mix(in srgb, var(--agora-text-muted) 5%, var(--agora-surface));
   font: inherit;
   cursor: pointer;
   transition: border-color 0.2s ease-in-out, background-color 0.2s ease-in-out;
 }
 
 .rp-seguridad:hover {
-  background-color: var(--agora-surface-highlight);
+  background-color: color-mix(in srgb, var(--agora-text-muted) 8%, var(--agora-surface));
   border-color: color-mix(in srgb, var(--agora-primary) 40%, transparent);
 }
 
