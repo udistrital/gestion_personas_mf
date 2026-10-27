@@ -3,6 +3,11 @@ import { RouterModule, Routes } from "@angular/router";
 
 const routes: Routes = [
   {
+    path: "bandeja-solicitudes",
+    redirectTo: "/cotizaciones/solicitudes",
+    pathMatch: "full",
+  },
+  {
     path: "solicitudes",
     loadChildren: () =>
       import("./solicitante/solicitante.module").then(
