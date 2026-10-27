@@ -101,6 +101,9 @@ export class PermisosSolicitudService {
 
     return MATRIZ_ACCIONES_INVITACION_PROVEEDOR[invitacion.estado].filter(
       (accion) => {
+        if (accion === "descargar-anexo") {
+          return false;
+        }
         if (accion === "ver-detalle-proveedor") {
           return true;
         }
@@ -113,6 +116,23 @@ export class PermisosSolicitudService {
         return this.puedeResponder(solicitud);
       },
     );
+  }
+
+  puedeDescargarAnexo(
+    invitacion: InvitacionPermisable,
+  ): boolean {
+    return (
+      this.rol.estaCargado() &&
+      this.rol.getRolActivo() === ROL_PROVEEDOR &&
+      MATRIZ_ACCIONES_INVITACION_PROVEEDOR[invitacion.estado].includes(
+        "descargar-anexo",
+      )
+    );
+  }
+
+  solicitudCerradaPorFecha(solicitud: Solicitud): boolean {
+    const cierre = fechaCierreDeSolicitud(solicitud.cierre);
+    return cierre !== null && cierre <= Date.now();
   }
 
   etiquetaAccionInvitacion(accion: AccionInvitacionProveedor): string {
@@ -130,21 +150,22 @@ export class PermisosSolicitudService {
   }
 
   private puedeObservar(solicitud: Solicitud): boolean {
-    return fechaCierreDeSolicitud(solicitud.cierre) > Date.now();
+    const cierre = fechaCierreDeSolicitud(solicitud.cierre);
+    return cierre !== null && cierre > Date.now();
   }
 
   private puedeResponder(solicitud: Solicitud): boolean {
     return (
       this.puedeParticiparEnSolicitud(solicitud) &&
-      fechaCierreDeSolicitud(solicitud.cierre) > Date.now()
+      this.puedeObservar(solicitud)
     );
   }
 }
 
 /** El cierre visible dd/MM/yyyy vence a las 23:59 de esa misma fecha. */
-function fechaCierreDeSolicitud(cierre: string | null): number {
+function fechaCierreDeSolicitud(cierre: string | null): number | null {
   if (!cierre) {
-    return Number.NEGATIVE_INFINITY;
+    return null;
   }
 
   const [dia, mes, anio] = cierre.split("/").map(Number);
@@ -157,7 +178,7 @@ function fechaCierreDeSolicitud(cierre: string | null): number {
     fechaValidacion.getUTCMonth() !== mes - 1 ||
     fechaValidacion.getUTCFullYear() !== anio
   ) {
-    return Number.NEGATIVE_INFINITY;
+    return null;
   }
 
   const fechaIso = `${anio}-${String(mes).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;

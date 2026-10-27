@@ -28,6 +28,8 @@ export interface ItemSolicitud {
   /** Identificador numérico de U_COMERCIO, cuando la unidad viene del catálogo. */
   readonly unidadId?: number;
   readonly cantidad: number;
+  /** Valor unitario techo publicado, cuando el proceso lo informa. */
+  readonly valorUnitarioTecho?: number | null;
   /** Código UNSPSC (solo lo aportan los ítems del cargue masivo). */
   readonly codigoUnspsc?: string;
   /**

@@ -44,7 +44,7 @@ export class BandejaSolicitudesComponent implements OnInit {
   ) {}
 
   readonly breadcrumb =
-    "<p>Portal Proveedor › Cotizaciones › <b>Solicitudes de cotización</b></p>";
+    "<p>Gestión Proveedor › Cotizaciones › <b>Bandeja de solicitudes de cotización</b></p>";
   readonly acciones = ACCIONES_INVITACION_PROVEEDOR;
   readonly vigenciaActual = VIGENCIA_ACTUAL;
   readonly grupos = GRUPOS_FILTRO_INVITACION;
