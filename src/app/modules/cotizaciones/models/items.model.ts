@@ -26,6 +26,8 @@ export interface ItemSolicitud {
   readonly descripcion: string;
   readonly unidad: string;
   readonly cantidad: number;
+  /** Valor unitario techo publicado, cuando el proceso lo informa. */
+  readonly valorUnitarioTecho?: number | null;
   /** Código UNSPSC (solo lo aportan los ítems del cargue masivo). */
   readonly codigoUnspsc?: string;
   /**

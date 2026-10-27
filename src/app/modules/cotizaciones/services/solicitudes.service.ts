@@ -6,13 +6,18 @@ import {
 } from "src/app/core/constants/estados-solicitud.const";
 import type {
   ConteosFiltrosInvitaciones,
+  DetalleInvitacionProveedor,
   FiltroInvitacionesProveedor,
   GrupoFiltroInvitacion,
   InvitacionProveedor,
   InvitacionProveedorConSolicitud,
   ResultadoListadoInvitaciones,
+  SolicitudDetalleProveedor,
 } from "../models/invitacion-proveedor.model";
-import { grupoDeInvitacion } from "../models/invitacion-proveedor.model";
+import {
+  grupoDeInvitacion,
+  tienePostulacionRadicada,
+} from "../models/invitacion-proveedor.model";
 import {
   FiltroSolicitudes,
   ResultadoListado,
@@ -65,6 +70,7 @@ import type {
   DatosEdicionSolicitud,
   ModoEdicionSolicitud,
   ModificacionPendiente,
+  ResumenDiferencias,
   ResultadoGuardadoSolicitud,
   VersionEdicionSolicitud,
 } from "../models/edicion-solicitud.model";
@@ -87,8 +93,8 @@ import { MIN_CARACTERES_JUSTIFICACION } from "src/app/shared/validators/justific
  * Capa de datos de solicitudes.
  *
  * Los componentes solo conocen esta clase abstracta; el enlace con la
- * implementación simulada se hace en UN solo punto (provider de
- * `SolicitanteModule`). Cuando exista el backend se reemplaza por
+ * implementación simulada se hace en un solo punto (`CotizacionesModule`).
+ * Cuando exista el backend se reemplaza por
  * `SolicitudesServiceHttp` con `HttpClient` y no se toca ninguna pantalla.
  */
 export abstract class SolicitudesService {
@@ -119,6 +125,11 @@ export abstract class SolicitudesService {
    * traduce ese `null` al estado "solicitud no encontrada".
    */
   abstract obtenerPorId(id: string): Observable<SolicitudDetalle | null>;
+
+  /** Detalle autorizado de una invitación en el portal del proveedor (P-02). */
+  abstract obtenerDetalleProveedor(
+    id: string,
+  ): Observable<DetalleInvitacionProveedor | null>;
 
   /**
    * Guarda una edición de la solicitud (S-04).
@@ -551,6 +562,12 @@ const INVITACIONES_PROVEEDOR_MOCK: readonly InvitacionProveedor[] = [
     solicitudId: "SOL-2026-0139",
     estado: "pendiente-ajuste",
     fechaRadicacion: "2026-10-25T10:20:00-05:00",
+    adendaPublicada: {
+      versionAnterior: "v1.0",
+      versionVigente: "v1.1",
+      publicadaEl: "27/10/2026 09:00 COT",
+      anexoId: "anexo-0139-adenda",
+    },
   },
   {
     id: "INV-0135",
@@ -1399,6 +1416,16 @@ function anexoCargado(
 const ANEXOS_POR_SOLICITUD: Readonly<
   Record<string, readonly AnexoSolicitud[]>
 > = {
+  "SOL-2026-0139": [
+    anexoCargado(
+      "anexo-0139-adenda",
+      "Adenda_01_Laboratorios_STEM.pdf",
+      "Adenda oficial publicada para la solicitud",
+      384 * 1024,
+      "Publicada el 27 Oct 2026, 09:00 AM",
+      "ÁGORA",
+    ),
+  ],
   "SOL-2026-0047": [
     anexoCargado(
       "anexo-0047-estudio-previo",
@@ -2531,6 +2558,98 @@ function comoDetalle(
   };
 }
 
+function valoresConAdendaPublicada(
+  valores: DatosEdicionSolicitud,
+): DatosEdicionSolicitud {
+  // Fixture provisional para demostrar una adenda publicada que cambia cantidades.
+  const [primerItem, ...demasItems] = valores.items.registros;
+  return {
+    ...valores,
+    items: {
+      ...valores.items,
+      registros: primerItem
+        ? [{ ...primerItem, cantidad: primerItem.cantidad + 1 }, ...demasItems]
+        : demasItems,
+    },
+  };
+}
+
+function diferenciasProveedor(
+  diferencias: ResumenDiferencias,
+): ResumenDiferencias {
+  const grupos = diferencias.grupos.filter((grupo) => grupo.paso !== 5);
+  return {
+    grupos,
+    total: grupos.reduce((total, grupo) => total + grupo.cambios.length, 0),
+  };
+}
+
+function proyectarSolicitudProveedor(
+  solicitud: SolicitudDetalle,
+): SolicitudDetalleProveedor {
+  return {
+    id: solicitud.id,
+    vigencia: solicitud.vigencia,
+    unidadEjecutora: solicitud.unidadEjecutora,
+    titulo: solicitud.titulo,
+    apertura: solicitud.apertura,
+    cierre: solicitud.cierre,
+    dependencia: solicitud.dependencia,
+    tipoCotizacion: solicitud.tipoCotizacion,
+    estado: solicitud.estado,
+    version: solicitud.version ?? "v1.0",
+    general: solicitud.general,
+    presupuesto: solicitud.presupuesto
+      ? {
+          valorCdp: solicitud.presupuesto.valorCdp,
+          descripcionCdp: solicitud.presupuesto.descripcionCdp,
+          saldo: solicitud.presupuesto.saldo,
+          imputaciones: solicitud.presupuesto.imputaciones.map(
+            ({
+              vigencia,
+              numeroCdp,
+              valor,
+              rubro,
+              rubroNombre,
+              estado,
+              tono,
+            }) => ({
+              vigencia,
+              numeroCdp,
+              valor,
+              rubro,
+              rubroNombre,
+              estado,
+              tono,
+            }),
+          ),
+        }
+      : null,
+    itemsDetalle: solicitud.itemsDetalle,
+    items: solicitud.items.map((item) => ({
+      ...item,
+      valorUnitarioTecho: null,
+    })),
+    contratacion: solicitud.contratacion,
+    documentos: solicitud.documentos
+      ? {
+          anexos: solicitud.documentos.anexos.map(
+            ({ id, nombre, pesoBytes, icono, estado, progreso, descripcion }) => ({
+              id,
+              nombre,
+              pesoBytes,
+              icono,
+              estado,
+              progreso,
+              descripcion,
+            }),
+          ),
+          requeridos: solicitud.documentos.requeridos,
+        }
+      : null,
+  };
+}
+
 /**
  * Fotografía interna de una versión guardada (S-04).
  *
@@ -2552,8 +2671,10 @@ interface VersionGuardada {
  * Trucos de desarrollo (query params del navegador, sin tocar código):
  * - `?mock=vacio` → devuelve 0 filas (estado vacío)
  * - `?mock=error` → falla la petición (estado de error)
- * - `?mockRetardo=3000` → retardo en ms (ver el skeleton más tiempo)
+ * - `?mockRetardo=3000` → retardo en ms (ver el loader más tiempo)
  * - `?mockDetalle=error` → falla la carga del detalle (estado de error de S-03)
+ * - `?mockDetalleProveedor=error` → falla la carga del detalle P-02
+ * - `?mockNoInvitado=1` → simula una solicitud sin invitación para el proveedor
  * - `?mockGuardar=error` → falla el guardado de la edición (S-04)
  * - `?mockCancelar=error` → falla una cancelación (S-05)
  */
@@ -2721,6 +2842,70 @@ export class SolicitudesServiceMock extends SolicitudesService {
     return of(
       comoDetalle(fila, edicion, this.historialEdiciones.get(id) ?? []),
     ).pipe(delay(retardo));
+  }
+
+  obtenerDetalleProveedor(
+    id: string,
+  ): Observable<DetalleInvitacionProveedor | null> {
+    const params = new URLSearchParams(window.location.search);
+    const retardo = Number(params.get("mockRetardo")) || 700;
+
+    if (params.get("mockDetalleProveedor") === "error") {
+      return throwError(
+        () =>
+          new Error(
+            "No fue posible consultar el detalle asignado al proveedor.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    if (params.get("mockNoInvitado") === "1") {
+      return of(null).pipe(delay(retardo));
+    }
+
+    const invitacion = INVITACIONES_PROVEEDOR_MOCK.find(
+      (item) => item.solicitudId === id,
+    );
+    const solicitud = SOLICITUDES_PROVEEDOR_MOCK.find(
+      (item) => item.id === id,
+    );
+    if (!invitacion || !solicitud) {
+      return of(null).pipe(delay(retardo));
+    }
+
+    const valoresAnteriores = datosEdicionDesdeDetalle(solicitud);
+    const valoresVigentes = invitacion.adendaPublicada
+      ? valoresConAdendaPublicada(valoresAnteriores)
+      : valoresAnteriores;
+    const solicitudVigente = comoDetalle(
+      {
+        ...solicitud,
+        version:
+          invitacion.adendaPublicada?.versionVigente ??
+          solicitud.version ??
+          "v1.0",
+      },
+      valoresVigentes,
+    );
+    const diferencias = invitacion.adendaPublicada
+      ? diferenciasProveedor(
+          this.diferencias.calcular(valoresAnteriores, valoresVigentes),
+        )
+      : null;
+
+    return of({
+      invitacion,
+      solicitud: proyectarSolicitudProveedor(solicitudVigente),
+      yaRespondio:
+        tienePostulacionRadicada(invitacion),
+      adenda:
+        invitacion.adendaPublicada && diferencias
+          ? {
+              ...invitacion.adendaPublicada,
+              diferencias,
+            }
+          : null,
+    }).pipe(delay(retardo));
   }
 
   /**

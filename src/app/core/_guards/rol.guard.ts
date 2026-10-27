@@ -25,7 +25,7 @@ export const entradaCotizacionesGuard: CanActivateFn = async (_route, state) => 
 
   const destino =
     rolActivo === ROL_PROVEEDOR
-      ? ["cotizaciones", "mis-solicitudes"]
+      ? ["cotizaciones", "bandeja-solicitudes"]
       : ROLES_SOLICITANTE.includes(rolActivo)
         ? ["cotizaciones", "solicitudes"]
         : null;

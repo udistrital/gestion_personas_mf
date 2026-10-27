@@ -37,7 +37,8 @@ export type AccionSolicitud =
 export type AccionInvitacionProveedor =
   | "ver-detalle-proveedor"
   | "observar"
-  | "responder";
+  | "responder"
+  | "descargar-anexo";
 
 export type TonoChip =
   | "primario"
@@ -245,17 +246,22 @@ export const ACCIONES_INVITACION_PROVEEDOR: Readonly<
   "ver-detalle-proveedor": {
     etiqueta: "Ver solicitud",
     icono: "visibility",
-    ruta: "cotizaciones/mis-solicitudes/:id",
+    ruta: "cotizaciones/bandeja-solicitudes/:id",
   },
   observar: {
     etiqueta: "Observaciones",
     icono: "chat_bubble_outline",
-    ruta: "cotizaciones/mis-solicitudes/:id/observaciones",
+    ruta: "cotizaciones/bandeja-solicitudes/:id/observaciones",
   },
   responder: {
     etiqueta: "Responder",
     icono: "edit_square",
-    ruta: "cotizaciones/mis-solicitudes/:id/responder",
+    ruta: "cotizaciones/bandeja-solicitudes/:id/responder",
+  },
+  "descargar-anexo": {
+    etiqueta: "Descargar anexo",
+    icono: "download",
+    ruta: null,
   },
 };
 
@@ -267,14 +273,19 @@ export const ACCIONES_INVITACION_PROVEEDOR: Readonly<
 export const MATRIZ_ACCIONES_INVITACION_PROVEEDOR: Readonly<
   Record<EstadoPostulacionProveedor, readonly AccionInvitacionProveedor[]>
 > = {
-  borrador: ["ver-detalle-proveedor", "observar", "responder"],
-  enviada: ["ver-detalle-proveedor", "observar"],
-  "pendiente-ajuste": ["ver-detalle-proveedor", "observar", "responder"],
-  excluida: ["ver-detalle-proveedor", "observar"],
-  aceptada: ["ver-detalle-proveedor", "observar"],
-  rechazada: ["ver-detalle-proveedor", "observar"],
-  declinada: ["ver-detalle-proveedor", "observar"],
-  vencida: ["ver-detalle-proveedor", "observar"],
+  borrador: ["ver-detalle-proveedor", "observar", "responder", "descargar-anexo"],
+  enviada: ["ver-detalle-proveedor", "observar", "descargar-anexo"],
+  "pendiente-ajuste": [
+    "ver-detalle-proveedor",
+    "observar",
+    "responder",
+    "descargar-anexo",
+  ],
+  excluida: ["ver-detalle-proveedor", "observar", "descargar-anexo"],
+  aceptada: ["ver-detalle-proveedor", "observar", "descargar-anexo"],
+  rechazada: ["ver-detalle-proveedor", "observar", "descargar-anexo"],
+  declinada: ["ver-detalle-proveedor", "observar", "descargar-anexo"],
+  vencida: ["ver-detalle-proveedor", "observar", "descargar-anexo"],
 };
 
 /**

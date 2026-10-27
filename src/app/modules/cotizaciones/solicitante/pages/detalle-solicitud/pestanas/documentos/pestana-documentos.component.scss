@@ -52,10 +52,6 @@
 }
 
 /* ── Tabla de anexos: tipo de archivo, nombre y responsable ───────────────── */
-.chip--formato mat-icon {
-  color: var(--agora-primary);
-}
-
 .documento__datos {
   display: flex;
   flex-direction: column;
@@ -195,20 +191,6 @@
   margin-top: 0.25rem;
   color: var(--agora-texto-deshabilitado);
   font-size: 1rem;
-}
-
-/* Clasificación del requisito: obligatorio (rojo) o complementario (neutro). */
-.chip--clasificacion {
-  border-color: var(--agora-borde-control);
-  background: var(--agora-surface);
-  color: var(--agora-text);
-  text-transform: uppercase;
-}
-
-.chip--clasificacion--obligatorio {
-  border-color: var(--agora-error-border);
-  background: var(--agora-error-surface);
-  color: var(--agora-error);
 }
 
 /* ── La `<caption>` es solo para lectores de pantalla; se ancla al contenedor ─ */

@@ -37,24 +37,6 @@
   line-height: 1.6;
 }
 
-.bandeja__vigencia {
-  display: inline-flex;
-  align-items: center;
-  align-self: flex-start;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--agora-borde-tarjeta);
-  border-radius: var(--agora-radio-md);
-  background-color: var(--agora-superficie-neutra);
-  color: var(--agora-texto-neutro);
-  font-size: var(--agora-font-sm);
-  white-space: nowrap;
-}
-
-.bandeja__vigencia mat-icon {
-  color: var(--agora-primary);
-}
-
 .bandeja__aviso {
   display: flex;
   align-items: flex-start;

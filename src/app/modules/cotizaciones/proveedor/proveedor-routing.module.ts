@@ -2,6 +2,8 @@ import { NgModule } from "@angular/core";
 import { RouterModule, Routes } from "@angular/router";
 import { BandejaSolicitudesComponent } from "./pages/bandeja-solicitudes/bandeja-solicitudes.component";
 import { PantallaProveedorPlaceholderComponent } from "./pages/pantalla-proximamente/pantalla-proveedor-placeholder.component";
+import { DetalleSolicitudProveedorComponent } from "./pages/detalle-solicitud/detalle-solicitud-proveedor.component";
+import { detalleProveedorResolver } from "./pages/detalle-solicitud/detalle-proveedor.resolver";
 
 const routes: Routes = [
   {
@@ -23,9 +25,9 @@ const routes: Routes = [
   },
   {
     path: ":id",
-    component: PantallaProveedorPlaceholderComponent,
+    component: DetalleSolicitudProveedorComponent,
+    resolve: { detalleProveedor: detalleProveedorResolver },
     title: "ÁGORA · Detalle de solicitud",
-    data: { titulo: "Detalle de solicitud", pantalla: "P-02" },
   },
 ];
 
