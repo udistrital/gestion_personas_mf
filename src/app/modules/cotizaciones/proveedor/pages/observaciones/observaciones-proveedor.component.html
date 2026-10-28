@@ -1,0 +1,79 @@
+<plantilla-pagina-contenedora
+  [breadcrumb]="breadcrumb"
+  title="Observaciones a la solicitud"
+  icon="forum"
+  [mostrarBotonRegresar]="true"
+  (regresar)="volverAlDetalle()"
+>
+  <div class="observaciones-proveedor">
+    @switch (estado()) {
+      @case ("cargando") {
+        <div
+          class="estado estado--carga"
+          role="status"
+          aria-busy="true"
+          aria-live="polite"
+        >
+          <mat-spinner
+            diameter="36"
+            aria-label="Cargando solicitud"
+          ></mat-spinner>
+          <span>Cargando la información de la solicitud…</span>
+        </div>
+      }
+      @case ("no-encontrada") {
+        <section class="estado" role="status" aria-live="polite">
+          <mat-icon aria-hidden="true">search_off</mat-icon>
+          <h2>Solicitud no encontrada o sin acceso</h2>
+          <p>
+            No se encontró una invitación que permita consultar el foro de esta
+            solicitud.
+          </p>
+          <button type="button" class="boton-recto" (click)="volverAlDetalle()">
+            <mat-icon aria-hidden="true">arrow_back</mat-icon>
+            Volver a solicitudes
+          </button>
+        </section>
+      }
+      @case ("error") {
+        <section
+          class="estado estado--error"
+          role="alert"
+          aria-live="assertive"
+        >
+          <mat-icon aria-hidden="true">error_outline</mat-icon>
+          <h2>No fue posible cargar la solicitud</h2>
+          <p>{{ errorDetalle() }}</p>
+          <button
+            type="button"
+            class="boton-recto"
+            (click)="reintentarDetalle()"
+          >
+            <mat-icon aria-hidden="true">refresh</mat-icon>
+            Reintentar
+          </button>
+        </section>
+      }
+      @case ("listo") {
+        @if (detalle(); as d) {
+          <app-foro-observaciones
+            [solicitud]="d.solicitud"
+            [observaciones]="observaciones()"
+            modo="proveedor"
+            [cargando]="cargandoObservaciones()"
+            [errorCarga]="errorCarga()"
+            [puedeObservar]="puedeObservar"
+            [fechaLimiteVencida]="fechaLimiteVencida"
+            [enviandoObservacion]="enviando()"
+            [errorNuevaObservacion]="errorEnvio()"
+            [mensajeExito]="mensajeExito()"
+            [enfocarId]="enfocarId()"
+            [limpiarFormulario]="limpiarFormulario()"
+            (reintentar)="cargarObservaciones()"
+            (observacionCreada)="registrarObservacion($event)"
+          ></app-foro-observaciones>
+        }
+      }
+    }
+  </div>
+</plantilla-pagina-contenedora>

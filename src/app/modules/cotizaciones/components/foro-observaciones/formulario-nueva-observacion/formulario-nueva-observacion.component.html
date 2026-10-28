@@ -47,6 +47,16 @@
     </p>
   }
   <div class="formulario__acciones">
+    @if (mostrarCancelar) {
+      <button
+        class="boton boton--secundario"
+        type="button"
+        [disabled]="enviando || !formulario.controls.contenido.value"
+        (click)="cancelar()"
+      >
+        Cancelar
+      </button>
+    }
     <button
       class="boton"
       type="submit"
@@ -60,7 +70,7 @@
         Enviando…
       } @else {
         <mat-icon aria-hidden="true">send</mat-icon>
-        Enviar observación
+        {{ textoEnviar }}
       }
     </button>
   </div>

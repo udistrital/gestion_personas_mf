@@ -31,12 +31,14 @@ export type AccionSolicitud =
   | "ver-detalle"
   | "modificar"
   | "foro"
+  | "formular-observacion"
   | "oferentes"
   | "cancelar";
 
 export type AccionInvitacionProveedor =
   | "ver-detalle-proveedor"
   | "observar"
+  | "formular-observacion"
   | "responder"
   | "descargar-anexo";
 
@@ -221,6 +223,11 @@ export const ACCIONES_SOLICITUD: Readonly<
     icono: "forum",
     ruta: "cotizaciones/solicitudes/:id/observaciones",
   },
+  "formular-observacion": {
+    etiqueta: "Formular observación",
+    icono: "add_comment",
+    ruta: null,
+  },
   oferentes: {
     etiqueta: "Tablero de oferentes",
     icono: "group",
@@ -250,8 +257,13 @@ export const ACCIONES_INVITACION_PROVEEDOR: Readonly<
   },
   observar: {
     etiqueta: "Observaciones",
-    icono: "chat_bubble_outline",
+    icono: "forum",
     ruta: "cotizaciones/bandeja-solicitudes/:id/observaciones",
+  },
+  "formular-observacion": {
+    etiqueta: "Formular observación",
+    icono: "add_comment",
+    ruta: null,
   },
   responder: {
     etiqueta: "Responder",
@@ -266,18 +278,30 @@ export const ACCIONES_INVITACION_PROVEEDOR: Readonly<
 };
 
 /**
- * Reglas provisionales de acciones por estado de postulación.
- * La observación además depende de que la solicitud no esté cancelada y de su
- * fecha de cierre; esa comprobación se centraliza en PermisosSolicitudService.
+ * La consulta del foro está disponible para toda invitación. Formular requiere
+ * además que la invitación y la solicitud sigan habilitadas y que el plazo
+ * específico de observaciones no haya vencido.
  */
 export const MATRIZ_ACCIONES_INVITACION_PROVEEDOR: Readonly<
   Record<EstadoPostulacionProveedor, readonly AccionInvitacionProveedor[]>
 > = {
-  borrador: ["ver-detalle-proveedor", "observar", "responder", "descargar-anexo"],
-  enviada: ["ver-detalle-proveedor", "observar", "descargar-anexo"],
+  borrador: [
+    "ver-detalle-proveedor",
+    "observar",
+    "formular-observacion",
+    "responder",
+    "descargar-anexo",
+  ],
+  enviada: [
+    "ver-detalle-proveedor",
+    "observar",
+    "formular-observacion",
+    "descargar-anexo",
+  ],
   "pendiente-ajuste": [
     "ver-detalle-proveedor",
     "observar",
+    "formular-observacion",
     "responder",
     "descargar-anexo",
   ],
@@ -300,6 +324,7 @@ export const MATRIZ_ACCIONES_POR_ESTADO: Readonly<
     "ver-detalle",
     "modificar",
     "foro",
+    "formular-observacion",
     "oferentes",
     "cancelar",
   ],
@@ -308,6 +333,7 @@ export const MATRIZ_ACCIONES_POR_ESTADO: Readonly<
     "ver-detalle",
     "modificar",
     "foro",
+    "formular-observacion",
     "oferentes",
     "cancelar",
   ],
