@@ -20,6 +20,7 @@ import {
   ValidatorFn,
   Validators,
 } from "@angular/forms";
+import { map } from "rxjs";
 import { AlertService } from "src/app/shared/services/alert.service";
 import {
   BalanceMasivo,
@@ -40,6 +41,8 @@ import {
   formatoTamano,
   resumirItems,
 } from "../../../../models/items.model";
+import { OpcionCatalogo, RegistroPersonaJuridicaCatalogosService } from "src/app/modules/proveedores/components/registro-persona-juridica/services/registro-persona-juridica-catalogos.service";
+import { RegistroPersonaJuridicaUnspscService } from "src/app/modules/proveedores/components/registro-persona-juridica/services/registro-persona-juridica-unspsc.service";
 
 /** Máximo de ítems que caben en una página de la tabla (mockup: 5). */
 const ITEMS_POR_PAGINA = 5;
@@ -92,32 +95,11 @@ export function minCaracteresTexto(minimo: number): ValidatorFn {
 export class PasoItemsComponent implements OnInit {
   readonly tipos = TIPOS_ITEM;
   readonly unidades = UNIDADES_MEDIDA;
-  readonly catalogoBusqueda: readonly {
+  readonly catalogoBusqueda = signal<readonly {
     tipo: TipoBusquedaCatalogo;
     codigo: string;
     etiqueta: string;
-  }[] = [
-    {
-      tipo: "CIIU",
-      codigo: "6201",
-      etiqueta: "6201 - Desarrollo de sistemas informáticos",
-    },
-    {
-      tipo: "CIIU",
-      codigo: "6202",
-      etiqueta: "6202 - Consultoría informática",
-    },
-    {
-      tipo: "UNSPSC",
-      codigo: "43211500",
-      etiqueta: "43211500 - Computadores",
-    },
-    {
-      tipo: "UNSPSC",
-      codigo: "81111500",
-      etiqueta: "81111500 - Servicios de desarrollo de software",
-    },
-  ];
+  }[]>([]);
   readonly estructuras = ESTRUCTURAS_PLANTILLA;
   readonly plantillaMasiva = PLANTILLA_MASIVA;
   readonly maxArchivoMb = MAX_ARCHIVO_MB;
@@ -155,6 +137,8 @@ export class PasoItemsComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
   private readonly alerta = inject(AlertService);
+  private readonly catalogos = inject(RegistroPersonaJuridicaCatalogosService);
+  private readonly unspsc = inject(RegistroPersonaJuridicaUnspscService);
 
   /** Ítems agregados al pliego (alimenta la tabla consolidada). */
   readonly items = signal<readonly ItemSolicitud[]>([]);
@@ -212,6 +196,48 @@ export class PasoItemsComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.catalogos
+      .obtenerCatalogoParametro("CIIU")
+      .pipe(
+        map((opciones) => opciones.map((opcion) => this.opcionCiiu(opcion))),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (opciones) => {
+          this.catalogoBusqueda.update((actuales) => [
+            ...actuales.filter((opcion) => opcion.tipo !== "CIIU"),
+            ...opciones,
+          ]);
+        },
+        error: () => {
+          this.alerta.showAlert(
+            "Catálogo no disponible",
+            "No fue posible cargar el catálogo CIIU.",
+          );
+        },
+      });
+    this.unspsc
+      .obtenerCatalogo()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (opciones) => {
+          this.catalogoBusqueda.update((actuales) => [
+            ...actuales.filter((opcion) => opcion.tipo !== "UNSPSC"),
+            ...opciones.map((opcion) => ({
+              tipo: "UNSPSC" as const,
+              codigo: opcion.codigo,
+              etiqueta: `${opcion.codigo} - ${opcion.titulo}`,
+            })),
+          ]);
+        },
+        error: () => {
+          this.alerta.showAlert(
+            "Catálogo no disponible",
+            "No fue posible cargar el catálogo UNSPSC.",
+          );
+        },
+      });
+
     // Restaura los ítems que el borrador dejó en el formulario.
     const guardados = this.controlOpcional("registros")?.value;
     if (Array.isArray(guardados) && guardados.length > 0) {
@@ -252,7 +278,7 @@ export class PasoItemsComponent implements OnInit {
   /** Opciones locales del catálogo según clasificación y filtro. */
   readonly opcionesCatalogoFiltradas = computed(() => {
     const termino = this.filtroCatalogo().trim().toLowerCase();
-    return this.catalogoBusqueda.filter(
+    return this.catalogoBusqueda().filter(
       (opcion) =>
         opcion.tipo === this.tipoBusqueda() &&
         (!termino ||
@@ -336,6 +362,23 @@ export class PasoItemsComponent implements OnInit {
         (opcion) => opcion.etiqueta === nombre,
       )
     );
+  }
+
+  private opcionCiiu(opcion: OpcionCatalogo): {
+    tipo: "CIIU";
+    codigo: string;
+    etiqueta: string;
+  } {
+    if (!opcion.codigo) {
+      throw new Error(
+        `El parámetro CIIU con Id ${opcion.id} no contiene CodigoAbreviacion.`,
+      );
+    }
+    return {
+      tipo: "CIIU",
+      codigo: opcion.codigo,
+      etiqueta: `${opcion.codigo} - ${opcion.nombre}`,
+    };
   }
 
   /** true cuando el archivo del cargue ya fue elegido. */

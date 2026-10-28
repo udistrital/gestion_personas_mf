@@ -33,7 +33,7 @@
       <asistente-pasos
         [pasos]="pasos"
         [pasoActual]="pasoActual"
-        [pasoAlcanzado]="pasoAlcanzado"
+        [pasoAlcanzado]="pasos.length"
         [pasoConError]="pasoConError"
         (pasoActualChange)="irAlPaso($event)"
       ></asistente-pasos>
@@ -96,7 +96,7 @@
         [iconoFinal]="pasoActual === 7 ? 'send' : 'check_circle'"
         [estadoMensaje]="estadoMensaje"
         [estadoDetalle]="estadoDetalle"
-        [deshabilitarContinuar]="!pasoValido"
+        [deshabilitarContinuar]="pasoActual === 7 && !pasoValido"
         [ayudaContinuar]="ayudaContinuar"
         (regreso)="regresar()"
         (guardar)="guardarBorrador()"

@@ -8,6 +8,7 @@ import {
   signal,
 } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { map } from "rxjs";
 import {
   AbstractControl,
   FormGroup,
@@ -19,6 +20,7 @@ import { formatoFechaCorta } from "../../../../models/datos-generales.model";
 import {
   ACTIVIDADES_CIIU,
   AREAS_SNIES,
+  ActividadCiiu,
   ActividadVinculada,
   NBC_SIN_IDONEIDAD,
   NUCLEOS_SNIES,
@@ -30,6 +32,7 @@ import {
   listarCodigos,
   perfilNbc,
 } from "../../../../models/proveedores.model";
+import { RegistroPersonaJuridicaCatalogosService } from "src/app/modules/proveedores/components/registro-persona-juridica/services/registro-persona-juridica-catalogos.service";
 
 /** Proveedores que despliega la muestra de la tarjeta 4 (mockup: 3). */
 const PROVEEDORES_EN_MUESTRA = 3;
@@ -70,7 +73,7 @@ export function criteriosProveedores(): ValidatorFn {
   standalone: false,
 })
 export class PasoProveedoresComponent implements OnInit {
-  readonly catalogoCiiu = ACTIVIDADES_CIIU;
+  catalogoCiiu: readonly ActividadCiiu[] = [];
   readonly areasSnies = AREAS_SNIES;
   readonly nucleosSnies = NUCLEOS_SNIES;
   readonly formatoVinculadas = formatoVinculadas;
@@ -83,6 +86,7 @@ export class PasoProveedoresComponent implements OnInit {
 
   private readonly destroyRef = inject(DestroyRef);
   private readonly alerta = inject(AlertService);
+  private readonly catalogos = inject(RegistroPersonaJuridicaCatalogosService);
 
   /** Actividades económicas vinculadas (tabla de la tarjeta 2). */
   readonly actividades = signal<readonly ActividadVinculada[]>([]);
@@ -111,6 +115,40 @@ export class PasoProveedoresComponent implements OnInit {
   private readonly marcas = signal(0);
 
   ngOnInit(): void {
+    this.catalogos
+      .obtenerCatalogoParametro("CIIU")
+      .pipe(
+        map((opciones) =>
+          opciones.map((opcion) => {
+            if (!opcion.codigo) {
+              throw new Error(
+                `El parámetro CIIU con Id ${opcion.id} no contiene CodigoAbreviacion.`,
+              );
+            }
+            const existente = ACTIVIDADES_CIIU.find(
+              (actividad) => actividad.codigo === opcion.codigo,
+            );
+            return {
+              codigo: opcion.codigo,
+              descripcion: opcion.descripcion || opcion.nombre,
+              clase: existente?.clase ?? "CIIU",
+            };
+          }),
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (opciones) => {
+          this.catalogoCiiu = opciones;
+        },
+        error: () => {
+          this.alerta.showAlert(
+            "Catálogo no disponible",
+            "No fue posible cargar el catálogo CIIU.",
+          );
+        },
+      });
+
     const guardadas = this.controlOpcional("actividades")?.value;
     if (Array.isArray(guardadas) && guardadas.length > 0) {
       this.actividades.set(guardadas as readonly ActividadVinculada[]);

@@ -124,6 +124,30 @@ export class RegistroPersonaJuridicaCatalogosService {
 
   constructor(private readonly http: HttpClient) {}
 
+  obtenerCatalogoParametro(
+    codigoTipo: string,
+    codigoArea?: string,
+  ): Observable<OpcionCatalogo[]> {
+    const memo = new Map<string, Observable<RegistroCatalogo[]>>();
+    const memorizar = (
+      clave: string,
+      crear: () => Observable<RegistroCatalogo[]>,
+    ) => {
+      let solicitud = memo.get(clave);
+      if (!solicitud) {
+        solicitud = crear().pipe(shareReplay(1));
+        memo.set(clave, solicitud);
+      }
+      return solicitud;
+    };
+
+    return this.obtenerParametrosPorTipo(
+      codigoTipo,
+      codigoArea ? { codigoArea } : {},
+      memorizar,
+    );
+  }
+
   obtenerCatalogos(): Observable<CatalogosTercerosParametros> {
     // area_tipo y tipo_parametro se consultan una sola vez por carga y código.
     const memo = new Map<string, Observable<RegistroCatalogo[]>>();

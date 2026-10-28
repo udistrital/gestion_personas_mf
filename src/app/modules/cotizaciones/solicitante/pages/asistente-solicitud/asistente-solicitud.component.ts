@@ -771,20 +771,17 @@ export class AsistenteSolicitudComponent implements OnInit {
     );
   }
 
-  /** El stepper delega en este método; solo se llega a pasos alcanzados. */
+  /** Navega a cualquier paso dentro del rango del asistente. */
   irAlPaso(paso: number): void {
-    if (paso < PRIMER_PASO || paso > ULTIMO_PASO || paso > this.pasoAlcanzado) {
+    if (paso < PRIMER_PASO || paso > ULTIMO_PASO) {
       return;
     }
     this.pasoActual = paso;
+    this.pasoAlcanzado = Math.max(this.pasoAlcanzado, paso);
   }
 
-  /** Avanza tras validar el paso 1 (los demás pasos no avanzan aún). */
+  /** Avanza al siguiente paso sin bloquear la navegación por validaciones. */
   continuar(): void {
-    if (!this.pasoValido) {
-      this.asistenteForm.markAllAsTouched();
-      return;
-    }
     this.pasoActual = Math.min(ULTIMO_PASO, this.pasoActual + 1);
     this.pasoAlcanzado = Math.max(this.pasoAlcanzado, this.pasoActual);
     this.guardarBorrador(true);
