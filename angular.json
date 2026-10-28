@@ -76,7 +76,7 @@
                   "with": "src/environments/environment.development.ts"
                 }
               ],
-              "deployUrl": "https://pruebasagoracore.portaloas.udistrital.edu.co/"
+              "deployUrl": "https://pruebasagoraproveedor.portaloas.udistrital.edu.co/"
             },
             "local": {
               "buildOptimizer": false,
