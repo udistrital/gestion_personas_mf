@@ -457,6 +457,7 @@ const SOLICITUDES_PROVEEDOR_MOCK: readonly Solicitud[] = [
     dependencia: "DIRTEI (Tecnología)",
     tipoCotizacion: "BIEN",
     estado: "enviada-proveedores",
+    fechaLimiteObservaciones: "2026-10-29T23:59:00-05:00",
   },
   {
     id: "SOL-2026-0139",
@@ -469,6 +470,7 @@ const SOLICITUDES_PROVEEDOR_MOCK: readonly Solicitud[] = [
     dependencia: "Recursos Educativos",
     tipoCotizacion: "SERVICIO",
     estado: "enviada-con-modificaciones",
+    fechaLimiteObservaciones: "2026-10-30T18:00:00-05:00",
   },
   {
     id: "SOL-2026-0135",
@@ -481,6 +483,7 @@ const SOLICITUDES_PROVEEDOR_MOCK: readonly Solicitud[] = [
     dependencia: "División de Planta Física",
     tipoCotizacion: "BIEN",
     estado: "enviada-proveedores",
+    fechaLimiteObservaciones: "2026-11-03T18:00:00-05:00",
   },
   {
     id: "SOL-2026-0128",
@@ -505,6 +508,7 @@ const SOLICITUDES_PROVEEDOR_MOCK: readonly Solicitud[] = [
     dependencia: "Red de Datos UD",
     tipoCotizacion: "BIEN_Y_SERVICIO",
     estado: "en-evaluacion",
+    fechaLimiteObservaciones: "2026-10-15T18:00:00-05:00",
   },
   {
     id: "SOL-2026-0098",
@@ -2594,6 +2598,7 @@ function proyectarSolicitudProveedor(
     titulo: solicitud.titulo,
     apertura: solicitud.apertura,
     cierre: solicitud.cierre,
+    fechaLimiteObservaciones: solicitud.fechaLimiteObservaciones,
     dependencia: solicitud.dependencia,
     tipoCotizacion: solicitud.tipoCotizacion,
     estado: solicitud.estado,

@@ -2,11 +2,20 @@
   <header class="foro__cabecera">
     <div>
       <p class="foro__sobrelinea">Solicitud {{ solicitud.id }}</p>
-      <h2>Observaciones de los proveedores</h2>
-      <p class="foro__descripcion">
-        Espacio de aclaraciones de la convocatoria. Las respuestas
-        institucionales se publican para todas las personas invitadas.
-      </p>
+      @if (modo === "proveedor") {
+        <h2>Observaciones de la convocatoria</h2>
+        <p class="foro__descripcion">
+          Consulte las observaciones registradas por los proveedores y las
+          respuestas del solicitante. El historial es visible para todas las
+          empresas invitadas.
+        </p>
+      } @else {
+        <h2>Observaciones de los proveedores</h2>
+        <p class="foro__descripcion">
+          Espacio de aclaraciones de la convocatoria. Las respuestas
+          institucionales se publican para todas las personas invitadas.
+        </p>
+      }
     </div>
     <div class="foro__metricas" aria-label="Resumen de observaciones">
       <strong>{{ observaciones.length }} recibidas</strong>
@@ -89,13 +98,23 @@
       <app-formulario-nueva-observacion
         [enviando]="enviandoObservacion"
         [error]="errorNuevaObservacion"
+        [limpiarFormulario]="limpiarFormulario"
+        [mostrarCancelar]="modo === 'proveedor'"
+        [textoEnviar]="
+          modo === 'proveedor' ? 'Registrar observación' : 'Enviar observación'
+        "
         (enviar)="observacionCreada.emit({ contenidoHtml: $event })"
       ></app-formulario-nueva-observacion>
     } @else {
       <p class="foro__aviso" role="status">
         <mat-icon aria-hidden="true">lock</mat-icon>
-        El plazo para formular observaciones venció. Puede consultar las
-        observaciones y respuestas publicadas.
+        @if (fechaLimiteVencida) {
+          El plazo para formular observaciones venció. Puede consultar las
+          observaciones y respuestas publicadas.
+        } @else {
+          El estado de la solicitud o de la invitación no permite registrar
+          nuevas observaciones. Puede consultar el historial publicado.
+        }
       </p>
     }
   } @else if (fechaLimiteVencida) {

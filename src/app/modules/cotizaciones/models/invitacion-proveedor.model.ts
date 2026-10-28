@@ -50,6 +50,8 @@ export interface SolicitudDetalleProveedor {
   readonly titulo: string;
   readonly apertura: string | null;
   readonly cierre: string | null;
+  /** Fecha límite específica para observaciones; no se deriva del cierre del proceso. */
+  readonly fechaLimiteObservaciones?: string | null;
   readonly dependencia: string;
   readonly tipoCotizacion: TipoCotizacion;
   readonly estado: EstadoSolicitud;

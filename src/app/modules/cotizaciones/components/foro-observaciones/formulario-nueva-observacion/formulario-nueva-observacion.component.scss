@@ -56,6 +56,8 @@
 
 .formulario__acciones {
   display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   justify-content: flex-end;
 }
 
@@ -74,7 +76,7 @@
   font-size: var(--agora-font-md);
   font-weight: 600;
   cursor: pointer;
-  transition: .3s ease all;
+  transition: 0.3s ease all;
 }
 
 .boton:focus-visible {
@@ -84,6 +86,16 @@
 
 .boton:hover {
   background: var(--agora-primary-dark);
+}
+
+.boton--secundario {
+  border: 1px solid var(--agora-borde-control);
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-text);
+}
+
+.boton--secundario:hover {
+  background: var(--agora-resalte-neutro);
 }
 
 .boton:disabled {

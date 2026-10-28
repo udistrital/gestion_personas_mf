@@ -217,6 +217,7 @@ select.campo-filtro__control {
   font-size: var(--agora-font-xs);
   font-weight: 600;
   cursor: pointer;
+  transition: .3s ease all;
 }
 
 .filtros__rapido:hover {
@@ -231,6 +232,12 @@ select.campo-filtro__control {
 .filtros__rapido--activo {
   border-color: var(--agora-primary);
   background-color: var(--agora-primary);
+  color: var(--agora-on-primary);
+}
+
+.filtros__rapido--activo:hover {
+  border-color: var(--agora-primary-dark);
+  background-color: var(--agora-primary-dark);
   color: var(--agora-on-primary);
 }
 

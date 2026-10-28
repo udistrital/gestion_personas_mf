@@ -24,6 +24,10 @@ export interface SolicitudPermisable {
 }
 
 export type InvitacionPermisable = Pick<InvitacionProveedor, "estado">;
+type SolicitudForoPermisable = Pick<
+  Solicitud,
+  "estado" | "cierre" | "fechaLimiteObservaciones"
+>;
 
 @Injectable({ providedIn: "root" })
 export class PermisosSolicitudService {
@@ -34,8 +38,11 @@ export class PermisosSolicitudService {
     solicitud: SolicitudPermisable,
   ): readonly AccionSolicitud[] {
     const acciones = MATRIZ_ACCIONES_POR_ESTADO[solicitud.estado] ?? [];
+    const accionesSinAccionesProveedor = acciones.filter(
+      (accion) => accion !== "formular-observacion",
+    );
     if (!this.rol.estaCargado()) {
-      return acciones.filter(
+      return accionesSinAccionesProveedor.filter(
         (accion) => accion !== "cancelar" && accion !== "foro",
       );
     }
@@ -44,8 +51,10 @@ export class PermisosSolicitudService {
       this.rol.tieneRol(rol),
     );
     return esSolicitante
-      ? acciones
-      : acciones.filter((accion) => accion !== "cancelar" && accion !== "foro");
+      ? accionesSinAccionesProveedor
+      : accionesSinAccionesProveedor.filter(
+          (accion) => accion !== "cancelar" && accion !== "foro",
+        );
   }
 
   /** true si la acción está permitida en el estado de la solicitud. */
@@ -107,15 +116,41 @@ export class PermisosSolicitudService {
         if (accion === "ver-detalle-proveedor") {
           return true;
         }
+        if (accion === "observar") {
+          return true;
+        }
+        if (accion === "formular-observacion") {
+          return this.puedeFormularObservacion(invitacion, solicitud);
+        }
         if (!this.puedeParticiparEnSolicitud(solicitud)) {
           return false;
         }
-        if (accion === "observar") {
-          return this.puedeObservar(solicitud);
-        }
         return this.puedeResponder(solicitud);
       },
-    );
+    ).filter((accion) => accion !== "formular-observacion");
+  }
+
+  /** Permiso centralizado para registrar, independiente del acceso de lectura al foro. */
+  puedeFormularObservacion(
+    invitacion: InvitacionPermisable,
+    solicitud: SolicitudForoPermisable,
+  ): boolean {
+    if (
+      !this.rol.estaCargado() ||
+      this.rol.getRolActivo() !== ROL_PROVEEDOR ||
+      !MATRIZ_ACCIONES_INVITACION_PROVEEDOR[invitacion.estado].includes(
+        "formular-observacion",
+      ) ||
+      !MATRIZ_ACCIONES_POR_ESTADO[solicitud.estado].includes(
+        "formular-observacion",
+      ) ||
+      this.solicitudCerradaPorFecha(solicitud)
+    ) {
+      return false;
+    }
+
+    const limite = solicitud.fechaLimiteObservaciones;
+    return !!limite && Date.parse(limite) > Date.now();
   }
 
   puedeDescargarAnexo(
@@ -130,7 +165,7 @@ export class PermisosSolicitudService {
     );
   }
 
-  solicitudCerradaPorFecha(solicitud: Solicitud): boolean {
+  solicitudCerradaPorFecha(solicitud: Pick<Solicitud, "cierre">): boolean {
     const cierre = fechaCierreDeSolicitud(solicitud.cierre);
     return cierre !== null && cierre <= Date.now();
   }

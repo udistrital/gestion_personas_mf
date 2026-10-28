@@ -7,7 +7,7 @@ import {
   Observacion,
   RespuestaObservacionEntrada,
 } from "../../models/observacion.model";
-import { SolicitudDetalle } from "../../models/solicitud.model";
+import type { Solicitud } from "../../models/solicitud.model";
 import { textoPlanoDesdeHtml } from "src/app/shared/utils/texto-plano";
 
 /**
@@ -21,9 +21,20 @@ import { textoPlanoDesdeHtml } from "src/app/shared/utils/texto-plano";
   standalone: false,
 })
 export class ForoObservacionesComponent {
-  @Input({ required: true }) solicitud!: SolicitudDetalle;
+  @Input({ required: true })
+  solicitud!: Pick<
+    Solicitud,
+    | "id"
+    | "titulo"
+    | "dependencia"
+    | "vigencia"
+    | "apertura"
+    | "cierre"
+    | "fechaLimiteObservaciones"
+  >;
   @Input() observaciones: readonly Observacion[] = [];
   @Input() modo: "solicitante" | "proveedor" = "solicitante";
+  @Input() limpiarFormulario = 0;
   @Input() cargando = false;
   @Input() errorCarga = "";
   @Input() puedeObservar = false;

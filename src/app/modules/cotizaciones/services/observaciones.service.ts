@@ -1,6 +1,9 @@
 import { Injectable } from "@angular/core";
 import { Observable, of, throwError, delay } from "rxjs";
 import { MATRIZ_ACCIONES_POR_ESTADO } from "src/app/core/constants/estados-solicitud.const";
+import { PermisosSolicitudService } from "src/app/core/services/permisos-solicitud.service";
+import type { EstadoPostulacionProveedor } from "src/app/core/constants/estados-solicitud.const";
+import type { InvitacionProveedor } from "../models/invitacion-proveedor.model";
 import {
   AutorObservacion,
   NuevaObservacion,
@@ -11,7 +14,7 @@ import { Solicitud } from "../models/solicitud.model";
 
 export type ContextoForoSolicitud = Pick<
   Solicitud,
-  "id" | "estado" | "fechaLimiteObservaciones"
+  "id" | "estado" | "cierre" | "fechaLimiteObservaciones"
 >;
 
 /**
@@ -25,6 +28,7 @@ export abstract class ObservacionesService {
 
   abstract formularObservacion(
     solicitud: ContextoForoSolicitud,
+    estadoInvitacion: EstadoPostulacionProveedor,
     contenido: NuevaObservacion,
     autor: AutorObservacion,
   ): Observable<Observacion>;
@@ -54,6 +58,73 @@ const AUTOR_PERSONA: AutorObservacion = {
 };
 
 const OBSERVACIONES_INICIALES: readonly Observacion[] = [
+  {
+    id: "OBS-0142-02",
+    solicitudId: "SOL-2026-0142",
+    radicado: "OBS-2026-0142-02",
+    autor: AUTOR_EMPRESA_RED,
+    fechaIso: "2026-10-27T14:10:00-05:00",
+    fecha: "27/10/2026 14:10 COT",
+    contenidoHtml:
+      "<p>¿La instalación del equipamiento debe realizarse en una única jornada o puede coordinarse por etapas con la dependencia?</p>",
+  },
+  {
+    id: "OBS-0142-01",
+    solicitudId: "SOL-2026-0142",
+    radicado: "OBS-2026-0142-01",
+    autor: AUTOR_EMPRESA,
+    fechaIso: "2026-10-26T09:35:00-05:00",
+    fecha: "26/10/2026 09:35 COT",
+    contenidoHtml:
+      "<p>Solicitamos confirmar si la garantía de los servidores debe ser prestada directamente por el fabricante o puede acreditarse mediante un centro de servicio autorizado en Colombia.</p>",
+    respuesta: {
+      contenidoHtml:
+        "<p>Se admite la atención por un centro de servicio autorizado por el fabricante, con cobertura nacional y los tiempos definidos en el pliego.</p>",
+      autor: "División de Recursos Tecnológicos",
+      rol: "Solicitante",
+      fechaIso: "2026-10-27T11:00:00-05:00",
+      fecha: "27/10/2026 11:00 COT",
+      visibilidad: "publica",
+    },
+  },
+  {
+    id: "OBS-0139-01",
+    solicitudId: "SOL-2026-0139",
+    radicado: "OBS-2026-0139-01",
+    autor: AUTOR_PERSONA,
+    fechaIso: "2026-10-27T08:20:00-05:00",
+    fecha: "27/10/2026 08:20 COT",
+    contenidoHtml:
+      "<p>Solicitamos precisar si la adenda modifica también el número de usuarios concurrentes previsto para los laboratorios.</p>",
+    respuesta: {
+      contenidoHtml:
+        "<p>La adenda actualiza el número de usuarios concurrentes; el valor vigente está publicado en la versión actual de la solicitud.</p>",
+      autor: "Recursos Educativos",
+      rol: "Solicitante",
+      fechaIso: "2026-10-27T15:40:00-05:00",
+      fecha: "27/10/2026 15:40 COT",
+      visibilidad: "publica",
+    },
+  },
+  {
+    id: "OBS-0115-01",
+    solicitudId: "SOL-2026-0115",
+    radicado: "OBS-2026-0115-01",
+    autor: AUTOR_EMPRESA,
+    fechaIso: "2026-10-14T11:05:00-05:00",
+    fecha: "14/10/2026 11:05 COT",
+    contenidoHtml:
+      "<p>Solicitamos aclarar el alcance de las pruebas de certificación del cableado estructurado.</p>",
+    respuesta: {
+      contenidoHtml:
+        "<p>Las pruebas y certificaciones requeridas se encuentran descritas en el anexo técnico de la solicitud.</p>",
+      autor: "Red de Datos UD",
+      rol: "Solicitante",
+      fechaIso: "2026-10-16T13:10:00-05:00",
+      fecha: "16/10/2026 13:10 COT",
+      visibilidad: "publica",
+    },
+  },
   {
     id: "OBS-084",
     solicitudId: "SOL-2026-0044",
@@ -128,6 +199,10 @@ const OBSERVACIONES_INICIALES: readonly Observacion[] = [
 export class ObservacionesServiceMock extends ObservacionesService {
   private observaciones = [...OBSERVACIONES_INICIALES];
 
+  constructor(private readonly permisos: PermisosSolicitudService) {
+    super();
+  }
+
   listarObservaciones(solicitudId: string): Observable<readonly Observacion[]> {
     const fallo = this.errorConfigurado();
     if (fallo) {
@@ -142,6 +217,7 @@ export class ObservacionesServiceMock extends ObservacionesService {
 
   formularObservacion(
     solicitud: ContextoForoSolicitud,
+    estadoInvitacion: InvitacionProveedor["estado"],
     contenido: NuevaObservacion,
     autor: AutorObservacion,
   ): Observable<Observacion> {
@@ -150,22 +226,20 @@ export class ObservacionesServiceMock extends ObservacionesService {
       return this.error(fallo);
     }
 
-    if (!MATRIZ_ACCIONES_POR_ESTADO[solicitud.estado].includes("foro")) {
-      return this.error("El foro no está habilitado para esta solicitud.");
-    }
-    if (
-      !solicitud.fechaLimiteObservaciones ||
-      Date.parse(solicitud.fechaLimiteObservaciones) <= Date.now()
-    ) {
-      return this.error("El plazo para formular observaciones ya venció.");
+    if (!this.permisos.puedeFormularObservacion({ estado: estadoInvitacion }, solicitud)) {
+      return this.error(
+        "La invitación o el plazo no permiten registrar observaciones.",
+      );
     }
 
     const ahora = new Date();
-    const numero = this.observaciones.length + 1;
+    const numero = this.observaciones.filter(
+      (item) => item.solicitudId === solicitud.id,
+    ).length + 1;
     const observacion: Observacion = {
       id: `OBS-${solicitud.id}-${numero}`,
       solicitudId: solicitud.id,
-      radicado: `OBS-${String(numero).padStart(3, "0")}`,
+      radicado: `OBS-${solicitud.id}-${String(numero).padStart(2, "0")}`,
       autor,
       fechaIso: ahora.toISOString(),
       fecha: fechaCorta(ahora),

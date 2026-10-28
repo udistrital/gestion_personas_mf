@@ -4,6 +4,7 @@ import { BandejaSolicitudesComponent } from "./pages/bandeja-solicitudes/bandeja
 import { PantallaProveedorPlaceholderComponent } from "./pages/pantalla-proximamente/pantalla-proveedor-placeholder.component";
 import { DetalleSolicitudProveedorComponent } from "./pages/detalle-solicitud/detalle-solicitud-proveedor.component";
 import { detalleProveedorResolver } from "./pages/detalle-solicitud/detalle-proveedor.resolver";
+import { ObservacionesProveedorComponent } from "./pages/observaciones/observaciones-proveedor.component";
 
 const routes: Routes = [
   {
@@ -13,9 +14,9 @@ const routes: Routes = [
   },
   {
     path: ":id/observaciones",
-    component: PantallaProveedorPlaceholderComponent,
+    component: ObservacionesProveedorComponent,
+    resolve: { detalleProveedor: detalleProveedorResolver },
     title: "ÁGORA · Observaciones de la solicitud",
-    data: { titulo: "Observaciones", pantalla: "P-03" },
   },
   {
     path: ":id/responder",
