@@ -302,7 +302,6 @@ export const MATRIZ_ACCIONES_INVITACION_PROVEEDOR: Readonly<
     "ver-detalle-proveedor",
     "observar",
     "formular-observacion",
-    "responder",
     "descargar-anexo",
   ],
   excluida: ["ver-detalle-proveedor", "observar", "descargar-anexo"],
@@ -341,6 +340,20 @@ export const MATRIZ_ACCIONES_POR_ESTADO: Readonly<
   adjudicada: ["ver-detalle", "foro", "oferentes"],
   desierta: ["ver-detalle"],
   cancelada: ["ver-detalle"],
+};
+
+/** Estados del proceso en los que puede recibirse una respuesta de proveedor. */
+export const MATRIZ_SOLICITUD_PERMITE_RESPUESTA: Readonly<
+  Record<EstadoSolicitud, boolean>
+> = {
+  borrador: false,
+  "enviada-proveedores": true,
+  "en-aprobacion": false,
+  "enviada-con-modificaciones": true,
+  "en-evaluacion": false,
+  adjudicada: false,
+  desierta: false,
+  cancelada: false,
 };
 
 /** Catálogo ordenado para poblar selects de estado. */

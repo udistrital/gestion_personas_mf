@@ -37,7 +37,7 @@ import {
   DialogoDescartarComponent,
   type DialogoDescartarDatos,
   type ResultadoDescartar,
-} from "./components/dialogo-descartar/dialogo-descartar.component";
+} from "../../../components/dialogo-descartar/dialogo-descartar.component";
 import { ResultadoCruce, formatoCop } from "../../../models/necesidad.model";
 import { aniosDelRango } from "../../../models/calendario.model";
 import {

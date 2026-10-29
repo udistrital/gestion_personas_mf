@@ -5,6 +5,7 @@ import { PantallaProveedorPlaceholderComponent } from "./pages/pantalla-proximam
 import { DetalleSolicitudProveedorComponent } from "./pages/detalle-solicitud/detalle-solicitud-proveedor.component";
 import { detalleProveedorResolver } from "./pages/detalle-solicitud/detalle-proveedor.resolver";
 import { ObservacionesProveedorComponent } from "./pages/observaciones/observaciones-proveedor.component";
+import { ResponderSolicitudComponent } from "./pages/responder-solicitud/responder-solicitud.component";
 
 const routes: Routes = [
   {
@@ -20,9 +21,9 @@ const routes: Routes = [
   },
   {
     path: ":id/responder",
-    component: PantallaProveedorPlaceholderComponent,
+    component: ResponderSolicitudComponent,
+    resolve: { detalleProveedor: detalleProveedorResolver },
     title: "ÁGORA · Responder solicitud",
-    data: { titulo: "Responder solicitud", pantalla: "P-04" },
   },
   {
     path: ":id",

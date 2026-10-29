@@ -58,12 +58,20 @@
     border-color: var(--agora-border-strong);
     background: var(--agora-resalte-neutro);
     color: var(--agora-primary);
+    padding: 0.125rem 0.625rem;
+    border-radius: 4px;
+    line-height: 1.6;
+    text-transform: uppercase;
   }
 
   .chip--servicio {
     border-color: var(--agora-borde-tarjeta);
     background: var(--agora-superficie-neutra);
     color: var(--agora-primary);
+    padding: 0.125rem 0.625rem;
+    border-radius: 4px;
+    line-height: 1.6;
+    text-transform: uppercase;
   }
 
   .chip--formato mat-icon {

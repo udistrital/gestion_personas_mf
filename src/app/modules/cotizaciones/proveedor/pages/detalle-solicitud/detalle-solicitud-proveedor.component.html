@@ -521,26 +521,11 @@
                         <span class="tabla-detalle__celda-titulo">
                           {{ item.nombre }}
                         </span>
-                        @if (item.codigoUnspsc) {
-                          <span class="tabla-detalle__celda-nota">
-                            UNSPSC: {{ item.codigoUnspsc }}
-                          </span>
-                        }
                       </td>
                       <td class="tabla-detalle__td">
                         <span
                           [innerHTML]="item.descripcion | htmlSeguro"
                         ></span>
-                        @if (item.especificaciones?.length) {
-                          <ul class="detalle-proveedor__especificaciones">
-                            @for (
-                              especificacion of item.especificaciones;
-                              track especificacion
-                            ) {
-                              <li>{{ especificacion }}</li>
-                            }
-                          </ul>
-                        }
                       </td>
                       <td class="tabla-detalle__td tabla-detalle__td--centro">
                         <span [class]="claseTipo(item.tipo)">

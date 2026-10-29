@@ -131,6 +131,12 @@ export abstract class SolicitudesService {
     id: string,
   ): Observable<DetalleInvitacionProveedor | null>;
 
+  /** Refleja la radicación en la invitación para las vistas P-01 y P-02. */
+  abstract registrarRespuestaProveedor(
+    solicitudId: string,
+    fechaRadicacion: string,
+  ): void;
+
   /**
    * Guarda una edición de la solicitud (S-04).
    *
@@ -844,14 +850,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Procesador dual 32 cores 2.8GHz, 256GB RAM DDR5 ECC, 2x 960GB NVMe SSD redundantes para centro de cómputo Paiba. Chasis compatible con rack estándar de 19 pulgadas y tarjetas mezzanina 25GbE dual port.",
     unidad: "Unidad",
     cantidad: 2,
-    codigoUnspsc: "43211501",
-    notaTecnica: "Garantía 36 meses NBD",
-    iconoNota: "format_image_left",
-    especificaciones: [
-      "Dual Redundant PSU",
-      "IPMI 2.0 / iDRAC9",
-      "Hardware RAID 1",
-    ],
+    iconoNota: "format_image_left"
   },
   {
     id: "2",
@@ -861,10 +860,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Suscripción por 12 meses con soporte oficial 24x7 en sitio, cobertura para 64 zócalos físicos institucionales. Incluye consola unificada de gestión, HA, DRS, vMotion en caliente y parches de seguridad automatizados.",
     unidad: "Suscripción",
     cantidad: 1,
-    codigoUnspsc: "43232800",
-    notaTecnica: "SLA Crítico 2 horas",
-    iconoNota: "support_agent",
-    especificaciones: ["Soporte Nivel 3", "Actualizaciones Mayores"],
+    iconoNota: "support_agent"
   },
   {
     id: "3",
@@ -874,10 +870,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Capa 3 gestionable, 48x SFP+ 10Gbps, 4x QSFP28 100Gbps uplinks, protocolo OSPF/BGP, fuentes y ventiladores hot-swap. Capacidad de conmutación mínima de 1.76 Tbps y latencia sub-microsegundo para topología spine-leaf.",
     unidad: "Unidad",
     cantidad: 4,
-    codigoUnspsc: "43222612",
-    notaTecnica: "Transceivers incluidos",
-    iconoNota: "cable",
-    especificaciones: ["10G/100G", "LACP Stacking", "Dual AC Redundante"],
+    iconoNota: "cable"
   },
   {
     id: "4",
@@ -887,10 +880,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Certificación Categoría 6A en puntos de red para laboratorio Sala 304 y datacenter Paiba, tendido con canaleta perimetral de aluminio anodizado, patch panels blindados y rotulado ANSI/TIA-606-B institucional.",
     unidad: "Punto",
     cantidad: 48,
-    codigoUnspsc: "72151601",
-    notaTecnica: "Certificación Fluke Networks",
-    iconoNota: "verified",
-    especificaciones: ["Cat 6A F/UTP", "LSZH Cero Halógenos", "Norma RETIE"],
+    iconoNota: "verified"
   },
   {
     id: "5",
@@ -900,10 +890,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Topología doble conversión, banco de baterías VRLA externo para 30 minutos de autonomía a plena carga, tarjeta SNMP para monitoreo web centralizado, factor de potencia 1.0 y transformador de aislamiento galvánico.",
     unidad: "Unidad",
     cantidad: 1,
-    codigoUnspsc: "39121011",
-    notaTecnica: "Bypass Estático y Manual",
-    iconoNota: "electric_bolt",
-    especificaciones: ["Factor Potencia 1.0", "SNMP v3", "THDi < 3%"],
+    iconoNota: "electric_bolt"
   },
   {
     id: "6",
@@ -913,10 +900,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Controladoras duales activas, caché 64GB por controladora, discos SAS 12Gbps, replicación remota asíncrona y conectividad FC 32Gbps para el clúster de virtualización institucional.",
     unidad: "Unidad",
     cantidad: 2,
-    codigoUnspsc: "43201802",
-    notaTecnica: "Garantía 60 meses en sitio",
-    iconoNota: "storage",
-    especificaciones: ["FC 32Gbps", "Replicación Remota"],
+    iconoNota: "storage"
   },
   {
     id: "7",
@@ -926,10 +910,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Chasis de 6U con backplane pasivo, ventilación N+1 y gestión integrada de todas las hojas instaladas, compatible con las hojas de cómputo y almacenamiento del proyecto.",
     unidad: "Unidad",
     cantidad: 1,
-    codigoUnspsc: "43211501",
-    notaTecnica: "Compatible con hojas SAN",
-    iconoNota: "dns",
-    especificaciones: ["Backplane Pasivo", "Ventilación N+1"],
+    iconoNota: "dns"
   },
   {
     id: "8",
@@ -939,10 +920,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Interfaz de red 25Gbps por puerto con soporte para SR-IOV y offload de funciones de virtualización, instalable en las hojas de cómputo del chasis blade.",
     unidad: "Unidad",
     cantidad: 16,
-    codigoUnspsc: "43201404",
-    notaTecnica: "Soporte SR-IOV",
-    iconoNota: "settings_ethernet",
-    especificaciones: ["25GbE", "Offload Virtualización"],
+    iconoNota: "settings_ethernet"
   },
   {
     id: "9",
@@ -952,10 +930,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Atención de incidentes críticos en sitio con tiempos de respuesta de 4 horas y 24 horas para casos menores, durante 12 meses contados desde la puesta en marcha del centro de cómputo.",
     unidad: "Servicio",
     cantidad: 1,
-    codigoUnspsc: "81111803",
-    notaTecnica: "Respuesta 4 horas en sitio",
-    iconoNota: "headset_mic",
-    especificaciones: ["Cobertura 24x7", "Técnico certificado"],
+    iconoNota: "headset_mic"
   },
   {
     id: "10",
@@ -965,10 +940,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Programa de formación para el personal de la DIRTEI en administración del clúster, consola de virtualización y procedimientos de recuperación ante desastres, con material didáctico incluido.",
     unidad: "Servicio",
     cantidad: 1,
-    codigoUnspsc: "86132000",
-    notaTecnica: "Material incluido",
-    iconoNota: "school",
-    especificaciones: ["Modalidad presencial", "Certificado de asistencia"],
+    iconoNota: "school"
   },
   {
     id: "11",
@@ -978,10 +950,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Gabinete de piso con puerta frontal perforada, gestión vertical de cableado, bandejas fijas y kit de ventilación para el alojamiento de servidores y equipos de red.",
     unidad: "Unidad",
     cantidad: 6,
-    codigoUnspsc: "43222801",
-    notaTecnica: "Garantía 24 meses",
-    iconoNota: "inventory_2",
-    especificaciones: ["42U", "Cierre con llave"],
+    iconoNota: "inventory_2"
   },
   {
     id: "12",
@@ -991,10 +960,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Unidad de distribución de energía con monitoreo por toma, medición de consumo y corte remoto, montaje horizontal en gabinete de 19 pulgadas.",
     unidad: "Unidad",
     cantidad: 12,
-    codigoUnspsc: "39121002",
-    notaTecnica: "Monitoreo por toma",
-    iconoNota: "power",
-    especificaciones: ["32A", "Corte Remoto"],
+    iconoNota: "power"
   },
   {
     id: "13",
@@ -1004,10 +970,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Supervisión técnica de la instalación, configuración y puesta en marcha del centro de cómputo, con informes de avance y actas de aceptación por hitos.",
     unidad: "Servicio",
     cantidad: 1,
-    codigoUnspsc: "81112000",
-    notaTecnica: "Informes por hito",
-    iconoNota: "fact_check",
-    especificaciones: ["Acta de aceptación", "Supervisión en sitio"],
+    iconoNota: "fact_check"
   },
   {
     id: "14",
@@ -1017,10 +980,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Panel de parcheo de 1U con puertos blindados y etiquetado institucional ANSI/TIA-606-B, para el cerramiento de los puntos de red certificados.",
     unidad: "Unidad",
     cantidad: 4,
-    codigoUnspsc: "43223309",
-    notaTecnica: "Etiquetado ANSI/TIA",
-    iconoNota: "grid_on",
-    especificaciones: ["Cat 6A", "1U"],
+    iconoNota: "grid_on"
   },
   {
     id: "15",
@@ -1030,10 +990,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Módulos ópticos de 10Gbps compatibles con los switches de núcleo y de acceso del proyecto, con diagnóstico digital y certificación del fabricante.",
     unidad: "Unidad",
     cantidad: 64,
-    codigoUnspsc: "43201553",
-    notaTecnica: "Certificados de fábrica",
-    iconoNota: "settings_input_antenna",
-    especificaciones: ["10Gbps", "DDM"],
+    iconoNota: "settings_input_antenna"
   },
   {
     id: "16",
@@ -1043,10 +1000,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Traslado planificado de las máquinas virtuales y servicios académicos y administrativos al nuevo clúster, con ventanas de mantenimiento y plan de reversa.",
     unidad: "Servicio",
     cantidad: 1,
-    codigoUnspsc: "81112200",
-    notaTecnica: "Incluye plan de reversa",
-    iconoNota: "sync_alt",
-    especificaciones: ["Ventanas nocturnas", "Plan de contingencias"],
+    iconoNota: "sync_alt"
   },
   {
     id: "17",
@@ -1056,10 +1010,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Sensores de temperatura, humedad y detección temprana de humo conectados a la plataforma central de monitoreo, con alertas por correo y SNMP.",
     unidad: "Kit",
     cantidad: 3,
-    codigoUnspsc: "41111947",
-    notaTecnica: "Alertas SNMP",
-    iconoNota: "thermostat",
-    especificaciones: ["Temperatura y humedad", "Detección de humo"],
+    iconoNota: "thermostat"
   },
   {
     id: "18",
@@ -1069,10 +1020,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Obras eléctricas para alimentación redundante, tablero de distribución y sistema de puesta a tierra con certificación RETIE, conforme a la norma vigente.",
     unidad: "Servicio",
     cantidad: 1,
-    codigoUnspsc: "72151500",
-    notaTecnica: "Certificación RETIE",
-    iconoNota: "electrical_services",
-    especificaciones: ["Circuito redundante", "Puesta a tierra"],
+    iconoNota: "electrical_services"
   },
 ];
 
@@ -2699,6 +2647,7 @@ export class SolicitudesServiceMock extends SolicitudesService {
     string,
     readonly EventoHistorial[]
   >();
+  private readonly invitacionesActualizadas = new Map<string, InvitacionProveedor>();
 
   constructor(private readonly diferencias: DiferenciasSolicitudService) {
     super();
@@ -2773,7 +2722,10 @@ export class SolicitudesServiceMock extends SolicitudesService {
       ]),
     );
     const filas: InvitacionProveedorConSolicitud[] =
-      INVITACIONES_PROVEEDOR_MOCK.flatMap((invitacion) => {
+      INVITACIONES_PROVEEDOR_MOCK.flatMap((invitacionBase) => {
+        const invitacion =
+          this.invitacionesActualizadas.get(invitacionBase.solicitudId) ??
+          invitacionBase;
         const solicitud = solicitudes.get(invitacion.solicitudId);
         if (!solicitud) {
           return [];
@@ -2868,9 +2820,12 @@ export class SolicitudesServiceMock extends SolicitudesService {
       return of(null).pipe(delay(retardo));
     }
 
-    const invitacion = INVITACIONES_PROVEEDOR_MOCK.find(
+    const invitacionBase = INVITACIONES_PROVEEDOR_MOCK.find(
       (item) => item.solicitudId === id,
     );
+    const invitacion = invitacionBase
+      ? this.invitacionesActualizadas.get(id) ?? invitacionBase
+      : undefined;
     const solicitud = SOLICITUDES_PROVEEDOR_MOCK.find(
       (item) => item.id === id,
     );
@@ -2911,6 +2866,25 @@ export class SolicitudesServiceMock extends SolicitudesService {
             }
           : null,
     }).pipe(delay(retardo));
+  }
+
+  registrarRespuestaProveedor(
+    solicitudId: string,
+    fechaRadicacion: string,
+  ): void {
+    const invitacion =
+      this.invitacionesActualizadas.get(solicitudId) ??
+      INVITACIONES_PROVEEDOR_MOCK.find(
+        (item) => item.solicitudId === solicitudId,
+      );
+    if (!invitacion) {
+      throw new Error("No existe la invitación asociada a la solicitud.");
+    }
+    this.invitacionesActualizadas.set(solicitudId, {
+      ...invitacion,
+      estado: "enviada",
+      fechaRadicacion,
+    });
   }
 
   /**

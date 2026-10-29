@@ -1,0 +1,84 @@
+<div
+  class="carga-archivos"
+  [class.carga-archivos--listo]="archivos.length > 0"
+  [class.carga-archivos--compacto]="compacto"
+  [class.carga-archivos--arrastrando]="arrastrando"
+  (dragover)="alArrastrar($event)"
+  (dragleave)="alSalirArrastre($event)"
+  (drop)="alSoltar($event)"
+>
+  <input
+    #entradaArchivo
+    class="carga-archivos__entrada"
+    [id]="id"
+    type="file"
+    [attr.accept]="formatosAceptados"
+    [multiple]="multiple"
+    [disabled]="deshabilitado"
+    tabindex="-1"
+    aria-hidden="true"
+    (change)="seleccionar($event)"
+    (blur)="marcarTocado()"
+  />
+  <span class="carga-archivos__icono" aria-hidden="true">
+    <mat-icon>{{ archivos.length > 0 ? "task_alt" : "cloud_upload" }}</mat-icon>
+  </span>
+  <div class="carga-archivos__textos">
+    <span class="carga-archivos__titulo">{{ tituloCarga }}</span>
+    <span class="carga-archivos__ayuda" [id]="id + '-ayuda'">
+      {{ etiquetaFormatos }} · Máximo {{ tamanoMaxMb }} MB por archivo
+    </span>
+  </div>
+  <button
+    class="carga-archivos__boton"
+    type="button"
+    [disabled]="deshabilitado"
+    [attr.aria-describedby]="id + '-ayuda'"
+    (click)="abrirSelector()"
+  >
+    <mat-icon aria-hidden="true">{{ archivos.length > 0 ? "swap_horiz" : "add_circle" }}</mat-icon>
+    <span>{{ archivos.length > 0 ? "Reemplazar archivo" : etiqueta }}</span>
+  </button>
+
+  @if (!compacto) {
+    <span class="carga-archivos__pista">
+      <mat-icon aria-hidden="true">info</mat-icon>
+      Puede arrastrar el archivo desde su equipo o seleccionarlo con el botón.
+    </span>
+  }
+
+  @if (error) {
+    <span class="carga-archivos__error" [id]="id + '-error'" role="alert">
+      {{ error }}
+    </span>
+  }
+
+  @if (archivos.length > 0) {
+    <div class="carga-archivos__resumen">
+      <span>
+        {{ archivos.length === 1 ? "1 archivo vinculado" : archivos.length + " archivos vinculados" }}
+      </span>
+      <span class="carga-archivos__peso">Total: {{ pesoTotal }}</span>
+    </div>
+    <ul class="carga-archivos__lista">
+      @for (archivo of archivos; track archivo.name + archivo.size; let i = $index) {
+        <li>
+          <span class="carga-archivos__archivo">
+            <mat-icon aria-hidden="true">description</mat-icon>
+            <span class="carga-archivos__nombre">{{ archivo.name }}</span>
+            <small class="carga-archivos__tamano">{{ tamano(archivo) }}</small>
+          </span>
+          <button
+            class="carga-archivos__quitar"
+            type="button"
+            [disabled]="deshabilitado"
+            (click)="eliminar(i)"
+            [attr.aria-label]="'Quitar ' + archivo.name"
+          >
+            <mat-icon aria-hidden="true">close</mat-icon>
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</div>

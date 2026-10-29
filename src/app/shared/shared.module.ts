@@ -21,6 +21,7 @@ import { EditorEnriquecidoComponent } from "./components/editor-enriquecido/edit
 import { EtiquetaPorDefinirComponent } from "./components/etiqueta-por-definir/etiqueta-por-definir.component";
 import { ContadorRegresivoComponent } from "./components/contador-regresivo/contador-regresivo.component";
 import { HtmlSeguroPipe } from "./pipes/html-seguro.pipe";
+import { CargaArchivosComponent } from "./components/carga-archivos/carga-archivos.component";
 import { QuillModule } from "ngx-quill";
 
 @NgModule({
@@ -42,6 +43,7 @@ import { QuillModule } from "ngx-quill";
     EtiquetaPorDefinirComponent,
     ContadorRegresivoComponent,
     HtmlSeguroPipe,
+    CargaArchivosComponent,
   ],
   imports: [
     CommonModule,
@@ -76,6 +78,7 @@ import { QuillModule } from "ngx-quill";
     ContadorRegresivoComponent,
     QuillModule,
     HtmlSeguroPipe,
+    CargaArchivosComponent,
   ],
 })
 export class SharedModule {}

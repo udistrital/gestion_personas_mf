@@ -28,19 +28,8 @@ export interface ItemSolicitud {
   readonly cantidad: number;
   /** Valor unitario techo publicado, cuando el proceso lo informa. */
   readonly valorUnitarioTecho?: number | null;
-  /** Código UNSPSC (solo lo aportan los ítems del cargue masivo). */
-  readonly codigoUnspsc?: string;
-  /**
-   * Nota corta de la ficha ("Garantía 36 meses NBD").
-   *
-   * La rellenan los mockups del detalle (S-03, pestaña "Ítems"); el asistente
-   * de creación (S-02) la deja sin usar.
-   */
-  readonly notaTecnica?: string;
   /** Icono Material de la nota ("format_image_left"); por defecto `verified`. */
   readonly iconoNota?: string;
-  /** Etiquetas de especificaciones que se pintan como chips en el detalle. */
-  readonly especificaciones?: readonly string[];
 }
 
 /** Opción de los selects y del selector segmentado. */

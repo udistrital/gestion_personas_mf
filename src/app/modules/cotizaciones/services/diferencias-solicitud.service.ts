@@ -167,25 +167,7 @@ export class DiferenciasSolicitudService {
             `Ítem ${item.nombre} · Unidad de medida`,
             previo.unidad,
             item.unidad,
-          ),
-          this.cambio(
-            3,
-            `Ítem ${item.nombre} · Código UNSPSC`,
-            previo.codigoUnspsc ?? "",
-            item.codigoUnspsc ?? "",
-          ),
-          this.cambio(
-            3,
-            `Ítem ${item.nombre} · Nota técnica`,
-            previo.notaTecnica ?? "",
-            item.notaTecnica ?? "",
-          ),
-          this.cambio(
-            3,
-            `Ítem ${item.nombre} · Especificaciones`,
-            (previo.especificaciones ?? []).join(", "),
-            (item.especificaciones ?? []).join(", "),
-          ),
+          )
         ]),
       );
     }

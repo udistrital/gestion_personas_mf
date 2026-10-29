@@ -1,6 +1,8 @@
 <div class="campo-dinero">
   <span class="prefijo" aria-hidden="true">$</span>
   <input
+    [id]="id || null"
+    [attr.aria-label]="ariaLabel || null"
     [disabled]="deshabilitado"
     [value]="valorMostrado"
     inputmode="numeric"

@@ -89,8 +89,7 @@ export class PestanaItemsComponent {
       }
       return (
         item.nombre.toLowerCase().includes(termino) ||
-        item.descripcion.toLowerCase().includes(termino) ||
-        (item.codigoUnspsc ?? "").toLowerCase().includes(termino)
+        item.descripcion.toLowerCase().includes(termino)
       );
     });
   });
