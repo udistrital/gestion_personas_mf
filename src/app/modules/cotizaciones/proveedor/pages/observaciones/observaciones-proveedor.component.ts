@@ -35,6 +35,7 @@ export class ObservacionesProveedorComponent implements OnInit {
   readonly estado = signal<EstadoPagina>("cargando");
   readonly detalle = signal<DetalleInvitacionProveedor | null>(null);
   readonly observaciones = signal<readonly Observacion[]>([]);
+  readonly autorProveedor = signal<AutorObservacion | null>(null);
   readonly errorCarga = signal("");
   readonly errorDetalle = signal("");
   readonly cargandoObservaciones = signal(false);
@@ -116,8 +117,32 @@ export class ObservacionesProveedorComponent implements OnInit {
     }
     this.cargandoObservaciones.set(true);
     this.errorCarga.set("");
+    void this.listarObservacionesDelProveedor(detalle.solicitud.id);
+  }
+
+  /**
+   * Lista únicamente el hilo del proveedor autenticado: sus observaciones y
+   * las respuestas que el solicitante le haya dado. Las observaciones de los
+   * demás invitados no son visibles para él.
+   */
+  private async listarObservacionesDelProveedor(
+    solicitudId: string,
+  ): Promise<void> {
+    let autor: AutorObservacion;
+    try {
+      autor = await this.autorDelProveedor();
+    } catch (error: unknown) {
+      this.errorCarga.set(
+        error instanceof Error
+          ? error.message
+          : "No fue posible identificar al proveedor autenticado.",
+      );
+      this.cargandoObservaciones.set(false);
+      return;
+    }
+
     this.observacionesService
-      .listarObservaciones(detalle.solicitud.id)
+      .listarObservaciones(solicitudId, autor)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (observaciones) => {
@@ -173,7 +198,7 @@ export class ObservacionesProveedorComponent implements OnInit {
     elementoRetorno?: HTMLElement,
   ): Promise<void> {
     try {
-      const autor = await this.autorActual();
+      const autor = await this.autorDelProveedor();
       this.observacionesService
         .formularObservacion(
           detalle.solicitud,
@@ -192,7 +217,7 @@ export class ObservacionesProveedorComponent implements OnInit {
             this.limpiarFormulario.update((valor) => valor + 1);
             this.enviando.set(false);
             this.mensajeExito.set(
-              "La observación se registró y ya aparece en el historial público.",
+              "La observación se registró y ya aparece en su historial.",
             );
             void this.alerta
               .showObservacionRegistradaAlert(
@@ -217,6 +242,17 @@ export class ObservacionesProveedorComponent implements OnInit {
       );
       this.enviando.set(false);
     }
+  }
+
+  /** Identidad del proveedor autenticado, calculada una sola vez. */
+  private async autorDelProveedor(): Promise<AutorObservacion> {
+    const actual = this.autorProveedor();
+    if (actual) {
+      return actual;
+    }
+    const autor = await this.autorActual();
+    this.autorProveedor.set(autor);
+    return autor;
   }
 
   private async autorActual(): Promise<AutorObservacion> {

@@ -27,7 +27,7 @@
 .tarjeta__identidad p,
 .respuesta__cabecera,
 .respuesta__cabecera h4,
-.respuesta__publica {
+.respuesta__visibilidad {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -107,6 +107,34 @@
   color: var(--agora-success);
 }
 
+/* Marcas del encabezado: chip de autoría propia y estado del hilo. */
+.tarjeta__marcas {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tarjeta__propia {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.3rem 0.65rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: 999px;
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-primary);
+  font-size: var(--agora-font-sm);
+  font-weight: 600;
+}
+
+.tarjeta__propia mat-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  font-size: 0.875rem;
+}
+
 .tarjeta__contenido,
 .respuesta__contenido {
   min-width: 0;
@@ -157,13 +185,13 @@
   font-size: var(--agora-font-sm);
 }
 
-.respuesta__publica {
+.respuesta__visibilidad {
   color: var(--agora-success);
   font-size: var(--agora-font-sm);
   font-weight: 600;
 }
 
-.respuesta__publica mat-icon {
+.respuesta__visibilidad mat-icon {
   flex: 0 0 auto;
 }
 
@@ -221,7 +249,11 @@
     align-items: flex-start;
   }
 
-  .estado {
+  .tarjeta__marcas {
     margin-left: 3.5rem;
+  }
+
+  .estado {
+    margin-left: 0;
   }
 }

@@ -23,14 +23,21 @@
     <mat-icon aria-hidden="true">
       {{ hayFiltros ? "search_off" : "forum" }}
     </mat-icon>
-    <h2>{{ hayFiltros ? "Sin coincidencias" : "Aún no hay observaciones" }}</h2>
-    <p>
-      @if (hayFiltros) {
+    @if (hayFiltros) {
+      <h2>Sin coincidencias</h2>
+      <p>
         No hay observaciones que coincidan con los filtros. Ajuste los criterios
         para ver resultados.
-      } @else {
-        Todavía no se han recibido observaciones para esta solicitud.
-      }
-    </p>
+      </p>
+    } @else if (modo === "proveedor") {
+      <h2>Aún no ha registrado observaciones</h2>
+      <p>
+        Sus observaciones y las respuestas del solicitante aparecerán aquí.
+        Las observaciones de otras empresas invitadas no son visibles para usted.
+      </p>
+    } @else {
+      <h2>Aún no hay observaciones</h2>
+      <p>Todavía no se han recibido observaciones para esta solicitud.</p>
+    }
   </section>
 }

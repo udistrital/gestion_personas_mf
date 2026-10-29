@@ -3,24 +3,31 @@
     <div>
       <p class="foro__sobrelinea">Solicitud {{ solicitud.id }}</p>
       @if (modo === "proveedor") {
-        <h2>Observaciones de la convocatoria</h2>
+        <h2>Sus observaciones de la convocatoria</h2>
         <p class="foro__descripcion">
-          Consulte las observaciones registradas por los proveedores y las
-          respuestas del solicitante. El historial es visible para todas las
-          empresas invitadas.
+          Consulte únicamente las observaciones que usted registró y las
+          respuestas del solicitante a cada una. Las observaciones de otras
+          empresas invitadas no son visibles para usted.
         </p>
       } @else {
         <h2>Observaciones de los proveedores</h2>
         <p class="foro__descripcion">
-          Espacio de aclaraciones de la convocatoria. Las respuestas
-          institucionales se publican para todas las personas invitadas.
+          Espacio de aclaraciones de la convocatoria. Cada respuesta
+          institucional solo es visible para el proveedor que formuló la
+          observación y el solicitante.
         </p>
       }
     </div>
     <div class="foro__metricas" aria-label="Resumen de observaciones">
-      <strong>{{ observaciones.length }} recibidas</strong>
-      <span>{{ pendientes }} pendientes de respuesta</span>
-      <span>{{ respondidas }} respondidas y publicadas</span>
+      @if (modo === "proveedor") {
+        <strong>{{ observaciones.length }} {{ observaciones.length === 1 ? "suya" : "suyas" }}</strong>
+        <span>{{ pendientes }} pendientes de respuesta</span>
+        <span>{{ respondidas }} respondidas por el solicitante</span>
+      } @else {
+        <strong>{{ observaciones.length }} recibidas</strong>
+        <span>{{ pendientes }} pendientes de respuesta</span>
+        <span>{{ respondidas }} respondidas</span>
+      }
     </div>
   </header>
 
@@ -109,11 +116,12 @@
       <p class="foro__aviso" role="status">
         <mat-icon aria-hidden="true">lock</mat-icon>
         @if (fechaLimiteVencida) {
-          El plazo para formular observaciones venció. Puede consultar las
-          observaciones y respuestas publicadas.
+          El plazo para formular observaciones venció. Puede consultar sus
+          observaciones y las respuestas recibidas.
         } @else {
           El estado de la solicitud o de la invitación no permite registrar
-          nuevas observaciones. Puede consultar el historial publicado.
+          nuevas observaciones. Puede consultar sus observaciones y las
+          respuestas recibidas.
         }
       </p>
     }

@@ -34,16 +34,24 @@
         </p>
       </div>
     </div>
-    <span
-      class="estado"
-      [class.estado--respondida]="!!observacion.respuesta"
-      [attr.aria-label]="
-        observacion.respuesta ? 'Respondida' : 'Pendiente de respuesta'
-      "
-    >
-      <span aria-hidden="true"></span>
-      {{ observacion.respuesta ? "Respondida" : "Pendiente de respuesta" }}
-    </span>
+    <div class="tarjeta__marcas">
+      @if (modo === "proveedor") {
+        <span class="tarjeta__propia">
+          <mat-icon aria-hidden="true">person</mat-icon>
+          Su observación
+        </span>
+      }
+      <span
+        class="estado"
+        [class.estado--respondida]="!!observacion.respuesta"
+        [attr.aria-label]="
+          observacion.respuesta ? 'Respondida' : 'Pendiente de respuesta'
+        "
+      >
+        <span aria-hidden="true"></span>
+        {{ observacion.respuesta ? "Respondida" : "Pendiente de respuesta" }}
+      </span>
+    </div>
   </header>
 
   <div class="tarjeta__contenido">
@@ -71,9 +79,13 @@
             ></etiqueta-por-definir>
           }
         </div>
-        <span class="respuesta__publica">
-          <mat-icon aria-hidden="true">public</mat-icon>
-          Visible para todos los invitados
+        <span class="respuesta__visibilidad">
+          <mat-icon aria-hidden="true">lock</mat-icon>
+          @if (modo === "proveedor") {
+            Visible solo para usted y el solicitante
+          } @else {
+            Visible solo para el proveedor autor y el solicitante
+          }
         </span>
       </header>
       <div
