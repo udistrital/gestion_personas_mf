@@ -19,11 +19,17 @@ export type ContextoForoSolicitud = Pick<
 
 /**
  * Contrato único de datos del foro; la implementación HTTP sustituirá al mock.
- * Pendiente: la propuesta no define si las respuestas alimentan la bitácora S-03.
+ *
+ * `listarObservaciones` admite el autor cuando quien consulta es un proveedor:
+ * en ese caso solo se devuelven sus propias observaciones y las respuestas del
+ * solicitante a ellas. El solicitante consulta sin autor y ve todos los hilos.
+ * La implementación HTTP debe resolver el filtro con el token de la sesión y
+ * no confiar en el identificador enviado por el cliente.
  */
 export abstract class ObservacionesService {
   abstract listarObservaciones(
     solicitudId: string,
+    autor?: AutorObservacion,
   ): Observable<readonly Observacion[]>;
 
   abstract formularObservacion(
@@ -84,7 +90,7 @@ const OBSERVACIONES_INICIALES: readonly Observacion[] = [
       rol: "Solicitante",
       fechaIso: "2026-10-27T11:00:00-05:00",
       fecha: "27/10/2026 11:00 COT",
-      visibilidad: "publica",
+      visibilidad: "privada",
     },
   },
   {
@@ -103,7 +109,7 @@ const OBSERVACIONES_INICIALES: readonly Observacion[] = [
       rol: "Solicitante",
       fechaIso: "2026-10-27T15:40:00-05:00",
       fecha: "27/10/2026 15:40 COT",
-      visibilidad: "publica",
+      visibilidad: "privada",
     },
   },
   {
@@ -122,7 +128,7 @@ const OBSERVACIONES_INICIALES: readonly Observacion[] = [
       rol: "Solicitante",
       fechaIso: "2026-10-16T13:10:00-05:00",
       fecha: "16/10/2026 13:10 COT",
-      visibilidad: "publica",
+      visibilidad: "privada",
     },
   },
   {
@@ -141,7 +147,7 @@ const OBSERVACIONES_INICIALES: readonly Observacion[] = [
       rol: "Ordenador del Gasto",
       fechaIso: "2026-10-09T16:15:00-05:00",
       fecha: "09/10/2026 16:15 COT",
-      visibilidad: "publica",
+      visibilidad: "privada",
     },
   },
   {
@@ -160,7 +166,7 @@ const OBSERVACIONES_INICIALES: readonly Observacion[] = [
       rol: "Ordenador del Gasto",
       fechaIso: "2026-10-08T17:15:00-05:00",
       fecha: "08/10/2026 17:15 COT",
-      visibilidad: "publica",
+      visibilidad: "privada",
     },
   },
   {
@@ -203,16 +209,51 @@ export class ObservacionesServiceMock extends ObservacionesService {
     super();
   }
 
-  listarObservaciones(solicitudId: string): Observable<readonly Observacion[]> {
+  listarObservaciones(
+    solicitudId: string,
+    autor?: AutorObservacion,
+  ): Observable<readonly Observacion[]> {
     const fallo = this.errorConfigurado();
     if (fallo) {
       return this.error(fallo);
     }
+    const deLaSolicitud = this.observaciones.filter(
+      (observacion) => observacion.solicitudId === solicitudId,
+    );
+    // Sin autor (solicitante) se devuelven todos los hilos. Con autor
+    // (proveedor) solo los propios: las observaciones de los demás invitados
+    // no son visibles para él.
+    const visibles = autor ? this.soloDelAutor(deLaSolicitud, autor) : deLaSolicitud;
     return of(
-      this.observaciones
-        .filter((observacion) => observacion.solicitudId === solicitudId)
-        .sort((a, b) => Date.parse(b.fechaIso) - Date.parse(a.fechaIso)),
+      [...visibles].sort(
+        (a, b) => Date.parse(b.fechaIso) - Date.parse(a.fechaIso),
+      ),
     ).pipe(delay(this.retardo()));
+  }
+
+  /**
+   * Filtra el foro al hilo del proveedor autenticado.
+   *
+   * Solo mock: los hilos sembrados de la empresa demo se reatribuyen al
+   * proveedor de la sesión para poder demostrar el flujo completo (incluida la
+   * respuesta institucional). El backend real filtra por token, no por este
+   * identificador.
+   */
+  private soloDelAutor(
+    observaciones: readonly Observacion[],
+    autor: AutorObservacion,
+  ): readonly Observacion[] {
+    return observaciones
+      .filter(
+        (observacion) =>
+          observacion.autor.identificacion === autor.identificacion ||
+          observacion.autor.identificacion === AUTOR_EMPRESA.identificacion,
+      )
+      .map((observacion) =>
+        observacion.autor.identificacion === AUTOR_EMPRESA.identificacion
+          ? { ...observacion, autor }
+          : observacion,
+      );
   }
 
   formularObservacion(
@@ -292,7 +333,7 @@ export class ObservacionesServiceMock extends ObservacionesService {
         rol: "Solicitante",
         fechaIso: ahora.toISOString(),
         fecha: fechaCorta(ahora),
-        visibilidad: "publica",
+        visibilidad: "privada",
       },
     };
     this.observaciones = this.observaciones.map((actual) =>

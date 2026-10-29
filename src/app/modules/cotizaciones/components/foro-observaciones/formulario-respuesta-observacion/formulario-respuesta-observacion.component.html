@@ -10,14 +10,14 @@
       Respuesta oficial al proveedor
     </h4>
     <span class="formulario__publica">
-      <mat-icon aria-hidden="true">public</mat-icon>
-      Pública para todos los invitados
+      <mat-icon aria-hidden="true">lock</mat-icon>
+      Privada: proveedor autor y solicitante
     </span>
   </div>
 
   <p class="formulario__aviso" id="aviso-publicacion-respuesta">
-    La respuesta será visible para todas las personas invitadas a esta
-    solicitud.
+    La respuesta solo será visible para el proveedor que formuló esta
+    observación y para el solicitante.
   </p>
 
   <label class="formulario__etiqueta" id="etiqueta-respuesta-observacion">
@@ -26,8 +26,8 @@
   <editor-enriquecido
     etiqueta="Texto de la respuesta"
     idEtiqueta="etiqueta-respuesta-observacion"
-    pista="Escriba una respuesta clara para todos los invitados."
-    ayuda="La respuesta se publica en el expediente general."
+    pista="Escriba una respuesta clara para el proveedor que formuló la observación."
+    ayuda="La respuesta queda registrada en el hilo de esa observación."
     [minCaracteres]="minimo"
     [maxCaracteres]="maximo"
     [rows]="4"

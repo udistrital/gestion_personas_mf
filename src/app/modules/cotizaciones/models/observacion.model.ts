@@ -5,14 +5,19 @@ export interface AutorObservacion {
   readonly identificacion: string;
 }
 
-/** Respuesta institucional visible para todas las personas invitadas. */
+/**
+ * Respuesta institucional del solicitante a una observación.
+ *
+ * El hilo es privado: solo lo ven el proveedor que formuló la observación y
+ * el solicitante que la atiende. Ningún otro proveedor invitado puede leerlo.
+ */
 export interface RespuestaObservacion {
   readonly contenidoHtml: string;
   readonly autor: string;
   readonly rol: string;
   readonly fechaIso: string;
   readonly fecha: string;
-  readonly visibilidad: "publica";
+  readonly visibilidad: "privada";
 }
 
 /** Observación vinculada a una solicitud; sin respuesta equivale a pendiente. */
