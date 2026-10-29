@@ -148,6 +148,56 @@ export class RegistroPersonaJuridicaCatalogosService {
     );
   }
 
+  obtenerTiposParametroPorArea(
+    codigoArea: string,
+    codigosTipo: readonly string[],
+  ): Observable<OpcionCatalogo[]> {
+    const areas$ = this.obtenerPaginado(
+      `${this.parametrosUrl}/area_tipo`,
+      `CodigoAbreviacion:${codigoArea}`,
+      true,
+      "areaTipo",
+    );
+    const tipos$ = forkJoin(
+      codigosTipo.map((codigoTipo) =>
+        this.obtenerPaginado(
+          `${this.parametrosUrl}/tipo_parametro`,
+          `CodigoAbreviacion:${codigoTipo}`,
+          true,
+          "tipoParametro",
+        ),
+      ),
+    );
+
+    return forkJoin({ areas: areas$, tipos: tipos$ }).pipe(
+      map(({ areas, tipos }) => {
+        const idsAreas = new Set(
+          areas
+            .filter(
+              (area) =>
+                area.Activo !== false &&
+                area.CodigoAbreviacion === codigoArea,
+            )
+            .map((area) => area.Id),
+        );
+        const tiposFiltrados = codigosTipo.reduce<RegistroCatalogo[]>(
+          (resultado, codigoTipo, indice) => [
+            ...resultado,
+            ...tipos[indice].filter(
+              (tipo) =>
+                tipo.Activo !== false &&
+                tipo.CodigoAbreviacion === codigoTipo &&
+                tipo.AreaTipoId?.Id !== undefined &&
+                idsAreas.has(tipo.AreaTipoId.Id),
+            ),
+          ],
+          [],
+        );
+        return this.aOpciones(tiposFiltrados);
+      }),
+    );
+  }
+
   obtenerCatalogos(): Observable<CatalogosTercerosParametros> {
     // area_tipo y tipo_parametro se consultan una sola vez por carga y código.
     const memo = new Map<string, Observable<RegistroCatalogo[]>>();

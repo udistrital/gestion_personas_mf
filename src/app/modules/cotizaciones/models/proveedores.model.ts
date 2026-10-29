@@ -125,8 +125,60 @@ export interface OpcionSnies {
   readonly icono: string;
 }
 
+/** Códigos tipo_parametro asociados al área tipo SNIES. */
+export const CODIGOS_AREAS_SNIES = [
+  "AGRO_VET_AFINES",
+  "BELLAS_ARTES",
+  "CIENCIAS_EDUCACIÓN",
+  "CIENCIAS_SALUD",
+  "CIENCIAS_HUMANAS",
+  "ECONO_ADMIN_AFINES",
+  "ING_ARQ_AFINES",
+  "MAT_NATURALES",
+] as const;
+
 /** Áreas de conocimiento del SNIES (select "Área de conocimiento"). */
 export const AREAS_SNIES: readonly OpcionSnies[] = [
+  {
+    valor: "AGRO_VET_AFINES",
+    etiqueta: "AGRONOMÍA, VETERINARIA Y AFINES",
+    icono: "agriculture",
+  },
+  {
+    valor: "BELLAS_ARTES",
+    etiqueta: "BELLAS ARTES",
+    icono: "palette",
+  },
+  {
+    valor: "CIENCIAS_EDUCACIÓN",
+    etiqueta: "CIENCIAS DE LA EDUCACIÓN",
+    icono: "school",
+  },
+  {
+    valor: "CIENCIAS_SALUD",
+    etiqueta: "CIENCIAS DE LA SALUD",
+    icono: "medical_services",
+  },
+  {
+    valor: "CIENCIAS_HUMANAS",
+    etiqueta: "CIENCIAS SOCIALES Y HUMANAS",
+    icono: "groups",
+  },
+  {
+    valor: "ECONO_ADMIN_AFINES",
+    etiqueta: "ECONOMÍA, ADMINISTRACIÓN, CONTADURÍA Y AFINES",
+    icono: "account_balance",
+  },
+  {
+    valor: "ING_ARQ_AFINES",
+    etiqueta: "INGENIERÍA, ARQUITECTURA, URBANISMO Y AFINES",
+    icono: "engineering",
+  },
+  {
+    valor: "MAT_NATURALES",
+    etiqueta: "MATEMÁTICAS Y CIENCIAS NATURALES",
+    icono: "science",
+  },
   {
     valor: "ING",
     etiqueta: "INGENIERÍA, ARQUITECTURA, URBANISMO Y AFINES",

@@ -8,7 +8,14 @@ import {
   signal,
 } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { map } from "rxjs";
+import {
+  distinctUntilChanged,
+  map,
+  of,
+  startWith,
+  switchMap,
+  tap,
+} from "rxjs";
 import {
   AbstractControl,
   FormGroup,
@@ -22,8 +29,10 @@ import {
   AREAS_SNIES,
   ActividadCiiu,
   ActividadVinculada,
+  CODIGOS_AREAS_SNIES,
   NBC_SIN_IDONEIDAD,
   NUCLEOS_SNIES,
+  OpcionSnies,
   ProveedorObjetivo,
   ResumenSolicitudProveedores,
   buscarProveedores,
@@ -36,6 +45,15 @@ import { RegistroPersonaJuridicaCatalogosService } from "src/app/modules/proveed
 
 /** Proveedores que despliega la muestra de la tarjeta 4 (mockup: 3). */
 const PROVEEDORES_EN_MUESTRA = 3;
+
+const AREAS_SNIES_ANTERIORES: Readonly<Record<string, string>> = {
+  ING: "ING_ARQ_AFINES",
+  CIEN: "CIENCIAS_EDUCACIÓN",
+  ECON: "ECONO_ADMIN_AFINES",
+  SOC: "CIENCIAS_HUMANAS",
+  NAT: "MAT_NATURALES",
+  SALUD: "CIENCIAS_SALUD",
+};
 
 /** Pluraliza el contador de actividades vinculadas. */
 function formatoVinculadas(cantidad: number): string {
@@ -74,8 +92,8 @@ export function criteriosProveedores(): ValidatorFn {
 })
 export class PasoProveedoresComponent implements OnInit {
   catalogoCiiu: readonly ActividadCiiu[] = [];
-  readonly areasSnies = AREAS_SNIES;
-  readonly nucleosSnies = NUCLEOS_SNIES;
+  readonly areasSnies = signal<readonly OpcionSnies[]>([]);
+  readonly nucleosSnies = signal<readonly OpcionSnies[]>([]);
   readonly formatoVinculadas = formatoVinculadas;
 
   /** Subgrupo `proveedores` del `FormGroup` raíz del asistente. */
@@ -149,6 +167,56 @@ export class PasoProveedoresComponent implements OnInit {
         },
       });
 
+    this.catalogos
+      .obtenerTiposParametroPorArea("SNIES", CODIGOS_AREAS_SNIES)
+      .pipe(
+        map((opciones) => {
+          const porCodigo = new Map<
+            string,
+            (typeof opciones)[number]
+          >();
+          for (const opcion of opciones) {
+            if (typeof opcion.codigo === "string") {
+              porCodigo.set(opcion.codigo, opcion);
+            }
+          }
+          const faltantes = CODIGOS_AREAS_SNIES.filter(
+            (codigo) => !porCodigo.has(codigo),
+          );
+          if (faltantes.length > 0) {
+            throw new Error(
+              `No se encontraron tipos de parámetro SNIES: ${faltantes.join(", ")}.`,
+            );
+          }
+          return CODIGOS_AREAS_SNIES.map((codigo) => {
+            const opcion = porCodigo.get(codigo);
+            if (!opcion) {
+              throw new Error(
+                `No se encontró el tipo de parámetro SNIES "${codigo}".`,
+              );
+            }
+            return {
+              valor: codigo,
+              etiqueta: opcion.nombre,
+              icono: "school",
+            };
+          });
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (opciones) => {
+          this.areasSnies.set(opciones);
+          this.cargarNucleosSnies();
+        },
+        error: () => {
+          this.alerta.showAlert(
+            "Catálogo no disponible",
+            "No fue posible cargar las áreas de conocimiento SNIES.",
+          );
+        },
+      });
+
     const guardadas = this.controlOpcional("actividades")?.value;
     if (Array.isArray(guardadas) && guardadas.length > 0) {
       this.actividades.set(guardadas as readonly ActividadVinculada[]);
@@ -162,6 +230,92 @@ export class PasoProveedoresComponent implements OnInit {
           this.marcas.update((cantidad) => cantidad + 1);
         });
     }
+  }
+
+  private cargarNucleosSnies(): void {
+    const controlArea = this.controlOpcional("areaSnies");
+    if (!controlArea) {
+        return;
+    }
+
+    const areaGuardada = String(controlArea.value ?? "");
+    const areaMigrada = AREAS_SNIES_ANTERIORES[areaGuardada] ?? areaGuardada;
+    if (this.areasSnies().some((area) => area.valor === areaMigrada)) {
+        if (areaMigrada !== areaGuardada) {
+          controlArea.setValue(areaMigrada, { emitEvent: false });
+        }
+    } else if (areaGuardada) {
+        controlArea.setValue("", { emitEvent: false });
+        this.controlOpcional("nucleoSnies")?.setValue("", {
+          emitEvent: false,
+        });
+    }
+
+    let primeraSeleccion = true;
+    controlArea.valueChanges
+        .pipe(
+          startWith(controlArea.value),
+          distinctUntilChanged(),
+          tap(() => {
+            this.nucleosSnies.set([]);
+            if (!primeraSeleccion) {
+              this.controlOpcional("nucleoSnies")?.setValue("", {
+                emitEvent: false,
+              });
+            }
+            primeraSeleccion = false;
+          }),
+          switchMap((valor: unknown) => {
+            const area = this.areasSnies().find(
+              (opcion) => opcion.valor === String(valor ?? ""),
+            );
+            if (!area) {
+              return of([]);
+            }
+            return this.catalogos
+              .obtenerCatalogoParametro(area.valor, "SNIES")
+              .pipe(
+                map((opciones) =>
+                  opciones.map((opcion) => {
+                    if (!opcion.codigo) {
+                      throw new Error(
+                        `El núcleo SNIES con Id ${opcion.id} no contiene CodigoAbreviacion.`,
+                      );
+                    }
+                    const existente = NUCLEOS_SNIES.find(
+                      (nucleo) => nucleo.valor === opcion.codigo,
+                    );
+                    return {
+                      valor: opcion.codigo,
+                      etiqueta: opcion.nombre,
+                      icono: existente?.icono ?? "school",
+                    };
+                  }),
+                ),
+              );
+          }),
+          takeUntilDestroyed(this.destroyRef),
+        )
+        .subscribe({
+          next: (opciones) => {
+            this.nucleosSnies.set(opciones);
+            const controlNucleo = this.controlOpcional("nucleoSnies");
+            if (
+              controlNucleo?.value &&
+              !opciones.some(
+                (opcion) => opcion.valor === controlNucleo.value,
+              )
+            ) {
+              controlNucleo.setValue("", { emitEvent: false });
+            }
+          },
+          error: () => {
+            this.alerta.showAlert(
+              "Catálogo no disponible",
+              "No fue posible cargar los núcleos básicos de conocimiento para el área seleccionada.",
+            );
+          },
+        });
   }
 
   // ── Estado derivado ──────────────────────────────────────────────────────

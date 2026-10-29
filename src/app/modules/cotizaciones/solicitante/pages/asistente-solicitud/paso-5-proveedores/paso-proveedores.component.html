@@ -270,7 +270,7 @@
           </mat-icon>
           <select id="snies-area" formControlName="areaSnies">
             <option value="">Seleccione el área de conocimiento</option>
-            @for (opcion of areasSnies; track opcion.valor) {
+            @for (opcion of areasSnies(); track opcion.valor) {
               <option [value]="opcion.valor">{{ opcion.etiqueta }}</option>
             }
           </select>
@@ -293,7 +293,7 @@
           <mat-icon class="selector__icono" aria-hidden="true">school</mat-icon>
           <select id="snies-nbc" formControlName="nucleoSnies">
             <option value="">Seleccione el núcleo básico (NBC)</option>
-            @for (opcion of nucleosSnies; track opcion.valor) {
+            @for (opcion of nucleosSnies(); track opcion.valor) {
               <option [value]="opcion.valor">{{ opcion.etiqueta }}</option>
             }
           </select>
