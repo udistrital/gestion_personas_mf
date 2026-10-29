@@ -20,7 +20,7 @@
     </div>
     <div class="foro__metricas" aria-label="Resumen de observaciones">
       @if (modo === "proveedor") {
-        <strong>{{ observaciones.length }} {{ observaciones.length === 1 ? "suya" : "suyas" }}</strong>
+        <strong>{{ observaciones.length }} {{ observaciones.length === 1 ? "observación" : "observaciones" }}</strong>
         <span>{{ pendientes }} pendientes de respuesta</span>
         <span>{{ respondidas }} respondidas por el solicitante</span>
       } @else {
