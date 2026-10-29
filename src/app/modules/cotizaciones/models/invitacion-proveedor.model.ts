@@ -102,7 +102,6 @@ export interface InvitacionProveedorConSolicitud {
   readonly invitacion: InvitacionProveedor;
   readonly solicitud: Solicitud;
   readonly ordenadorGasto: string;
-  readonly nota: string;
 }
 
 export type GrupoFiltroInvitacion =

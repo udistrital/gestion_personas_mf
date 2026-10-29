@@ -630,18 +630,6 @@ const ORDENADORES_PROVEEDOR_MOCK: Readonly<Record<string, string>> = {
   "SOL-2026-0064": "Ing. Martha Cecilia Bello",
 };
 
-const NOTAS_PROVEEDOR_MOCK: Readonly<Record<string, string>> = {
-  "SOL-2026-0142": "ID Requisición: RQ-8841-UD · CDP 1402",
-  "SOL-2026-0139": "Adenda publicada: ajuste en cantidad de usuarios",
-  "SOL-2026-0135": "Lotes 1 y 2 · Especificaciones técnicas anexas",
-  "SOL-2026-0128": "Cotización enviada",
-  "SOL-2026-0115": "Plazo cerrado",
-  "SOL-2026-0098": "Oferta seleccionada",
-  "SOL-2026-0084": "Informe comparativo publicado",
-  "SOL-2026-0072": "Motivo de rechazo por definir",
-  "SOL-2026-0064": "Invitación declinada por el proveedor",
-};
-
 const MAPA_TIPOS: Readonly<Record<string, TipoCotizacion>> = {
   bienes: "BIEN",
   servicios: "SERVICIO",
@@ -2736,8 +2724,7 @@ export class SolicitudesServiceMock extends SolicitudesService {
             solicitud,
             ordenadorGasto:
               ORDENADORES_PROVEEDOR_MOCK[solicitud.id] ??
-              "Por definir",
-            nota: NOTAS_PROVEEDOR_MOCK[solicitud.id] ?? "",
+              "Por definir"
           },
         ];
       });
