@@ -4,17 +4,23 @@ import type {
   ModoEdicionSolicitud,
   ResumenDiferencias,
   VersionEdicionSolicitud,
-} from "../../../../../models/edicion-solicitud.model";
+} from "../../models/edicion-solicitud.model";
 
-/** Datos que el asistente entrega al diálogo de descarte. */
-export interface DialogoDescartarDatos {
-  readonly solicitudId: string;
-  readonly modo: ModoEdicionSolicitud;
-  /** Cambios de esta sesión que se perderían si se confirma el descarte. */
-  readonly diferencias: ResumenDiferencias;
-  /** Versiones guardadas, de la vigente a la original. */
-  readonly versiones: readonly VersionEdicionSolicitud[];
-}
+/** Datos que los asistentes entregan al diálogo de descarte. */
+export type DialogoDescartarDatos =
+  | {
+      readonly tipo: "respuesta";
+      readonly solicitudId: string;
+    }
+  | {
+      readonly tipo?: "edicion";
+      readonly solicitudId: string;
+      readonly modo: ModoEdicionSolicitud;
+      /** Cambios de esta sesión que se perderían si se confirma el descarte. */
+      readonly diferencias: ResumenDiferencias;
+      /** Versiones guardadas, de la vigente a la original. */
+      readonly versiones: readonly VersionEdicionSolicitud[];
+    };
 
 /** Decisión del diálogo: versión a la que se vuelve; `null` = la vigente. */
 export interface ResultadoDescartar {
@@ -44,30 +50,45 @@ export class DialogoDescartarComponent {
     private readonly dialogRef: MatDialogRef<DialogoDescartarComponent>,
     @Inject(MAT_DIALOG_DATA) readonly datos: DialogoDescartarDatos,
   ) {
-    this.seleccion.set(
-      this.datos.versiones.find((version) => version.actual)?.version ??
-        this.datos.versiones[0]?.version ??
-        "",
-    );
+    if (this.datos.tipo !== "respuesta") {
+      this.seleccion.set(
+        this.datos.versiones.find((version) => version.actual)?.version ??
+          this.datos.versiones[0]?.version ??
+          "",
+      );
+    }
+  }
+
+  get esRespuesta(): boolean {
+    return this.datos.tipo === "respuesta";
   }
 
   get etiquetaModo(): string {
+    if (this.datos.tipo === "respuesta") {
+      return "Borrador de proveedor";
+    }
     return this.datos.modo === "completa"
       ? "Borrador · edición completa"
       : "Solicitud enviada · modificación restringida";
   }
 
   get versiones(): readonly VersionEdicionSolicitud[] {
-    return this.datos.versiones;
+    return this.datos.tipo === "respuesta" ? [] : this.datos.versiones;
   }
 
   /** true si hay versiones anteriores a las que se pueda volver. */
   get hayVersionesAnteriores(): boolean {
-    return this.datos.versiones.some((version) => !version.actual);
+    return (
+      this.datos.tipo !== "respuesta" &&
+      this.datos.versiones.some((version) => !version.actual)
+    );
   }
 
   /** Versión marcada por el usuario (la vigente si no hay selección). */
   get seleccionada(): VersionEdicionSolicitud | null {
+    if (this.datos.tipo === "respuesta") {
+      return null;
+    }
     return (
       this.datos.versiones.find(
         (version) => version.version === this.seleccion(),
@@ -84,6 +105,9 @@ export class DialogoDescartarComponent {
 
   /** Cambios que se perderían con la opción elegida. */
   get cambios(): ResumenDiferencias {
+    if (this.datos.tipo === "respuesta") {
+      return { grupos: [], total: 0 };
+    }
     if (this.esVigente) {
       return this.datos.diferencias;
     }
@@ -92,6 +116,9 @@ export class DialogoDescartarComponent {
 
   /** Título del bloque de cambios en riesgo. */
   get tituloCambios(): string {
+    if (this.datos.tipo === "respuesta") {
+      return "Avance guardado del formulario";
+    }
     return this.esVigente
       ? "Cambios de esta sesión sin guardar"
       : "Cambios guardados que se perderán";
@@ -99,6 +126,9 @@ export class DialogoDescartarComponent {
 
   /** Etiqueta del botón de confirmación. */
   get tituloAccion(): string {
+    if (this.datos.tipo === "respuesta") {
+      return "Descartar borrador y salir";
+    }
     return this.esVigente
       ? "Descartar cambios"
       : `Volver a ${this.seleccionada?.version ?? "la versión anterior"}`;
@@ -106,6 +136,9 @@ export class DialogoDescartarComponent {
 
   /** Icono del botón de confirmación. */
   get iconoAccion(): string {
+    if (this.datos.tipo === "respuesta") {
+      return "delete_outline";
+    }
     return this.esVigente ? "delete_outline" : "settings_backup_restore";
   }
 
@@ -122,7 +155,9 @@ export class DialogoDescartarComponent {
   /** Confirma el descarte con la versión elegida. */
   descartar(): void {
     this.dialogRef.close({
-      version: this.esVigente ? null : (this.seleccionada?.version ?? null),
+      version: this.esRespuesta || this.esVigente
+        ? null
+        : (this.seleccionada?.version ?? null),
     });
   }
 }

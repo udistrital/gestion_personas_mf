@@ -9,6 +9,10 @@ import {
   SolicitudesServiceMock,
 } from "./services/solicitudes.service";
 import { EntradaCotizacionesComponent } from "./pages/entrada-cotizaciones/entrada-cotizaciones.component";
+import {
+  RespuestaProveedorService,
+  RespuestaProveedorServiceMock,
+} from "./services/respuesta-proveedor.service";
 
 /**
  * Módulo raíz del dominio de cotizaciones. Las áreas (solicitante,
@@ -20,6 +24,10 @@ import { EntradaCotizacionesComponent } from "./pages/entrada-cotizaciones/entra
   providers: [
     { provide: SolicitudesService, useClass: SolicitudesServiceMock },
     { provide: ObservacionesService, useClass: ObservacionesServiceMock },
+    {
+      provide: RespuestaProveedorService,
+      useClass: RespuestaProveedorServiceMock,
+    },
   ],
 })
 export class CotizacionesModule {}

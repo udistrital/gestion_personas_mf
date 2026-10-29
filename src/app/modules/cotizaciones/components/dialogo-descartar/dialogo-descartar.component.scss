@@ -322,7 +322,7 @@
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+  transition: .3s ease all !important;
 }
 
 .boton mat-icon {

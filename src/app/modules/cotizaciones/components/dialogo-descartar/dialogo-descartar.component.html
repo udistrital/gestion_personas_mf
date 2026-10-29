@@ -5,7 +5,7 @@
     </span>
 
     <h2 id="dialogo-descartar-titulo" class="dialogo__titulo">
-      Descartar cambios de la edición
+      {{ esRespuesta ? "Descartar borrador de respuesta" : "Descartar cambios de la edición" }}
     </h2>
 
     <span class="dialogo__sello">
@@ -15,6 +15,12 @@
   </header>
 
   <div class="dialogo__cuerpo">
+    @if (esRespuesta) {
+      <p class="dialogo__aviso">
+        El borrador se guarda automáticamente en este equipo. Si continúa,
+        se eliminará el borrador local y saldrá del formulario.
+      </p>
+    } @else {
     <p class="dialogo__aviso">
       Elija qué desea conservar. El avance de esta sesión que aún no se ha
       guardado se descarta siempre; si elige una versión anterior, también se
@@ -51,7 +57,7 @@
 
           @if (version.actual) {
             <span class="version__chip version__chip--neutro">
-              {{ datos.diferencias.total }} sin guardar
+              {{ cambios.total }} sin guardar
             </span>
           } @else {
             <span class="version__chip">
@@ -79,7 +85,9 @@
 
       @if (cambios.total === 0) {
         <p class="dialogo__vacio">
-          @if (esVigente) {
+          @if (esRespuesta) {
+            El borrador local y los cambios de esta sesión se eliminarán.
+          } @else if (esVigente) {
             No se detectaron cambios sin guardar en esta sesión.
           } @else {
             La versión elegida es equivalente a la vigente en los campos
@@ -107,6 +115,7 @@
         </ul>
       }
     </div>
+    }
   </div>
 
   <footer class="dialogo__pie">

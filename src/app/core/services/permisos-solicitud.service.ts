@@ -11,6 +11,7 @@ import {
   EstadoSolicitud,
   MATRIZ_ACCIONES_INVITACION_PROVEEDOR,
   MATRIZ_ACCIONES_POR_ESTADO,
+  MATRIZ_SOLICITUD_PERMITE_RESPUESTA,
 } from "../constants/estados-solicitud.const";
 import type {
   InvitacionProveedor,
@@ -122,10 +123,7 @@ export class PermisosSolicitudService {
         if (accion === "formular-observacion") {
           return this.puedeFormularObservacion(invitacion, solicitud);
         }
-        if (!this.puedeParticiparEnSolicitud(solicitud)) {
-          return false;
-        }
-        return this.puedeResponder(solicitud);
+        return this.puedeResponderInvitacion(invitacion, solicitud);
       },
     ).filter((accion) => accion !== "formular-observacion");
   }
@@ -165,6 +163,22 @@ export class PermisosSolicitudService {
     );
   }
 
+  /** Permiso centralizado para abrir P-04 según invitación, estado y cierre. */
+  puedeResponderInvitacion(
+    invitacion: InvitacionPermisable,
+    solicitud: Solicitud,
+  ): boolean {
+    return (
+      this.rol.estaCargado() &&
+      this.rol.getRolActivo() === ROL_PROVEEDOR &&
+      MATRIZ_ACCIONES_INVITACION_PROVEEDOR[invitacion.estado].includes(
+        "responder",
+      ) &&
+      MATRIZ_SOLICITUD_PERMITE_RESPUESTA[solicitud.estado] &&
+      !this.solicitudCerradaPorFecha(solicitud)
+    );
+  }
+
   solicitudCerradaPorFecha(solicitud: Pick<Solicitud, "cierre">): boolean {
     const cierre = fechaCierreDeSolicitud(solicitud.cierre);
     return cierre !== null && cierre <= Date.now();
@@ -180,21 +194,6 @@ export class PermisosSolicitudService {
     return ACCIONES_INVITACION_PROVEEDOR[accion].ruta;
   }
 
-  private puedeParticiparEnSolicitud(solicitud: Solicitud): boolean {
-    return MATRIZ_ACCIONES_POR_ESTADO[solicitud.estado].includes("foro");
-  }
-
-  private puedeObservar(solicitud: Solicitud): boolean {
-    const cierre = fechaCierreDeSolicitud(solicitud.cierre);
-    return cierre !== null && cierre > Date.now();
-  }
-
-  private puedeResponder(solicitud: Solicitud): boolean {
-    return (
-      this.puedeParticiparEnSolicitud(solicitud) &&
-      this.puedeObservar(solicitud)
-    );
-  }
 }
 
 /** El cierre visible dd/MM/yyyy vence a las 23:59 de esa misma fecha. */

@@ -25,7 +25,7 @@ import { ListaVerificacionComponent } from "./pages/asistente-solicitud/paso-7-r
 import { DialogoProcesarComponent } from "./pages/asistente-solicitud/paso-7-revision/components/dialogo-procesar/dialogo-procesar.component";
 import { DialogoConfirmarModificacionComponent } from "./pages/asistente-solicitud/paso-7-revision/components/dialogo-confirmar-modificacion/dialogo-confirmar-modificacion.component";
 import { ResumenDiferenciasComponent } from "./pages/asistente-solicitud/paso-7-revision/components/resumen-diferencias/resumen-diferencias.component";
-import { DialogoDescartarComponent } from "./pages/asistente-solicitud/components/dialogo-descartar/dialogo-descartar.component";
+import { DialogoDescartarModule } from "../components/dialogo-descartar/dialogo-descartar.module";
 import { EditarSolicitudComponent } from "./pages/editar-solicitud/editar-solicitud.component";
 import { paginadorEnEspanol } from "./mat-paginator-intl-es";
 import { ForoObservacionesModule } from "../components/foro-observaciones/foro-observaciones.module";
@@ -50,7 +50,6 @@ import { ForoObservacionesPageComponent } from "./pages/foro-observaciones/foro-
     DialogoProcesarComponent,
     DialogoConfirmarModificacionComponent,
     ResumenDiferenciasComponent,
-    DialogoDescartarComponent,
     EditarSolicitudComponent,
     ForoObservacionesPageComponent,
   ],
@@ -60,6 +59,7 @@ import { ForoObservacionesPageComponent } from "./pages/foro-observaciones/foro-
     SolicitanteComponentsModule,
     SolicitanteRoutingModule,
     ForoObservacionesModule,
+    DialogoDescartarModule,
   ],
   providers: [
     // Único punto de enlace de SICAPITAL (cruce del paso 1 del asistente).
