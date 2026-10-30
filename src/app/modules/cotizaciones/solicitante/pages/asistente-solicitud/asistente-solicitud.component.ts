@@ -159,8 +159,8 @@ export class AsistenteSolicitudComponent implements OnInit {
       // Paso 2 (implementado)
       datosGenerales: fb.group(
         {
-          dependenciaSolicitante: ["", Validators.required],
-          dependenciaDestino: ["", Validators.required],
+          dependenciaSolicitante: [null, Validators.required],
+          dependenciaDestino: [null, Validators.required],
           fechaApertura: ["", Validators.required],
           fechaCierre: ["", Validators.required],
           criterioSeleccion: ["", minCaracteres(MIN_CARACTERES_CRITERIO)],
@@ -230,7 +230,15 @@ export class AsistenteSolicitudComponent implements OnInit {
       .obtenerDependencias()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (dependencias) => this.dependencias.set(dependencias),
+        next: (dependencias) => {
+          this.dependencias.set(dependencias);
+          if (this.normalizarDependencias(dependencias)) {
+            void this.alerta.showAlert(
+              "Dependencias actualizadas",
+              "Una dependencia guardada ya no está disponible. Seleccione nuevamente las dependencias del proceso.",
+            );
+          }
+        },
         error: () => {
           this.alerta.showAlert(
             "Catálogo no disponible",
@@ -326,7 +334,7 @@ export class AsistenteSolicitudComponent implements OnInit {
   get resumenProveedores(): ResumenSolicitudProveedores {
     const cruce = this.resultadoCruce();
     const datos = this.datosGeneralesForm.getRawValue() as {
-      dependenciaSolicitante?: string;
+      dependenciaSolicitante?: number | null;
       fechaApertura?: string;
       fechaCierre?: string;
     };
@@ -336,8 +344,9 @@ export class AsistenteSolicitudComponent implements OnInit {
       this.dependencias().find(
         (opcion) => opcion.valor === datos.dependenciaSolicitante,
       )?.etiqueta ??
-      datos.dependenciaSolicitante ??
-      "";
+      (datos.dependenciaSolicitante == null
+        ? ""
+        : String(datos.dependenciaSolicitante));
 
     return {
       objeto: cruce?.solicitud.objeto ?? "",
@@ -714,7 +723,7 @@ export class AsistenteSolicitudComponent implements OnInit {
       nucleoSnies?: string;
     };
     const datosGenerales = this.datosGeneralesForm.getRawValue() as {
-      dependenciaDestino?: string;
+      dependenciaDestino?: number | null;
       fechaApertura?: string;
       fechaCierre?: string;
       criterioSeleccion?: string;
@@ -745,7 +754,7 @@ export class AsistenteSolicitudComponent implements OnInit {
         : "",
       sede: cruce?.solicitud.sede ?? "",
       dependenciaDestino: this.etiquetaDependenciaDestino(
-        datosGenerales.dependenciaDestino ?? "",
+        datosGenerales.dependenciaDestino,
       ),
       fechaAperturaLarga: datosGenerales.fechaApertura
         ? formatoFechaLarga(datosGenerales.fechaApertura)
@@ -776,14 +785,48 @@ export class AsistenteSolicitudComponent implements OnInit {
   }
 
   /** Etiqueta de la dependencia destino (guion cuando falta el dato). */
-  private etiquetaDependenciaDestino(valor: string): string {
-    if (!valor) {
+  private etiquetaDependenciaDestino(valor: number | null | undefined): string {
+    if (valor === null || valor === undefined) {
       return "";
     }
     return (
       this.dependencias().find((opcion) => opcion.valor === valor)?.etiqueta ??
-      valor
+      String(valor)
     );
+  }
+
+  private normalizarDependencias(
+    opciones: readonly OpcionDependencia[],
+  ): boolean {
+    let habiaDependenciaInvalida = false;
+    for (const nombreControl of [
+      "dependenciaSolicitante",
+      "dependenciaDestino",
+    ]) {
+      const control = this.datosGeneralesForm.get(nombreControl);
+      const valor = control?.value;
+      if (valor === null || valor === undefined || valor === "") {
+        control?.setValue(null, { emitEvent: false });
+        continue;
+      }
+
+      const id =
+        typeof valor === "number"
+          ? valor
+          : typeof valor === "string" && valor.trim() !== ""
+            ? Number(valor)
+            : Number.NaN;
+      if (
+        !Number.isInteger(id) ||
+        !opciones.some((opcion) => opcion.valor === id)
+      ) {
+        control?.setValue(null, { emitEvent: false });
+        habiaDependenciaInvalida = true;
+      } else if (valor !== id) {
+        control?.setValue(id, { emitEvent: false });
+      }
+    }
+    return habiaDependenciaInvalida;
   }
 
   /** Navega a cualquier paso dentro del rango del asistente. */
@@ -941,8 +984,8 @@ export class AsistenteSolicitudComponent implements OnInit {
     this.asistenteForm.reset({
       necesidad: { unidadEjecutora: "", vigencia: "", numeroNecesidad: "" },
       datosGenerales: {
-        dependenciaSolicitante: "",
-        dependenciaDestino: "",
+        dependenciaSolicitante: null,
+        dependenciaDestino: null,
         fechaApertura: "",
         fechaCierre: "",
         criterioSeleccion: "",

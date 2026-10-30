@@ -70,6 +70,12 @@ export class BorradorService<T extends BorradorBase> {
 
   /** Validación del payload; los subtipos pueden añadir condiciones. */
   protected esValido(borrador: T): boolean {
-    return borrador.version === this.versionEsperada;
+    return (
+      borrador.version === this.versionEsperada &&
+      Number.isInteger(borrador.currentStep) &&
+      borrador.currentStep >= 1 &&
+      typeof borrador.savedAt === "string" &&
+      Number.isFinite(Date.parse(borrador.savedAt))
+    );
   }
 }

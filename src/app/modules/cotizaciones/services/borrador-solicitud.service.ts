@@ -33,7 +33,8 @@ export class BorradorSolicitudService extends BorradorService<BorradorSolicitudN
     return (
       super.esValido(borrador) &&
       !!borrador.formValue &&
-      typeof borrador.formValue === "object"
+      typeof borrador.formValue === "object" &&
+      !Array.isArray(borrador.formValue)
     );
   }
 }

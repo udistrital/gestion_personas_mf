@@ -7,6 +7,6 @@ export interface DependenciaOikos {
 
 /** Opción de dependencia utilizada por los formularios del asistente. */
 export interface OpcionDependencia {
-  readonly valor: string;
+  readonly valor: number;
   readonly etiqueta: string;
 }

@@ -39,7 +39,7 @@ export class DependenciasService {
         dependencias
           .filter((dependencia) => dependencia.Activo)
           .map((dependencia) => ({
-            valor: String(dependencia.Id),
+            valor: dependencia.Id,
             etiqueta: dependencia.Nombre,
           })),
       ),

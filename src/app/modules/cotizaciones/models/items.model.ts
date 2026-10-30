@@ -25,6 +25,8 @@ export interface ItemSolicitud {
   /** Descripción y ficha técnica (texto plano). */
   readonly descripcion: string;
   readonly unidad: string;
+  /** Identificador numérico de U_COMERCIO, cuando la unidad viene del catálogo. */
+  readonly unidadId?: number;
   readonly cantidad: number;
   /** Código UNSPSC (solo lo aportan los ítems del cargue masivo). */
   readonly codigoUnspsc?: string;
@@ -46,6 +48,13 @@ export interface OpcionItem {
   readonly valor: string;
   readonly etiqueta: string;
   /** Icono Material representativo (clásicos, ya disponibles). */
+  readonly icono: string;
+}
+
+/** Opción de unidad de medida de Parámetros. */
+export interface OpcionUnidadMedida {
+  readonly valor: number;
+  readonly etiqueta: string;
   readonly icono: string;
 }
 

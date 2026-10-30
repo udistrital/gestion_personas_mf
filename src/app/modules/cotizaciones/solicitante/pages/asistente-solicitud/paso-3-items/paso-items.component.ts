@@ -32,11 +32,11 @@ import {
   MIN_CARACTERES_DESCRIPCION_ITEM,
   MIN_CARACTERES_NOMBRE_ITEM,
   ModoRegistro,
+  OpcionUnidadMedida,
   PLANTILLA_MASIVA,
   RechazoMasivo,
   TIPOS_ITEM,
   TipoItem,
-  OpcionItem,
   formatoCantidad,
   formatoTamano,
   resumirItems,
@@ -94,7 +94,7 @@ export function minCaracteresTexto(minimo: number): ValidatorFn {
 })
 export class PasoItemsComponent implements OnInit {
   readonly tipos = TIPOS_ITEM;
-  unidades: readonly OpcionItem[] = [];
+  unidades: readonly OpcionUnidadMedida[] = [];
   readonly catalogoBusqueda = signal<readonly {
     tipo: TipoBusquedaCatalogo;
     codigo: string;
@@ -190,7 +190,7 @@ export class PasoItemsComponent implements OnInit {
           minCaracteresTexto(MIN_CARACTERES_DESCRIPCION_ITEM),
         ],
       ],
-      unidad: ["", Validators.required],
+      unidad: [null, Validators.required],
       cantidad: [1, [Validators.required, Validators.min(CANTIDAD_MINIMA)]],
     });
   }
@@ -202,12 +202,12 @@ export class PasoItemsComponent implements OnInit {
       .subscribe({
         next: (opciones) => {
           this.unidades = opciones.map((opcion) => ({
-            valor: String(opcion.id),
+            valor: opcion.id,
             etiqueta: opcion.nombre,
             icono: "category",
           }));
           const unidad = this.itemForm.get("unidad");
-          if (!unidad?.value && this.unidades.length > 0) {
+          if (unidad?.value === null && this.unidades.length > 0) {
             unidad?.setValue(this.valorUnidadPredeterminada(), {
               emitEvent: false,
             });
@@ -423,9 +423,19 @@ export class PasoItemsComponent implements OnInit {
       tipo: TipoItem;
       nombre: string;
       descripcion: string;
-      unidad: string;
+      unidad: number;
       cantidad: number;
     };
+    const unidad = this.unidades.find(
+      (opcion) => opcion.valor === valores.unidad,
+    );
+    if (!unidad) {
+      this.alerta.showAlert(
+        "Unidad no disponible",
+        "Seleccione una unidad de medida disponible en el catálogo.",
+      );
+      return;
+    }
     const id = this.editandoId();
 
     if (id) {
@@ -437,7 +447,8 @@ export class PasoItemsComponent implements OnInit {
                 tipo: valores.tipo,
                 nombre: valores.nombre.trim(),
                 descripcion: valores.descripcion.trim(),
-                unidad: valores.unidad,
+                unidad: unidad.etiqueta,
+                unidadId: unidad.valor,
                 cantidad: Number(valores.cantidad),
               }
             : item,
@@ -451,7 +462,8 @@ export class PasoItemsComponent implements OnInit {
           tipo: valores.tipo,
           nombre: valores.nombre.trim(),
           descripcion: valores.descripcion.trim(),
-          unidad: valores.unidad,
+          unidad: unidad.etiqueta,
+          unidadId: unidad.valor,
           cantidad: Number(valores.cantidad),
         },
       ]);
@@ -489,7 +501,7 @@ export class PasoItemsComponent implements OnInit {
       tipo: item.tipo,
       nombre: item.nombre,
       descripcion: item.descripcion,
-      unidad: item.unidad,
+      unidad: this.valorUnidadParaEdicion(item),
       cantidad: item.cantidad,
     });
   }
@@ -506,8 +518,24 @@ export class PasoItemsComponent implements OnInit {
     });
   }
 
-  private valorUnidadPredeterminada(): string {
-    return this.unidades[0]?.valor ?? "";
+  private valorUnidadPredeterminada(): number | null {
+    return this.unidades[0]?.valor ?? null;
+  }
+
+  private valorUnidadParaEdicion(item: ItemSolicitud): number | null {
+    if (
+      item.unidadId !== undefined &&
+      this.unidades.some((unidad) => unidad.valor === item.unidadId)
+    ) {
+      return item.unidadId;
+    }
+    return (
+      this.unidades.find(
+        (unidad) =>
+          unidad.etiqueta === item.unidad ||
+          String(unidad.valor) === item.unidad,
+      )?.valor ?? null
+    );
   }
 
   // ── Cargue masivo ────────────────────────────────────────────────────────
