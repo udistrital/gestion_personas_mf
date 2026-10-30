@@ -157,6 +157,27 @@
   border-radius: var(--agora-radio-sm);
 }
 
+/* Paso no editable en la edición (S-04): texto + icono, nunca solo color. */
+.acordeon__solo-lectura {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: 999px;
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-texto-neutro);
+  font-size: t.$fuente-sm;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.acordeon__solo-lectura mat-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  font-size: 0.875rem;
+}
+
 .acordeon__flecha {
   color: var(--agora-texto-deshabilitado);
   transition: transform 0.2s ease-in-out;

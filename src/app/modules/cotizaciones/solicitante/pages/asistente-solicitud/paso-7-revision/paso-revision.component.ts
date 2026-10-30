@@ -9,6 +9,7 @@ import {
   signal,
 } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { FormControl, Validators } from "@angular/forms";
 import { MatDialog } from "@angular/material/dialog";
 import { formatoFechaCorta } from "../../../../models/datos-generales.model";
 import {
@@ -48,11 +49,33 @@ import {
   etiquetaClasificacion,
 } from "../../../../models/documentos.model";
 import { AlertService } from "src/app/shared/services/alert.service";
+import { textoPlanoDesdeHtml } from "src/app/shared/utils/texto-plano";
+import {
+  justificacionMinima,
+  MIN_CARACTERES_JUSTIFICACION,
+} from "src/app/shared/validators/justificacion.validator";
 import { CalendarioFestivosService } from "../../../../services/calendario-festivos.service";
+import type {
+  ModoEdicionSolicitud,
+  ResumenDiferencias,
+} from "../../../../models/edicion-solicitud.model";
 import { DialogoProcesarComponent } from "./components/dialogo-procesar/dialogo-procesar.component";
+import {
+  DialogoConfirmarModificacionComponent,
+  type DialogoConfirmarModificacionDatos,
+} from "./components/dialogo-confirmar-modificacion/dialogo-confirmar-modificacion.component";
 
 /** Segundos que tarda la radicación simulada antes de mostrar el éxito. */
 const ESPERA_RADICACION = 1200;
+
+/**
+ * Mínimo de caracteres (texto plano) de la justificación de la edición.
+ *
+ * Es provisional: el mockup de S-04 deja las reglas de trazabilidad de cambios
+ * (RF-016) como "por definir", así que se adopta el mínimo de S-02 para los
+ * textos largos.
+ */
+export const MIN_JUSTIFICACION_EDICION = MIN_CARACTERES_JUSTIFICACION;
 
 /**
  * Paso 7 del asistente: "Revisión y procesar".
@@ -120,6 +143,51 @@ export class PasoRevisionComponent {
   /** Pide al asistente volver al listado de solicitudes. */
   @Output() irAMisSolicitudes = new EventEmitter<void>();
 
+  /*
+   * ── Edición de una solicitud existente (S-04) ───────────────────────────
+   *
+   * El paso 7 es el punto de guardado de la edición: muestra las diferencias
+   * calculadas por el asistente, exige la justificación del cambio y ejecuta
+   * el guardado. En la creación estos inputs llegan en sus valores por defecto
+   * y la vista no cambia.
+   */
+
+  /** Modo de edición habilitado por el estado; `null` en la creación. */
+  @Input() modoEdicion: ModoEdicionSolicitud | null = null;
+
+  /** Cambios contra la versión guardada (los calcula el asistente). */
+  @Input() diferencias: ResumenDiferencias = { grupos: [], total: 0 };
+
+  /** Pasos que admiten cambios en el modo de edición actual. */
+  @Input() pasosEditables: readonly number[] = [];
+
+  /** true mientras el asistente persiste la edición. */
+  @Input() guardando = false;
+
+  /** Error del último intento de guardado (vacío = sin error). */
+  @Input() errorGuardado = "";
+
+  /** true cuando no hay diferencias contra la versión guardada. */
+  @Input() sinCambios = false;
+
+  /** true cuando el asistente autoriza el guardado (validaciones de pasos). */
+  @Input() puedeGuardar = false;
+
+  /** Motivo por el que el asistente bloquea el guardado. */
+  @Input() ayudaGuardar = "";
+
+  /** Número visible de la solicitud editada. */
+  @Input() solicitudId = "";
+
+  /** Versión vigente del expediente ("v1.0"). */
+  @Input() versionActual = "v1.0";
+
+  /** Pide al asistente guardar la edición. */
+  @Output() guardarEdicion = new EventEmitter<void>();
+
+  /** Pide al asistente confirmar el descarte de los cambios. */
+  @Output() descartarEdicion = new EventEmitter<void>();
+
   /**
    * Notifica el cambio de vista del paso (revisión ↔ éxito).
    *
@@ -151,6 +219,27 @@ export class PasoRevisionComponent {
 
   /** Momento en que se radicó la solicitud (para el resumen de éxito). */
   readonly fechaRadicacion = signal<Date | null>(null);
+
+  /*
+   * ── Edición de una solicitud existente (S-04) ────────────────────────────
+   */
+
+  /** Mínimo de caracteres de la justificación, expuesto a la plantilla. */
+  readonly minimoJustificacion = MIN_JUSTIFICACION_EDICION;
+
+  /**
+   * Justificación de la modificación.
+   *
+   * Se declara siempre para que el componente conserve una sola forma; solo se
+   * pinta y se valida en el modo edición.
+   */
+  readonly justificacion = new FormControl("", {
+    nonNullable: true,
+    validators: [
+      Validators.required,
+      justificacionMinima(MIN_JUSTIFICACION_EDICION),
+    ],
+  });
 
   /** true mientras se dialoga la confirmación (evita dobles aperturas). */
   private readonly dialogando = signal(false);
@@ -190,6 +279,173 @@ export class PasoRevisionComponent {
       this.verificacionFinal.length > 0 &&
       this.verificacionFinal.every((item) => item.cumple)
     );
+  }
+
+  // ── Edición (S-04) ───────────────────────────────────────────────────────
+
+  /** true cuando el paso 7 forma parte de una edición. */
+  get esEdicion(): boolean {
+    return this.modoEdicion !== null;
+  }
+
+  /** true en una modificación restringida (solicitud ya enviada). */
+  get esRestringida(): boolean {
+    return this.modoEdicion === "restringida";
+  }
+
+  /** Etiqueta del modo de edición, visible en el banner. */
+  get modoEtiqueta(): string {
+    return this.esRestringida
+      ? "Modificación restringida"
+      : "Edición de borrador";
+  }
+
+  /** Título del banner cuando se modifica una solicitud. */
+  get tituloBannerEdicion(): string {
+    return this.solicitudId
+      ? `Modificar solicitud N.° ${this.solicitudId}`
+      : "Modificar solicitud";
+  }
+
+  /** Texto de apoyo del banner cuando se modifica una solicitud. */
+  get descripcionBannerEdicion(): string {
+    return this.esRestringida
+      ? "La solicitud ya fue enviada a proveedores: solo se modifican los ítems y la fecha de cierre. El cambio queda pendiente de aprobación."
+      : "Está editando un borrador. Los cambios no se envían a proveedores hasta que procese la solicitud; puede regresar en cualquier momento sin perder lo editado.";
+  }
+
+  /** Etiqueta del botón de guardado de la edición. */
+  get tituloGuardar(): string {
+    return this.esRestringida ? "Solicitar modificación" : "Guardar cambios";
+  }
+
+  /** Icono del botón de guardado de la edición. */
+  get iconoGuardar(): string {
+    return this.esRestringida ? "send" : "save";
+  }
+
+  /** true si el botón de guardado de la edición está bloqueado. */
+  get guardadoDeshabilitado(): boolean {
+    if (this.guardando) {
+      return true;
+    }
+    // Sin cambios se permite pulsar: el asistente explica que la solicitud no
+    // se modifica. Es el único caso en el que no se exige justificación.
+    if (this.sinCambios) {
+      return false;
+    }
+    return !this.puedeGuardar || this.justificacion.invalid;
+  }
+
+  /** Explica por qué el guardado de la edición está bloqueado. */
+  get ayudaGuardado(): string {
+    if (this.guardando) {
+      return "Guardando los cambios de la solicitud…";
+    }
+    if (this.sinCambios) {
+      return "No hay cambios respecto de la versión guardada: al pulsar se indicará que la solicitud no se modifica.";
+    }
+    if (!this.puedeGuardar) {
+      return this.ayudaGuardar;
+    }
+    if (this.justificacion.invalid) {
+      return `Escriba una justificación de al menos ${MIN_JUSTIFICACION_EDICION} caracteres.`;
+    }
+    return "";
+  }
+
+  /** true cuando el error de la justificación debe mostrarse. */
+  get justificacionInvalida(): boolean {
+    return this.justificacion.invalid && this.justificacion.touched;
+  }
+
+  /** true si el paso admite cambios (siempre en la creación). */
+  pasoEditable(numero: number): boolean {
+    return !this.esEdicion || this.pasosEditables.includes(numero);
+  }
+
+  /** Marca la justificación como tocada al salir del editor. */
+  alSalirJustificacion(): void {
+    this.justificacion.markAsTouched();
+  }
+
+  /** Guarda la edición si la justificación y las validaciones lo permiten. */
+  guardar(): void {
+    if (!this.esEdicion || this.guardando || this.dialogando()) {
+      return;
+    }
+
+    // Sin cambios no se pide justificación: el asistente muestra el aviso de
+    // que la solicitud permanece igual.
+    if (this.sinCambios) {
+      this.justificacion.markAsUntouched();
+      this.guardarEdicion.emit();
+      return;
+    }
+
+    this.justificacion.markAsTouched();
+    if (!this.puedeGuardar || this.justificacion.invalid) {
+      return;
+    }
+
+    // La modificación de una solicitud enviada es una solicitud formal: se
+    // confirma en un diálogo con el detalle de los cambios y la justificación.
+    if (this.esRestringida) {
+      this.confirmarModificacion();
+      return;
+    }
+
+    this.guardarEdicion.emit();
+  }
+
+  /**
+   * Abre la confirmación de la modificación restringida (S-04).
+   *
+   * El diálogo resume los cambios que se enviarán, muestra la justificación
+   * registrada y exige el reconocimiento de que la propuesta queda pendiente
+   * de aprobación. Solo al confirmar se delega el guardado en el asistente;
+   * cancelar conserva el formulario intacto. El progreso posterior se muestra
+   * en el pie de este mismo paso.
+   */
+  private confirmarModificacion(): void {
+    if (this.dialogando()) {
+      return;
+    }
+    this.dialogando.set(true);
+
+    this.dialog
+      .open<
+        DialogoConfirmarModificacionComponent,
+        DialogoConfirmarModificacionDatos,
+        boolean
+      >(DialogoConfirmarModificacionComponent, {
+        data: {
+          solicitudId: this.solicitudId,
+          versionActual: this.versionActual,
+          diferencias: this.diferencias,
+          justificacion: textoPlanoDesdeHtml(this.justificacion.value).trim(),
+        },
+        width: "640px",
+        maxWidth: "96vw",
+        autoFocus: ".dialogo__seguir",
+        restoreFocus: true,
+      })
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((confirmado) => {
+        this.dialogando.set(false);
+        if (confirmado === true) {
+          this.guardarEdicion.emit();
+        }
+      });
+  }
+
+  /** Pide confirmar el descarte de los cambios de la edición. */
+  descartar(): void {
+    if (this.guardando) {
+      return;
+    }
+    this.descartarEdicion.emit();
   }
 
   /** Resumen institucional que alimenta el modal y la vista de éxito. */
@@ -236,6 +492,9 @@ export class PasoRevisionComponent {
 
   /** Vuelve al paso que el usuario quiere corregir. */
   alEditar(numero: number): void {
+    if (!this.pasoEditable(numero)) {
+      return;
+    }
     this.editarPaso.emit(numero);
   }
 

@@ -22,7 +22,10 @@ export class AlertService {
     });
   }
 
-  showSuccessAlert(text: string, title: string = "Operación exitosa"): Promise<SweetAlertResult> {
+  showSuccessAlert(
+    text: string,
+    title: string = "Operación exitosa",
+  ): Promise<SweetAlertResult> {
     return Swal.fire({
       icon: "success",
       title: title,
@@ -33,6 +36,24 @@ export class AlertService {
         cancelButton: "alertaCancelarBoton",
         icon: "alertaIconoSuccess",
       },
+    });
+  }
+
+  showObservacionRegistradaAlert(
+    text: string,
+    elementoRetorno?: HTMLElement,
+  ): Promise<SweetAlertResult> {
+    return Swal.fire({
+      icon: "success",
+      title: "Observación registrada correctamente",
+      text,
+      confirmButtonText: "Ver historial de observaciones",
+      customClass: {
+        confirmButton: "alertaConfirmarBoton",
+        icon: "alertaIconoSuccess",
+      },
+      didOpen: () => Swal.getConfirmButton()?.focus(),
+      didClose: () => elementoRetorno?.focus(),
     });
   }
 
@@ -49,7 +70,10 @@ export class AlertService {
     });
   }
 
-  showConfirmAlert(text: string, title: string = "Atención"): Promise<SweetAlertResult> {
+  showConfirmAlert(
+    text: string,
+    title: string = "Atención",
+  ): Promise<SweetAlertResult> {
     return Swal.fire({
       title: title,
       text: text,

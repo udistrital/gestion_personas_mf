@@ -1,0 +1,317 @@
+<section class="dialogo" aria-labelledby="dialogo-cancelacion-titulo">
+  <header class="dialogo__cabecera">
+    <span
+      class="dialogo__icono"
+      [class.dialogo__icono--exito]="vista() === 'exito'"
+      aria-hidden="true"
+    >
+      <mat-icon>{{ vista() === "exito" ? "check_circle" : "cancel" }}</mat-icon>
+    </span>
+    <div class="dialogo__titulos">
+      <span
+        class="dialogo__sello"
+        [class.dialogo__sello--exito]="vista() === 'exito'"
+      >
+        {{ vista() === "exito" ? "Cancelación registrada" : "Acción crítica" }}
+      </span>
+      <h2 id="dialogo-cancelacion-titulo" class="dialogo__titulo">
+        @if (vista() === "exito") {
+          La solicitud fue cancelada correctamente
+        } @else if (solicitud(); as s) {
+          ¿Cancelar la solicitud {{ s.id }}?
+        } @else {
+          Cancelar solicitud
+        }
+      </h2>
+      @if (vista() !== "exito") {
+        <p class="dialogo__subtitulo">
+          Acción formal de terminación anticipada del procedimiento.
+        </p>
+      }
+    </div>
+    <button
+      class="dialogo__cerrar"
+      type="button"
+      aria-label="Cerrar diálogo"
+      [disabled]="enviando()"
+      (click)="volver()"
+    >
+      <mat-icon aria-hidden="true">close</mat-icon>
+    </button>
+  </header>
+
+  @switch (vista()) {
+    @case ("cargando") {
+      <div
+        class="dialogo__estado"
+        id="dialogo-cancelacion-descripcion"
+        role="status"
+        aria-live="polite"
+      >
+        <mat-spinner
+          diameter="32"
+          aria-label="Cargando solicitud"
+        ></mat-spinner>
+        <span>Cargando la información de la solicitud…</span>
+      </div>
+    }
+
+    @case ("error") {
+      <div
+        class="dialogo__estado dialogo__estado--error"
+        id="dialogo-cancelacion-descripcion"
+        role="alert"
+        aria-live="assertive"
+      >
+        <mat-icon aria-hidden="true">error_outline</mat-icon>
+        <p>{{ error() }}</p>
+      </div>
+      <footer class="dialogo__pie">
+        <button
+          class="boton boton--secundario"
+          type="button"
+          (click)="volver()"
+        >
+          Volver
+        </button>
+        <button
+          class="boton boton--primario"
+          type="button"
+          (click)="cargarSolicitud()"
+        >
+          <mat-icon aria-hidden="true">refresh</mat-icon>
+          Reintentar
+        </button>
+      </footer>
+    }
+
+    @case ("bloqueada") {
+      <div
+        class="dialogo__cuerpo"
+        id="dialogo-cancelacion-descripcion"
+        role="status"
+        aria-live="polite"
+      >
+        <div class="dialogo__aviso dialogo__aviso--bloqueo" role="status">
+          <mat-icon aria-hidden="true">lock</mat-icon>
+          <p>
+            La solicitud ya no está en un estado que permita cancelarla. No se
+            realizó ningún cambio.
+          </p>
+        </div>
+        @if (solicitud(); as s) {
+          <div class="dialogo__resumen">
+            <strong>{{ s.id }}</strong>
+            <span>{{ s.titulo }}</span>
+            <chip-estado [estado]="s.estado"></chip-estado>
+          </div>
+        }
+      </div>
+      <footer class="dialogo__pie">
+        <button class="boton boton--primario" type="button" (click)="volver()">
+          Cerrar
+        </button>
+      </footer>
+    }
+
+    @case ("listo") {
+      @if (solicitud(); as s) {
+        <form
+          class="dialogo__formulario"
+          [formGroup]="formulario"
+          (ngSubmit)="confirmar()"
+        >
+          <div class="dialogo__cuerpo" id="dialogo-cancelacion-descripcion">
+            <div class="dialogo__resumen">
+              <div class="dialogo__resumen-cabecera">
+                <strong>{{ s.id }}</strong>
+                <chip-estado [estado]="s.estado"></chip-estado>
+              </div>
+              <div>
+                <span class="dialogo__etiqueta">Objeto contractual</span>
+                <p>{{ s.titulo }}</p>
+              </div>
+              <dl class="dialogo__datos">
+                <div>
+                  <dt>Fecha de apertura</dt>
+                  <dd>{{ s.apertura || "—" }}</dd>
+                </div>
+                <div>
+                  <dt>Fecha de cierre</dt>
+                  <dd>{{ s.cierre || "—" }}</dd>
+                </div>
+                <div class="dialogo__dependencia">
+                  <dt>Dependencia solicitante</dt>
+                  <dd>{{ s.dependencia }}</dd>
+                </div>
+              </dl>
+            </div>
+
+            <div class="dialogo__aviso dialogo__aviso--destructivo">
+              <mat-icon aria-hidden="true">warning</mat-icon>
+              <p>
+                Esta acción no se puede deshacer. La solicitud dejará de estar
+                disponible y no se podrán registrar más cotizaciones.
+              </p>
+            </div>
+
+            @if (origenEnviado) {
+              <div class="dialogo__aviso dialogo__aviso--notificacion">
+                <mat-icon aria-hidden="true">campaign</mat-icon>
+                <p>
+                  Se notificará formalmente a los
+                  <strong>{{ s.contadores.proveedores }} proveedores</strong>
+                  invitados a esta solicitud. La justificación permanecerá en el
+                  expediente interno.
+                </p>
+              </div>
+            } @else {
+              <div class="dialogo__aviso dialogo__aviso--notificacion">
+                <mat-icon aria-hidden="true">info</mat-icon>
+                <p>
+                  Esta solicitud es un borrador; no hay proveedores invitados
+                  que deban ser notificados.
+                </p>
+              </div>
+            }
+
+            <section
+              class="dialogo__campo"
+              aria-labelledby="justificacion-etiqueta"
+            >
+              <label id="justificacion-etiqueta">
+                Motivo de la cancelación <span aria-hidden="true">*</span>
+              </label>
+              <editor-enriquecido
+                id="justificacion-cancelacion"
+                formControlName="justificacion"
+                [idEtiqueta]="'justificacion-etiqueta'"
+                pista="Explique el motivo de la cancelación."
+                [ayuda]="
+                  'Obligatorio · mínimo ' +
+                  minimoJustificacion +
+                  ' caracteres de texto'
+                "
+                [minCaracteres]="minimoJustificacion"
+                [rows]="3"
+                (blur)="alSalirJustificacion()"
+              ></editor-enriquecido>
+              @if (
+                formulario.controls.justificacion.invalid &&
+                formulario.controls.justificacion.touched
+              ) {
+                <p class="dialogo__error-campo" role="alert" aria-live="polite">
+                  El motivo es obligatorio y debe tener al menos
+                  {{ minimoJustificacion }} caracteres.
+                </p>
+              }
+            </section>
+
+            <label class="dialogo__check">
+              <input
+                type="checkbox"
+                [checked]="aceptado()"
+                [disabled]="enviando()"
+                (change)="alCambiarAceptacion($event)"
+              />
+              <span>
+                Entiendo que esta acción es irreversible y deja sin efecto los
+                plazos estipulados.
+              </span>
+            </label>
+
+            @if (error()) {
+              <p
+                class="dialogo__error-envio"
+                role="alert"
+                aria-live="assertive"
+              >
+                <mat-icon aria-hidden="true">error</mat-icon>
+                <span>{{ error() }}</span>
+              </p>
+            }
+
+            @if (enviando()) {
+              <p class="dialogo__enviando" role="status" aria-live="polite">
+                <mat-spinner diameter="20" aria-hidden="true"></mat-spinner>
+                Procesando la cancelación…
+              </p>
+            }
+          </div>
+
+          <footer class="dialogo__pie">
+            <button
+              class="boton boton--secundario dialogo__volver"
+              type="button"
+              [disabled]="enviando()"
+              (click)="volver()"
+            >
+              Volver
+            </button>
+            <button
+              class="boton boton--peligro"
+              type="submit"
+              [disabled]="!puedeConfirmar"
+            >
+              <mat-icon aria-hidden="true">cancel</mat-icon>
+              {{ enviando() ? "Cancelando…" : "Cancelar solicitud" }}
+            </button>
+          </footer>
+        </form>
+      }
+    }
+
+    @case ("exito") {
+      @if (solicitud(); as s) {
+        <div
+          class="dialogo__cuerpo dialogo__exito"
+          id="dialogo-cancelacion-descripcion"
+          role="status"
+          aria-live="polite"
+        >
+          <p>
+            El estado del trámite fue actualizado a
+            <strong>Cancelada</strong> en el sistema ÁGORA.
+          </p>
+
+          <div class="dialogo__resumen">
+            <div class="dialogo__resumen-cabecera">
+              <strong>{{ s.id }}</strong>
+              <chip-estado [estado]="s.estado"></chip-estado>
+            </div>
+            <p>{{ s.titulo }}</p>
+            <dl class="dialogo__datos dialogo__datos--exito">
+              <div>
+                <dt>Fecha de registro</dt>
+                <dd>{{ s.cancelacion?.fecha }}</dd>
+              </div>
+              <div>
+                <dt>Funcionario ejecutor</dt>
+                <dd>{{ s.cancelacion?.autor }}</dd>
+              </div>
+              <div>
+                <dt>Notificación a proveedores</dt>
+                <dd>
+                  @if (s.cancelacion?.estadoAnterior === "borrador") {
+                    No aplica: la solicitud estaba en borrador
+                  } @else if (s.cancelacion; as cancelacion) {
+                    {{ cancelacion.destinatariosNotificados }} oferentes
+                    notificados (envío simulado)
+                  } @else {
+                    Sin destinatarios registrados
+                  }
+                </dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+      }
+      <footer class="dialogo__pie">
+        <button class="boton boton--primario" type="button" (click)="volver()">
+          <span>{{ tituloAccionVolver }}</span>
+          <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+        </button>
+      </footer>
+    }
+  }
+</section>

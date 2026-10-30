@@ -1,0 +1,77 @@
+<plantilla-pagina-contenedora
+  [breadcrumb]="breadcrumb"
+  title="Foro de observaciones"
+  icon="forum"
+  [mostrarBotonRegresar]="true"
+  (regresar)="volverAlDetalle()"
+>
+  <div class="foro-observaciones">
+    @switch (estado()) {
+      @case ("cargando") {
+        <div class="estado estado--carga" role="status" aria-live="polite">
+          <mat-spinner
+            diameter="36"
+            aria-label="Cargando solicitud"
+          ></mat-spinner>
+          <span>Cargando la información de la solicitud…</span>
+        </div>
+      }
+      @case ("no-encontrada") {
+        <section class="estado" role="status">
+          <mat-icon aria-hidden="true">search_off</mat-icon>
+          <h2>Solicitud no encontrada</h2>
+          <p>No existe una solicitud con ese identificador.</p>
+        </section>
+      }
+      @case ("bloqueado") {
+        <section class="estado estado--bloqueado" role="alert">
+          <mat-icon aria-hidden="true">lock</mat-icon>
+          <h2>Acceso no disponible</h2>
+          <p>
+            El foro de observaciones está disponible para los roles solicitantes
+            autorizados.
+          </p>
+        </section>
+      }
+      @case ("error") {
+        <section class="estado estado--error" role="alert" aria-live="assertive">
+          <mat-icon aria-hidden="true">error_outline</mat-icon>
+          <h2>No fue posible cargar la solicitud</h2>
+          <p>{{ errorCarga() }}</p>
+          <button type="button" (click)="reintentarCargaSolicitud()">
+            <mat-icon aria-hidden="true">refresh</mat-icon>
+            Reintentar
+          </button>
+        </section>
+      }
+      @case ("listo") {
+        @if (solicitud(); as s) {
+          @if (soloLectura) {
+            <p class="aviso-lectura" role="status" aria-live="polite">
+              <mat-icon aria-hidden="true">lock</mat-icon>
+              El estado actual de la solicitud no permite nuevas actuaciones en el
+              foro. La información se muestra en modo de solo lectura.
+            </p>
+          }
+          <app-foro-observaciones
+            [solicitud]="s"
+            [observaciones]="observaciones()"
+            modo="solicitante"
+            [cargando]="cargandoObservaciones()"
+            [errorCarga]="errorCarga()"
+            [puedeResponder]="puedeUsarForo"
+            [puedeEditarRespuesta]="puedeUsarForo && puedeEditarRespuesta"
+            [fechaLimiteVencida]="fechaLimiteVencida"
+            [enviandoId]="enviandoId()"
+            [errorEnvioId]="errorEnvioId()"
+            [errorEnvio]="errorEnvio()"
+            [mensajeExito]="mensajeExito()"
+            [enfocarId]="enfocarId()"
+            (reintentar)="cargarObservaciones()"
+            (respuestaEnviada)="responder($event)"
+          ></app-foro-observaciones>
+        }
+      }
+    }
+  </div>
+</plantilla-pagina-contenedora>

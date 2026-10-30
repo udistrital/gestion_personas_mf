@@ -71,6 +71,25 @@
     </div>
   </div>
 
+  @if (filtrosRapidos.length > 0) {
+    <div class="filtros__rapidos" role="group" aria-label="Filtros rápidos">
+      @for (filtro of filtrosRapidos; track filtro.valor) {
+        <button
+          class="filtros__rapido"
+          [class.filtros__rapido--activo]="filtro.valor === filtroRapidoActivo"
+          type="button"
+          [attr.aria-pressed]="filtro.valor === filtroRapidoActivo"
+          (click)="filtroRapido.emit(filtro.valor)"
+        >
+          <span>{{ filtro.etiqueta }}</span>
+          @if (filtro.conteo !== undefined) {
+            <span class="filtros__rapido-conteo">{{ filtro.conteo }}</span>
+          }
+        </button>
+      }
+    </div>
+  }
+
   @if (nota) {
     <p class="filtros__nota">
       <mat-icon aria-hidden="true">info</mat-icon>

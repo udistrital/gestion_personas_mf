@@ -1,0 +1,160 @@
+<plantilla-pagina-contenedora
+  [breadcrumb]="breadcrumb"
+  [title]="tituloPagina"
+  [mostrarBotonRegresar]="true"
+  (regresar)="volverAlDetalle()"
+>
+  <div class="edicion">
+    @switch (vista()) {
+      @case ("cargando") {
+        <section class="cargando" role="status" aria-live="polite">
+          <span class="visually-oculto">
+            Cargando la solicitud para su modificación…
+          </span>
+          <div class="cargando__bloque cargando__bloque--titulo" aria-hidden="true"></div>
+          <div class="cargando__bloque" aria-hidden="true"></div>
+          <div class="cargando__bloque cargando__bloque--alto" aria-hidden="true"></div>
+        </section>
+      }
+
+      @case ("listo") {
+        @if (contexto(); as contextoEdicion) {
+          <asistente-solicitud
+            [contextoEdicion]="contextoEdicion"
+            (guardado)="alGuardar($event)"
+            (descartado)="alDescartar()"
+          ></asistente-solicitud>
+        }
+      }
+
+      @case ("bloqueada") {
+        <section class="bloqueo" aria-labelledby="bloqueo-titulo">
+          <div class="bloqueo__cabecera">
+            <span class="bloqueo__sello" aria-hidden="true">
+              <mat-icon>lock</mat-icon>
+            </span>
+            <div class="bloqueo__textos">
+              <span class="bloqueo__antetitulo">
+                Restricción normativa del Estatuto de Contratación (Acuerdo 003
+                de 2015)
+              </span>
+              <h2 id="bloqueo-titulo" class="bloqueo__titulo">
+                {{ tituloBloqueo() }}
+              </h2>
+              <p class="bloqueo__motivo">{{ motivoBloqueo() }}</p>
+            </div>
+          </div>
+
+          @if (solicitud(); as s) {
+            <div class="bloqueo__expediente">
+              <span class="bloqueo__pildora">
+                <mat-icon aria-hidden="true">description</mat-icon>
+                <span>{{ s.id }}</span>
+              </span>
+              <span class="bloqueo__pildora">
+                <span class="bloqueo__pildora-etiqueta">Estado:</span>
+                <span>{{ etiquetaEstado() }}</span>
+              </span>
+              <span class="bloqueo__pildora">
+                <span class="bloqueo__pildora-etiqueta">Unidad:</span>
+                <span>{{ etiquetaUnidad(s.unidadEjecutora) }}</span>
+              </span>
+            </div>
+
+            <h3 class="bloqueo__objeto">{{ s.titulo }}</h3>
+
+            <dl class="bloqueo__metricas">
+              <div class="bloqueo__metrica">
+                <dt>Oferentes notificados</dt>
+                <dd>{{ s.contadores.proveedores }}</dd>
+              </div>
+              <div class="bloqueo__metrica">
+                <dt>Cotizaciones radicadas</dt>
+                <dd>{{ s.cotizacionesRecibidas }}</dd>
+              </div>
+              <div class="bloqueo__metrica">
+                <dt>Término de respuesta</dt>
+                <dd>{{ s.cierre || "—" }}</dd>
+              </div>
+            </dl>
+          }
+
+          <div class="bloqueo__nota" role="note">
+            <mat-icon aria-hidden="true">gavel</mat-icon>
+            <p>
+              Una vez procesada, la solicitud queda amparada por el principio de
+              seguridad jurídica: los oferentes ya participantes no pueden ver
+              alteradas las condiciones del pliego sin un trámite aprobado.
+            </p>
+          </div>
+
+          <div class="bloqueo__provisional">
+            <etiqueta-por-definir
+              texto="Matriz de modificaciones permitidas por estado"
+              detalle="efectos sobre los oferentes ya participantes (RF-016)"
+            ></etiqueta-por-definir>
+          </div>
+
+          <div class="bloqueo__acciones">
+            <button
+              class="boton-recto"
+              type="button"
+              (click)="volverAlDetalle()"
+            >
+              <mat-icon aria-hidden="true">arrow_back</mat-icon>
+              <span>Volver al detalle de la solicitud</span>
+            </button>
+            <button
+              class="boton-recto boton-recto--vino"
+              type="button"
+              (click)="solicitarExcepcion()"
+            >
+              <mat-icon aria-hidden="true">forward_to_inbox</mat-icon>
+              <span>Solicitar modificación</span>
+            </button>
+          </div>
+        </section>
+      }
+
+      @case ("error") {
+        <section class="estado" role="alert">
+          <mat-icon class="estado__icono estado__icono--error" aria-hidden="true">
+            error_outline
+          </mat-icon>
+          <h2 class="estado__titulo">No pudimos cargar la solicitud</h2>
+          <p class="estado__texto">
+            {{
+              mensajeError() ||
+                "Ocurrió un problema al consultar la solicitud. Intente nuevamente."
+            }}
+          </p>
+          <div class="estado__acciones">
+            <button class="boton-recto" type="button" (click)="cargar()">
+              <mat-icon aria-hidden="true">refresh</mat-icon>
+              <span>Reintentar</span>
+            </button>
+            <button class="boton-recto" type="button" (click)="volverAlDetalle()">
+              <mat-icon aria-hidden="true">arrow_back</mat-icon>
+              <span>Volver al detalle</span>
+            </button>
+          </div>
+        </section>
+      }
+
+      @default {
+        <section class="estado">
+          <mat-icon class="estado__icono" aria-hidden="true">search_off</mat-icon>
+          <h2 class="estado__titulo">Solicitud no encontrada</h2>
+          <p class="estado__texto">
+            La solicitud que intenta modificar no existe o ya no está
+            disponible. Verifique el enlace o vuelva al listado.
+          </p>
+          <button class="boton-recto" type="button" (click)="volverAlListado()">
+            <mat-icon aria-hidden="true">arrow_back</mat-icon>
+            <span>Volver al listado</span>
+          </button>
+        </section>
+      }
+    }
+  </div>
+</plantilla-pagina-contenedora>

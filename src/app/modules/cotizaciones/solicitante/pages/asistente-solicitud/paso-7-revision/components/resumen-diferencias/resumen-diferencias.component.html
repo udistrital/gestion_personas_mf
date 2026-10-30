@@ -1,0 +1,74 @@
+<section class="diferencias" aria-labelledby="diferencias-titulo">
+  <header class="diferencias__cabecera">
+    <div class="diferencias__textos">
+      <h3 id="diferencias-titulo" class="diferencias__titulo">
+        <mat-icon aria-hidden="true">difference</mat-icon>
+        <span>Resumen de cambios</span>
+      </h3>
+      <p class="diferencias__descripcion">{{ descripcion }}</p>
+    </div>
+
+    <span class="diferencias__total">
+      <mat-icon aria-hidden="true">edit_note</mat-icon>
+      <span>{{ totalTexto }}</span>
+    </span>
+  </header>
+
+  @if (diferencias.total === 0) {
+    <p class="diferencias__vacio" role="status">
+      <mat-icon aria-hidden="true">check_circle</mat-icon>
+      <span>
+        Todavía no hay cambios respecto de la versión guardada. Modifique un
+        campo para habilitar el guardado.
+      </span>
+    </p>
+  } @else {
+    <div class="diferencias__grupos">
+      @for (grupo of diferencias.grupos; track grupo.paso) {
+        <article class="diferencias__grupo" [attr.aria-labelledby]="'cambios-paso-' + grupo.paso">
+          <header class="diferencias__grupo-cabecera">
+            <span class="diferencias__icono" aria-hidden="true">
+              <mat-icon>{{ grupo.icono }}</mat-icon>
+            </span>
+            <div class="diferencias__grupo-textos">
+              <span class="diferencias__paso">Paso {{ grupo.paso }}</span>
+              <h4
+                [id]="'cambios-paso-' + grupo.paso"
+                class="diferencias__grupo-titulo"
+              >
+                {{ grupo.titulo }}
+              </h4>
+            </div>
+            <span class="diferencias__contador">
+              {{ grupo.cambios.length }}
+              <span class="visually-oculto">
+                {{ grupo.cambios.length === 1 ? "cambio" : "cambios" }}
+              </span>
+            </span>
+          </header>
+
+          <ul class="diferencias__lista">
+            @for (cambio of grupo.cambios; track cambio.etiqueta) {
+              <li class="diferencias__cambio">
+                <span class="diferencias__campo">{{ cambio.etiqueta }}</span>
+                <span class="diferencias__valores">
+                  <span class="diferencias__anterior">
+                    <span class="visually-oculto">Valor anterior: </span>
+                    {{ cambio.anterior }}
+                  </span>
+                  <mat-icon class="diferencias__flecha" aria-hidden="true">
+                    arrow_forward
+                  </mat-icon>
+                  <span class="diferencias__nuevo">
+                    <span class="visually-oculto">Valor nuevo: </span>
+                    {{ cambio.nuevo }}
+                  </span>
+                </span>
+              </li>
+            }
+          </ul>
+        </article>
+      }
+    </div>
+  }
+</section>

@@ -1,11 +1,29 @@
 import { Injectable } from "@angular/core";
 import { Observable, of, throwError, delay } from "rxjs";
-import { EstadoSolicitud } from "src/app/core/constants/estados-solicitud.const";
+import {
+  EstadoSolicitud,
+  MATRIZ_ACCIONES_POR_ESTADO,
+} from "src/app/core/constants/estados-solicitud.const";
+import type {
+  ConteosFiltrosInvitaciones,
+  DetalleInvitacionProveedor,
+  FiltroInvitacionesProveedor,
+  GrupoFiltroInvitacion,
+  InvitacionProveedor,
+  InvitacionProveedorConSolicitud,
+  ResultadoListadoInvitaciones,
+  SolicitudDetalleProveedor,
+} from "../models/invitacion-proveedor.model";
+import {
+  grupoDeInvitacion,
+  tienePostulacionRadicada,
+} from "../models/invitacion-proveedor.model";
 import {
   FiltroSolicitudes,
   ResultadoListado,
   Solicitud,
   SolicitudDetalle,
+  DatosCancelacionSolicitud,
   TipoCotizacion,
   tipoNecesidad,
 } from "../models/solicitud.model";
@@ -48,13 +66,35 @@ import {
   buscarProveedores,
   exigeSnies,
 } from "../models/proveedores.model";
+import type {
+  DatosEdicionSolicitud,
+  ModoEdicionSolicitud,
+  ModificacionPendiente,
+  ResumenDiferencias,
+  ResultadoGuardadoSolicitud,
+  VersionEdicionSolicitud,
+} from "../models/edicion-solicitud.model";
+import {
+  revisionSolicitud,
+  siguienteVersionBorrador,
+  siguienteVersionModificacion,
+  versionSolicitud,
+} from "../models/edicion-solicitud.model";
+import type { ResultadoCruce } from "../models/necesidad.model";
+import {
+  DEPENDENCIAS_DESTINO,
+  DEPENDENCIAS_SOLICITANTES,
+} from "../models/datos-generales.model";
+import { DiferenciasSolicitudService } from "./diferencias-solicitud.service";
+import { textoPlanoDesdeHtml } from "src/app/shared/utils/texto-plano";
+import { MIN_CARACTERES_JUSTIFICACION } from "src/app/shared/validators/justificacion.validator";
 
 /**
  * Capa de datos de solicitudes.
  *
  * Los componentes solo conocen esta clase abstracta; el enlace con la
- * implementación simulada se hace en UN solo punto (provider de
- * `SolicitanteModule`). Cuando exista el backend se reemplaza por
+ * implementación simulada se hace en un solo punto (`CotizacionesModule`).
+ * Cuando exista el backend se reemplaza por
  * `SolicitudesServiceHttp` con `HttpClient` y no se toca ninguna pantalla.
  */
 export abstract class SolicitudesService {
@@ -71,6 +111,13 @@ export abstract class SolicitudesService {
     porPagina: number,
   ): Observable<ResultadoListado>;
 
+  /** Listado paginado de invitaciones del proveedor y su solicitud asociada. */
+  abstract listarInvitacionesProveedor(
+    criterios: Partial<FiltroInvitacionesProveedor>,
+    pagina: number,
+    porPagina: number,
+  ): Observable<ResultadoListadoInvitaciones>;
+
   /**
    * Detalle de una solicitud por su identificador.
    *
@@ -78,6 +125,57 @@ export abstract class SolicitudesService {
    * traduce ese `null` al estado "solicitud no encontrada".
    */
   abstract obtenerPorId(id: string): Observable<SolicitudDetalle | null>;
+
+  /** Detalle autorizado de una invitación en el portal del proveedor (P-02). */
+  abstract obtenerDetalleProveedor(
+    id: string,
+  ): Observable<DetalleInvitacionProveedor | null>;
+
+  /** Refleja la radicación en la invitación para las vistas P-01 y P-02. */
+  abstract registrarRespuestaProveedor(
+    solicitudId: string,
+    fechaRadicacion: string,
+  ): void;
+
+  /**
+   * Guarda una edición de la solicitud (S-04).
+   *
+   * - Edición completa: aplica los cambios y mantiene el borrador.
+   * - Edición restringida: registra la propuesta y pasa a `en-aprobacion`;
+   *   los datos no cambian hasta que S-08 la apruebe.
+   */
+  abstract guardarEdicion(
+    id: string,
+    valores: DatosEdicionSolicitud,
+    modo: ModoEdicionSolicitud,
+  ): Observable<ResultadoGuardadoSolicitud>;
+
+  /** Cancela una solicitud permitida por la matriz y registra su auditoría. */
+  abstract cancelarSolicitud(
+    id: string,
+    justificacion: string,
+  ): Observable<SolicitudDetalle>;
+
+  /**
+   * Versiones guardadas de la edición de una solicitud (S-04).
+   *
+   * El descarte es progresivo: la lista permite conservar la versión vigente o
+   * volver a una anterior. Se devuelve de la más reciente a la más antigua e
+   * incluye, en cada entrada, los cambios guardados que se perderían al
+   * elegirla.
+   */
+  abstract historialVersiones(
+    id: string,
+  ): Observable<readonly VersionEdicionSolicitud[]>;
+
+  /**
+   * Devuelve la solicitud a una versión guardada anterior (S-04).
+   *
+   * La fotografía, la fila del listado y la bitácora vuelven al estado de la
+   * versión elegida: los guardados posteriores se descartan de forma
+   * progresiva, sin borrar toda la edición de la sesión.
+   */
+  abstract revertirEdicion(id: string, version: string): Observable<void>;
 
   /**
    * Documento adjunto de una solicitud, listo para verse o descargarse.
@@ -93,6 +191,21 @@ export abstract class SolicitudesService {
 
 const DATOS_MOCK: readonly Solicitud[] = [
   {
+    id: "SOL-2026-0047",
+    vigencia: 2026,
+    unidadEjecutora: "1",
+    titulo:
+      "Adquisición de estaciones de trabajo para el laboratorio de análisis de datos",
+    apertura: "23/02/2026",
+    cierre: "06/03/2026",
+    dependencia: "Vicerrectoría Académica",
+    tipoCotizacion: "BIEN",
+    estado: "borrador",
+    version: "v1.2",
+    revision: 2,
+    ultimaModificacion: "18/02/2026 11:40 COT",
+  },
+  {
     id: "SOL-2026-0046",
     vigencia: 2026,
     unidadEjecutora: "4",
@@ -103,6 +216,9 @@ const DATOS_MOCK: readonly Solicitud[] = [
     dependencia: "Facultad de Ciencias y Educación",
     tipoCotizacion: "SERVICIO",
     estado: "borrador",
+    version: "v1.0",
+    revision: 1,
+    ultimaModificacion: "16/02/2026 09:20 COT",
   },
   {
     id: "SOL-2026-0044",
@@ -113,7 +229,11 @@ const DATOS_MOCK: readonly Solicitud[] = [
     cierre: "11/02/2026",
     dependencia: "Facultad de Ingeniería",
     tipoCotizacion: "BIEN",
-    estado: "abierta",
+    estado: "enviada-proveedores",
+    version: "v1.0",
+    revision: 1,
+    ultimaModificacion: "02/02/2026 08:52 COT",
+    fechaLimiteObservaciones: "2026-11-02T18:00:00-05:00",
   },
   {
     id: "SOL-2026-0042",
@@ -121,10 +241,28 @@ const DATOS_MOCK: readonly Solicitud[] = [
     unidadEjecutora: "1",
     titulo: "Suministro de equipos de cómputo para laboratorios de posgrados",
     apertura: "15/02/2026",
-    cierre: "24/02/2026",
+    cierre: "26/02/2026",
     dependencia: "Vicerrectoría Académica",
     tipoCotizacion: "BIEN",
-    estado: "abierta",
+    estado: "enviada-con-modificaciones",
+    version: "v2.0",
+    revision: 3,
+    ultimaModificacion: "02/03/2026 11:30 COT",
+  },
+  {
+    id: "SOL-2026-0041",
+    vigencia: 2026,
+    unidadEjecutora: "2",
+    titulo:
+      "Renovación de la plataforma de gestión documental y firma electrónica",
+    apertura: "10/02/2026",
+    cierre: "20/02/2026",
+    dependencia: "División de TI",
+    tipoCotizacion: "SERVICIO",
+    estado: "en-aprobacion",
+    version: "v1.0",
+    revision: 1,
+    ultimaModificacion: "19/02/2026 15:05 COT",
   },
   {
     id: "SOL-2026-0039",
@@ -137,6 +275,9 @@ const DATOS_MOCK: readonly Solicitud[] = [
     dependencia: "División de TI",
     tipoCotizacion: "SERVICIO",
     estado: "en-evaluacion",
+    version: "v1.1",
+    revision: 2,
+    ultimaModificacion: "25/02/2026 09:15 COT",
   },
   {
     id: "SOL-2026-0035",
@@ -148,6 +289,9 @@ const DATOS_MOCK: readonly Solicitud[] = [
     dependencia: "Facultad del Medio Ambiente",
     tipoCotizacion: "BIEN",
     estado: "borrador",
+    version: "v1.0",
+    revision: 1,
+    ultimaModificacion: "10/02/2026 16:45 COT",
   },
   {
     id: "SOL-2026-0028",
@@ -159,18 +303,26 @@ const DATOS_MOCK: readonly Solicitud[] = [
     cierre: "04/02/2026",
     dependencia: "Oficina Asesora de Control Interno",
     tipoCotizacion: "SERVICIO",
-    estado: "publicada",
+    estado: "enviada-proveedores",
+    version: "v1.0",
+    revision: 1,
+    ultimaModificacion: "29/01/2026 10:45 COT",
+    fechaLimiteObservaciones: "2026-10-12T18:00:00-05:00",
   },
   {
     id: "SOL-2026-0021",
     vigencia: 2026,
     unidadEjecutora: "2",
-    titulo: "Renovación de pólizas institucionales de seguros de bienes muebles",
+    titulo:
+      "Renovación de pólizas institucionales de seguros de bienes muebles",
     apertura: "16/01/2026",
     cierre: "22/01/2026",
     dependencia: "Secretaría General",
     tipoCotizacion: "SERVICIO",
-    estado: "cerrada",
+    estado: "desierta",
+    version: "v1.0",
+    revision: 1,
+    ultimaModificacion: "22/01/2026 17:45 COT",
   },
   {
     id: "SOL-2026-0015",
@@ -182,7 +334,10 @@ const DATOS_MOCK: readonly Solicitud[] = [
     cierre: "14/01/2026",
     dependencia: "Editorial Universidad Distrital",
     tipoCotizacion: "BIEN_Y_SERVICIO",
-    estado: "publicada",
+    estado: "adjudicada",
+    version: "v1.1",
+    revision: 2,
+    ultimaModificacion: "14/01/2026 17:45 COT",
   },
   {
     id: "SOL-2026-0008",
@@ -194,7 +349,10 @@ const DATOS_MOCK: readonly Solicitud[] = [
     cierre: null,
     dependencia: "División de Recursos Físicos",
     tipoCotizacion: "SERVICIO",
-    estado: "cerrada",
+    estado: "desierta",
+    version: "v1.0",
+    revision: 1,
+    ultimaModificacion: "12/01/2026 14:10 COT",
   },
   {
     id: "SOL-2026-0005",
@@ -205,7 +363,21 @@ const DATOS_MOCK: readonly Solicitud[] = [
     cierre: "28/01/2026",
     dependencia: "Facultad de Ingeniería",
     tipoCotizacion: "SERVICIO",
-    estado: "cerrada",
+    estado: "cancelada",
+    version: "v1.0",
+    revision: 1,
+    ultimaModificacion: "28/01/2026 09:05 COT",
+    fechaLimiteObservaciones: "2026-01-28T18:00:00-05:00",
+    cancelacion: {
+      estadoAnterior: "enviada-proveedores",
+      justificacion:
+        "La necesidad institucional fue replanteada antes del cierre del proceso.",
+      fecha: "28/01/2026 09:05 COT",
+      usuario: "raquimbayap",
+      autor: "Raúl Quimbaya",
+      rol: "Solicitante",
+      destinatariosNotificados: 12,
+    },
   },
   {
     id: "SOL-2025-0117",
@@ -216,7 +388,10 @@ const DATOS_MOCK: readonly Solicitud[] = [
     cierre: "18/12/2025",
     dependencia: "IDEXUD",
     tipoCotizacion: "BIEN",
-    estado: "cerrada",
+    estado: "desierta",
+    version: "v1.0",
+    revision: 1,
+    ultimaModificacion: "18/12/2025 17:30 COT",
   },
   {
     id: "SOL-2025-0098",
@@ -227,7 +402,10 @@ const DATOS_MOCK: readonly Solicitud[] = [
     cierre: "14/11/2025",
     dependencia: "Facultad de Ciencias y Educación",
     tipoCotizacion: "SERVICIO",
-    estado: "cerrada",
+    estado: "adjudicada",
+    version: "v1.0",
+    revision: 1,
+    ultimaModificacion: "14/11/2025 17:45 COT",
   },
   {
     id: "SOL-2025-0074",
@@ -238,7 +416,20 @@ const DATOS_MOCK: readonly Solicitud[] = [
     cierre: "10/10/2025",
     dependencia: "Rectoría",
     tipoCotizacion: "SERVICIO",
-    estado: "cerrada",
+    estado: "cancelada",
+    version: "v1.0",
+    revision: 1,
+    ultimaModificacion: "10/10/2025 11:20 COT",
+    cancelacion: {
+      estadoAnterior: "enviada-proveedores",
+      justificacion:
+        "Se canceló el proceso por ajuste de la planeación institucional.",
+      fecha: "10/10/2025 11:20 COT",
+      usuario: "mpulido",
+      autor: "Martha Patricia Pulido",
+      rol: "Solicitante",
+      destinatariosNotificados: 8,
+    },
   },
   {
     id: "SOL-2024-0061",
@@ -249,20 +440,195 @@ const DATOS_MOCK: readonly Solicitud[] = [
     cierre: "20/09/2024",
     dependencia: "Facultad de Ingeniería",
     tipoCotizacion: "BIEN",
-    estado: "cerrada",
-  },
-  {
-    id: "SOL-2026-0005",
-    vigencia: 2026,
-    unidadEjecutora: "3",
-    titulo: "Licenciamiento de plataforma de analítica institucional",
-    apertura: "20/01/2026",
-    cierre: "28/01/2026",
-    dependencia: "Facultad de Ingeniería",
-    tipoCotizacion: "SERVICIO",
-    estado: "cerrada",
+    estado: "adjudicada",
+    version: "v1.0",
+    revision: 1,
+    ultimaModificacion: "20/09/2024 16:30 COT",
   },
 ];
+
+/**
+ * Solicitudes sintéticas exclusivas de la bandeja del proveedor. Se mantienen
+ * fuera de DATOS_MOCK para no alterar el listado del solicitante (S-01).
+ */
+const SOLICITUDES_PROVEEDOR_MOCK: readonly Solicitud[] = [
+  {
+    id: "SOL-2026-0142",
+    vigencia: 2026,
+    unidadEjecutora: "1",
+    titulo:
+      "Adquisición de equipamiento de servidores y virtualización para el centro de cómputo",
+    apertura: "01/10/2026",
+    cierre: "30/10/2026",
+    dependencia: "DIRTEI (Tecnología)",
+    tipoCotizacion: "BIEN",
+    estado: "enviada-proveedores",
+    fechaLimiteObservaciones: "2026-10-29T23:59:00-05:00",
+  },
+  {
+    id: "SOL-2026-0139",
+    vigencia: 2026,
+    unidadEjecutora: "1",
+    titulo:
+      "Renovación y licenciamiento de plataforma de gestión de laboratorios virtuales STEM",
+    apertura: "24/10/2026",
+    cierre: "02/11/2026",
+    dependencia: "Recursos Educativos",
+    tipoCotizacion: "SERVICIO",
+    estado: "enviada-con-modificaciones",
+    fechaLimiteObservaciones: "2026-10-30T18:00:00-05:00",
+  },
+  {
+    id: "SOL-2026-0135",
+    vigencia: 2026,
+    unidadEjecutora: "3",
+    titulo:
+      "Suministro de mobiliario ergonómico para aulas de posgrado Sede Macarena A",
+    apertura: "24/10/2026",
+    cierre: "08/11/2026",
+    dependencia: "División de Planta Física",
+    tipoCotizacion: "BIEN",
+    estado: "enviada-proveedores",
+    fechaLimiteObservaciones: "2026-11-03T18:00:00-05:00",
+  },
+  {
+    id: "SOL-2026-0128",
+    vigencia: 2026,
+    unidadEjecutora: "1",
+    titulo:
+      "Mantenimiento preventivo y actualización de UPS de media potencia en sedes Bogotá",
+    apertura: "25/10/2026",
+    cierre: "12/11/2026",
+    dependencia: "Vicerrectoría Académica",
+    tipoCotizacion: "SERVICIO",
+    estado: "enviada-proveedores",
+  },
+  {
+    id: "SOL-2026-0115",
+    vigencia: 2026,
+    unidadEjecutora: "2",
+    titulo:
+      "Implementación de sistema de cableado estructurado e infraestructura de red pasiva",
+    apertura: "01/10/2026",
+    cierre: "20/10/2026",
+    dependencia: "Red de Datos UD",
+    tipoCotizacion: "BIEN_Y_SERVICIO",
+    estado: "en-evaluacion",
+    fechaLimiteObservaciones: "2026-10-15T18:00:00-05:00",
+  },
+  {
+    id: "SOL-2026-0098",
+    vigencia: 2026,
+    unidadEjecutora: "1",
+    titulo:
+      "Adquisición de kits de robótica y sensores IoT para semilleros de investigación",
+    apertura: "01/10/2026",
+    cierre: "05/12/2026",
+    dependencia: "Centro de Investigaciones (CIDC)",
+    tipoCotizacion: "BIEN",
+    estado: "adjudicada",
+  },
+  {
+    id: "SOL-2026-0084",
+    vigencia: 2026,
+    unidadEjecutora: "2",
+    titulo:
+      "Servicio integral de conectividad WAN e internet dedicado para campus universitarios",
+    apertura: "01/09/2026",
+    cierre: "20/09/2026",
+    dependencia: "DIRTEI",
+    tipoCotizacion: "SERVICIO",
+    estado: "desierta",
+  },
+  {
+    id: "SOL-2026-0072",
+    vigencia: 2026,
+    unidadEjecutora: "4",
+    titulo:
+      "Suministro de reactivos químicos y material de vidrio para laboratorio central",
+    apertura: "01/10/2026",
+    cierre: "15/10/2026",
+    dependencia: "Facultad de Ciencias y Educación",
+    tipoCotizacion: "BIEN",
+    estado: "en-evaluacion",
+  },
+  {
+    id: "SOL-2026-0064",
+    vigencia: 2026,
+    unidadEjecutora: "3",
+    titulo: "Suministro de equipos y accesorios para salas de cómputo",
+    apertura: "01/10/2026",
+    cierre: "04/12/2026",
+    dependencia: "Facultad de Ingeniería",
+    tipoCotizacion: "BIEN",
+    estado: "enviada-proveedores",
+  },
+];
+
+const INVITACIONES_PROVEEDOR_MOCK: readonly InvitacionProveedor[] = [
+  { id: "INV-0142", solicitudId: "SOL-2026-0142", estado: "borrador" },
+  {
+    id: "INV-0139",
+    solicitudId: "SOL-2026-0139",
+    estado: "pendiente-ajuste",
+    fechaRadicacion: "2026-10-25T10:20:00-05:00",
+    adendaPublicada: {
+      versionAnterior: "v1.0",
+      versionVigente: "v1.1",
+      publicadaEl: "27/10/2026 09:00 COT",
+      anexoId: "anexo-0139-adenda",
+    },
+  },
+  {
+    id: "INV-0135",
+    solicitudId: "SOL-2026-0135",
+    estado: "enviada",
+    fechaRadicacion: "2026-10-25T14:35:00-05:00",
+  },
+  {
+    id: "INV-0128",
+    solicitudId: "SOL-2026-0128",
+    estado: "enviada",
+    fechaRadicacion: "2026-10-25T15:10:00-05:00",
+  },
+  {
+    id: "INV-0115",
+    solicitudId: "SOL-2026-0115",
+    estado: "excluida",
+    fechaRadicacion: "2026-10-15T08:30:00-05:00",
+  },
+  {
+    id: "INV-0098",
+    solicitudId: "SOL-2026-0098",
+    estado: "aceptada",
+    fechaRadicacion: "2026-10-18T09:00:00-05:00",
+  },
+  {
+    id: "INV-0084",
+    solicitudId: "SOL-2026-0084",
+    estado: "rechazada",
+    fechaRadicacion: "2026-09-10T11:00:00-05:00",
+  },
+  { id: "INV-0072", solicitudId: "SOL-2026-0072", estado: "vencida" },
+  {
+    id: "INV-0064",
+    solicitudId: "SOL-2026-0064",
+    estado: "declinada",
+    fechaRadicacion: "2026-10-19T13:15:00-05:00",
+  },
+];
+
+const ORDENADORES_PROVEEDOR_MOCK: Readonly<Record<string, string>> = {
+  "SOL-2026-0142": "Dr. Ricardo Gómez Morales",
+  "SOL-2026-0139": "Dr. Ricardo Gómez Morales",
+  "SOL-2026-0135": "Ing. Martha Cecilia Bello",
+  "SOL-2026-0128": "Dr. Carlos Julio González",
+  "SOL-2026-0115": "Dr. Ricardo Gómez Morales",
+  "SOL-2026-0098": "Dra. Elvia María Sanabria",
+  "SOL-2026-0084": "Dr. Ricardo Gómez Morales",
+  "SOL-2026-0072": "Lic. Fernando Triana",
+  "SOL-2026-0064": "Ing. Martha Cecilia Bello",
+};
 
 const MAPA_TIPOS: Readonly<Record<string, TipoCotizacion>> = {
   bienes: "BIEN",
@@ -294,6 +660,29 @@ const RESPONSABLE_MOCK: ResponsableDetalle = {
     "División de Recursos Tecnológicos e Informáticos (DIRTEI)",
   dependenciaDestino: "Vicerrectoría Administrativa y Financiera",
 };
+
+/**
+ * Borradores que ya tienen expediente técnico cargado.
+ *
+ * La solicitud de referencia de S-04 (`SOL-2026-0047`) es un borrador real: ya
+ * tiene pliego, contratación, segmentación, anexos y CDP. Los demás borradores
+ * de la semilla siguen vacíos para conservar el estado inicial del asistente.
+ */
+const BORRADORES_CON_EXPEDIENTE: readonly string[] = ["SOL-2026-0047"];
+
+/**
+ * true si la solicitud ya tiene expediente técnico.
+ *
+ * Los borradores sin expediente devuelven `null` en cada pestaña para que el
+ * detalle muestre su estado vacío; los borradores de referencia se comportan
+ * como una solicitud diligenciada.
+ */
+function tieneExpediente(solicitud: Solicitud): boolean {
+  return (
+    solicitud.estado !== "borrador" ||
+    BORRADORES_CON_EXPEDIENTE.includes(solicitud.id)
+  );
+}
 
 /**
  * Contenido de la pestaña "General" para una solicitud.
@@ -410,7 +799,7 @@ const FIRMAS_MOCK: readonly FirmaAval[] = [
  * se replica el certificado del mockup.
  */
 function presupuestoDetalle(solicitud: Solicitud): PresupuestoDetalle | null {
-  if (solicitud.estado === "borrador") {
+  if (!tieneExpediente(solicitud)) {
     return null;
   }
 
@@ -449,10 +838,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Procesador dual 32 cores 2.8GHz, 256GB RAM DDR5 ECC, 2x 960GB NVMe SSD redundantes para centro de cómputo Paiba. Chasis compatible con rack estándar de 19 pulgadas y tarjetas mezzanina 25GbE dual port.",
     unidad: "Unidad",
     cantidad: 2,
-    codigoUnspsc: "43211501",
-    notaTecnica: "Garantía 36 meses NBD",
-    iconoNota: "format_image_left",
-    especificaciones: ["Dual Redundant PSU", "IPMI 2.0 / iDRAC9", "Hardware RAID 1"],
+    iconoNota: "format_image_left"
   },
   {
     id: "2",
@@ -462,10 +848,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Suscripción por 12 meses con soporte oficial 24x7 en sitio, cobertura para 64 zócalos físicos institucionales. Incluye consola unificada de gestión, HA, DRS, vMotion en caliente y parches de seguridad automatizados.",
     unidad: "Suscripción",
     cantidad: 1,
-    codigoUnspsc: "43232800",
-    notaTecnica: "SLA Crítico 2 horas",
-    iconoNota: "support_agent",
-    especificaciones: ["Soporte Nivel 3", "Actualizaciones Mayores"],
+    iconoNota: "support_agent"
   },
   {
     id: "3",
@@ -475,10 +858,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Capa 3 gestionable, 48x SFP+ 10Gbps, 4x QSFP28 100Gbps uplinks, protocolo OSPF/BGP, fuentes y ventiladores hot-swap. Capacidad de conmutación mínima de 1.76 Tbps y latencia sub-microsegundo para topología spine-leaf.",
     unidad: "Unidad",
     cantidad: 4,
-    codigoUnspsc: "43222612",
-    notaTecnica: "Transceivers incluidos",
-    iconoNota: "cable",
-    especificaciones: ["10G/100G", "LACP Stacking", "Dual AC Redundante"],
+    iconoNota: "cable"
   },
   {
     id: "4",
@@ -488,10 +868,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Certificación Categoría 6A en puntos de red para laboratorio Sala 304 y datacenter Paiba, tendido con canaleta perimetral de aluminio anodizado, patch panels blindados y rotulado ANSI/TIA-606-B institucional.",
     unidad: "Punto",
     cantidad: 48,
-    codigoUnspsc: "72151601",
-    notaTecnica: "Certificación Fluke Networks",
-    iconoNota: "verified",
-    especificaciones: ["Cat 6A F/UTP", "LSZH Cero Halógenos", "Norma RETIE"],
+    iconoNota: "verified"
   },
   {
     id: "5",
@@ -501,10 +878,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Topología doble conversión, banco de baterías VRLA externo para 30 minutos de autonomía a plena carga, tarjeta SNMP para monitoreo web centralizado, factor de potencia 1.0 y transformador de aislamiento galvánico.",
     unidad: "Unidad",
     cantidad: 1,
-    codigoUnspsc: "39121011",
-    notaTecnica: "Bypass Estático y Manual",
-    iconoNota: "electric_bolt",
-    especificaciones: ["Factor Potencia 1.0", "SNMP v3", "THDi < 3%"],
+    iconoNota: "electric_bolt"
   },
   {
     id: "6",
@@ -514,10 +888,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Controladoras duales activas, caché 64GB por controladora, discos SAS 12Gbps, replicación remota asíncrona y conectividad FC 32Gbps para el clúster de virtualización institucional.",
     unidad: "Unidad",
     cantidad: 2,
-    codigoUnspsc: "43201802",
-    notaTecnica: "Garantía 60 meses en sitio",
-    iconoNota: "storage",
-    especificaciones: ["FC 32Gbps", "Replicación Remota"],
+    iconoNota: "storage"
   },
   {
     id: "7",
@@ -527,10 +898,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Chasis de 6U con backplane pasivo, ventilación N+1 y gestión integrada de todas las hojas instaladas, compatible con las hojas de cómputo y almacenamiento del proyecto.",
     unidad: "Unidad",
     cantidad: 1,
-    codigoUnspsc: "43211501",
-    notaTecnica: "Compatible con hojas SAN",
-    iconoNota: "dns",
-    especificaciones: ["Backplane Pasivo", "Ventilación N+1"],
+    iconoNota: "dns"
   },
   {
     id: "8",
@@ -540,10 +908,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Interfaz de red 25Gbps por puerto con soporte para SR-IOV y offload de funciones de virtualización, instalable en las hojas de cómputo del chasis blade.",
     unidad: "Unidad",
     cantidad: 16,
-    codigoUnspsc: "43201404",
-    notaTecnica: "Soporte SR-IOV",
-    iconoNota: "settings_ethernet",
-    especificaciones: ["25GbE", "Offload Virtualización"],
+    iconoNota: "settings_ethernet"
   },
   {
     id: "9",
@@ -553,10 +918,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Atención de incidentes críticos en sitio con tiempos de respuesta de 4 horas y 24 horas para casos menores, durante 12 meses contados desde la puesta en marcha del centro de cómputo.",
     unidad: "Servicio",
     cantidad: 1,
-    codigoUnspsc: "81111803",
-    notaTecnica: "Respuesta 4 horas en sitio",
-    iconoNota: "headset_mic",
-    especificaciones: ["Cobertura 24x7", "Técnico certificado"],
+    iconoNota: "headset_mic"
   },
   {
     id: "10",
@@ -566,10 +928,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Programa de formación para el personal de la DIRTEI en administración del clúster, consola de virtualización y procedimientos de recuperación ante desastres, con material didáctico incluido.",
     unidad: "Servicio",
     cantidad: 1,
-    codigoUnspsc: "86132000",
-    notaTecnica: "Material incluido",
-    iconoNota: "school",
-    especificaciones: ["Modalidad presencial", "Certificado de asistencia"],
+    iconoNota: "school"
   },
   {
     id: "11",
@@ -579,10 +938,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Gabinete de piso con puerta frontal perforada, gestión vertical de cableado, bandejas fijas y kit de ventilación para el alojamiento de servidores y equipos de red.",
     unidad: "Unidad",
     cantidad: 6,
-    codigoUnspsc: "43222801",
-    notaTecnica: "Garantía 24 meses",
-    iconoNota: "inventory_2",
-    especificaciones: ["42U", "Cierre con llave"],
+    iconoNota: "inventory_2"
   },
   {
     id: "12",
@@ -592,10 +948,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Unidad de distribución de energía con monitoreo por toma, medición de consumo y corte remoto, montaje horizontal en gabinete de 19 pulgadas.",
     unidad: "Unidad",
     cantidad: 12,
-    codigoUnspsc: "39121002",
-    notaTecnica: "Monitoreo por toma",
-    iconoNota: "power",
-    especificaciones: ["32A", "Corte Remoto"],
+    iconoNota: "power"
   },
   {
     id: "13",
@@ -605,10 +958,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Supervisión técnica de la instalación, configuración y puesta en marcha del centro de cómputo, con informes de avance y actas de aceptación por hitos.",
     unidad: "Servicio",
     cantidad: 1,
-    codigoUnspsc: "81112000",
-    notaTecnica: "Informes por hito",
-    iconoNota: "fact_check",
-    especificaciones: ["Acta de aceptación", "Supervisión en sitio"],
+    iconoNota: "fact_check"
   },
   {
     id: "14",
@@ -618,10 +968,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Panel de parcheo de 1U con puertos blindados y etiquetado institucional ANSI/TIA-606-B, para el cerramiento de los puntos de red certificados.",
     unidad: "Unidad",
     cantidad: 4,
-    codigoUnspsc: "43223309",
-    notaTecnica: "Etiquetado ANSI/TIA",
-    iconoNota: "grid_on",
-    especificaciones: ["Cat 6A", "1U"],
+    iconoNota: "grid_on"
   },
   {
     id: "15",
@@ -631,10 +978,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Módulos ópticos de 10Gbps compatibles con los switches de núcleo y de acceso del proyecto, con diagnóstico digital y certificación del fabricante.",
     unidad: "Unidad",
     cantidad: 64,
-    codigoUnspsc: "43201553",
-    notaTecnica: "Certificados de fábrica",
-    iconoNota: "settings_input_antenna",
-    especificaciones: ["10Gbps", "DDM"],
+    iconoNota: "settings_input_antenna"
   },
   {
     id: "16",
@@ -644,10 +988,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Traslado planificado de las máquinas virtuales y servicios académicos y administrativos al nuevo clúster, con ventanas de mantenimiento y plan de reversa.",
     unidad: "Servicio",
     cantidad: 1,
-    codigoUnspsc: "81112200",
-    notaTecnica: "Incluye plan de reversa",
-    iconoNota: "sync_alt",
-    especificaciones: ["Ventanas nocturnas", "Plan de contingencias"],
+    iconoNota: "sync_alt"
   },
   {
     id: "17",
@@ -657,10 +998,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Sensores de temperatura, humedad y detección temprana de humo conectados a la plataforma central de monitoreo, con alertas por correo y SNMP.",
     unidad: "Kit",
     cantidad: 3,
-    codigoUnspsc: "41111947",
-    notaTecnica: "Alertas SNMP",
-    iconoNota: "thermostat",
-    especificaciones: ["Temperatura y humedad", "Detección de humo"],
+    iconoNota: "thermostat"
   },
   {
     id: "18",
@@ -670,10 +1008,7 @@ const ITEMS_MOCK: readonly ItemSolicitud[] = [
       "Obras eléctricas para alimentación redundante, tablero de distribución y sistema de puesta a tierra con certificación RETIE, conforme a la norma vigente.",
     unidad: "Servicio",
     cantidad: 1,
-    codigoUnspsc: "72151500",
-    notaTecnica: "Certificación RETIE",
-    iconoNota: "electrical_services",
-    especificaciones: ["Circuito redundante", "Puesta a tierra"],
+    iconoNota: "electrical_services"
   },
 ];
 
@@ -687,11 +1022,12 @@ const ITEMS_DETALLE_MOCK: ItemsDetalle = {
 /**
  * Ítems de una solicitud.
  *
- * Los borradores todavía no tienen pliego cargado, así que devuelven una lista
- * vacía y la pestaña muestra su estado vacío. El resto replica el mockup.
+ * Los borradores sin expediente todavía no tienen pliego cargado, así que
+ * devuelven una lista vacía y la pestaña muestra su estado vacío. El borrador
+ * de referencia y el resto de estados replican el mockup.
  */
 function itemsSolicitud(solicitud: Solicitud): readonly ItemSolicitud[] {
-  return solicitud.estado === "borrador" ? [] : ITEMS_MOCK;
+  return tieneExpediente(solicitud) ? ITEMS_MOCK : [];
 }
 
 /* ── Contratación y pago (pestaña "Contratación y pago") ──────────────────── */
@@ -737,6 +1073,61 @@ const PARAMETROS_MOCK: readonly ParametroPago[] = [
 ];
 
 /**
+ * Contenido institucional fijo de la pestaña "Contratación y pago".
+ *
+ * Los campos que el solicitante puede cambiar (tipo de contrato, medio, forma
+ * de pago y cronograma) se agregan al construir el detalle; el resto es texto
+ * normativo que no se edita y que la edición (S-04) reutiliza tal cual.
+ */
+const CONTRATACION_BASE: Omit<
+  ContratacionDetalle,
+  "tipoContrato" | "medioPago" | "formaPago" | "parametros"
+> = {
+  tipoContratoNorma:
+    "Ley 80 de 1993 / Estatuto General UD (Acuerdo 003 de 2015)",
+  modalidadSeleccion:
+    "Convocatoria Pública para Solicitud de Cotizaciones / Estudio de Mercado",
+  modalidadNota:
+    "Etapa precontractual conducente a consolidación de presupuesto oficial",
+  plazoEjecucion: "4 meses calendario",
+  plazoDias: "120 días continuos",
+  plazoNota:
+    "Inicia a partir del perfeccionamiento, acta de inicio y aprobación de garantías",
+  lugarEjecucion: "Sede Aduanilla de Paiba - Sala de Servidores Datacenter",
+  lugarDireccion:
+    "Calle 13 N.° 31-75, Bloque de Infraestructura de TI, Bogotá D.C.",
+  medioPagoNota:
+    "A cuenta bancaria (Ahorros o Corriente) previamente validada, certificada e inscrita por el proveedor en el portal ÁGORA.",
+  formaPagoNota:
+    "Reembolsos supeditados a la suscripción del acta de recibo a satisfacción expedida por la supervisión designada.",
+  reglamentacion: "Resolución 067 de 2017",
+  reglamentacionNota:
+    "Concordante con el Estatuto de Presupuesto de la Universidad Distrital Francisco José de Caldas y directrices PAC.",
+  notaTributaria:
+    "Cada desembolso estará sujeto a las retenciones tributarias nacionales y distritales vigentes (Retefuente, ReteICA y Estampillas Universidad Distrital 50 años y Pro-Cultura), liquidadas sobre el valor bruto facturado.",
+  supervisor: {
+    cargo:
+      "Director de la DIRTEI (División de Recursos Tecnológicos e Informáticos)",
+    parrafoHtml:
+      "La verificación del cumplimiento de los hitos y la autorización de cada desembolso estará a cargo exclusivo del <strong>Director de la DIRTEI (División de Recursos Tecnológicos e Informáticos)</strong>.",
+  },
+  garantias: [
+    {
+      icono: "verified_user",
+      titulo: "Póliza Única de Cumplimiento",
+      descripcion:
+        "Amparos de cumplimiento contractual (20%), calidad de bienes y servicios (20%) y salarios y prestaciones (5%) vigentes ante la aseguradora universitaria.",
+    },
+    {
+      icono: "health_and_safety",
+      titulo: "Aportes a Seguridad Social y Parafiscales (PILA)",
+      descripcion:
+        "Certificación mensual emitida por Revisor Fiscal o Representante Legal adjuntando planilla PILA cancelada de todo el personal asignado al proyecto.",
+    },
+  ],
+};
+
+/**
  * Contratación y pagos de una solicitud.
  *
  * Devuelve `null` cuando la solicitud todavía no tiene condiciones
@@ -746,57 +1137,16 @@ const PARAMETROS_MOCK: readonly ParametroPago[] = [
  * `etiquetaCorta`.
  */
 function contratacionDetalle(solicitud: Solicitud): ContratacionDetalle | null {
-  if (solicitud.estado === "borrador") {
+  if (!tieneExpediente(solicitud)) {
     return null;
   }
 
   return {
+    ...CONTRATACION_BASE,
     tipoContrato: "suministro",
-    tipoContratoNorma:
-      "Ley 80 de 1993 / Estatuto General UD (Acuerdo 003 de 2015)",
-    modalidadSeleccion:
-      "Convocatoria Pública para Solicitud de Cotizaciones / Estudio de Mercado",
-    modalidadNota:
-      "Etapa precontractual conducente a consolidación de presupuesto oficial",
-    plazoEjecucion: "4 meses calendario",
-    plazoDias: "120 días continuos",
-    plazoNota:
-      "Inicia a partir del perfeccionamiento, acta de inicio y aprobación de garantías",
-    lugarEjecucion: "Sede Aduanilla de Paiba - Sala de Servidores Datacenter",
-    lugarDireccion:
-      "Calle 13 N.° 31-75, Bloque de Infraestructura de TI, Bogotá D.C.",
     medioPago: "transferencia_sebra",
-    medioPagoNota:
-      "A cuenta bancaria (Ahorros o Corriente) previamente validada, certificada e inscrita por el proveedor en el portal ÁGORA.",
     formaPago: "pagos_parciales",
-    formaPagoNota:
-      "Reembolsos supeditados a la suscripción del acta de recibo a satisfacción expedida por la supervisión designada.",
-    reglamentacion: "Resolución 067 de 2017",
-    reglamentacionNota:
-      "Concordante con el Estatuto de Presupuesto de la Universidad Distrital Francisco José de Caldas y directrices PAC.",
-    notaTributaria:
-      "Cada desembolso estará sujeto a las retenciones tributarias nacionales y distritales vigentes (Retefuente, ReteICA y Estampillas Universidad Distrital 50 años y Pro-Cultura), liquidadas sobre el valor bruto facturado.",
     parametros: PARAMETROS_MOCK,
-    supervisor: {
-      cargo:
-        "Director de la DIRTEI (División de Recursos Tecnológicos e Informáticos)",
-      parrafoHtml:
-        "La verificación del cumplimiento de los hitos y la autorización de cada desembolso estará a cargo exclusivo del <strong>Director de la DIRTEI (División de Recursos Tecnológicos e Informáticos)</strong>.",
-    },
-    garantias: [
-      {
-        icono: "verified_user",
-        titulo: "Póliza Única de Cumplimiento",
-        descripcion:
-          "Amparos de cumplimiento contractual (20%), calidad de bienes y servicios (20%) y salarios y prestaciones (5%) vigentes ante la aseguradora universitaria.",
-      },
-      {
-        icono: "health_and_safety",
-        titulo: "Aportes a Seguridad Social y Parafiscales (PILA)",
-        descripcion:
-          "Certificación mensual emitida por Revisor Fiscal o Representante Legal adjuntando planilla PILA cancelada de todo el personal asignado al proyecto.",
-      },
-    ],
   };
 }
 
@@ -848,7 +1198,9 @@ const NOTIFICACION_BIENES = { vistos: 18, descargaron: 14, cotizaron: 8 };
  * usa el buscador del paso 5 (S-02), de modo que el detalle y el asistente
  * muestran exactamente el mismo texto.
  */
-function actividadesDesde(codigos: readonly string[]): readonly ActividadVinculada[] {
+function actividadesDesde(
+  codigos: readonly string[],
+): readonly ActividadVinculada[] {
   return codigos
     .map((codigo) => ACTIVIDADES_CIIU.find((a) => a.codigo === codigo))
     .filter((actividad): actividad is ActividadCiiu => !!actividad)
@@ -887,8 +1239,10 @@ function segmentacionProveedores(
  * registrada (borrador o expediente sin cruce registral): así la pestaña
  * muestra su estado vacío sin inventar cifras.
  */
-function proveedoresDetalle(solicitud: Solicitud): ProveedoresObjetivoDetalle | null {
-  if (solicitud.estado === "borrador" || SIN_SEGMENTACION.includes(solicitud.id)) {
+function proveedoresDetalle(
+  solicitud: Solicitud,
+): ProveedoresObjetivoDetalle | null {
+  if (!tieneExpediente(solicitud) || SIN_SEGMENTACION.includes(solicitud.id)) {
     return null;
   }
 
@@ -1002,6 +1356,50 @@ function anexoCargado(
 const ANEXOS_POR_SOLICITUD: Readonly<
   Record<string, readonly AnexoSolicitud[]>
 > = {
+  "SOL-2026-0139": [
+    anexoCargado(
+      "anexo-0139-adenda",
+      "Adenda_01_Laboratorios_STEM.pdf",
+      "Adenda oficial publicada para la solicitud",
+      384 * 1024,
+      "Publicada el 27 Oct 2026, 09:00 AM",
+      "ÁGORA",
+    ),
+  ],
+  "SOL-2026-0047": [
+    anexoCargado(
+      "anexo-0047-estudio-previo",
+      "Estudio_Previo_Estaciones_Trabajo_2026.pdf",
+      "Estudio de conveniencia y necesidad del laboratorio de análisis de datos",
+      2.1 * 1024 * 1024,
+      "Subido el 18 Feb 2026, 11:12 AM",
+      AUTOR_VICERRECTORIA,
+    ),
+    anexoCargado(
+      "anexo-0047-especificaciones",
+      "Especificaciones_Tecnicas_Estaciones_Trabajo.docx",
+      "Requerimientos mínimos de CPU, memoria, almacenamiento y garantía",
+      760 * 1024,
+      "Subido el 18 Feb 2026, 11:20 AM",
+      AUTOR_VICERRECTORIA,
+    ),
+    anexoCargado(
+      "anexo-0047-matriz-items",
+      "Matriz_Items_Estaciones_Trabajo.xlsx",
+      "Matriz tabulada con los 18 ítems del pliego para cotización",
+      164 * 1024,
+      "Subido el 18 Feb 2026, 11:28 AM",
+      AUTOR_VICERRECTORIA,
+    ),
+    anexoCargado(
+      "anexo-0047-cdp",
+      "CDP_Presupuestal_Firmado_2026.pdf",
+      "Certificado de Disponibilidad Presupuestal ref. 2026-00412",
+      1.8 * 1024 * 1024,
+      "Subido el 18 Feb 2026, 11:35 AM",
+      AUTOR_VICERRECTORIA,
+    ),
+  ],
   "SOL-2026-0042": [
     anexoCargado(
       "anexo-0042-estudios-previos",
@@ -1103,10 +1501,7 @@ const ANEXOS_POR_SOLICITUD: Readonly<
  * pertenecen al flujo de carga del asistente, no a un expediente archivado.
  */
 function documentosDetalle(solicitud: Solicitud): DocumentosDetalle | null {
-  if (
-    solicitud.estado === "borrador" ||
-    SIN_DOCUMENTOS.includes(solicitud.id)
-  ) {
+  if (!tieneExpediente(solicitud) || SIN_DOCUMENTOS.includes(solicitud.id)) {
     return null;
   }
 
@@ -1279,7 +1674,7 @@ function eventoCdp(id: string, fecha: string, hora: string): EventoHistorial {
     nombreUsuario: "Dra. Martha Patricia Pulido",
     rol: "Jefe Sección de Presupuesto - SICAPITAL",
     estadoAnterior: "borrador",
-    estadoNuevo: "publicada",
+    estadoNuevo: "enviada-proveedores",
     icono: "account_balance_wallet",
     tono: "primario",
     resultado: "Aprobación presupuestal",
@@ -1310,8 +1705,8 @@ function eventoRadicacion(
     usuario: "raquimbayap",
     nombreUsuario: "Raúl Quimbaya",
     rol: "Solicitante",
-    estadoAnterior: "publicada",
-    estadoNuevo: "abierta",
+    estadoAnterior: "enviada-proveedores",
+    estadoNuevo: "enviada-proveedores",
     icono: "send",
     tono: "destacado",
     resultado: "Despacho Conforme",
@@ -1338,8 +1733,8 @@ function eventoPublicacion(
     usuario: "sistema",
     nombreUsuario: "Sistema ÁGORA",
     rol: "Automatización institucional",
-    estadoAnterior: "abierta",
-    estadoNuevo: "abierta",
+    estadoAnterior: "enviada-proveedores",
+    estadoNuevo: "enviada-proveedores",
     icono: "campaign",
     tono: "primario",
     evidencia: {
@@ -1366,8 +1761,8 @@ function eventoModificacion(
     usuario: "raquimbayap",
     nombreUsuario: "Raúl Quimbaya",
     rol: "Solicitante / Contratista Registrado",
-    estadoAnterior: "abierta",
-    estadoNuevo: "abierta",
+    estadoAnterior: "enviada-proveedores",
+    estadoNuevo: "enviada-con-modificaciones",
     icono: "edit_calendar",
     tono: "destacado",
     resultado: "En revisión por Ordenador del Gasto",
@@ -1395,7 +1790,7 @@ function eventoEvaluacion(
     usuario: "rgomez",
     nombreUsuario: "Dr. Ricardo Gómez Morales",
     rol: "Vicerrector Administrativo (Ordenador del Gasto)",
-    estadoAnterior: "abierta",
+    estadoAnterior: "enviada-proveedores",
     estadoNuevo: "en-evaluacion",
     icono: "rate_review",
     tono: "primario",
@@ -1425,8 +1820,8 @@ function eventoCierre(
     usuario: "sistema",
     nombreUsuario: "Sistema ÁGORA",
     rol: "Automatización institucional",
-    estadoAnterior: "abierta",
-    estadoNuevo: "cerrada",
+    estadoAnterior: "en-evaluacion",
+    estadoNuevo: "adjudicada",
     icono: "lock",
     tono: "neutro",
     resultado: "Expediente archivado",
@@ -1434,6 +1829,37 @@ function eventoCierre(
     evidencia: {
       icono: "inventory_2",
       texto: "Carpeta de soporte: 6 documentos",
+    },
+  });
+}
+
+/** Evento de cancelación; la justificación queda en la bitácora interna. */
+function eventoCancelacion(solicitud: Solicitud): EventoHistorial | null {
+  const cancelacion = solicitud.cancelacion;
+  if (!cancelacion) {
+    return null;
+  }
+  const [fecha, hora = "00:00"] = cancelacion.fecha.split(" ");
+
+  return eventoHistorial({
+    id: `evento-${solicitud.id}-cancelacion`,
+    fecha,
+    hora: hora.slice(0, 5),
+    tipo: "estado",
+    titulo: "Solicitud cancelada",
+    detalle: `Justificación interna: ${cancelacion.justificacion}`,
+    usuario: cancelacion.usuario,
+    nombreUsuario: cancelacion.autor,
+    rol: cancelacion.rol,
+    estadoAnterior: cancelacion.estadoAnterior,
+    estadoNuevo: "cancelada",
+    icono: "cancel",
+    tono: "destacado",
+    resultado: "Cancelación registrada",
+    tonoResultado: "advertencia",
+    evidencia: {
+      icono: "groups",
+      texto: `${cancelacion.destinatariosNotificados} destinatarios de notificación (envío simulado)`,
     },
   });
 }
@@ -1523,6 +1949,17 @@ function historialPorDefecto(
   solicitud: Solicitud,
   totalProveedores: number,
 ): readonly EventoHistorial[] {
+  if (solicitud.estado === "cancelada") {
+    const evento = eventoCancelacion(solicitud);
+    const estadoAnterior =
+      solicitud.cancelacion?.estadoAnterior ?? "enviada-proveedores";
+    const eventosPrevios = historialPorDefecto(
+      { ...solicitud, estado: estadoAnterior },
+      totalProveedores,
+    );
+    return evento ? [evento, ...eventosPrevios] : eventosPrevios;
+  }
+
   const apertura = solicitud.apertura ?? "15/02/2026";
   const [dia, mes] = apertura.split("/");
   const anio = "2026";
@@ -1550,7 +1987,7 @@ function historialPorDefecto(
     ),
   );
 
-  if (solicitud.estado === "publicada") {
+  if (solicitud.estado === "enviada-proveedores") {
     return eventos;
   }
 
@@ -1564,7 +2001,25 @@ function historialPorDefecto(
     ),
   );
 
-  if (solicitud.estado === "abierta") {
+  if (solicitud.estado === "en-aprobacion") {
+    eventos.push(
+      eventoModificacion(
+        `evento-${solicitud.id}-modificacion-pendiente`,
+        sumarDiasHistorial(fechaCreacion, 3),
+        "11:30",
+      ),
+    );
+    return eventos;
+  }
+
+  if (solicitud.estado === "enviada-con-modificaciones") {
+    eventos.push(
+      eventoModificacion(
+        `evento-${solicitud.id}-modificacion`,
+        sumarDiasHistorial(fechaCreacion, 3),
+        "11:30",
+      ),
+    );
     return eventos;
   }
 
@@ -1590,17 +2045,60 @@ function historialPorDefecto(
 }
 
 /**
+ * Evento de bitácora de una edición guardada sobre un borrador (S-04).
+ *
+ * El expediente de un borrador aún no tiene bitácora; este evento de sesión
+ * permite que la pestaña "Historial" refleje la nueva versión sin inventar un
+ * flujo de aprobación que todavía no existe.
+ */
+function eventoEdicionBorrador(
+  id: string,
+  fecha: string,
+  hora: string,
+  version: string,
+  cambios: number,
+): EventoHistorial {
+  return eventoHistorial({
+    id,
+    fecha,
+    hora,
+    tipo: "modificacion",
+    titulo: "Borrador actualizado desde la edición",
+    detalle: `Se guardaron <strong>${cambios}</strong> ${
+      cambios === 1 ? "cambio" : "cambios"
+    } en el borrador y se generó la versión <strong>${version}</strong>.`,
+    usuario: "raquimbayap",
+    nombreUsuario: "Raúl Quimbaya",
+    rol: "Solicitante / Contratista Registrado",
+    estadoAnterior: "borrador",
+    estadoNuevo: "borrador",
+    icono: "edit_note",
+    tono: "neutro",
+    resultado: "Versión guardada",
+    tonoResultado: "exito",
+    evidencia: {
+      icono: "fingerprint",
+      texto: `ID Transacción: TXN-EDICION-${id}`,
+    },
+  });
+}
+
+/**
  * Bitácora de la solicitud.
  *
- * Devuelve `null` cuando la solicitud todavía no tiene expediente (borrador o
- * expediente sin apertura): así la pestaña muestra su estado vacío sin
- * inventar eventos. Los eventos se devuelven del más reciente al más antiguo.
+ * Devuelve `null` cuando la solicitud todavía no tiene expediente (borrador sin
+ * ediciones o expediente sin apertura): así la pestaña muestra su estado vacío
+ * sin inventar eventos. Los eventos se devuelven del más reciente al más
+ * antiguo.
  */
-function historialDetalle(solicitud: Solicitud): HistorialDetalle | null {
-  if (
-    solicitud.estado === "borrador" ||
-    SIN_HISTORIAL.includes(solicitud.id)
-  ) {
+function historialDetalle(
+  solicitud: Solicitud,
+  extras: readonly EventoHistorial[] = [],
+): HistorialDetalle | null {
+  if (SIN_HISTORIAL.includes(solicitud.id)) {
+    return null;
+  }
+  if (solicitud.estado === "borrador" && extras.length === 0) {
     return null;
   }
 
@@ -1610,10 +2108,13 @@ function historialDetalle(solicitud: Solicitud): HistorialDetalle | null {
   const totalProveedores = proveedores ? contarProveedores(proveedores) : 0;
 
   const semilla = HISTORIAL_POR_SOLICITUD[solicitud.id];
+  const base = semilla
+    ? semilla(totalProveedores)
+    : historialPorDefecto(solicitud, totalProveedores);
   const eventos = [
-    ...(semilla
-      ? semilla(totalProveedores)
-      : historialPorDefecto(solicitud, totalProveedores)),
+    ...new Map(
+      [...base, ...extras].map((evento) => [evento.id, evento]),
+    ).values(),
   ].sort((a, b) => Date.parse(b.fechaIso) - Date.parse(a.fechaIso));
 
   return {
@@ -1625,29 +2126,484 @@ function historialDetalle(solicitud: Solicitud): HistorialDetalle | null {
   };
 }
 
-/** Amplía una fila del listado con la información del detalle. */
-function comoDetalle(solicitud: Solicitud): SolicitudDetalle {
+/** Formatea una fecha/hora al estilo del expediente ("18/02/2026 11:40 COT"). */
+function fechaHoraExpediente(fecha: Date): string {
+  const dia = String(fecha.getDate()).padStart(2, "0");
+  const mes = String(fecha.getMonth() + 1).padStart(2, "0");
+  const anio = fecha.getFullYear();
+  const hora = String(fecha.getHours()).padStart(2, "0");
+  const minuto = String(fecha.getMinutes()).padStart(2, "0");
+  return `${dia}/${mes}/${anio} ${hora}:${minuto} COT`;
+}
+
+/**
+ * Convierte `yyyy-MM-dd` (valor de `<input type="date">`) a `dd/MM/yyyy`.
+ *
+ * El formulario de S-02 usa fechas ISO porque son las que exige el control de
+ * fecha; el expediente (listado y detalle) las guarda y muestra en formato
+ * colombiano. La edición de S-04 es la frontera entre ambos mundos.
+ */
+function fechaCortaDesdeIso(fecha: string | null | undefined): string {
+  const coincidencia = /^(\d{4})-(\d{2})-(\d{2})$/.exec(fecha ?? "");
+  return coincidencia
+    ? `${coincidencia[3]}/${coincidencia[2]}/${coincidencia[1]}`
+    : (fecha ?? "");
+}
+
+/** Convierte `dd/MM/yyyy` a `yyyy-MM-dd` para hidratar los controles de fecha. */
+function fechaIsoDesdeCorta(fecha: string | null | undefined): string {
+  const coincidencia = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(fecha ?? "");
+  return coincidencia
+    ? `${coincidencia[3]}-${coincidencia[2]}-${coincidencia[1]}`
+    : (fecha ?? "");
+}
+
+/** Hash abreviado de integridad para la confirmación de guardado (mock). */
+function hashIntegridad(semilla: string): string {
+  let hash = 0;
+  for (let indice = 0; indice < semilla.length; indice += 1) {
+    hash = (hash * 31 + semilla.charCodeAt(indice)) >>> 0;
+  }
+  const hex = hash.toString(16).toUpperCase().padStart(8, "0");
+  return `SHA-256: ${hex.slice(0, 4)}...${hex.slice(4)}`;
+}
+
+/** Valor de catálogo de una dependencia a partir de su etiqueta visible. */
+function valorDependencia(
+  catalogo: readonly { readonly valor: string; readonly etiqueta: string }[],
+  etiqueta: string,
+): string {
+  return catalogo.find((opcion) => opcion.etiqueta === etiqueta)?.valor ?? "";
+}
+
+/** Etiqueta visible de una dependencia (para el listado y la cabecera). */
+function etiquetaDependencia(
+  catalogo: readonly { readonly valor: string; readonly etiqueta: string }[],
+  valor: string,
+  reserva: string,
+): string {
+  return catalogo.find((opcion) => opcion.valor === valor)?.etiqueta ?? reserva;
+}
+
+/**
+ * Cruce de SICAPITAL reconstruido desde el detalle.
+ *
+ * La edición no vuelve a consultar el sistema financiero: el paso 1 se hidrata
+ * con esta fotografía, que respeta la necesidad y el CDP del expediente.
+ */
+function resultadoCruceDesdeDetalle(solicitud: Solicitud): ResultadoCruce {
+  const general = generalDetalle(solicitud);
+  const presupuesto = presupuestoDetalle(solicitud);
+  const imputaciones = presupuesto?.imputaciones ?? IMPUTACIONES_MOCK;
+  const disponibilidades = imputaciones.map((imputacion) => ({
+    vigencia: Number(imputacion.vigencia),
+    solicitudNecesidad: imputacion.solicitudNecesidad,
+    numeroDisponibilidad: imputacion.numeroCdp,
+    valor: imputacion.valor,
+    dependencia: imputacion.dependencia,
+    rubro: imputacion.rubro,
+    rubroNombre: imputacion.rubroNombre,
+    estado: imputacion.estado,
+  }));
+  const numeroNecesidad =
+    disponibilidades[0]?.solicitudNecesidad ??
+    `NEC-${solicitud.vigencia}-${solicitud.id.slice(-4)}`;
+
+  return {
+    necesidad: {
+      valor: numeroNecesidad,
+      titulo: solicitud.titulo,
+      etiqueta: `${numeroNecesidad} (${solicitud.titulo})`,
+      unidadEjecutora: solicitud.unidadEjecutora,
+      vigencia: solicitud.vigencia,
+    },
+    presupuesto: {
+      disponibilidades,
+      valorCdp: disponibilidades.reduce(
+        (total, disponibilidad) => total + disponibilidad.valor,
+        0,
+      ),
+    },
+    solicitud: {
+      titulo: solicitud.titulo,
+      vigencia: solicitud.vigencia,
+      objeto: textoPlanoDesdeHtml(general.caracteristicas.objetivo),
+      justificacion: textoPlanoDesdeHtml(general.planAccion.descripcion),
+      sede: "Sede Aduanilla de Paiba",
+      plazo: general.caracteristicas.plazoEjecucion,
+      controlPresupuestal: "100% Amparado",
+    },
+    responsable: {
+      nombres: general.responsable.nombres,
+      apellidos: general.responsable.apellidos,
+      identificacion: general.responsable.identificacion,
+      unidadEjecutora: general.responsable.unidadEjecutora,
+      ordenadorGasto: general.responsable.ordenadorGasto,
+    },
+    caracteristicas: {
+      objetivo: general.caracteristicas.objetivo,
+      requisitos: general.caracteristicas.requisitos,
+      observaciones: general.caracteristicas.observaciones,
+      plazoEjecucion: general.caracteristicas.plazoEjecucion,
+    },
+  };
+}
+
+/**
+ * Fotografía editable de una solicitud.
+ *
+ * La capa de datos la entrega armada (el mock no guarda el formulario de S-02)
+ * para que el asistente de edición hidrate sus pasos sin reconstruir nada desde
+ * las vistas de solo lectura del detalle.
+ */
+function datosEdicionDesdeDetalle(solicitud: Solicitud): DatosEdicionSolicitud {
+  const general = generalDetalle(solicitud);
+  const contratacion = contratacionDetalle(solicitud);
   const proveedores = proveedoresDetalle(solicitud);
   const documentos = documentosDetalle(solicitud);
-  const historial = historialDetalle(solicitud);
+  const registros = itemsSolicitud(solicitud);
+
+  return {
+    necesidad: {
+      unidadEjecutora: solicitud.unidadEjecutora,
+      vigencia: String(solicitud.vigencia),
+      numeroNecesidad: resultadoCruceDesdeDetalle(solicitud).necesidad.valor,
+    },
+    datosGenerales: {
+      dependenciaSolicitante: valorDependencia(
+        DEPENDENCIAS_SOLICITANTES,
+        general.responsable.dependenciaSolicitante,
+      ),
+      dependenciaDestino: valorDependencia(
+        DEPENDENCIAS_DESTINO,
+        general.responsable.dependenciaDestino,
+      ),
+      fechaApertura: fechaIsoDesdeCorta(solicitud.apertura),
+      fechaCierre: fechaIsoDesdeCorta(solicitud.cierre),
+      criterioSeleccion: general.caracteristicas.criterioSeleccion,
+      planAccion: general.planAccion.descripcion,
+    },
+    items: {
+      modo: "individual",
+      archivo: "",
+      procesado: registros.length > 0,
+      registros,
+    },
+    contratacion: {
+      tipoContrato: contratacion?.tipoContrato ?? "",
+      medioPago: contratacion?.medioPago ?? "",
+      formaPago: contratacion?.formaPago ?? "",
+      parametros: contratacion?.parametros ?? [],
+    },
+    proveedores: {
+      actividades: proveedores?.segmentacion.actividades ?? [],
+      areaSnies: proveedores?.segmentacion.areaSnies ?? "",
+      nucleoSnies: proveedores?.segmentacion.nucleoSnies ?? "",
+    },
+    documentos: {
+      anexos: documentos?.anexos ?? [],
+      requeridos: documentos?.requeridos ?? DOCUMENTOS_OFERENTE_SEMILLA,
+    },
+    resultadoCruce: resultadoCruceDesdeDetalle(solicitud),
+  };
+}
+
+/**
+ * Resumen general del expediente con los valores editables del formulario.
+ *
+ * La edición no reescribe los textos institucionales (objetivo, requisitos,
+ * observaciones): solo proyecta los campos que S-04 permite cambiar. Las
+ * fechas vuelven del formulario en ISO y se muestran como el resto del
+ * expediente (`dd/MM/yyyy`).
+ */
+function generalDesdeEdicion(
+  solicitud: Solicitud,
+  edicion: DatosEdicionSolicitud,
+): GeneralDetalle {
+  const base = generalDetalle(solicitud);
+  const apertura = fechaCortaDesdeIso(edicion.datosGenerales.fechaApertura);
+  const cierre = fechaCortaDesdeIso(edicion.datosGenerales.fechaCierre);
+
+  return {
+    responsable: {
+      ...base.responsable,
+      dependenciaSolicitante: etiquetaDependencia(
+        DEPENDENCIAS_SOLICITANTES,
+        edicion.datosGenerales.dependenciaSolicitante,
+        base.responsable.dependenciaSolicitante,
+      ),
+      dependenciaDestino: etiquetaDependencia(
+        DEPENDENCIAS_DESTINO,
+        edicion.datosGenerales.dependenciaDestino,
+        base.responsable.dependenciaDestino,
+      ),
+    },
+    caracteristicas: {
+      ...base.caracteristicas,
+      apertura: {
+        fecha: apertura || "Sin programar",
+        nota: apertura
+          ? base.caracteristicas.apertura.nota
+          : "Pendiente de publicación del proceso",
+      },
+      cierre: {
+        fecha: cierre || "Sin programar",
+        nota: cierre
+          ? base.caracteristicas.cierre.nota
+          : "Se calcula desde la fecha de apertura",
+      },
+      criterioSeleccion: edicion.datosGenerales.criterioSeleccion,
+    },
+    planAccion: {
+      ...base.planAccion,
+      descripcion: edicion.datosGenerales.planAccion,
+    },
+  };
+}
+
+/** Contratación y pagos proyectados desde la fotografía editable. */
+function contratacionDesdeEdicion(
+  solicitud: Solicitud,
+  edicion: DatosEdicionSolicitud,
+): ContratacionDetalle | null {
+  const base = contratacionDetalle(solicitud);
+  if (
+    !base &&
+    !edicion.contratacion.tipoContrato &&
+    !edicion.contratacion.medioPago &&
+    !edicion.contratacion.formaPago &&
+    edicion.contratacion.parametros.length === 0
+  ) {
+    return null;
+  }
+
+  return {
+    ...CONTRATACION_BASE,
+    ...(base ?? {}),
+    tipoContrato: edicion.contratacion.tipoContrato || base?.tipoContrato || "",
+    medioPago: edicion.contratacion.medioPago || base?.medioPago || "",
+    formaPago: edicion.contratacion.formaPago || base?.formaPago || "",
+    parametros: edicion.contratacion.parametros.length
+      ? edicion.contratacion.parametros
+      : (base?.parametros ?? []),
+  };
+}
+
+/** Segmentación de proveedores proyectada desde la fotografía editable. */
+function proveedoresDesdeEdicion(
+  solicitud: Solicitud,
+  edicion: DatosEdicionSolicitud,
+): ProveedoresObjetivoDetalle | null {
+  const base = proveedoresDetalle(solicitud);
+  const { actividades, areaSnies, nucleoSnies } = edicion.proveedores;
+  if (!base && actividades.length === 0) {
+    return null;
+  }
+
+  const requiereIdoneidad = Boolean(nucleoSnies);
+  return {
+    segmentacion: {
+      actividades: actividades.length
+        ? actividades
+        : (base?.segmentacion.actividades ?? []),
+      areaSnies: areaSnies || base?.segmentacion.areaSnies || "",
+      nucleoSnies: nucleoSnies || base?.segmentacion.nucleoSnies || "",
+    },
+    requiereIdoneidad: base?.requiereIdoneidad ?? requiereIdoneidad,
+    notaIdoneidad: base?.notaIdoneidad ?? NOTA_IDONEIDAD,
+    acuerdo: base?.acuerdo ?? ACUERDO_SNIES,
+    notificacion: base?.notificacion ?? {
+      enviada: solicitud.apertura
+        ? `${solicitud.apertura} 08:00 COT`
+        : "Pendiente de envío",
+      ...(requiereIdoneidad ? NOTIFICACION_SERVICIOS : NOTIFICACION_BIENES),
+      hash: HASH_AUDITORIA,
+    },
+  };
+}
+
+/** Expediente documental proyectado desde la fotografía editable. */
+function documentosDesdeEdicion(
+  solicitud: Solicitud,
+  edicion: DatosEdicionSolicitud,
+): DocumentosDetalle | null {
+  const base = documentosDetalle(solicitud);
+  if (
+    !base &&
+    edicion.documentos.anexos.length === 0 &&
+    edicion.documentos.requeridos.length === 0
+  ) {
+    return null;
+  }
+
+  return {
+    anexos: edicion.documentos.anexos,
+    requeridos: edicion.documentos.requeridos,
+    notaNormativa: base?.notaNormativa ?? NOTA_NORMATIVA_DOCUMENTOS,
+    estadoMatriz: base?.estadoMatriz ?? ESTADO_MATRIZ_DOCUMENTOS,
+    ultimaModificacion:
+      base?.ultimaModificacion ?? ULTIMA_MODIFICACION_DOCUMENTOS,
+    versionSistema: base?.versionSistema ?? VERSION_SISTEMA_DOCUMENTOS,
+  };
+}
+
+/**
+ * Amplía una fila del listado con la información del detalle.
+ *
+ * Cuando hay fotografía editable (S-04) el detalle se proyecta desde ella para
+ * que las pestañas muestren la versión vigente después de guardar un borrador.
+ * La edición restringida no llega aquí con valores aplicados: su propuesta vive
+ * en `modificacionPendiente` y el expediente conserva la versión publicada.
+ */
+function comoDetalle(
+  solicitud: Solicitud,
+  edicion?: DatosEdicionSolicitud,
+  extrasHistorial: readonly EventoHistorial[] = [],
+): SolicitudDetalle {
+  const general = edicion
+    ? generalDesdeEdicion(solicitud, edicion)
+    : generalDetalle(solicitud);
+  const items = edicion ? edicion.items.registros : itemsSolicitud(solicitud);
+  const contratacion = edicion
+    ? contratacionDesdeEdicion(solicitud, edicion)
+    : contratacionDetalle(solicitud);
+  const proveedores = edicion
+    ? proveedoresDesdeEdicion(solicitud, edicion)
+    : proveedoresDetalle(solicitud);
+  const documentos = edicion
+    ? documentosDesdeEdicion(solicitud, edicion)
+    : documentosDetalle(solicitud);
+  const historial = historialDetalle(solicitud, extrasHistorial);
 
   return {
     ...solicitud,
-    cotizacionesRecibidas: COTIZACIONES_RECIBIDAS_MOCK,
-    general: generalDetalle(solicitud),
+    edicion,
+    // Un borrador aún no se envía a proveedores: no puede tener cotizaciones.
+    cotizacionesRecibidas:
+      solicitud.estado === "borrador" ? 0 : COTIZACIONES_RECIBIDAS_MOCK,
+    general,
     presupuesto: presupuestoDetalle(solicitud),
     itemsDetalle: ITEMS_DETALLE_MOCK,
-    items: itemsSolicitud(solicitud),
-    contratacion: contratacionDetalle(solicitud),
+    items,
+    contratacion,
     proveedores,
     documentos,
     historial,
     contadores: {
       ...CONTADORES_MOCK,
+      items: items.length,
       proveedores: proveedores ? contarProveedores(proveedores) : 0,
       documentos: documentos ? documentos.anexos.length : 0,
     },
   };
+}
+
+function valoresConAdendaPublicada(
+  valores: DatosEdicionSolicitud,
+): DatosEdicionSolicitud {
+  // Fixture provisional para demostrar una adenda publicada que cambia cantidades.
+  const [primerItem, ...demasItems] = valores.items.registros;
+  return {
+    ...valores,
+    items: {
+      ...valores.items,
+      registros: primerItem
+        ? [{ ...primerItem, cantidad: primerItem.cantidad + 1 }, ...demasItems]
+        : demasItems,
+    },
+  };
+}
+
+function diferenciasProveedor(
+  diferencias: ResumenDiferencias,
+): ResumenDiferencias {
+  const grupos = diferencias.grupos.filter((grupo) => grupo.paso !== 5);
+  return {
+    grupos,
+    total: grupos.reduce((total, grupo) => total + grupo.cambios.length, 0),
+  };
+}
+
+function proyectarSolicitudProveedor(
+  solicitud: SolicitudDetalle,
+): SolicitudDetalleProveedor {
+  return {
+    id: solicitud.id,
+    vigencia: solicitud.vigencia,
+    unidadEjecutora: solicitud.unidadEjecutora,
+    titulo: solicitud.titulo,
+    apertura: solicitud.apertura,
+    cierre: solicitud.cierre,
+    fechaLimiteObservaciones: solicitud.fechaLimiteObservaciones,
+    dependencia: solicitud.dependencia,
+    tipoCotizacion: solicitud.tipoCotizacion,
+    estado: solicitud.estado,
+    version: solicitud.version ?? "v1.0",
+    general: solicitud.general,
+    presupuesto: solicitud.presupuesto
+      ? {
+          valorCdp: solicitud.presupuesto.valorCdp,
+          descripcionCdp: solicitud.presupuesto.descripcionCdp,
+          saldo: solicitud.presupuesto.saldo,
+          imputaciones: solicitud.presupuesto.imputaciones.map(
+            ({
+              vigencia,
+              numeroCdp,
+              valor,
+              rubro,
+              rubroNombre,
+              estado,
+              tono,
+            }) => ({
+              vigencia,
+              numeroCdp,
+              valor,
+              rubro,
+              rubroNombre,
+              estado,
+              tono,
+            }),
+          ),
+        }
+      : null,
+    itemsDetalle: solicitud.itemsDetalle,
+    items: solicitud.items.map((item) => ({
+      ...item,
+      valorUnitarioTecho: null,
+    })),
+    contratacion: solicitud.contratacion,
+    documentos: solicitud.documentos
+      ? {
+          anexos: solicitud.documentos.anexos.map(
+            ({ id, nombre, pesoBytes, icono, estado, progreso, descripcion }) => ({
+              id,
+              nombre,
+              pesoBytes,
+              icono,
+              estado,
+              progreso,
+              descripcion,
+            }),
+          ),
+          requeridos: solicitud.documentos.requeridos,
+        }
+      : null,
+  };
+}
+
+/**
+ * Fotografía interna de una versión guardada (S-04).
+ *
+ * Guarda la fotografía editable, sus metadatos visibles y cuántos eventos de
+ * bitácora existían al crearla: al volver a una versión se recorta la historia
+ * posterior para que el expediente no quede inconsistente.
+ */
+interface VersionGuardada {
+  readonly version: string;
+  readonly revision: number;
+  readonly fecha: string;
+  readonly valores: DatosEdicionSolicitud;
+  readonly eventos: number;
 }
 
 /**
@@ -1656,11 +2612,35 @@ function comoDetalle(solicitud: Solicitud): SolicitudDetalle {
  * Trucos de desarrollo (query params del navegador, sin tocar código):
  * - `?mock=vacio` → devuelve 0 filas (estado vacío)
  * - `?mock=error` → falla la petición (estado de error)
- * - `?mockRetardo=3000` → retardo en ms (ver el skeleton más tiempo)
+ * - `?mockRetardo=3000` → retardo en ms (ver el loader más tiempo)
  * - `?mockDetalle=error` → falla la carga del detalle (estado de error de S-03)
+ * - `?mockDetalleProveedor=error` → falla la carga del detalle P-02
+ * - `?mockNoInvitado=1` → simula una solicitud sin invitación para el proveedor
+ * - `?mockGuardar=error` → falla el guardado de la edición (S-04)
+ * - `?mockCancelar=error` → falla una cancelación (S-05)
  */
 @Injectable()
 export class SolicitudesServiceMock extends SolicitudesService {
+  /** Filas modificadas durante la sesión (sobreponen a `DATOS_MOCK`). */
+  private readonly filasEditadas = new Map<string, Solicitud>();
+
+  /** Fotografía editable vigente de cada solicitud (base del diff). */
+  private readonly ediciones = new Map<string, DatosEdicionSolicitud>();
+
+  /** Versiones guardadas de la edición, de la más antigua a la más reciente. */
+  private readonly versiones = new Map<string, readonly VersionGuardada[]>();
+
+  /** Eventos de bitácora generados por ediciones guardadas en la sesión. */
+  private readonly historialEdiciones = new Map<
+    string,
+    readonly EventoHistorial[]
+  >();
+  private readonly invitacionesActualizadas = new Map<string, InvitacionProveedor>();
+
+  constructor(private readonly diferencias: DiferenciasSolicitudService) {
+    super();
+  }
+
   listar(
     criterios: Partial<FiltroSolicitudes>,
     pagina: number,
@@ -1680,7 +2660,10 @@ export class SolicitudesServiceMock extends SolicitudesService {
       return of({ solicitudes: [], total: 0 }).pipe(delay(retardo));
     }
 
-    const filtradas = DATOS_MOCK.filter((solicitud) =>
+    const filas = DATOS_MOCK.map(
+      (solicitud) => this.filasEditadas.get(solicitud.id) ?? solicitud,
+    );
+    const filtradas = filas.filter((solicitud) =>
       this.coincide(solicitud, criterios),
     );
 
@@ -1690,6 +2673,90 @@ export class SolicitudesServiceMock extends SolicitudesService {
     return of({
       solicitudes: filtradas.slice(desde, hasta),
       total: filtradas.length,
+    }).pipe(delay(retardo));
+  }
+
+  listarInvitacionesProveedor(
+    criterios: Partial<FiltroInvitacionesProveedor>,
+    pagina: number,
+    porPagina: number,
+  ): Observable<ResultadoListadoInvitaciones> {
+    const params = new URLSearchParams(window.location.search);
+    const modo = params.get("mockInvitaciones");
+    const retardo = Number(params.get("mockRetardo")) || 900;
+
+    if (modo === "error") {
+      return throwError(
+        () =>
+          new Error(
+            "No fue posible consultar las solicitudes asignadas al proveedor.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    if (modo === "vacio") {
+      return of({
+        invitaciones: [],
+        total: 0,
+        conteos: conteosVacios(),
+        dependencias: [],
+      }).pipe(delay(retardo));
+    }
+
+    const solicitudes = new Map(
+      SOLICITUDES_PROVEEDOR_MOCK.map((solicitud) => [
+        solicitud.id,
+        solicitud,
+      ]),
+    );
+    const filas: InvitacionProveedorConSolicitud[] =
+      INVITACIONES_PROVEEDOR_MOCK.flatMap((invitacionBase) => {
+        const invitacion =
+          this.invitacionesActualizadas.get(invitacionBase.solicitudId) ??
+          invitacionBase;
+        const solicitud = solicitudes.get(invitacion.solicitudId);
+        if (!solicitud) {
+          return [];
+        }
+        return [
+          {
+            invitacion,
+            solicitud,
+            ordenadorGasto:
+              ORDENADORES_PROVEEDOR_MOCK[solicitud.id] ??
+              "Por definir"
+          },
+        ];
+      });
+
+    const base = filas.filter((fila) =>
+      this.coincideInvitacion(fila, criterios),
+    );
+    const conteos = contarInvitaciones(base);
+    const filtradas = base.filter(
+      ({ invitacion }) =>
+        !criterios.grupo ||
+        criterios.grupo === "todas" ||
+        grupoDeInvitacion(invitacion.estado) === criterios.grupo,
+    );
+    // Provisional: conserva el orden descendente por identificador del mockup.
+    const factor = criterios.ordenNumero === "asc" ? 1 : -1;
+    const ordenadas = [...filtradas].sort(
+      (a, b) => factor * a.solicitud.id.localeCompare(b.solicitud.id),
+    );
+    const desde = pagina * porPagina;
+
+    return of({
+      invitaciones: ordenadas.slice(desde, desde + porPagina),
+      total: ordenadas.length,
+      conteos,
+      dependencias: [
+        ...new Set(
+          SOLICITUDES_PROVEEDOR_MOCK.map(
+            (solicitud) => solicitud.dependencia,
+          ),
+        ),
+      ].sort((a, b) => a.localeCompare(b, "es-CO")),
     }).pipe(delay(retardo));
   }
 
@@ -1703,8 +2770,403 @@ export class SolicitudesServiceMock extends SolicitudesService {
       ).pipe(delay(retardo));
     }
 
-    const solicitud = DATOS_MOCK.find((fila) => fila.id === id);
-    return of(solicitud ? comoDetalle(solicitud) : null).pipe(delay(retardo));
+    const solicitud = this.fila(id);
+    if (!solicitud) {
+      return of(null).pipe(delay(retardo));
+    }
+
+    const edicion = this.edicionBase(solicitud);
+    const pendiente =
+      solicitud.modificacionPendiente ??
+      this.modificacionDemo(solicitud, edicion);
+    const fila = pendiente
+      ? { ...solicitud, modificacionPendiente: pendiente }
+      : solicitud;
+
+    return of(
+      comoDetalle(fila, edicion, this.historialEdiciones.get(id) ?? []),
+    ).pipe(delay(retardo));
+  }
+
+  obtenerDetalleProveedor(
+    id: string,
+  ): Observable<DetalleInvitacionProveedor | null> {
+    const params = new URLSearchParams(window.location.search);
+    const retardo = Number(params.get("mockRetardo")) || 700;
+
+    if (params.get("mockDetalleProveedor") === "error") {
+      return throwError(
+        () =>
+          new Error(
+            "No fue posible consultar el detalle asignado al proveedor.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    if (params.get("mockNoInvitado") === "1") {
+      return of(null).pipe(delay(retardo));
+    }
+
+    const invitacionBase = INVITACIONES_PROVEEDOR_MOCK.find(
+      (item) => item.solicitudId === id,
+    );
+    const invitacion = invitacionBase
+      ? this.invitacionesActualizadas.get(id) ?? invitacionBase
+      : undefined;
+    const solicitud = SOLICITUDES_PROVEEDOR_MOCK.find(
+      (item) => item.id === id,
+    );
+    if (!invitacion || !solicitud) {
+      return of(null).pipe(delay(retardo));
+    }
+
+    const valoresAnteriores = datosEdicionDesdeDetalle(solicitud);
+    const valoresVigentes = invitacion.adendaPublicada
+      ? valoresConAdendaPublicada(valoresAnteriores)
+      : valoresAnteriores;
+    const solicitudVigente = comoDetalle(
+      {
+        ...solicitud,
+        version:
+          invitacion.adendaPublicada?.versionVigente ??
+          solicitud.version ??
+          "v1.0",
+      },
+      valoresVigentes,
+    );
+    const diferencias = invitacion.adendaPublicada
+      ? diferenciasProveedor(
+          this.diferencias.calcular(valoresAnteriores, valoresVigentes),
+        )
+      : null;
+
+    return of({
+      invitacion,
+      solicitud: proyectarSolicitudProveedor(solicitudVigente),
+      yaRespondio:
+        tienePostulacionRadicada(invitacion),
+      adenda:
+        invitacion.adendaPublicada && diferencias
+          ? {
+              ...invitacion.adendaPublicada,
+              diferencias,
+            }
+          : null,
+    }).pipe(delay(retardo));
+  }
+
+  registrarRespuestaProveedor(
+    solicitudId: string,
+    fechaRadicacion: string,
+  ): void {
+    const invitacion =
+      this.invitacionesActualizadas.get(solicitudId) ??
+      INVITACIONES_PROVEEDOR_MOCK.find(
+        (item) => item.solicitudId === solicitudId,
+      );
+    if (!invitacion) {
+      throw new Error("No existe la invitación asociada a la solicitud.");
+    }
+    this.invitacionesActualizadas.set(solicitudId, {
+      ...invitacion,
+      estado: "enviada",
+      fechaRadicacion,
+    });
+  }
+
+  /**
+   * Guarda una edición (S-04).
+   *
+   * En modo completo aplica los cambios a la fila y a la fotografía editable;
+   * en modo restringido deja la propuesta en `modificacionPendiente` y mueve la
+   * solicitud a `en-aprobacion` sin tocar los datos del expediente.
+   */
+  guardarEdicion(
+    id: string,
+    valores: DatosEdicionSolicitud,
+    modo: ModoEdicionSolicitud,
+  ): Observable<ResultadoGuardadoSolicitud> {
+    const params = new URLSearchParams(window.location.search);
+    const retardo = Number(params.get("mockRetardo")) || 600;
+
+    if (params.get("mockGuardar") === "error") {
+      return throwError(
+        () =>
+          new Error(
+            "No fue posible guardar la modificación de la solicitud. Intente nuevamente.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const actual = this.fila(id);
+    if (!actual) {
+      return throwError(
+        () => new Error("La solicitud ya no existe en el expediente."),
+      ).pipe(delay(retardo));
+    }
+
+    const base = this.edicionBase(actual);
+    const resumen = this.diferencias.calcular(base, valores);
+    const ahora = new Date();
+    const fecha = fechaHoraExpediente(ahora);
+    const revision = revisionSolicitud(actual) + 1;
+    const version =
+      modo === "completa"
+        ? siguienteVersionBorrador(versionSolicitud(actual))
+        : siguienteVersionModificacion(versionSolicitud(actual));
+    const estado: EstadoSolicitud =
+      modo === "completa" ? "borrador" : "en-aprobacion";
+    const hash = hashIntegridad(
+      `${id}-${version}-${revision}-${ahora.toISOString()}-${resumen.total}`,
+    );
+
+    if (modo === "completa") {
+      this.ediciones.set(id, valores);
+      this.filasEditadas.set(id, {
+        ...actual,
+        estado,
+        version,
+        revision,
+        ultimaModificacion: fecha,
+        apertura:
+          fechaCortaDesdeIso(valores.datosGenerales.fechaApertura) || null,
+        cierre: fechaCortaDesdeIso(valores.datosGenerales.fechaCierre) || null,
+        dependencia: etiquetaDependencia(
+          DEPENDENCIAS_DESTINO,
+          valores.datosGenerales.dependenciaDestino,
+          actual.dependencia,
+        ),
+      });
+      // El borrador no tiene bitácora propia: la edición deja un evento de
+      // sesión para que la pestaña "Historial" muestre la nueva versión.
+      const eventos = [
+        ...(this.historialEdiciones.get(id) ?? []),
+        eventoEdicionBorrador(
+          `evento-${id}-edicion-${revision}`,
+          fecha.slice(0, 10),
+          fecha.slice(11, 16),
+          version,
+          resumen.total,
+        ),
+      ];
+      this.historialEdiciones.set(id, eventos);
+      // La versión queda disponible para el descarte progresivo: volver a una
+      // anterior restaura su fotografía y recorta la bitácora posterior.
+      this.versiones.set(id, [
+        ...(this.versiones.get(id) ?? []),
+        { version, revision, fecha, valores, eventos: eventos.length },
+      ]);
+    } else {
+      this.filasEditadas.set(id, {
+        ...actual,
+        estado,
+        version,
+        revision,
+        ultimaModificacion: fecha,
+        modificacionPendiente: {
+          version,
+          revision,
+          solicitadaEl: fecha,
+          solicitadaPor: "Raúl Quimbaya",
+          cambios: resumen.total,
+          valores,
+        },
+      });
+    }
+
+    return of({
+      modo,
+      version,
+      revision,
+      estado,
+      fecha,
+      hash,
+      cambios: resumen.total,
+      grupos: resumen.grupos,
+    }).pipe(delay(retardo));
+  }
+
+  cancelarSolicitud(
+    id: string,
+    justificacion: string,
+  ): Observable<SolicitudDetalle> {
+    const params = new URLSearchParams(window.location.search);
+    const retardo = Number(params.get("mockRetardo")) || 700;
+
+    if (params.get("mockCancelar") === "error") {
+      return throwError(
+        () =>
+          new Error(
+            "No fue posible cancelar la solicitud. Verifique su conexión e intente nuevamente.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const actual = this.fila(id);
+    if (!actual) {
+      return throwError(
+        () => new Error("La solicitud ya no existe en el expediente."),
+      ).pipe(delay(retardo));
+    }
+
+    if (!MATRIZ_ACCIONES_POR_ESTADO[actual.estado].includes("cancelar")) {
+      return throwError(
+        () =>
+          new Error("La solicitud cambió de estado y ya no se puede cancelar."),
+      ).pipe(delay(retardo));
+    }
+
+    const motivo = textoPlanoDesdeHtml(justificacion).trim();
+    if (motivo.length < MIN_CARACTERES_JUSTIFICACION) {
+      return throwError(
+        () =>
+          new Error(
+            `La justificación debe tener al menos ${MIN_CARACTERES_JUSTIFICACION} caracteres.`,
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const detalleActual = comoDetalle(
+      actual,
+      this.edicionBase(actual),
+      this.historialEdiciones.get(id) ?? [],
+    );
+    // El mock solo conoce el total del segmento; el registro real de entregas
+    // por destinatario se conectará cuando exista NotificacionesService.
+    const destinatariosNotificados =
+      actual.estado === "borrador" ? 0 : detalleActual.contadores.proveedores;
+    const ahora = new Date();
+    const fecha = fechaHoraExpediente(ahora);
+    const cancelacion: DatosCancelacionSolicitud = {
+      estadoAnterior: actual.estado,
+      justificacion: motivo,
+      fecha,
+      usuario: "sesion",
+      autor: "Usuario autenticado",
+      rol: "Solicitante (JD u OG)",
+      destinatariosNotificados,
+    };
+    const actualizada: Solicitud = {
+      ...actual,
+      estado: "cancelada",
+      ultimaModificacion: fecha,
+      cancelacion,
+    };
+    const evento = eventoCancelacion(actualizada);
+
+    this.filasEditadas.set(id, actualizada);
+    if (evento) {
+      this.historialEdiciones.set(id, [
+        ...(this.historialEdiciones.get(id) ?? []),
+        evento,
+      ]);
+    }
+
+    return of(
+      comoDetalle(
+        actualizada,
+        this.edicionBase(actualizada),
+        this.historialEdiciones.get(id) ?? [],
+      ),
+    ).pipe(delay(retardo));
+  }
+
+  /**
+   * Versiones guardadas de la edición (S-04).
+   *
+   * Devuelve la versión vigente primero y luego las anteriores. La versión
+   * vigente no tiene cambios en riesgo (elegirla solo descarta lo no guardado);
+   * las anteriores informan lo que se perdería al volver a ellas.
+   */
+  historialVersiones(
+    id: string,
+  ): Observable<readonly VersionEdicionSolicitud[]> {
+    const params = new URLSearchParams(window.location.search);
+    const retardo = Number(params.get("mockRetardo")) || 500;
+
+    const solicitud = this.fila(id);
+    if (!solicitud) {
+      return throwError(
+        () => new Error("La solicitud ya no existe en el expediente."),
+      ).pipe(delay(retardo));
+    }
+
+    const vigente = this.edicionBase(solicitud);
+    const versiones = this.versiones.get(id) ?? [];
+    const total = versiones.length;
+
+    const resultado = [...versiones].reverse().map((guardada, indice) => {
+      const actual = indice === 0;
+      const esOriginal = versiones[0]?.version === guardada.version;
+      return {
+        version: guardada.version,
+        revision: guardada.revision,
+        fecha: guardada.fecha,
+        etiqueta: actual
+          ? "Versión vigente"
+          : esOriginal || total === 1
+            ? "Versión original"
+            : "Versión guardada",
+        actual,
+        diferencias: actual
+          ? { grupos: [], total: 0 }
+          : this.diferencias.calcular(guardada.valores, vigente),
+      };
+    });
+
+    return of(resultado).pipe(delay(retardo));
+  }
+
+  /**
+   * Vuelve a una versión guardada anterior (S-04).
+   *
+   * Restaura la fotografía, la fila y el contador de la bitácora de esa versión:
+   * los guardados posteriores se recortan y la solicitud queda lista para
+   * seguir editando desde ese punto.
+   */
+  revertirEdicion(id: string, version: string): Observable<void> {
+    const params = new URLSearchParams(window.location.search);
+    const retardo = Number(params.get("mockRetardo")) || 500;
+
+    const solicitud = this.fila(id);
+    if (!solicitud) {
+      return throwError(
+        () => new Error("La solicitud ya no existe en el expediente."),
+      ).pipe(delay(retardo));
+    }
+
+    this.edicionBase(solicitud);
+    const versiones = this.versiones.get(id) ?? [];
+    const indice = versiones.findIndex(
+      (guardada) => guardada.version === version,
+    );
+    const objetivo = indice >= 0 ? versiones[indice] : undefined;
+    const semilla = DATOS_MOCK.find((fila) => fila.id === id);
+
+    if (!objetivo || !semilla) {
+      return throwError(
+        () =>
+          new Error(
+            "La versión seleccionada ya no está disponible. Vuelva al detalle e intente de nuevo.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    // Volver a la versión vigente no cambia el expediente: solo se descarta el
+    // avance local que el asistente limpia al cerrar el diálogo.
+    if (indice === versiones.length - 1) {
+      return of(void 0).pipe(delay(retardo));
+    }
+
+    this.versiones.set(id, versiones.slice(0, indice + 1));
+    this.historialEdiciones.set(
+      id,
+      (this.historialEdiciones.get(id) ?? []).slice(0, objetivo.eventos),
+    );
+    this.ediciones.set(id, objetivo.valores);
+    this.filasEditadas.set(id, this.filaDesdeVersion(semilla, objetivo));
+
+    return of(void 0).pipe(delay(retardo));
   }
 
   /**
@@ -1739,6 +3201,123 @@ export class SolicitudesServiceMock extends SolicitudesService {
       disponible: true,
       mensaje: MENSAJE_GESTOR_DOCUMENTAL,
     }).pipe(delay(retardo));
+  }
+
+  /** Fila vigente de una solicitud (la editada sobrepone a la semilla). */
+  private fila(id: string): Solicitud | undefined {
+    return (
+      this.filasEditadas.get(id) ??
+      DATOS_MOCK.find((solicitud) => solicitud.id === id)
+    );
+  }
+
+  /**
+   * Fotografía editable vigente de una solicitud.
+   *
+   * Se construye la primera vez desde el detalle y se conserva para que el
+   * diff compare siempre contra la última versión aplicada. Al crearla se
+   * registra también la versión original del expediente, primer punto del
+   * historial de descarte progresivo.
+   */
+  private edicionBase(solicitud: Solicitud): DatosEdicionSolicitud {
+    const guardada = this.ediciones.get(solicitud.id);
+    if (guardada) {
+      this.asegurarVersiones(solicitud.id);
+      return guardada;
+    }
+    const construida = datosEdicionDesdeDetalle(solicitud);
+    this.ediciones.set(solicitud.id, construida);
+    this.asegurarVersiones(solicitud.id);
+    return construida;
+  }
+
+  /** Registra la versión original de la solicitud si aún no existe. */
+  private asegurarVersiones(id: string): void {
+    if (this.versiones.has(id)) {
+      return;
+    }
+    const semilla = DATOS_MOCK.find((solicitud) => solicitud.id === id);
+    const valores = this.ediciones.get(id);
+    if (!semilla || !valores) {
+      return;
+    }
+    this.versiones.set(id, [
+      {
+        version: versionSolicitud(semilla),
+        revision: revisionSolicitud(semilla),
+        fecha: semilla.ultimaModificacion ?? "",
+        valores,
+        eventos: 0,
+      },
+    ]);
+  }
+
+  /** Fila del listado reconstruida desde una versión guardada. */
+  private filaDesdeVersion(
+    semilla: Solicitud,
+    version: VersionGuardada,
+  ): Solicitud {
+    return {
+      ...semilla,
+      estado: semilla.estado,
+      version: version.version,
+      revision: version.revision,
+      ultimaModificacion: version.fecha,
+      apertura:
+        fechaCortaDesdeIso(version.valores.datosGenerales.fechaApertura) ||
+        null,
+      cierre:
+        fechaCortaDesdeIso(version.valores.datosGenerales.fechaCierre) || null,
+      dependencia: etiquetaDependencia(
+        DEPENDENCIAS_DESTINO,
+        version.valores.datosGenerales.dependenciaDestino,
+        semilla.dependencia,
+      ),
+    };
+  }
+
+  /**
+   * Modificación pendiente de demostración (S-08).
+   *
+   * La solicitud `en-aprobacion` de la semilla no tiene una propuesta guardada;
+   * este mock la crea para que el detalle y el armazón bloqueado muestren el
+   * flujo completo sin depender de una edición previa en la sesión.
+   */
+  private modificacionDemo(
+    solicitud: Solicitud,
+    edicion: DatosEdicionSolicitud,
+  ): ModificacionPendiente | null {
+    if (solicitud.id !== "SOL-2026-0041") {
+      return null;
+    }
+
+    const registros = edicion.items.registros;
+    const primero = registros[0];
+    const valores: DatosEdicionSolicitud = {
+      ...edicion,
+      datosGenerales: {
+        ...edicion.datosGenerales,
+        fechaCierre: "2026-02-27",
+      },
+      items: primero
+        ? {
+            ...edicion.items,
+            registros: [
+              { ...primero, cantidad: primero.cantidad + 2 },
+              ...registros.slice(1),
+            ],
+          }
+        : edicion.items,
+    };
+
+    return {
+      version: "v1.1",
+      revision: 2,
+      solicitadaEl: "19/02/2026 15:05 COT",
+      solicitadaPor: "Raúl Quimbaya",
+      cambios: 2,
+      valores,
+    };
   }
 
   /** Busca un anexo por su identificador en todos los expedientes simulados. */
@@ -1792,4 +3371,75 @@ export class SolicitudesServiceMock extends SolicitudesService {
 
     return true;
   }
+
+  private coincideInvitacion(
+    fila: InvitacionProveedorConSolicitud,
+    criterios: Partial<FiltroInvitacionesProveedor>,
+  ): boolean {
+    const { invitacion, solicitud } = fila;
+    if (
+      criterios.vigencia &&
+      criterios.vigencia !== "todas" &&
+      String(solicitud.vigencia) !== criterios.vigencia
+    ) {
+      return false;
+    }
+    if (criterios.estado && invitacion.estado !== criterios.estado) {
+      return false;
+    }
+    if (
+      criterios.tipoCotizacion &&
+      solicitud.tipoCotizacion !== criterios.tipoCotizacion
+    ) {
+      return false;
+    }
+    if (
+      criterios.dependencia &&
+      solicitud.dependencia !== criterios.dependencia
+    ) {
+      return false;
+    }
+
+    const texto = criterios.busqueda?.trim().toLocaleLowerCase("es-CO");
+    if (
+      texto &&
+      ![
+        fila.invitacion.id,
+        solicitud.id,
+        solicitud.titulo,
+        solicitud.dependencia,
+        fila.ordenadorGasto,
+      ].some((valor) => valor.toLocaleLowerCase("es-CO").includes(texto))
+    ) {
+      return false;
+    }
+
+    return true;
+  }
+}
+
+function conteosVacios(): ConteosFiltrosInvitaciones {
+  return {
+    todas: 0,
+    "por-responder": 0,
+    respondidas: 0,
+    "con-modificaciones": 0,
+    cerradas: 0,
+  };
+}
+
+function contarInvitaciones(
+  filas: readonly InvitacionProveedorConSolicitud[],
+): ConteosFiltrosInvitaciones {
+  const conteos: Record<GrupoFiltroInvitacion, number> = {
+    todas: filas.length,
+    "por-responder": 0,
+    respondidas: 0,
+    "con-modificaciones": 0,
+    cerradas: 0,
+  };
+  for (const { invitacion } of filas) {
+    conteos[grupoDeInvitacion(invitacion.estado)] += 1;
+  }
+  return conteos;
 }

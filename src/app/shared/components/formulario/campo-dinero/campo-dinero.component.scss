@@ -13,31 +13,31 @@
   display: flex;
   align-items: center;
   box-sizing: border-box;
-  min-height: 2.5rem;
-  padding: 0 0.75rem;
-  border: 1px solid transparent;
-  border-radius: 0.5rem;
-  background-color: color-mix(in srgb, var(--agora-text-muted) 5%, var(--agora-surface));
-  color: var(--agora-text);
-  box-shadow: 0 0.125rem 0.35rem rgb(37 24 25 / 7%);
+  min-height: 2.4rem;
+  padding: 0 0.6rem;
+  border: 1px solid var(--agora-borde, #e8e2e2);
+  border-radius: 0.4rem;
+  background-color: var(--agora-superficie, #fff);
+  color: var(--agora-texto-titulo, #251819);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
 }
 
 .campo-dinero:focus-within {
-  border-color: var(--agora-primary);
-  outline: 2px solid color-mix(in srgb, var(--agora-primary) 14%, transparent);
+  border-color: var(--agora-vino, #69101b);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--agora-vino, #69101b) 10%, transparent);
 }
 
 .campo-dinero input {
   min-width: 0;
   flex: 1;
-  padding: 0.625rem 0.5rem;
+  padding: 0.45rem 0.4rem;
   border: 0;
   outline: 0;
   background: transparent;
   color: inherit;
   font: inherit;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   text-align: right;
 }
 

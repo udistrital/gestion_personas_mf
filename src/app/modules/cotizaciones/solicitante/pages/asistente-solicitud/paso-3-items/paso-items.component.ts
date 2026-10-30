@@ -428,8 +428,7 @@ export class PasoItemsComponent implements OnInit {
           nombre: aceptados[indice].nombre,
           descripcion: aceptados[indice].descripcion,
           unidad: aceptados[indice].unidad,
-          cantidad: aceptados[indice].cantidad,
-          codigoUnspsc: aceptados[indice].codigoUnspsc,
+          cantidad: aceptados[indice].cantidad
         });
       }
 
@@ -556,7 +555,6 @@ export class PasoItemsComponent implements OnInit {
           "Procesador Dual Xeon Silver 4410Y, 128GB RAM ECC, 4x 1.92TB SSD SAS Enterprise, doble fuente redundante certificada 80 Plus Platinum.",
         unidad: "Unidad",
         cantidad: 2,
-        codigoUnspsc: "43211501",
       },
       {
         id: "2",
@@ -566,7 +564,6 @@ export class PasoItemsComponent implements OnInit {
           "Suscripción anual soporte enterprise hypervisor para clúster de cómputo académico, incluye parches y actualizaciones de seguridad.",
         unidad: "Licencia",
         cantidad: 16,
-        codigoUnspsc: "43232800",
       },
       {
         id: "3",
@@ -576,7 +573,6 @@ export class PasoItemsComponent implements OnInit {
           "Capa 3 gestionable, 48x SFP+ 10Gbps, 4x QSFP28 100Gbps uplinks, protocolo OSPF/BGP, fuentes y ventiladores hot-swap.",
         unidad: "Unidad",
         cantidad: 4,
-        codigoUnspsc: "43222612",
       },
       {
         id: "4",
@@ -586,7 +582,6 @@ export class PasoItemsComponent implements OnInit {
           "Certificación Categoría 6A en puntos de red para laboratorio Sala 304 Aduanilla de Paiba, tendido con canaleta perimetral y marquillado.",
         unidad: "Punto",
         cantidad: 48,
-        codigoUnspsc: "72151600",
       },
       {
         id: "5",
@@ -596,7 +591,6 @@ export class PasoItemsComponent implements OnInit {
           "Topología doble conversión, banco de baterías VRLA externo para 30 minutos de autonomía plena carga, tarjeta de monitoreo SNMP.",
         unidad: "Unidad",
         cantidad: 3,
-        codigoUnspsc: "39121011",
       },
     ];
   }

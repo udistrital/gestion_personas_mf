@@ -2,9 +2,12 @@ import { NgModule } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { MatPaginatorIntl } from "@angular/material/paginator";
 import { SharedModule } from "src/app/shared/shared.module";
-import { SolicitudesServiceMock, SolicitudesService } from "../services/solicitudes.service";
-import { SicapitalService, SicapitalServiceMock } from "../services/sicapital.service";
+import {
+  SicapitalService,
+  SicapitalServiceMock,
+} from "../services/sicapital.service";
 import { SolicitanteRoutingModule } from "./solicitante-routing.module";
+import { SolicitanteComponentsModule } from "./solicitante-components.module";
 import { ListadoSolicitudesComponent } from "./pages/listado-solicitudes/listado-solicitudes.component";
 import { AsistenteSolicitudComponent } from "./pages/asistente-solicitud/asistente-solicitud.component";
 import { DialogoAcuerdoComponent } from "./pages/asistente-solicitud/paso-1-necesidad/components/dialogo-acuerdo/dialogo-acuerdo.component";
@@ -20,7 +23,13 @@ import { PasoRevisionComponent } from "./pages/asistente-solicitud/paso-7-revisi
 import { AcordeonPasoComponent } from "./pages/asistente-solicitud/paso-7-revision/components/acordeon-paso/acordeon-paso.component";
 import { ListaVerificacionComponent } from "./pages/asistente-solicitud/paso-7-revision/components/lista-verificacion/lista-verificacion.component";
 import { DialogoProcesarComponent } from "./pages/asistente-solicitud/paso-7-revision/components/dialogo-procesar/dialogo-procesar.component";
+import { DialogoConfirmarModificacionComponent } from "./pages/asistente-solicitud/paso-7-revision/components/dialogo-confirmar-modificacion/dialogo-confirmar-modificacion.component";
+import { ResumenDiferenciasComponent } from "./pages/asistente-solicitud/paso-7-revision/components/resumen-diferencias/resumen-diferencias.component";
+import { DialogoDescartarModule } from "../components/dialogo-descartar/dialogo-descartar.module";
+import { EditarSolicitudComponent } from "./pages/editar-solicitud/editar-solicitud.component";
 import { paginadorEnEspanol } from "./mat-paginator-intl-es";
+import { ForoObservacionesModule } from "../components/foro-observaciones/foro-observaciones.module";
+import { ForoObservacionesPageComponent } from "./pages/foro-observaciones/foro-observaciones-page.component";
 
 @NgModule({
   declarations: [
@@ -39,12 +48,20 @@ import { paginadorEnEspanol } from "./mat-paginator-intl-es";
     AcordeonPasoComponent,
     ListaVerificacionComponent,
     DialogoProcesarComponent,
+    DialogoConfirmarModificacionComponent,
+    ResumenDiferenciasComponent,
+    EditarSolicitudComponent,
+    ForoObservacionesPageComponent,
   ],
-  imports: [CommonModule, SharedModule, SolicitanteRoutingModule],
+  imports: [
+    CommonModule,
+    SharedModule,
+    SolicitanteComponentsModule,
+    SolicitanteRoutingModule,
+    ForoObservacionesModule,
+    DialogoDescartarModule,
+  ],
   providers: [
-    // ÚNICO punto de enlace de la capa de datos simulada.
-    // Cambiar `useClass` por `SolicitudesServiceHttp` cuando exista el backend.
-    { provide: SolicitudesService, useClass: SolicitudesServiceMock },
     // Único punto de enlace de SICAPITAL (cruce del paso 1 del asistente).
     { provide: SicapitalService, useClass: SicapitalServiceMock },
     { provide: MatPaginatorIntl, useFactory: paginadorEnEspanol },
