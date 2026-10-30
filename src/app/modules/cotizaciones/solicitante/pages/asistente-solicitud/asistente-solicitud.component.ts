@@ -11,6 +11,7 @@ import { FormBuilder, FormGroup, Validators } from "@angular/forms";
 import { Router } from "@angular/router";
 import { debounceTime } from "rxjs";
 import { AlertService } from "src/app/shared/services/alert.service";
+import { DependenciasService } from "../../../services/dependencias.service";
 import { textoPlanoDesdeHtml } from "src/app/shared/utils/texto-plano";
 import {
   BorradorSolicitudNueva,
@@ -20,13 +21,12 @@ import { CalendarioFestivosService } from "../../../services/calendario-festivos
 import { ResultadoCruce, formatoCop } from "../../../models/necesidad.model";
 import { aniosDelRango } from "../../../models/calendario.model";
 import {
-  DEPENDENCIAS_DESTINO,
-  DEPENDENCIAS_SOLICITANTES,
   MIN_CARACTERES_CRITERIO,
   MIN_CARACTERES_PLAN,
   diasHabilesEntre,
   formatoFechaLarga,
 } from "../../../models/datos-generales.model";
+import { OpcionDependencia } from "../../../models/dependencia.model";
 import { ItemSolicitud, resumirItems } from "../../../models/items.model";
 import {
   ActividadVinculada,
@@ -89,6 +89,7 @@ interface ValidacionPaso extends ItemVerificacion {
 })
 export class AsistenteSolicitudComponent implements OnInit {
   readonly pasos = PASOS_SOLICITUD;
+  readonly dependencias = signal<readonly OpcionDependencia[]>([]);
 
   readonly breadcrumb =
     "<p>Gestión Proveedor › Cotizaciones › Mis Solicitudes de Cotización › <b>Nueva solicitud</b></p>";
@@ -146,6 +147,7 @@ export class AsistenteSolicitudComponent implements OnInit {
     private readonly alerta: AlertService,
     private readonly destroyRef: DestroyRef,
     private readonly calendarioFestivos: CalendarioFestivosService,
+    private readonly dependenciasService: DependenciasService,
   ) {
     this.asistenteForm = fb.group({
       // Paso 1 (implementado)
@@ -224,6 +226,19 @@ export class AsistenteSolicitudComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.dependenciasService
+      .obtenerDependencias()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (dependencias) => this.dependencias.set(dependencias),
+        error: () => {
+          this.alerta.showAlert(
+            "Catálogo no disponible",
+            "No fue posible cargar las dependencias institucionales.",
+          );
+        },
+      });
+
     this.asistenteForm.valueChanges
       .pipe(debounceTime(800), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.guardarBorrador(true));
@@ -318,7 +333,7 @@ export class AsistenteSolicitudComponent implements OnInit {
     const registros = (this.itemsForm.get("registros")?.value ??
       []) as readonly ItemSolicitud[];
     const dependencia =
-      DEPENDENCIAS_SOLICITANTES.find(
+      this.dependencias().find(
         (opcion) => opcion.valor === datos.dependenciaSolicitante,
       )?.etiqueta ??
       datos.dependenciaSolicitante ??
@@ -766,7 +781,7 @@ export class AsistenteSolicitudComponent implements OnInit {
       return "";
     }
     return (
-      DEPENDENCIAS_DESTINO.find((opcion) => opcion.valor === valor)?.etiqueta ??
+      this.dependencias().find((opcion) => opcion.valor === valor)?.etiqueta ??
       valor
     );
   }

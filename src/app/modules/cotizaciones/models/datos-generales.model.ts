@@ -28,32 +28,6 @@ export interface CaracteristicasSolicitud {
   readonly plazoEjecucion: string;
 }
 
-/** Catálogos de dependencias de la tarjeta 1. */
-export interface OpcionDependencia {
-  readonly valor: string;
-  readonly etiqueta: string;
-}
-
-export const DEPENDENCIAS_SOLICITANTES: readonly OpcionDependencia[] = [
-  {
-    valor: "DIRTEI",
-    etiqueta: "División de Recursos Tecnológicos e Informáticos (DIRTEI)",
-  },
-  { valor: "DIB", etiqueta: "División de Bibliotecas" },
-  { valor: "LAB", etiqueta: "Laboratorios Integrados de Ingeniería" },
-  {
-    valor: "CIDC",
-    etiqueta: "Centro de Investigaciones y Desarrollo Científico (CIDC)",
-  },
-];
-
-export const DEPENDENCIAS_DESTINO: readonly OpcionDependencia[] = [
-  { valor: "VAF", etiqueta: "Vicerrectoría Administrativa y Financiera" },
-  { valor: "VAC", etiqueta: "Vicerrectoría Académica" },
-  { valor: "SEC", etiqueta: "Secretaría General" },
-  { valor: "OAP", etiqueta: "Oficina Asesora de Planeación" },
-];
-
 /**
  * Hito de la línea de tiempo proyectada (tarjeta 2).
  *

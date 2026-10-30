@@ -15,8 +15,6 @@ import {
   ValidatorFn,
 } from "@angular/forms";
 import {
-  DEPENDENCIAS_DESTINO,
-  DEPENDENCIAS_SOLICITANTES,
   DIAS_HABILES_MINIMOS,
   HITOS_CRONOGRAMA,
   MIN_CARACTERES_CRITERIO,
@@ -25,6 +23,7 @@ import {
   formatoFechaCorta,
   formatoFechaLarga,
 } from "../../../../models/datos-generales.model";
+import { OpcionDependencia } from "../../../../models/dependencia.model";
 import {
   FechasFestivas,
   festivosDelRango,
@@ -94,8 +93,6 @@ export function minCaracteres(minimo: number): ValidatorFn {
   standalone: false,
 })
 export class PasoDatosGeneralesComponent implements OnInit {
-  readonly dependenciasSolicitantes = DEPENDENCIAS_SOLICITANTES;
-  readonly dependenciasDestino = DEPENDENCIAS_DESTINO;
   readonly hitos = HITOS_CRONOGRAMA;
   readonly minCriterio = MIN_CARACTERES_CRITERIO;
   readonly minPlan = MIN_CARACTERES_PLAN;
@@ -103,6 +100,9 @@ export class PasoDatosGeneralesComponent implements OnInit {
 
   /** Subgrupo `datosGenerales` del `FormGroup` raíz del asistente. */
   @Input({ required: true }) form!: FormGroup;
+
+  /** Catálogo Oikos compartido por los dos selectores de dependencias. */
+  @Input() dependencias: readonly OpcionDependencia[] = [];
 
   /**
    * Datos del cruce con SICAPITAL. `null` mientras el paso 1 no ha cruzado:

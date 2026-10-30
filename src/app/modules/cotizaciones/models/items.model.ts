@@ -49,18 +49,6 @@ export interface OpcionItem {
   readonly icono: string;
 }
 
-/** Unidades de medida homologadas (mockup: catálogo DANE/UD). */
-export const UNIDADES_MEDIDA: readonly OpcionItem[] = [
-  { valor: "Unidad", etiqueta: "Unidad (Und.)", icono: "category" },
-  { valor: "Caja", etiqueta: "Caja", icono: "category" },
-  { valor: "Metro", etiqueta: "Metro", icono: "category" },
-  { valor: "Kilogramo", etiqueta: "Kilogramo", icono: "category" },
-  { valor: "Servicio", etiqueta: "Servicio", icono: "category" },
-  { valor: "Licencia", etiqueta: "Licencia", icono: "category" },
-  { valor: "Punto", etiqueta: "Punto", icono: "category" },
-  { valor: "Suscripción", etiqueta: "Suscripción", icono: "category" },
-];
-
 /** Tipos de ítem del selector segmentado (tarjeta 1). */
 export const TIPOS_ITEM: readonly OpcionItem[] = [
   { valor: "bien", etiqueta: "Bien", icono: "devices" },

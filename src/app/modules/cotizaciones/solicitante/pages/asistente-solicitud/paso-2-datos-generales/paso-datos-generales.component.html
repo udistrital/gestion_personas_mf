@@ -145,7 +145,7 @@
           formControlName="dependenciaSolicitante"
         >
           <option value="">Seleccione la dependencia solicitante</option>
-          @for (dependencia of dependenciasSolicitantes; track dependencia.valor) {
+          @for (dependencia of dependencias; track dependencia.valor) {
             <option [value]="dependencia.valor">
               {{ dependencia.etiqueta }}
             </option>
@@ -168,7 +168,7 @@
         </mat-icon>
         <select id="dep-destino" formControlName="dependenciaDestino">
           <option value="">Seleccione la dependencia destino</option>
-          @for (dependencia of dependenciasDestino; track dependencia.valor) {
+          @for (dependencia of dependencias; track dependencia.valor) {
             <option [value]="dependencia.valor">
               {{ dependencia.etiqueta }}
             </option>

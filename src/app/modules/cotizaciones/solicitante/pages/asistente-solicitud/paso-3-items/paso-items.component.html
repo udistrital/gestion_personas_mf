@@ -158,6 +158,7 @@
           <span class="selector">
             <mat-icon class="selector__icono" aria-hidden="true">straighten</mat-icon>
             <select id="item-unidad" formControlName="unidad">
+              <option value="" disabled>Seleccione una unidad de medida</option>
               @for (unidad of unidades; track unidad.valor) {
                 <option [value]="unidad.valor">{{ unidad.etiqueta }}</option>
               }

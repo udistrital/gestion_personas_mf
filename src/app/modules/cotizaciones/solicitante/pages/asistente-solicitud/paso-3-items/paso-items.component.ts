@@ -36,7 +36,7 @@ import {
   RechazoMasivo,
   TIPOS_ITEM,
   TipoItem,
-  UNIDADES_MEDIDA,
+  OpcionItem,
   formatoCantidad,
   formatoTamano,
   resumirItems,
@@ -94,7 +94,7 @@ export function minCaracteresTexto(minimo: number): ValidatorFn {
 })
 export class PasoItemsComponent implements OnInit {
   readonly tipos = TIPOS_ITEM;
-  readonly unidades = UNIDADES_MEDIDA;
+  unidades: readonly OpcionItem[] = [];
   readonly catalogoBusqueda = signal<readonly {
     tipo: TipoBusquedaCatalogo;
     codigo: string;
@@ -190,12 +190,37 @@ export class PasoItemsComponent implements OnInit {
           minCaracteresTexto(MIN_CARACTERES_DESCRIPCION_ITEM),
         ],
       ],
-      unidad: ["Unidad", Validators.required],
+      unidad: ["", Validators.required],
       cantidad: [1, [Validators.required, Validators.min(CANTIDAD_MINIMA)]],
     });
   }
 
   ngOnInit(): void {
+    this.catalogos
+      .obtenerCatalogoParametro("U_COMERCIO")
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (opciones) => {
+          this.unidades = opciones.map((opcion) => ({
+            valor: String(opcion.id),
+            etiqueta: opcion.nombre,
+            icono: "category",
+          }));
+          const unidad = this.itemForm.get("unidad");
+          if (!unidad?.value && this.unidades.length > 0) {
+            unidad?.setValue(this.valorUnidadPredeterminada(), {
+              emitEvent: false,
+            });
+          }
+        },
+        error: () => {
+          this.alerta.showAlert(
+            "Catálogo no disponible",
+            "No fue posible cargar las unidades de medida.",
+          );
+        },
+      });
+
     this.catalogos
       .obtenerCatalogoParametro("CIIU")
       .pipe(
@@ -438,7 +463,7 @@ export class PasoItemsComponent implements OnInit {
       tipo: valores.tipo,
       nombre: "",
       descripcion: "",
-      unidad: "Unidad",
+      unidad: this.valorUnidadPredeterminada(),
       cantidad: 1,
     });
     this.pagina.set(1);
@@ -476,9 +501,13 @@ export class PasoItemsComponent implements OnInit {
       tipo: this.itemForm.value.tipo,
       nombre: "",
       descripcion: "",
-      unidad: "Unidad",
+      unidad: this.valorUnidadPredeterminada(),
       cantidad: 1,
     });
+  }
+
+  private valorUnidadPredeterminada(): string {
+    return this.unidades[0]?.valor ?? "";
   }
 
   // ── Cargue masivo ────────────────────────────────────────────────────────
