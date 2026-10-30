@@ -75,6 +75,8 @@
   <barra-acciones-formulario
     [mostrarRegreso]="pasoActual > 1"
     [esUltimoPaso]="pasoActual === pasos.length"
+    [estadoMensaje]="estadoMensaje"
+    [estadoDetalle]="estadoDetalle"
     (regreso)="pasoActual = pasoActual - 1"
     (continuar)="continuar()"
     (finalizar)="finalizar()"

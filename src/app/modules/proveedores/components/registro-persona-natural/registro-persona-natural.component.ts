@@ -24,6 +24,12 @@ import {
   OpcionNatural,
   RegistroPersonaNaturalCatalogosService,
 } from "./registro-persona-natural-catalogos.service";
+import { mapearPersonaNaturalMid } from "../../services/gestion-personas-mid.mapper";
+import {
+  GestionPersonasMidService,
+  resumirErrorMid,
+  resumirRespuestaMid,
+} from "../../services/gestion-personas-mid.service";
 
 export interface EstadoCatalogoNatural {
   cargando: boolean;
@@ -63,6 +69,7 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
   private readonly borradorRegistroService = inject(BorradorRegistroService);
   private readonly elementRef = inject(ElementRef<HTMLElement>);
   private readonly catalogosService = inject(RegistroPersonaNaturalCatalogosService);
+  private readonly gestionPersonasMidService = inject(GestionPersonasMidService);
 
   catalogosPaso1: CatalogosPersonaNaturalPaso1 | null = null;
   estadoPaso1: EstadoCatalogoNatural = { cargando: false, error: null };
@@ -91,6 +98,11 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
   estadoDetalle =
     "Los cambios se guardarán en este navegador al escribir o al pulsar Guardar Borrador";
   private suspenderAutoguardado = false;
+  private registroEnviandose = false;
+  private registroProcesado = false;
+  private envioIndeterminado = false;
+  proveedorMidId?: number;
+  terceroMidId?: number;
 
   readonly pasosStepper = [
     {
@@ -738,6 +750,68 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
       this.currentStep++;
       this.persistirBorrador(true);
     }
+  }
+
+  finalizarRegistro(): void {
+    if (this.registroEnviandose) {
+      return;
+    }
+    if (this.registroProcesado) {
+      this.estadoMensaje = "Este registro ya fue enviado al MID";
+      this.estadoDetalle = this.proveedorMidId
+        ? `Id del proveedor: ${this.proveedorMidId}. No se enviará un segundo POST.`
+        : "No se enviará un segundo POST.";
+      return;
+    }
+    if (this.envioIndeterminado) {
+      this.estadoMensaje = "El resultado del envío anterior sigue sin confirmarse";
+      this.estadoDetalle =
+        "Verifique el estado del registro antes de volver a enviarlo.";
+      return;
+    }
+    if (this.personaNaturalForm.invalid) {
+      this.personaNaturalForm.markAllAsTouched();
+      this.estadoMensaje = "No se puede finalizar el registro";
+      this.estadoDetalle = "Revise los campos obligatorios del formulario.";
+      return;
+    }
+
+    let mapeo: ReturnType<typeof mapearPersonaNaturalMid>;
+    try {
+      mapeo = mapearPersonaNaturalMid(this.personaNaturalForm.getRawValue());
+    } catch (error) {
+      const resultado = resumirErrorMid(error);
+      this.estadoMensaje = resultado.mensaje;
+      this.estadoDetalle = resultado.detalle;
+      return;
+    }
+
+    this.registroEnviandose = true;
+    this.estadoMensaje = "Enviando el registro al MID";
+    this.estadoDetalle = "No cierre esta página mientras se procesa la solicitud.";
+    this.gestionPersonasMidService
+      .registrarPersonaNatural(mapeo.payload)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (respuesta) => {
+          const resultado = resumirRespuestaMid(respuesta, mapeo.omisiones);
+          this.registroEnviandose = false;
+          this.registroProcesado =
+            resultado.tipo === "success" || resultado.tipo === "partial";
+          this.envioIndeterminado = resultado.tipo === "indeterminate";
+          this.proveedorMidId = resultado.proveedorId;
+          this.terceroMidId = resultado.terceroId;
+          this.estadoMensaje = resultado.mensaje;
+          this.estadoDetalle = resultado.detalle;
+        },
+        error: (error: unknown) => {
+          const resultado = resumirErrorMid(error);
+          this.registroEnviandose = false;
+          this.envioIndeterminado = resultado.tipo === "indeterminate";
+          this.estadoMensaje = resultado.mensaje;
+          this.estadoDetalle = resultado.detalle;
+        },
+      });
   }
 
   regresar(): void {

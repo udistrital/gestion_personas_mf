@@ -26,6 +26,15 @@ import {
   OpcionUnspsc,
   RegistroPersonaJuridicaUnspscService,
 } from "./services/registro-persona-juridica-unspsc.service";
+import {
+  esMatriculaMercantilValida,
+  mapearPersonaJuridicaMid,
+} from "../../services/gestion-personas-mid.mapper";
+import {
+  GestionPersonasMidService,
+  resumirErrorMid,
+  resumirRespuestaMid,
+} from "../../services/gestion-personas-mid.service";
 
 const SOLO_DIGITOS = /^\d+$/;
 const NIT = /^\d{9}$/;
@@ -46,6 +55,24 @@ function minArrayLength(min: number): ValidatorFn {
     }
     return value.length >= min ? null : { minArrayLength: { requiredLength: min, actualLength: value.length } };
   };
+}
+
+function validarRangoMatriculaMercantil(
+  control: AbstractControl,
+): ValidationErrors | null {
+  const valor = control.value;
+  if (valor === null || valor === undefined || valor === "") {
+    return null;
+  }
+  if (typeof valor !== "string") {
+    return { matriculaMercantilFormato: true };
+  }
+  if (!SOLO_DIGITOS.test(valor)) {
+    return null;
+  }
+  return esMatriculaMercantilValida(valor)
+    ? null
+    : { matriculaMercantilFueraDeRango: true };
 }
 
 @Component({
@@ -78,11 +105,19 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
   private solicitudCiudadesDomicilio = 0;
   private solicitudCiudadesApertura = 0;
   private suscripcionCatalogos?: Subscription;
+  estadoMensaje = "Complete el formulario para registrar la persona jurídica.";
+  estadoDetalle = "";
+  private registroEnviandose = false;
+  private registroProcesado = false;
+  private envioIndeterminado = false;
+  proveedorMidId?: number;
+  terceroMidId?: number;
 
   constructor(
     private readonly catalogosService: RegistroPersonaJuridicaCatalogosService,
     private readonly ubicacionesService: RegistroPersonaJuridicaUbicacionesService,
     private readonly unspscService: RegistroPersonaJuridicaUnspscService,
+    private readonly gestionPersonasMidService: GestionPersonasMidService,
     private readonly router: Router,
     private readonly destroyRef: DestroyRef,
   ) {}
@@ -345,12 +380,66 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
   ];
 
   finalizar() {
+    if (this.registroEnviandose) {
+      return;
+    }
+    if (this.registroProcesado) {
+      this.estadoMensaje = "Este registro ya fue enviado al MID";
+      this.estadoDetalle = this.proveedorMidId
+        ? `Id del proveedor: ${this.proveedorMidId}. No se enviará un segundo POST.`
+        : "No se enviará un segundo POST.";
+      return;
+    }
+    if (this.envioIndeterminado) {
+      this.estadoMensaje = "El resultado del envío anterior sigue sin confirmarse";
+      this.estadoDetalle =
+        "Verifique el estado del registro antes de volver a enviarlo.";
+      return;
+    }
     const ciudadesValidas = this.ciudadValida('domicilio') && this.ciudadValida('apertura');
     if (!this.validarFormulario() || !ciudadesValidas || this.formulario.invalid) {
       this.formulario.markAllAsTouched();
-      console.error('No se puede finalizar el registro porque el formulario contiene campos inválidos.');
+      this.estadoMensaje = "No se puede finalizar el registro";
+      this.estadoDetalle = "Revise los campos obligatorios del formulario.";
       return;
     }
+
+    let mapeo: ReturnType<typeof mapearPersonaJuridicaMid>;
+    try {
+      mapeo = mapearPersonaJuridicaMid(this.formulario.getRawValue());
+    } catch (error) {
+      const resultado = resumirErrorMid(error);
+      this.estadoMensaje = resultado.mensaje;
+      this.estadoDetalle = resultado.detalle;
+      return;
+    }
+
+    this.registroEnviandose = true;
+    this.estadoMensaje = "Enviando el registro al MID";
+    this.estadoDetalle = "No cierre esta página mientras se procesa la solicitud.";
+    this.gestionPersonasMidService
+      .registrarPersonaJuridica(mapeo.payload)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (respuesta) => {
+          const resultado = resumirRespuestaMid(respuesta, mapeo.omisiones);
+          this.registroEnviandose = false;
+          this.registroProcesado =
+            resultado.tipo === "success" || resultado.tipo === "partial";
+          this.envioIndeterminado = resultado.tipo === "indeterminate";
+          this.proveedorMidId = resultado.proveedorId;
+          this.terceroMidId = resultado.terceroId;
+          this.estadoMensaje = resultado.mensaje;
+          this.estadoDetalle = resultado.detalle;
+        },
+        error: (error: unknown) => {
+          const resultado = resumirErrorMid(error);
+          this.registroEnviandose = false;
+          this.envioIndeterminado = resultado.tipo === "indeterminate";
+          this.estadoMensaje = resultado.mensaje;
+          this.estadoDetalle = resultado.detalle;
+        },
+      });
   }
 
   continuar(): void {
@@ -396,27 +485,31 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
   }
 
   formulario: FormGroup = new FormGroup({
-    nit: new FormControl('900845120', [Validators.required, Validators.pattern(NIT)]),
-    digitoVerificacion: new FormControl('3', Validators.pattern(DIGITO_VERIFICACION)),
-    nitConfirmacion: new FormControl('900845120', [Validators.required, Validators.pattern(NIT)]),
+    nit: new FormControl('', [Validators.required, Validators.pattern(NIT)]),
+    digitoVerificacion: new FormControl('', Validators.pattern(DIGITO_VERIFICACION)),
+    nitConfirmacion: new FormControl('', [Validators.required, Validators.pattern(NIT)]),
     procedencia: new FormControl<number | null>(null, Validators.required),
-    razonSocial: new FormControl('SOLUCIONES TECNOLÓGICAS E INTEGRACIONES S.A.S.', Validators.required),
-    nombreComercial: new FormControl('INTEGRATECH S.A.S.'),
-    matriculaMercantil: new FormControl('03148920', [Validators.required, Validators.pattern(SOLO_DIGITOS)]),
+    razonSocial: new FormControl('', Validators.required),
+    nombreComercial: new FormControl(''),
+    matriculaMercantil: new FormControl('', [
+      Validators.required,
+      Validators.pattern(SOLO_DIGITOS),
+      validarRangoMatriculaMercantil,
+    ]),
     camaraComercio: new FormControl<number | null>(null, Validators.required),
-    fechaConstitucion: new FormControl('2016-04-14', Validators.required),
-    fechaRenovacion: new FormControl('2025-02-18', Validators.required),
+    fechaConstitucion: new FormControl('', Validators.required),
+    fechaRenovacion: new FormControl('', Validators.required),
     tipoOrganizacion: new FormControl<number | null>(null, Validators.required),
     tamanoEmpresarial: new FormControl<number | null>(null, Validators.required),
-    documentoRepresentante: new FormControl('80234567', [Validators.required, Validators.pattern(SOLO_DIGITOS)]),
+    documentoRepresentante: new FormControl('', [Validators.required, Validators.pattern(SOLO_DIGITOS)]),
     cargoRepresentante: new FormControl<number | null>(null, Validators.required),
-    primerApellido: new FormControl('RODRÍGUEZ', Validators.required),
-    segundoApellido: new FormControl('PATIÑO'),
-    primerNombre: new FormControl('CARLOS', Validators.required),
-    segundoNombre: new FormControl('EDUARDO'),
-    correoRepresentante: new FormControl('gerencia@integratech.com.co', [Validators.required, Validators.pattern(CORREO)]),
-    telefonoRepresentante: new FormControl('+57 310 456 7890', [Validators.required, Validators.pattern(TELEFONO)]),
-    limitacionEstatutaria: new FormControl(false, Validators.required),
+    primerApellido: new FormControl('', Validators.required),
+    segundoApellido: new FormControl(''),
+    primerNombre: new FormControl('', Validators.required),
+    segundoNombre: new FormControl(''),
+    correoRepresentante: new FormControl('', [Validators.required, Validators.pattern(CORREO)]),
+    telefonoRepresentante: new FormControl('', [Validators.required, Validators.pattern(TELEFONO)]),
+    limitacionEstatutaria: new FormControl<boolean | null>(null, Validators.required),
     registrarSuplente: new FormControl(false),
     beneficiariosFinales: new FormControl<boolean | null>(null, Validators.required),
     cotizaBolsa: new FormControl<boolean | null>(null, Validators.required),
@@ -428,25 +521,25 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
     departamento: new FormControl<number | null>(null, Validators.required),
     ciudad: new FormControl<number | null>({ value: null, disabled: true }, Validators.required),
     tipoVia: new FormControl<number | null>(null, Validators.required),
-    detalleVia: new FormControl('68', Validators.required),
-    numeroCruce: new FormControl('45', Validators.required),
-    placaPuerta: new FormControl('20', Validators.required),
+    detalleVia: new FormControl('', Validators.required),
+    numeroCruce: new FormControl('', Validators.required),
+    placaPuerta: new FormControl('', Validators.required),
     interiorTipo: new FormControl<number | null>(null),
-    detalleInterior: new FormControl('502'),
-    correoNotificaciones: new FormControl('notificaciones@integratech.com.co', [Validators.required, Validators.pattern(CORREO)]),
-    correoNotificacionesConfirmacion: new FormControl('notificaciones@integratech.com.co', [Validators.required, Validators.pattern(CORREO)]),
-    telefonoFijo: new FormControl('+57 (601) 745 8900', [Validators.required, Validators.pattern(TELEFONO)]),
-    extension: new FormControl('104', Validators.pattern(SOLO_DIGITOS)),
-    telefonoAlterno: new FormControl('3158890012', [Validators.required, Validators.pattern(TELEFONO)]),
-    sitioWeb: new FormControl('https://www.integratech.com.co', Validators.pattern(URL_HTTP)),
-    contactoComercial: new FormControl('MARCELA GÓMEZ RINCÓN'),
-    telefonoAsesor: new FormControl('3186749920', Validators.pattern(TELEFONO)),
+    detalleInterior: new FormControl(''),
+    correoNotificaciones: new FormControl('', [Validators.required, Validators.pattern(CORREO)]),
+    correoNotificacionesConfirmacion: new FormControl('', [Validators.required, Validators.pattern(CORREO)]),
+    telefonoFijo: new FormControl('', [Validators.required, Validators.pattern(TELEFONO)]),
+    extension: new FormControl('', Validators.pattern(SOLO_DIGITOS)),
+    telefonoAlterno: new FormControl('', [Validators.required, Validators.pattern(TELEFONO)]),
+    sitioWeb: new FormControl('', Validators.pattern(URL_HTTP)),
+    contactoComercial: new FormControl(''),
+    telefonoAsesor: new FormControl('', Validators.pattern(TELEFONO)),
     aceptaTerminos: new FormControl(false),
     tipoConstitucion: new FormControl<number | null>(null, Validators.required),
-    capitalAutorizado: new FormControl('500000000', [Validators.required, Validators.pattern(SOLO_DIGITOS)]),
-    capitalSuscritoPagado: new FormControl('350000000', [Validators.required, Validators.pattern(SOLO_DIGITOS)]),
-    activosTotales: new FormControl('1240850000', [Validators.required, Validators.pattern(SOLO_DIGITOS)]),
-    pasivosTotales: new FormControl('385200000', [Validators.required, Validators.pattern(SOLO_DIGITOS)]),
+    capitalAutorizado: new FormControl('', [Validators.required, Validators.pattern(SOLO_DIGITOS)]),
+    capitalSuscritoPagado: new FormControl('', [Validators.required, Validators.pattern(SOLO_DIGITOS)]),
+    activosTotales: new FormControl('', [Validators.required, Validators.pattern(SOLO_DIGITOS)]),
+    pasivosTotales: new FormControl('', [Validators.required, Validators.pattern(SOLO_DIGITOS)]),
     banco: new FormControl<number | null>(null, Validators.required),
     tipoCuenta: new FormControl<number | null>(null, Validators.required),
     departamentoApertura: new FormControl<number | null>(null, Validators.required),
@@ -454,32 +547,32 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
       { value: null, disabled: true },
       Validators.required,
     ),
-    numeroCuenta: new FormControl('21004598210', [Validators.required, Validators.pattern(CUENTA_BANCARIA)]),
-    numeroCuentaConfirmacion: new FormControl('21004598210', [Validators.required, Validators.pattern(CUENTA_BANCARIA)]),
-    titularCuenta: new FormControl('SOLUCIONES TECNOLÓGICAS E INTEGRACIONES S.A.S.'),
-    correoPagos: new FormControl('pagos@integratech.com.co', [Validators.required, Validators.pattern(CORREO)]),
-    correoPagosConfirmacion: new FormControl('pagos@integratech.com.co', [Validators.required, Validators.pattern(CORREO)]),
-    responsableTesoreria: new FormControl('Diana Marcela Mendoza Castro', Validators.required),
-    telefonoTesoreria: new FormControl('+57 (601) 745 8900 Ext. 105', [Validators.required, Validators.pattern(TELEFONO)]),
+    numeroCuenta: new FormControl('', [Validators.required, Validators.pattern(CUENTA_BANCARIA)]),
+    numeroCuentaConfirmacion: new FormControl('', [Validators.required, Validators.pattern(CUENTA_BANCARIA)]),
+    titularCuenta: new FormControl(''),
+    correoPagos: new FormControl('', [Validators.required, Validators.pattern(CORREO)]),
+    correoPagosConfirmacion: new FormControl('', [Validators.required, Validators.pattern(CORREO)]),
+    responsableTesoreria: new FormControl('', Validators.required),
+    telefonoTesoreria: new FormControl('', [Validators.required, Validators.pattern(TELEFONO)]),
     obligadoFacturar: new FormControl<boolean | null>(null, Validators.required),
-    prefijoFacturacion: new FormControl('SETT - 001 hasta 50000'),
-    resolucionDian: new FormControl('18764039201934 del 14/01/2024'),
+    prefijoFacturacion: new FormControl(''),
+    resolucionDian: new FormControl(''),
     monedaExtranjera: new FormControl<boolean | null>(null),
-    certificacionBancaria: new FormControl('Certificacion_Bancaria_BancoBogota_2025.pdf', Validators.pattern(ARCHIVO_PDF)),
-    rutArchivo: new FormControl('RUT_Integratech_2025.pdf', [Validators.required, Validators.pattern(ARCHIVO_PDF)]),
-    certificadoExistenciaArchivo: new FormControl('Certificado_CCB_Integratech_2025.pdf', [Validators.required, Validators.pattern(ARCHIVO_PDF)]),
-    cedulaRepresentanteArchivo: new FormControl('Cedula_Representante_Legal.pdf', [Validators.required, Validators.pattern(ARCHIVO_PDF)]),
+    certificacionBancaria: new FormControl('', Validators.pattern(ARCHIVO_PDF)),
+    rutArchivo: new FormControl('', [Validators.required, Validators.pattern(ARCHIVO_PDF)]),
+    certificadoExistenciaArchivo: new FormControl('', [Validators.required, Validators.pattern(ARCHIVO_PDF)]),
+    cedulaRepresentanteArchivo: new FormControl('', [Validators.required, Validators.pattern(ARCHIVO_PDF)]),
     tieneRup: new FormControl<boolean | null>(null, Validators.required),
-    rupArchivo: new FormControl('Certificado_RUP_Vigente_2025.pdf', [Validators.required, Validators.pattern(ARCHIVO_PDF)]),
-    vigenciaRup: new FormControl('2025-12-31', Validators.required),
-    certificadoParafiscales: new FormControl('Cert_Parafiscales_Feb2025.pdf', [Validators.required, Validators.pattern(ARCHIVO_PDF)]),
-    aportesSeguridadSocial: new FormControl(true, Validators.requiredTrue),
+    rupArchivo: new FormControl('', [Validators.required, Validators.pattern(ARCHIVO_PDF)]),
+    vigenciaRup: new FormControl('', Validators.required),
+    certificadoParafiscales: new FormControl('', [Validators.required, Validators.pattern(ARCHIVO_PDF)]),
+    aportesSeguridadSocial: new FormControl(false, Validators.requiredTrue),
     actividadesCiiu: new FormControl<number[]>([], Validators.required),
     unspscSeleccionados: new FormControl<number[]>([]),
-    descripcionServicios: new FormControl('Soluciones de infraestructura tecnológica de misión crítica, desarrollo de arquitecturas cloud, ciberseguridad aplicada, soporte integral de hardware institucional y licenciamiento corporativo para entidades de educación superior pública y sectores gubernamentales del Distrito Capital.', Validators.required),
+    descripcionServicios: new FormControl('', Validators.required),
     declaraciones: new FormControl<number[]>([], Validators.required),
-    tokenOtp: new FormControl('482913', [Validators.required, Validators.pattern(OTP)]),
-    aceptaTratamiento: new FormControl(true, Validators.requiredTrue)
+    tokenOtp: new FormControl('', [Validators.required, Validators.pattern(OTP)]),
+    aceptaTratamiento: new FormControl(false, Validators.requiredTrue)
   });
 
 }
