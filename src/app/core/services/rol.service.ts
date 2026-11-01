@@ -58,12 +58,31 @@ export class RolService {
     return this.roles;
   }
 
+  /**
+   * Rol con el que el Root pidió entrar al módulo.
+   *
+   * Es solo una preferencia de navegación (a qué área ir por defecto) y puede
+   * ser `null` cuando el usuario tiene varios roles y el Root no eligió uno.
+   * No debe usarse para autorizar: eso se resuelve con `tieneRol` /
+   * `tieneAlgunRol` sobre todos los roles del usuario.
+   */
   getRolActivo(): Rol | null {
     return this.rolActivo;
   }
 
   tieneRol(rol: string): boolean {
     return this.roles.some((rolDisponible) => rolDisponible === rol);
+  }
+
+  /**
+   * true si el usuario tiene al menos uno de los roles indicados.
+   *
+   * Es la comprobación que usan las rutas y los permisos: un usuario puede
+   * tener varios roles a la vez y el área se habilita por intersección con la
+   * lista del usuario, sin depender de que exista un `rolActivo` único.
+   */
+  tieneAlgunRol(roles: readonly string[]): boolean {
+    return roles.some((rol) => this.tieneRol(rol));
   }
 
   // Permiso para creación y edición

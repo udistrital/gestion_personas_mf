@@ -104,7 +104,7 @@ export class PermisosSolicitudService {
   ): readonly AccionInvitacionProveedor[] {
     if (
       !this.rol.estaCargado() ||
-      this.rol.getRolActivo() !== ROL_PROVEEDOR
+      !this.rol.tieneRol(ROL_PROVEEDOR)
     ) {
       return [];
     }
@@ -135,7 +135,7 @@ export class PermisosSolicitudService {
   ): boolean {
     if (
       !this.rol.estaCargado() ||
-      this.rol.getRolActivo() !== ROL_PROVEEDOR ||
+      !this.rol.tieneRol(ROL_PROVEEDOR) ||
       !MATRIZ_ACCIONES_INVITACION_PROVEEDOR[invitacion.estado].includes(
         "formular-observacion",
       ) ||
@@ -156,7 +156,7 @@ export class PermisosSolicitudService {
   ): boolean {
     return (
       this.rol.estaCargado() &&
-      this.rol.getRolActivo() === ROL_PROVEEDOR &&
+      this.rol.tieneRol(ROL_PROVEEDOR) &&
       MATRIZ_ACCIONES_INVITACION_PROVEEDOR[invitacion.estado].includes(
         "descargar-anexo",
       )
@@ -170,7 +170,7 @@ export class PermisosSolicitudService {
   ): boolean {
     return (
       this.rol.estaCargado() &&
-      this.rol.getRolActivo() === ROL_PROVEEDOR &&
+      this.rol.tieneRol(ROL_PROVEEDOR) &&
       MATRIZ_ACCIONES_INVITACION_PROVEEDOR[invitacion.estado].includes(
         "responder",
       ) &&

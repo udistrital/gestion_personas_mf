@@ -324,6 +324,11 @@
   line-height: 1.6;
 }
 
+/* La justificación es un párrafo aparte: separa del resumen de la propuesta. */
+.pendiente__justificacion {
+  margin-top: 0.5rem;
+}
+
 .pendiente__chips {
   display: flex;
   flex-wrap: wrap;

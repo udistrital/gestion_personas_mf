@@ -534,10 +534,12 @@ export class AsistenteSolicitudComponent implements OnInit {
   /**
    * Guarda la edición en la capa de datos (paso 7).
    *
+   * `justificacion` llega del paso 7 en texto plano y se conserva en la
+   * propuesta pendiente (S-08) o en la versión guardada del borrador.
    * Al completarse emite `guardado` para que el armazón navegue al detalle; el
    * detalle abre la confirmación con el resultado de la nueva versión.
    */
-  guardarCambios(): void {
+  guardarCambios(justificacion = ""): void {
     const contexto = this.contextoEdicion;
     const modo = this.modoEdicion;
     if (!contexto || !modo || this.guardando()) {
@@ -565,7 +567,12 @@ export class AsistenteSolicitudComponent implements OnInit {
     this.guardando.set(true);
 
     this.solicitudes
-      .guardarEdicion(contexto.solicitud.id, this.datosEdicionActuales(), modo)
+      .guardarEdicion(
+        contexto.solicitud.id,
+        this.datosEdicionActuales(),
+        modo,
+        justificacion,
+      )
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (resultado) => {

@@ -133,6 +133,12 @@
               El expediente mantiene la versión publicada hasta que la Oficina
               de Contratación la apruebe.
             </p>
+            @if (pendiente.justificacion) {
+              <p class="pendiente__texto pendiente__justificacion">
+                <strong>Justificación:</strong>
+                {{ pendiente.justificacion }}
+              </p>
+            }
             <div class="pendiente__chips">
               <span class="chip chip--recto">
                 <mat-icon aria-hidden="true">history</mat-icon>

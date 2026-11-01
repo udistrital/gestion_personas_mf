@@ -182,8 +182,15 @@ export class PasoRevisionComponent {
   /** Versión vigente del expediente ("v1.0"). */
   @Input() versionActual = "v1.0";
 
-  /** Pide al asistente guardar la edición. */
-  @Output() guardarEdicion = new EventEmitter<void>();
+  /**
+   * Pide al asistente guardar la edición.
+   *
+   * Emite la justificación en texto plano: el asistente la envía al servicio y
+   * esta queda registrada en la propuesta pendiente (S-08) o en la versión
+   * guardada del borrador. Se emite vacía cuando no hay cambios, porque en ese
+   * caso no se exige justificación.
+   */
+  @Output() guardarEdicion = new EventEmitter<string>();
 
   /** Pide al asistente confirmar el descarte de los cambios. */
   @Output() descartarEdicion = new EventEmitter<void>();
@@ -359,6 +366,11 @@ export class PasoRevisionComponent {
     return this.justificacion.invalid && this.justificacion.touched;
   }
 
+  /** Justificación normalizada que viaja al guardado y al diálogo. */
+  private get justificacionTexto(): string {
+    return textoPlanoDesdeHtml(this.justificacion.value).trim();
+  }
+
   /** true si el paso admite cambios (siempre en la creación). */
   pasoEditable(numero: number): boolean {
     return !this.esEdicion || this.pasosEditables.includes(numero);
@@ -379,7 +391,7 @@ export class PasoRevisionComponent {
     // que la solicitud permanece igual.
     if (this.sinCambios) {
       this.justificacion.markAsUntouched();
-      this.guardarEdicion.emit();
+      this.guardarEdicion.emit(this.justificacionTexto);
       return;
     }
 
@@ -395,7 +407,7 @@ export class PasoRevisionComponent {
       return;
     }
 
-    this.guardarEdicion.emit();
+    this.guardarEdicion.emit(this.justificacionTexto);
   }
 
   /**
@@ -423,7 +435,7 @@ export class PasoRevisionComponent {
           solicitudId: this.solicitudId,
           versionActual: this.versionActual,
           diferencias: this.diferencias,
-          justificacion: textoPlanoDesdeHtml(this.justificacion.value).trim(),
+          justificacion: this.justificacionTexto,
         },
         width: "640px",
         maxWidth: "96vw",
@@ -435,7 +447,7 @@ export class PasoRevisionComponent {
       .subscribe((confirmado) => {
         this.dialogando.set(false);
         if (confirmado === true) {
-          this.guardarEdicion.emit();
+          this.guardarEdicion.emit(this.justificacionTexto);
         }
       });
   }

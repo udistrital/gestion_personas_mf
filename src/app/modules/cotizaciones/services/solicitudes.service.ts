@@ -143,11 +143,16 @@ export abstract class SolicitudesService {
    * - Edición completa: aplica los cambios y mantiene el borrador.
    * - Edición restringida: registra la propuesta y pasa a `en-aprobacion`;
    *   los datos no cambian hasta que S-08 la apruebe.
+   *
+   * `justificacion` es el motivo que el paso 7 exige antes de guardar. Se
+   * conserva junto a la propuesta pendiente (S-08) y en la versión guardada
+   * del borrador, para que no se pierda al cerrar el diálogo.
    */
   abstract guardarEdicion(
     id: string,
     valores: DatosEdicionSolicitud,
     modo: ModoEdicionSolicitud,
+    justificacion?: string,
   ): Observable<ResultadoGuardadoSolicitud>;
 
   /** Cancela una solicitud permitida por la matriz y registra su auditoría. */
@@ -2604,6 +2609,8 @@ interface VersionGuardada {
   readonly fecha: string;
   readonly valores: DatosEdicionSolicitud;
   readonly eventos: number;
+  /** Justificación registrada al guardar esa versión (S-04). */
+  readonly justificacion?: string;
 }
 
 /**
@@ -2885,6 +2892,7 @@ export class SolicitudesServiceMock extends SolicitudesService {
     id: string,
     valores: DatosEdicionSolicitud,
     modo: ModoEdicionSolicitud,
+    justificacion = "",
   ): Observable<ResultadoGuardadoSolicitud> {
     const params = new URLSearchParams(window.location.search);
     const retardo = Number(params.get("mockRetardo")) || 600;
@@ -2909,6 +2917,9 @@ export class SolicitudesServiceMock extends SolicitudesService {
     const resumen = this.diferencias.calcular(base, valores);
     const ahora = new Date();
     const fecha = fechaHoraExpediente(ahora);
+    // Normaliza una sola vez: el texto viaja desde el editor enriquecido y debe
+    // quedar en texto plano tanto en la propuesta como en la versión guardada.
+    const motivo = textoPlanoDesdeHtml(justificacion).trim();
     const revision = revisionSolicitud(actual) + 1;
     const version =
       modo === "completa"
@@ -2954,7 +2965,14 @@ export class SolicitudesServiceMock extends SolicitudesService {
       // anterior restaura su fotografía y recorta la bitácora posterior.
       this.versiones.set(id, [
         ...(this.versiones.get(id) ?? []),
-        { version, revision, fecha, valores, eventos: eventos.length },
+        {
+          version,
+          revision,
+          fecha,
+          valores,
+          eventos: eventos.length,
+          justificacion: motivo,
+        },
       ]);
     } else {
       this.filasEditadas.set(id, {
@@ -2969,6 +2987,7 @@ export class SolicitudesServiceMock extends SolicitudesService {
           solicitadaEl: fecha,
           solicitadaPor: "Raúl Quimbaya",
           cambios: resumen.total,
+          justificacion: motivo,
           valores,
         },
       });
@@ -3108,6 +3127,7 @@ export class SolicitudesServiceMock extends SolicitudesService {
             ? "Versión original"
             : "Versión guardada",
         actual,
+        justificacion: guardada.justificacion,
         diferencias: actual
           ? { grupos: [], total: 0 }
           : this.diferencias.calcular(guardada.valores, vigente),
@@ -3316,6 +3336,8 @@ export class SolicitudesServiceMock extends SolicitudesService {
       solicitadaEl: "19/02/2026 15:05 COT",
       solicitadaPor: "Raúl Quimbaya",
       cambios: 2,
+      justificacion:
+        "Ajuste de la fecha de cierre y de la cantidad del primer ítem por actualización de la necesidad radicada en SICAPITAL.",
       valores,
     };
   }

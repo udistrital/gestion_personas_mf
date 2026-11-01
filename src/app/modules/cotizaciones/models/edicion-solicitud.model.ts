@@ -102,6 +102,8 @@ export interface ModificacionPendiente {
   readonly solicitadaEl: string;
   readonly solicitadaPor: string;
   readonly cambios: number;
+  /** Justificación registrada por quien radicó la propuesta (S-04). */
+  readonly justificacion: string;
   /** Propuesta que se aplicará cuando el aprobador la acepte. */
   readonly valores: DatosEdicionSolicitud;
 }
@@ -151,6 +153,8 @@ export interface VersionEdicionSolicitud {
   readonly etiqueta: string;
   /** true si es la versión vigente: elegirla solo descarta lo no guardado. */
   readonly actual: boolean;
+  /** Justificación con la que se guardó esa versión (S-04). */
+  readonly justificacion?: string;
   /** Cambios guardados que se perderían al volver a esta versión. */
   readonly diferencias: ResumenDiferencias;
 }
