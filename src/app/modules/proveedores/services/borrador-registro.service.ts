@@ -30,7 +30,12 @@ export class BorradorRegistroService extends BorradorService<BorradorRegistroPer
   protected override esValido(
     borrador: BorradorRegistroPersonaNatural,
   ): boolean {
-    return super.esValido(borrador) && typeof borrador.formValue === "object";
+    return (
+      super.esValido(borrador) &&
+      borrador.formValue !== null &&
+      typeof borrador.formValue === "object" &&
+      !Array.isArray(borrador.formValue)
+    );
   }
 
   /**

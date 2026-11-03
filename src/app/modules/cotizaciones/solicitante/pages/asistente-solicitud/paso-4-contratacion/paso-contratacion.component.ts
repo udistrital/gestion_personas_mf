@@ -16,24 +16,32 @@ import {
   ValidatorFn,
   Validators,
 } from "@angular/forms";
+import { map } from "rxjs";
 import {
   CONDICION_CONTRAENTREGA_SUGERIDA,
-  FORMAS_PAGO,
-  MEDIOS_PAGO,
+  FORMA_PAGO_CONTRAENTREGA,
   MIN_CARACTERES_CONDICION,
   NORMA_MEDIO_PAGO,
   PORCENTAJE_MINIMO,
   PORCENTAJE_PAGO_UNICO,
   PORCENTAJE_TOTAL,
+  OpcionContratacion,
   ParametroPago,
-  TIPOS_CONTRATO,
   calcularResumenPagos,
   esPagoUnico,
-  etiquetaCorta,
   formatoPorcentajePago,
   reglaDesembolso,
 } from "../../../../models/contratacion.model";
 import { AlertService } from "src/app/shared/services/alert.service";
+import { RegistroPersonaJuridicaCatalogosService } from "src/app/modules/proveedores/components/registro-persona-juridica/services/registro-persona-juridica-catalogos.service";
+
+function normalizarCatalogo(valor: string): string {
+  return valor
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+}
 
 /**
  * Validador del paso 4: exige al menos un parámetro de pago y que la suma de
@@ -101,9 +109,9 @@ function minCaracteresTexto(minimo: number): ValidatorFn {
   standalone: false,
 })
 export class PasoContratacionComponent implements OnInit {
-  readonly tiposContrato = TIPOS_CONTRATO;
-  readonly mediosPago = MEDIOS_PAGO;
-  readonly formasPago = FORMAS_PAGO;
+  tiposContrato: readonly OpcionContratacion[] = [];
+  mediosPago: readonly OpcionContratacion[] = [];
+  formasPago: readonly OpcionContratacion[] = [];
   readonly normaMedioPago = NORMA_MEDIO_PAGO;
   readonly minCondicion = MIN_CARACTERES_CONDICION;
   readonly formatoPorcentaje = formatoPorcentajePago;
@@ -117,6 +125,7 @@ export class PasoContratacionComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
   private readonly alerta = inject(AlertService);
+  private readonly catalogos = inject(RegistroPersonaJuridicaCatalogosService);
 
   /** Parámetros de pago agregados (alimenta la tabla y el medidor). */
   readonly parametros = signal<readonly ParametroPago[]>([]);
@@ -141,6 +150,59 @@ export class PasoContratacionComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.catalogos
+      .obtenerCatalogoParametro("TIP_FOR_PAG_COT")
+      .pipe(
+        map((opciones) => ({
+          tiposContrato: opciones.map((opcion) => ({
+            valor: opcion.codigo ?? String(opcion.id),
+            etiqueta: opcion.nombre,
+          })),
+          formasPago: opciones.map((opcion) => ({
+            valor: this.esOpcionPagoUnico(opcion)
+              ? FORMA_PAGO_CONTRAENTREGA
+              : "pagos_parciales",
+            etiqueta: opcion.nombre,
+          })),
+        })),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: ({ tiposContrato, formasPago }) => {
+          this.tiposContrato = tiposContrato;
+          this.formasPago = formasPago;
+        },
+        error: () => {
+          this.alerta.showAlert(
+            "Catálogo no disponible",
+            "No fue posible cargar el catálogo de formas de pago y contratos.",
+          );
+        },
+      });
+
+    this.catalogos
+      .obtenerCatalogoParametro("MPA")
+      .pipe(
+        map((opciones) =>
+          opciones.map((opcion) => ({
+            valor: opcion.codigo ?? String(opcion.id),
+            etiqueta: opcion.nombre,
+          })),
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (opciones) => {
+          this.mediosPago = opciones;
+        },
+        error: () => {
+          this.alerta.showAlert(
+            "Catálogo no disponible",
+            "No fue posible cargar el catálogo de medios de pago.",
+          );
+        },
+      });
+
     // Restaura los parámetros que el borrador dejó en el formulario.
     const guardados = this.controlOpcional("parametros")?.value;
     if (Array.isArray(guardados) && guardados.length > 0) {
@@ -199,15 +261,15 @@ export class PasoContratacionComponent implements OnInit {
   /** Etiquetas legibles de los selects (cabeceras de tarjeta y avisos). */
   readonly seleccion = computed(() => {
     this.marcas();
+    const medioPago = String(this.controlOpcional("medioPago")?.value ?? "");
+    const formaPago = String(this.controlOpcional("formaPago")?.value ?? "");
     return {
-      medioPago: etiquetaCorta(
-        MEDIOS_PAGO,
-        String(this.controlOpcional("medioPago")?.value ?? ""),
-      ),
-      formaPago: etiquetaCorta(
-        FORMAS_PAGO,
-        String(this.controlOpcional("formaPago")?.value ?? ""),
-      ),
+      medioPago:
+        this.mediosPago.find((opcion) => opcion.valor === medioPago)?.etiqueta ??
+        medioPago,
+      formaPago:
+        this.formasPago.find((opcion) => opcion.valor === formaPago)?.etiqueta ??
+        formaPago,
     };
   });
 
@@ -334,6 +396,11 @@ export class PasoContratacionComponent implements OnInit {
   /** Forma de pago seleccionada en el formulario. */
   private formaPagoActual(): string {
     return String(this.controlOpcional("formaPago")?.value ?? "");
+  }
+
+  private esOpcionPagoUnico(opcion: { codigo?: string; nombre: string }): boolean {
+    const clave = normalizarCatalogo(`${opcion.codigo ?? ""} ${opcion.nombre}`);
+    return clave.includes("contraentrega") || clave.includes("pagounico");
   }
 
   /**

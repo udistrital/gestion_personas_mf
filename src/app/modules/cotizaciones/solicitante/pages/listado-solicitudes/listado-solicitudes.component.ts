@@ -2,11 +2,11 @@ import { Component, DestroyRef, OnInit, signal } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { Router } from "@angular/router";
 import { Subscription } from "rxjs";
+import { map } from "rxjs";
 import {
   ACCIONES_SOLICITUD,
   AccionSolicitud,
   ESTADOS_SOLICITUD,
-  ESTADOS_SOLICITUD_LISTA,
 } from "src/app/core/constants/estados-solicitud.const";
 import { PermisosSolicitudService } from "src/app/core/services/permisos-solicitud.service";
 import { CampoFiltro } from "src/app/shared/components/listado-filtros/listado-filtros.component";
@@ -17,11 +17,11 @@ import {
   FiltroSolicitudes,
   Solicitud,
   ResultadoListado,
-  TIPOS_COTIZACION_FILTRO,
   UNIDADES_EJECUTORAS,
   VIGENCIAS,
 } from "../../../models/solicitud.model";
 import { SolicitudesService } from "../../../services/solicitudes.service";
+import { RegistroPersonaJuridicaCatalogosService } from "src/app/modules/proveedores/components/registro-persona-juridica/services/registro-persona-juridica-catalogos.service";
 
 type EstadoVista = "cargando" | "listo" | "error";
 
@@ -34,6 +34,7 @@ type EstadoVista = "cargando" | "listo" | "error";
 export class ListadoSolicitudesComponent implements OnInit {
   constructor(
     private readonly servicio: SolicitudesService,
+    private readonly catalogos: RegistroPersonaJuridicaCatalogosService,
     private readonly permisos: PermisosSolicitudService,
     private readonly router: Router,
     private readonly alerta: AlertService,
@@ -46,7 +47,7 @@ export class ListadoSolicitudesComponent implements OnInit {
   readonly breadcrumb =
     "<p>Gestión Proveedor › Cotizaciones › <b>Mis Solicitudes de Cotización</b></p>";
 
-  readonly camposFiltro: readonly CampoFiltro[] = [
+  camposFiltro: readonly CampoFiltro[] = [
     {
       clave: "vigencia",
       etiqueta: "Vigencia",
@@ -58,28 +59,19 @@ export class ListadoSolicitudesComponent implements OnInit {
       clave: "unidadEjecutora",
       etiqueta: "Unidad ejecutora",
       tipo: "select",
-      opciones: [
-        { valor: "", etiqueta: "Todas las unidades" },
-        ...UNIDADES_EJECUTORAS,
-      ],
+      opciones: [{ valor: "", etiqueta: "Todas las unidades" }],
     },
     {
       clave: "estado",
       etiqueta: "Estado",
       tipo: "select",
-      opciones: [
-        { valor: "", etiqueta: "Todos los estados" },
-        ...ESTADOS_SOLICITUD_LISTA.map((estado) => ({
-          valor: estado,
-          etiqueta: ESTADOS_SOLICITUD[estado].etiqueta,
-        })),
-      ],
+      opciones: [{ valor: "", etiqueta: "Todos los estados" }],
     },
     {
       clave: "tipoCotizacion",
       etiqueta: "Tipo de cotización",
       tipo: "select",
-      opciones: TIPOS_COTIZACION_FILTRO,
+      opciones: [{ valor: "", etiqueta: "Todos los tipos" }],
     },
     {
       clave: "busqueda",
@@ -111,7 +103,139 @@ export class ListadoSolicitudesComponent implements OnInit {
   private cargaActual?: Subscription;
 
   ngOnInit(): void {
+    this.cargarCatalogosFiltro();
     this.cargar();
+  }
+
+  private cargarCatalogosFiltro(): void {
+    this.catalogos
+      .obtenerCatalogoParametro("EST_SOL_COT", "COTIZACIONES")
+      .pipe(
+        map((opciones) => ({
+          unidades: opciones.map((opcion) => ({
+            valor: this.valorUnidadFiltro(opcion.codigo, opcion.id, opcion.nombre),
+            etiqueta: opcion.nombre,
+          })),
+          estados: opciones.map((opcion) => ({
+            valor: this.valorEstadoFiltro(opcion.codigo, opcion.id, opcion.nombre),
+            etiqueta: opcion.nombre,
+          })),
+        })),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: ({ unidades, estados }) => {
+          this.actualizarOpcionesFiltro("unidadEjecutora", "Todas las unidades", unidades);
+          this.actualizarOpcionesFiltro("estado", "Todos los estados", estados);
+        },
+        error: () => {
+          this.alerta.showAlert(
+            "Catálogo no disponible",
+            "No fue posible cargar los catálogos de unidades ejecutoras y estados.",
+          );
+        },
+      });
+
+    this.catalogos
+      .obtenerCatalogoParametro("TIP_NEC_COT", "COTIZACIONES")
+      .pipe(
+        map((opciones) =>
+          opciones.map((opcion) => ({
+            valor: this.valorTipoCotizacionFiltro(
+              opcion.codigo,
+              opcion.id,
+              opcion.nombre,
+            ),
+            etiqueta: opcion.nombre,
+          })),
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (opciones) =>
+          this.actualizarOpcionesFiltro("tipoCotizacion", "Todos los tipos", opciones),
+        error: () =>
+          this.alerta.showAlert(
+            "Catálogo no disponible",
+            "No fue posible cargar los tipos de cotización.",
+          ),
+      });
+  }
+
+  private actualizarOpcionesFiltro(
+    clave: string,
+    etiquetaInicial: string,
+    opciones: readonly { valor: string; etiqueta: string }[],
+  ): void {
+    this.camposFiltro = this.camposFiltro.map((campo) =>
+      campo.clave === clave
+        ? {
+            ...campo,
+            opciones: [
+              { valor: "", etiqueta: etiquetaInicial },
+              ...opciones,
+            ],
+          }
+        : campo,
+    );
+  }
+
+  private valorUnidadFiltro(
+    codigo: string | undefined,
+    id: number,
+    nombre: string,
+  ): string {
+    const normalizado = this.normalizarCatalogo(nombre);
+    const unidad = UNIDADES_EJECUTORAS.find((opcion) => {
+      const etiqueta = opcion.etiqueta.split("-").slice(1).join("-");
+      return normalizado.includes(this.normalizarCatalogo(etiqueta));
+    });
+    return unidad?.valor ?? codigo ?? String(id);
+  }
+
+  private valorEstadoFiltro(
+    codigo: string | undefined,
+    id: number,
+    nombre: string,
+  ): string {
+    const clave = this.normalizarCatalogo(`${codigo ?? ""} ${nombre}`);
+    const estado = (Object.keys(ESTADOS_SOLICITUD) as Array<
+      keyof typeof ESTADOS_SOLICITUD
+    >).find(
+      (valor) =>
+        clave.includes(this.normalizarCatalogo(valor)) ||
+        clave.includes(this.normalizarCatalogo(ESTADOS_SOLICITUD[valor].etiqueta)),
+    );
+    return estado ?? codigo ?? String(id);
+  }
+
+  private valorTipoCotizacionFiltro(
+    codigo: string | undefined,
+    id: number,
+    nombre: string,
+  ): string {
+    const clave = this.normalizarCatalogo(`${codigo ?? ""} ${nombre}`);
+    if (
+      clave.includes("mixt") ||
+      (clave.includes("bien") && clave.includes("serv"))
+    ) {
+      return "mixto";
+    }
+    if (clave.includes("serv")) {
+      return "servicios";
+    }
+    if (clave.includes("bien")) {
+      return "bienes";
+    }
+    return codigo ?? String(id);
+  }
+
+  private normalizarCatalogo(valor: string): string {
+    return valor
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "");
   }
 
   cargar(): void {

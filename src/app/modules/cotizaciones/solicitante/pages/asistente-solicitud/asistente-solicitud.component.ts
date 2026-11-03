@@ -11,6 +11,7 @@ import { FormBuilder, FormGroup, Validators } from "@angular/forms";
 import { Router } from "@angular/router";
 import { debounceTime } from "rxjs";
 import { AlertService } from "src/app/shared/services/alert.service";
+import { DependenciasService } from "../../../services/dependencias.service";
 import { textoPlanoDesdeHtml } from "src/app/shared/utils/texto-plano";
 import {
   BorradorSolicitudNueva,
@@ -20,13 +21,12 @@ import { CalendarioFestivosService } from "../../../services/calendario-festivos
 import { ResultadoCruce, formatoCop } from "../../../models/necesidad.model";
 import { aniosDelRango } from "../../../models/calendario.model";
 import {
-  DEPENDENCIAS_DESTINO,
-  DEPENDENCIAS_SOLICITANTES,
   MIN_CARACTERES_CRITERIO,
   MIN_CARACTERES_PLAN,
   diasHabilesEntre,
   formatoFechaLarga,
 } from "../../../models/datos-generales.model";
+import { OpcionDependencia } from "../../../models/dependencia.model";
 import { ItemSolicitud, resumirItems } from "../../../models/items.model";
 import {
   ActividadVinculada,
@@ -89,6 +89,7 @@ interface ValidacionPaso extends ItemVerificacion {
 })
 export class AsistenteSolicitudComponent implements OnInit {
   readonly pasos = PASOS_SOLICITUD;
+  readonly dependencias = signal<readonly OpcionDependencia[]>([]);
 
   readonly breadcrumb =
     "<p>Gestión Proveedor › Cotizaciones › Mis Solicitudes de Cotización › <b>Nueva solicitud</b></p>";
@@ -146,6 +147,7 @@ export class AsistenteSolicitudComponent implements OnInit {
     private readonly alerta: AlertService,
     private readonly destroyRef: DestroyRef,
     private readonly calendarioFestivos: CalendarioFestivosService,
+    private readonly dependenciasService: DependenciasService,
   ) {
     this.asistenteForm = fb.group({
       // Paso 1 (implementado)
@@ -157,8 +159,8 @@ export class AsistenteSolicitudComponent implements OnInit {
       // Paso 2 (implementado)
       datosGenerales: fb.group(
         {
-          dependenciaSolicitante: ["", Validators.required],
-          dependenciaDestino: ["", Validators.required],
+          dependenciaSolicitante: [null, Validators.required],
+          dependenciaDestino: [null, Validators.required],
           fechaApertura: ["", Validators.required],
           fechaCierre: ["", Validators.required],
           criterioSeleccion: ["", minCaracteres(MIN_CARACTERES_CRITERIO)],
@@ -224,6 +226,27 @@ export class AsistenteSolicitudComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.dependenciasService
+      .obtenerDependencias()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (dependencias) => {
+          this.dependencias.set(dependencias);
+          if (this.normalizarDependencias(dependencias)) {
+            void this.alerta.showAlert(
+              "Dependencias actualizadas",
+              "Una dependencia guardada ya no está disponible. Seleccione nuevamente las dependencias del proceso.",
+            );
+          }
+        },
+        error: () => {
+          this.alerta.showAlert(
+            "Catálogo no disponible",
+            "No fue posible cargar las dependencias institucionales.",
+          );
+        },
+      });
+
     this.asistenteForm.valueChanges
       .pipe(debounceTime(800), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.guardarBorrador(true));
@@ -311,18 +334,19 @@ export class AsistenteSolicitudComponent implements OnInit {
   get resumenProveedores(): ResumenSolicitudProveedores {
     const cruce = this.resultadoCruce();
     const datos = this.datosGeneralesForm.getRawValue() as {
-      dependenciaSolicitante?: string;
+      dependenciaSolicitante?: number | null;
       fechaApertura?: string;
       fechaCierre?: string;
     };
     const registros = (this.itemsForm.get("registros")?.value ??
       []) as readonly ItemSolicitud[];
     const dependencia =
-      DEPENDENCIAS_SOLICITANTES.find(
+      this.dependencias().find(
         (opcion) => opcion.valor === datos.dependenciaSolicitante,
       )?.etiqueta ??
-      datos.dependenciaSolicitante ??
-      "";
+      (datos.dependenciaSolicitante == null
+        ? ""
+        : String(datos.dependenciaSolicitante));
 
     return {
       objeto: cruce?.solicitud.objeto ?? "",
@@ -699,7 +723,7 @@ export class AsistenteSolicitudComponent implements OnInit {
       nucleoSnies?: string;
     };
     const datosGenerales = this.datosGeneralesForm.getRawValue() as {
-      dependenciaDestino?: string;
+      dependenciaDestino?: number | null;
       fechaApertura?: string;
       fechaCierre?: string;
       criterioSeleccion?: string;
@@ -730,7 +754,7 @@ export class AsistenteSolicitudComponent implements OnInit {
         : "",
       sede: cruce?.solicitud.sede ?? "",
       dependenciaDestino: this.etiquetaDependenciaDestino(
-        datosGenerales.dependenciaDestino ?? "",
+        datosGenerales.dependenciaDestino,
       ),
       fechaAperturaLarga: datosGenerales.fechaApertura
         ? formatoFechaLarga(datosGenerales.fechaApertura)
@@ -761,30 +785,61 @@ export class AsistenteSolicitudComponent implements OnInit {
   }
 
   /** Etiqueta de la dependencia destino (guion cuando falta el dato). */
-  private etiquetaDependenciaDestino(valor: string): string {
-    if (!valor) {
+  private etiquetaDependenciaDestino(valor: number | null | undefined): string {
+    if (valor === null || valor === undefined) {
       return "";
     }
     return (
-      DEPENDENCIAS_DESTINO.find((opcion) => opcion.valor === valor)?.etiqueta ??
-      valor
+      this.dependencias().find((opcion) => opcion.valor === valor)?.etiqueta ??
+      String(valor)
     );
   }
 
-  /** El stepper delega en este método; solo se llega a pasos alcanzados. */
+  private normalizarDependencias(
+    opciones: readonly OpcionDependencia[],
+  ): boolean {
+    let habiaDependenciaInvalida = false;
+    for (const nombreControl of [
+      "dependenciaSolicitante",
+      "dependenciaDestino",
+    ]) {
+      const control = this.datosGeneralesForm.get(nombreControl);
+      const valor = control?.value;
+      if (valor === null || valor === undefined || valor === "") {
+        control?.setValue(null, { emitEvent: false });
+        continue;
+      }
+
+      const id =
+        typeof valor === "number"
+          ? valor
+          : typeof valor === "string" && valor.trim() !== ""
+            ? Number(valor)
+            : Number.NaN;
+      if (
+        !Number.isInteger(id) ||
+        !opciones.some((opcion) => opcion.valor === id)
+      ) {
+        control?.setValue(null, { emitEvent: false });
+        habiaDependenciaInvalida = true;
+      } else if (valor !== id) {
+        control?.setValue(id, { emitEvent: false });
+      }
+    }
+    return habiaDependenciaInvalida;
+  }
+
+  /** Navega a cualquier paso dentro del rango del asistente. */
   irAlPaso(paso: number): void {
-    if (paso < PRIMER_PASO || paso > ULTIMO_PASO || paso > this.pasoAlcanzado) {
+    if (paso < PRIMER_PASO || paso > ULTIMO_PASO) {
       return;
     }
     this.pasoActual = paso;
+    this.pasoAlcanzado = Math.max(this.pasoAlcanzado, paso);
   }
 
-  /** Avanza tras validar el paso 1 (los demás pasos no avanzan aún). */
+  /** Avanza al siguiente paso sin bloquear la navegación por validaciones. */
   continuar(): void {
-    if (!this.pasoValido) {
-      this.asistenteForm.markAllAsTouched();
-      return;
-    }
     this.pasoActual = Math.min(ULTIMO_PASO, this.pasoActual + 1);
     this.pasoAlcanzado = Math.max(this.pasoAlcanzado, this.pasoActual);
     this.guardarBorrador(true);
@@ -929,8 +984,8 @@ export class AsistenteSolicitudComponent implements OnInit {
     this.asistenteForm.reset({
       necesidad: { unidadEjecutora: "", vigencia: "", numeroNecesidad: "" },
       datosGenerales: {
-        dependenciaSolicitante: "",
-        dependenciaDestino: "",
+        dependenciaSolicitante: null,
+        dependenciaDestino: null,
         fechaApertura: "",
         fechaCierre: "",
         criterioSeleccion: "",

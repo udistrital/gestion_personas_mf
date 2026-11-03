@@ -20,6 +20,7 @@ import {
   ValidatorFn,
   Validators,
 } from "@angular/forms";
+import { map } from "rxjs";
 import { AlertService } from "src/app/shared/services/alert.service";
 import {
   BalanceMasivo,
@@ -31,18 +32,22 @@ import {
   MIN_CARACTERES_DESCRIPCION_ITEM,
   MIN_CARACTERES_NOMBRE_ITEM,
   ModoRegistro,
+  OpcionUnidadMedida,
   PLANTILLA_MASIVA,
   RechazoMasivo,
   TIPOS_ITEM,
   TipoItem,
-  UNIDADES_MEDIDA,
   formatoCantidad,
   formatoTamano,
   resumirItems,
 } from "../../../../models/items.model";
+import { OpcionCatalogo, RegistroPersonaJuridicaCatalogosService } from "src/app/modules/proveedores/components/registro-persona-juridica/services/registro-persona-juridica-catalogos.service";
+import { RegistroPersonaJuridicaUnspscService } from "src/app/modules/proveedores/components/registro-persona-juridica/services/registro-persona-juridica-unspsc.service";
 
 /** Máximo de ítems que caben en una página de la tabla (mockup: 5). */
 const ITEMS_POR_PAGINA = 5;
+
+type TipoBusquedaCatalogo = "CIIU" | "UNSPSC";
 
 /**
  * Validador del paso 3: exige al menos un ítem en el pliego.
@@ -89,7 +94,12 @@ export function minCaracteresTexto(minimo: number): ValidatorFn {
 })
 export class PasoItemsComponent implements OnInit {
   readonly tipos = TIPOS_ITEM;
-  readonly unidades = UNIDADES_MEDIDA;
+  unidades: readonly OpcionUnidadMedida[] = [];
+  readonly catalogoBusqueda = signal<readonly {
+    tipo: TipoBusquedaCatalogo;
+    codigo: string;
+    etiqueta: string;
+  }[]>([]);
   readonly estructuras = ESTRUCTURAS_PLANTILLA;
   readonly plantillaMasiva = PLANTILLA_MASIVA;
   readonly maxArchivoMb = MAX_ARCHIVO_MB;
@@ -127,9 +137,17 @@ export class PasoItemsComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
   private readonly alerta = inject(AlertService);
+  private readonly catalogos = inject(RegistroPersonaJuridicaCatalogosService);
+  private readonly unspsc = inject(RegistroPersonaJuridicaUnspscService);
 
   /** Ítems agregados al pliego (alimenta la tabla consolidada). */
   readonly items = signal<readonly ItemSolicitud[]>([]);
+
+  /** Catálogo asociado a la selección Bien/Servicio. */
+  readonly tipoBusqueda = signal<TipoBusquedaCatalogo>("CIIU");
+
+  /** Texto que filtra las opciones del catálogo local. */
+  readonly filtroCatalogo = signal("");
 
   /** Subformulario del ítem individual (creado una sola vez). */
   readonly itemForm: FormGroup;
@@ -172,12 +190,79 @@ export class PasoItemsComponent implements OnInit {
           minCaracteresTexto(MIN_CARACTERES_DESCRIPCION_ITEM),
         ],
       ],
-      unidad: ["Unidad", Validators.required],
+      unidad: [null, Validators.required],
       cantidad: [1, [Validators.required, Validators.min(CANTIDAD_MINIMA)]],
     });
   }
 
   ngOnInit(): void {
+    this.catalogos
+      .obtenerCatalogoParametro("U_COMERCIO")
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (opciones) => {
+          this.unidades = opciones.map((opcion) => ({
+            valor: opcion.id,
+            etiqueta: opcion.nombre,
+            icono: "category",
+          }));
+          const unidad = this.itemForm.get("unidad");
+          if (unidad?.value === null && this.unidades.length > 0) {
+            unidad?.setValue(this.valorUnidadPredeterminada(), {
+              emitEvent: false,
+            });
+          }
+        },
+        error: () => {
+          this.alerta.showAlert(
+            "Catálogo no disponible",
+            "No fue posible cargar las unidades de medida.",
+          );
+        },
+      });
+
+    this.catalogos
+      .obtenerCatalogoParametro("CIIU")
+      .pipe(
+        map((opciones) => opciones.map((opcion) => this.opcionCiiu(opcion))),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (opciones) => {
+          this.catalogoBusqueda.update((actuales) => [
+            ...actuales.filter((opcion) => opcion.tipo !== "CIIU"),
+            ...opciones,
+          ]);
+        },
+        error: () => {
+          this.alerta.showAlert(
+            "Catálogo no disponible",
+            "No fue posible cargar el catálogo CIIU.",
+          );
+        },
+      });
+    this.unspsc
+      .obtenerCatalogo()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (opciones) => {
+          this.catalogoBusqueda.update((actuales) => [
+            ...actuales.filter((opcion) => opcion.tipo !== "UNSPSC"),
+            ...opciones.map((opcion) => ({
+              tipo: "UNSPSC" as const,
+              codigo: opcion.codigo,
+              etiqueta: `${opcion.codigo} - ${opcion.titulo}`,
+            })),
+          ]);
+        },
+        error: () => {
+          this.alerta.showAlert(
+            "Catálogo no disponible",
+            "No fue posible cargar el catálogo UNSPSC.",
+          );
+        },
+      });
+
     // Restaura los ítems que el borrador dejó en el formulario.
     const guardados = this.controlOpcional("registros")?.value;
     if (Array.isArray(guardados) && guardados.length > 0) {
@@ -212,6 +297,18 @@ export class PasoItemsComponent implements OnInit {
       (item) =>
         item.nombre.toLowerCase().includes(termino) ||
         item.descripcion.toLowerCase().includes(termino),
+    );
+  });
+
+  /** Opciones locales del catálogo según clasificación y filtro. */
+  readonly opcionesCatalogoFiltradas = computed(() => {
+    const termino = this.filtroCatalogo().trim().toLowerCase();
+    return this.catalogoBusqueda().filter(
+      (opcion) =>
+        opcion.tipo === this.tipoBusqueda() &&
+        (!termino ||
+          opcion.codigo.toLowerCase().includes(termino) ||
+          opcion.etiqueta.toLowerCase().includes(termino)),
     );
   });
 
@@ -261,6 +358,54 @@ export class PasoItemsComponent implements OnInit {
     return !!control && control.invalid && (control.dirty || control.touched);
   }
 
+  /** Actualiza el catálogo según Bien/Servicio y limpia la selección anterior. */
+  seleccionarTipoNecesidad(tipo: string): void {
+    if (tipo !== "bien" && tipo !== "servicio") {
+      return;
+    }
+    const tipoBusqueda: TipoBusquedaCatalogo =
+      tipo === "bien" ? "CIIU" : "UNSPSC";
+    if (this.tipoBusqueda() !== tipoBusqueda) {
+      this.tipoBusqueda.set(tipoBusqueda);
+      this.filtroCatalogo.set("");
+      this.itemForm.get("nombre")?.setValue("");
+    }
+    this.itemForm.patchValue({ tipo });
+  }
+
+  /** Refleja el texto que filtra las opciones del catálogo local. */
+  alFiltrarCatalogo(evento: Event): void {
+    this.filtroCatalogo.set((evento.target as HTMLInputElement).value);
+  }
+
+  /** Conserva nombres existentes al editar ítems fuera del catálogo de ejemplo. */
+  mostrarNombreActual(): boolean {
+    const nombre = String(this.itemForm.get("nombre")?.value ?? "");
+    return (
+      !!nombre &&
+      !this.opcionesCatalogoFiltradas().some(
+        (opcion) => opcion.etiqueta === nombre,
+      )
+    );
+  }
+
+  private opcionCiiu(opcion: OpcionCatalogo): {
+    tipo: "CIIU";
+    codigo: string;
+    etiqueta: string;
+  } {
+    if (!opcion.codigo) {
+      throw new Error(
+        `El parámetro CIIU con Id ${opcion.id} no contiene CodigoAbreviacion.`,
+      );
+    }
+    return {
+      tipo: "CIIU",
+      codigo: opcion.codigo,
+      etiqueta: `${opcion.codigo} - ${opcion.nombre}`,
+    };
+  }
+
   /** true cuando el archivo del cargue ya fue elegido. */
   get hayArchivo(): boolean {
     return !!this.controlOpcional("archivo")?.value;
@@ -278,9 +423,19 @@ export class PasoItemsComponent implements OnInit {
       tipo: TipoItem;
       nombre: string;
       descripcion: string;
-      unidad: string;
+      unidad: number;
       cantidad: number;
     };
+    const unidad = this.unidades.find(
+      (opcion) => opcion.valor === valores.unidad,
+    );
+    if (!unidad) {
+      this.alerta.showAlert(
+        "Unidad no disponible",
+        "Seleccione una unidad de medida disponible en el catálogo.",
+      );
+      return;
+    }
     const id = this.editandoId();
 
     if (id) {
@@ -292,7 +447,8 @@ export class PasoItemsComponent implements OnInit {
                 tipo: valores.tipo,
                 nombre: valores.nombre.trim(),
                 descripcion: valores.descripcion.trim(),
-                unidad: valores.unidad,
+                unidad: unidad.etiqueta,
+                unidadId: unidad.valor,
                 cantidad: Number(valores.cantidad),
               }
             : item,
@@ -306,7 +462,8 @@ export class PasoItemsComponent implements OnInit {
           tipo: valores.tipo,
           nombre: valores.nombre.trim(),
           descripcion: valores.descripcion.trim(),
-          unidad: valores.unidad,
+          unidad: unidad.etiqueta,
+          unidadId: unidad.valor,
           cantidad: Number(valores.cantidad),
         },
       ]);
@@ -318,7 +475,7 @@ export class PasoItemsComponent implements OnInit {
       tipo: valores.tipo,
       nombre: "",
       descripcion: "",
-      unidad: "Unidad",
+      unidad: this.valorUnidadPredeterminada(),
       cantidad: 1,
     });
     this.pagina.set(1);
@@ -338,11 +495,13 @@ export class PasoItemsComponent implements OnInit {
   editarItem(item: ItemSolicitud): void {
     this.controlOpcional("modo")?.setValue("individual");
     this.editandoId.set(item.id);
+    this.tipoBusqueda.set(item.tipo === "bien" ? "CIIU" : "UNSPSC");
+    this.filtroCatalogo.set("");
     this.itemForm.reset({
       tipo: item.tipo,
       nombre: item.nombre,
       descripcion: item.descripcion,
-      unidad: item.unidad,
+      unidad: this.valorUnidadParaEdicion(item),
       cantidad: item.cantidad,
     });
   }
@@ -354,9 +513,29 @@ export class PasoItemsComponent implements OnInit {
       tipo: this.itemForm.value.tipo,
       nombre: "",
       descripcion: "",
-      unidad: "Unidad",
+      unidad: this.valorUnidadPredeterminada(),
       cantidad: 1,
     });
+  }
+
+  private valorUnidadPredeterminada(): number | null {
+    return this.unidades[0]?.valor ?? null;
+  }
+
+  private valorUnidadParaEdicion(item: ItemSolicitud): number | null {
+    if (
+      item.unidadId !== undefined &&
+      this.unidades.some((unidad) => unidad.valor === item.unidadId)
+    ) {
+      return item.unidadId;
+    }
+    return (
+      this.unidades.find(
+        (unidad) =>
+          unidad.etiqueta === item.unidad ||
+          String(unidad.valor) === item.unidad,
+      )?.valor ?? null
+    );
   }
 
   // ── Cargue masivo ────────────────────────────────────────────────────────

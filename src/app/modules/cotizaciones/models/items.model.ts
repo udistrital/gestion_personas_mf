@@ -25,6 +25,8 @@ export interface ItemSolicitud {
   /** Descripción y ficha técnica (texto plano). */
   readonly descripcion: string;
   readonly unidad: string;
+  /** Identificador numérico de U_COMERCIO, cuando la unidad viene del catálogo. */
+  readonly unidadId?: number;
   readonly cantidad: number;
   /** Código UNSPSC (solo lo aportan los ítems del cargue masivo). */
   readonly codigoUnspsc?: string;
@@ -49,17 +51,12 @@ export interface OpcionItem {
   readonly icono: string;
 }
 
-/** Unidades de medida homologadas (mockup: catálogo DANE/UD). */
-export const UNIDADES_MEDIDA: readonly OpcionItem[] = [
-  { valor: "Unidad", etiqueta: "Unidad (Und.)", icono: "category" },
-  { valor: "Caja", etiqueta: "Caja", icono: "category" },
-  { valor: "Metro", etiqueta: "Metro", icono: "category" },
-  { valor: "Kilogramo", etiqueta: "Kilogramo", icono: "category" },
-  { valor: "Servicio", etiqueta: "Servicio", icono: "category" },
-  { valor: "Licencia", etiqueta: "Licencia", icono: "category" },
-  { valor: "Punto", etiqueta: "Punto", icono: "category" },
-  { valor: "Suscripción", etiqueta: "Suscripción", icono: "category" },
-];
+/** Opción de unidad de medida de Parámetros. */
+export interface OpcionUnidadMedida {
+  readonly valor: number;
+  readonly etiqueta: string;
+  readonly icono: string;
+}
 
 /** Tipos de ítem del selector segmentado (tarjeta 1). */
 export const TIPOS_ITEM: readonly OpcionItem[] = [

@@ -11,6 +11,7 @@ import {
 } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { AbstractControl, FormGroup } from "@angular/forms";
+import { map } from "rxjs";
 import { AlertService } from "src/app/shared/services/alert.service";
 import {
   ANEXOS_SEMILLA,
@@ -28,6 +29,7 @@ import {
   validarArchivo,
 } from "../../../../models/documentos.model";
 import { formatoTamano } from "../../../../models/items.model";
+import { RegistroPersonaJuridicaCatalogosService } from "src/app/modules/proveedores/components/registro-persona-juridica/services/registro-persona-juridica-catalogos.service";
 
 /** Intervalo de simulación del progreso de subida (ms). */
 const LATIDO_SUBIDA = 400;
@@ -37,6 +39,34 @@ const PASO_PROGRESO = 8;
 
 /** Icono por defecto de un requisito nuevo de la matriz. */
 const ICONO_REQUISITO = "note_add";
+
+interface OpcionClasificacion {
+  valor: ClasificacionDocumento;
+  etiqueta: string;
+}
+
+function clasificacionDeCatalogo(
+  codigo: string | undefined,
+  nombre: string,
+): ClasificacionDocumento | null {
+  const clave = `${codigo ?? ""} ${nombre}`
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+  if (
+    clave.includes("complement") ||
+    clave.includes("opcional") ||
+    clave.includes("nooblig") ||
+    clave.includes("norequerid")
+  ) {
+    return "complementario";
+  }
+  if (clave.includes("oblig") || clave.includes("requerid")) {
+    return "obligatorio";
+  }
+  return null;
+}
 
 /**
  * Paso 6 del asistente: "Anexos y documentos requeridos".
@@ -57,10 +87,7 @@ export class PasoDocumentosComponent implements OnInit {
   readonly etiquetaFormatos = ETIQUETA_FORMATOS;
   readonly tamanoMaxMb = TAMANO_MAX_MB;
   readonly etiquetaClasificacion = etiquetaClasificacion;
-  readonly formatosClasificacion: readonly ClasificacionDocumento[] = [
-    "obligatorio",
-    "complementario",
-  ];
+  formatosClasificacion: readonly OpcionClasificacion[] = [];
 
   /** Subgrupo `documentos` del `FormGroup` raíz del asistente. */
   @Input({ required: true }) form!: FormGroup;
@@ -70,6 +97,7 @@ export class PasoDocumentosComponent implements OnInit {
 
   private readonly destroyRef = inject(DestroyRef);
   private readonly alerta = inject(AlertService);
+  private readonly catalogos = inject(RegistroPersonaJuridicaCatalogosService);
 
   /** Anexos vinculados al proceso (tarjeta 1). */
   readonly anexos = signal<readonly AnexoSolicitud[]>([]);
@@ -82,6 +110,33 @@ export class PasoDocumentosComponent implements OnInit {
 
   ngOnInit(): void {
     this.restaurarOSembrar();
+    this.catalogos
+      .obtenerCatalogoParametro("CLAS_REQ_DOC_COT", "COTIZACIONES")
+      .pipe(
+        map((opciones) =>
+          opciones.map((opcion) => {
+            const valor = clasificacionDeCatalogo(opcion.codigo, opcion.nombre);
+            if (!valor) {
+              throw new Error(
+                `No se reconoce la clasificación del parámetro ${opcion.id}.`,
+              );
+            }
+            return { valor, etiqueta: opcion.nombre };
+          }),
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (opciones) => {
+          this.formatosClasificacion = opciones;
+        },
+        error: () => {
+          this.alerta.showAlert(
+            "Catálogo no disponible",
+            "No fue posible cargar las clasificaciones de documentos.",
+          );
+        },
+      });
 
     this.destroyRef.onDestroy(() => this.detenerTimers());
   }
@@ -211,14 +266,28 @@ export class PasoDocumentosComponent implements OnInit {
 
   /** Actualiza la clasificación (obligatorio/complementario) de un requisito. */
   cambiarClasificacion(id: string, evento: Event): void {
-    const clasificacion = (evento.target as HTMLSelectElement)
-      .value as ClasificacionDocumento;
+    const valor = (evento.target as HTMLSelectElement).value;
+    const clasificacion = this.formatosClasificacion.find(
+      (opcion) => opcion.valor === valor,
+    )?.valor;
+    if (!clasificacion) {
+      return;
+    }
     this.documentos.update((lista) =>
       lista.map((documento) =>
         documento.id === id ? { ...documento, clasificacion } : documento,
       ),
     );
     this.sincronizar();
+  }
+
+  etiquetaClasificacionCatalogo(
+    clasificacion: ClasificacionDocumento,
+  ): string {
+    return (
+      this.formatosClasificacion.find((opcion) => opcion.valor === clasificacion)
+        ?.etiqueta ?? this.etiquetaClasificacion(clasificacion)
+    );
   }
 
   /** Actualiza el nombre de un requisito editable. */
