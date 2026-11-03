@@ -109,9 +109,8 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
   estadoDetalle = "";
   private registroEnviandose = false;
   private registroProcesado = false;
-  private envioIndeterminado = false;
+  envioIndeterminado = false;
   proveedorMidId?: number;
-  terceroMidId?: number;
 
   constructor(
     private readonly catalogosService: RegistroPersonaJuridicaCatalogosService,
@@ -428,7 +427,6 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
             resultado.tipo === "success" || resultado.tipo === "partial";
           this.envioIndeterminado = resultado.tipo === "indeterminate";
           this.proveedorMidId = resultado.proveedorId;
-          this.terceroMidId = resultado.terceroId;
           this.estadoMensaje = resultado.mensaje;
           this.estadoDetalle = resultado.detalle;
         },
@@ -452,7 +450,6 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
     if (paso < 1 || paso > this.pasos.length) {
       return;
     }
-
     if (paso < this.pasoActual) {
       this.pasoActual = paso;
       return;

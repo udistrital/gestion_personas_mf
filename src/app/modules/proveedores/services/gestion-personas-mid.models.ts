@@ -78,6 +78,47 @@ export type NuevoProveedorJuridicoMidPayload = Omit<
   "TipoRegistroId"
 >;
 
+export interface ConsultaProveedorMidRequest {
+  id: number;
+}
+
+export interface TerceroMidActualizacion extends TerceroMid {
+  Id: number;
+}
+
+export interface CuentaBancariaMidActualizacion extends CuentaBancariaMid {
+  Id: number;
+}
+
+export interface ProveedorNaturalMidActualizacion
+  extends ProveedorNaturalMid {
+  Id: number;
+}
+
+export interface ProveedorJuridicoMidActualizacion
+  extends ProveedorJuridicoMid {
+  Id: number;
+}
+
+interface ActualizacionProveedorMidBase {
+  Id: number;
+  TerceroId: number;
+  TipoRegistroId: number;
+  Tercero: TerceroMidActualizacion;
+  DescripcionPortafolio?: string;
+  CuentaBancaria?: CuentaBancariaMidActualizacion[];
+}
+
+export interface ActualizarProveedorNaturalMidPayload
+  extends ActualizacionProveedorMidBase {
+  ProveedorNatural: ProveedorNaturalMidActualizacion;
+}
+
+export interface ActualizarProveedorJuridicoMidPayload
+  extends ActualizacionProveedorMidBase {
+  ProveedorJuridico: ProveedorJuridicoMidActualizacion;
+}
+
 export interface ErrorMaterializacionMid {
   path?: string;
   service?: string;

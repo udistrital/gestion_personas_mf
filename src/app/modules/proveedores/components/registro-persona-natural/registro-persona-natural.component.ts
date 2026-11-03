@@ -3,6 +3,7 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import {
   AbstractControl,
   FormBuilder,
+  FormControl,
   FormGroup,
   ValidationErrors,
   ValidatorFn,
@@ -24,7 +25,9 @@ import {
   OpcionNatural,
   RegistroPersonaNaturalCatalogosService,
 } from "./registro-persona-natural-catalogos.service";
-import { mapearPersonaNaturalMid } from "../../services/gestion-personas-mid.mapper";
+import {
+  mapearPersonaNaturalMid,
+} from "../../services/gestion-personas-mid.mapper";
 import {
   GestionPersonasMidService,
   resumirErrorMid,
@@ -100,9 +103,8 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
   private suspenderAutoguardado = false;
   private registroEnviandose = false;
   private registroProcesado = false;
-  private envioIndeterminado = false;
+  envioIndeterminado = false;
   proveedorMidId?: number;
-  terceroMidId?: number;
 
   readonly pasosStepper = [
     {
@@ -800,7 +802,6 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
             resultado.tipo === "success" || resultado.tipo === "partial";
           this.envioIndeterminado = resultado.tipo === "indeterminate";
           this.proveedorMidId = resultado.proveedorId;
-          this.terceroMidId = resultado.terceroId;
           this.estadoMensaje = resultado.mensaje;
           this.estadoDetalle = resultado.detalle;
         },
@@ -825,7 +826,6 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
     if (paso < 1 || paso > this.totalSteps) {
       return;
     }
-
     if (paso < this.currentStep) {
       this.currentStep = paso;
       this.persistirBorrador(true);

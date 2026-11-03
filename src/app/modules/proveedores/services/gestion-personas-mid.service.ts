@@ -3,6 +3,9 @@ import { Injectable } from "@angular/core";
 import { defer, map, Observable } from "rxjs";
 import { environment } from "src/environments/environment";
 import {
+  ActualizarProveedorJuridicoMidPayload,
+  ActualizarProveedorNaturalMidPayload,
+  ConsultaProveedorMidRequest,
   ErrorMaterializacionMid,
   NuevoProveedorJuridicoMidPayload,
   NuevoProveedorNaturalMidPayload,
@@ -32,6 +35,19 @@ export interface ResultadoEnvioMid {
   detalle: string;
   proveedorId?: number;
   terceroId?: number;
+}
+
+type OperacionMid = "registro" | "consulta" | "actualizacion";
+
+function nombreOperacion(operacion: OperacionMid): string {
+  switch (operacion) {
+    case "consulta":
+      return "la consulta";
+    case "actualizacion":
+      return "la actualización";
+    default:
+      return "el registro";
+  }
 }
 
 function esRegistro(valor: unknown): valor is Record<string, unknown> {
@@ -164,6 +180,7 @@ function mensajeDeEnvelope(error: unknown): string | undefined {
 export function resumirRespuestaMid(
   respuesta: RespuestaMid,
   omisiones: readonly string[],
+  operacion: OperacionMid = "registro",
 ): ResultadoEnvioMid {
   const proveedorId = respuesta.Data?.Id;
   const terceroId = respuesta.Data?.TerceroId;
@@ -188,9 +205,11 @@ export function resumirRespuestaMid(
 
   if (respuesta.Status !== "200" && respuesta.Status !== "206") {
     return {
-      tipo: "indeterminate",
+      tipo: operacion === "consulta" ? "error" : "indeterminate",
       mensaje: "El MID devolvió un estado de éxito no documentado.",
-      detalle: `Status recibido: ${respuesta.Status}. No vuelva a enviar el registro hasta verificarlo.`,
+      detalle: operacion === "consulta"
+        ? `Status recibido: ${respuesta.Status}. La consulta no se considera válida.`
+        : `Status recibido: ${respuesta.Status}. Verifique ${nombreOperacion(operacion)} antes de repetir la solicitud.`,
       proveedorId,
       terceroId,
     };
@@ -198,9 +217,11 @@ export function resumirRespuestaMid(
 
   if (respuesta.Status === "200" && proveedorId === undefined) {
     return {
-      tipo: "indeterminate",
+      tipo: operacion === "consulta" ? "error" : "indeterminate",
       mensaje: "El MID respondió éxito, pero no devolvió el Id del proveedor.",
-      detalle: `${respuesta.Message} No vuelva a enviar el registro hasta verificarlo. ${detalle}`,
+      detalle: operacion === "consulta"
+        ? `${respuesta.Message} La consulta no se puede asociar al proveedor solicitado.`
+        : `${respuesta.Message} Verifique ${nombreOperacion(operacion)} antes de repetir la solicitud. ${detalle}`,
       terceroId,
     };
   }
@@ -210,7 +231,7 @@ export function resumirRespuestaMid(
       tipo: "partial",
       mensaje: respuesta.Message,
       detalle: [
-        "Registro materializado parcialmente; revise los avisos antes de continuar.",
+        `${operacion === "consulta" ? "Consulta" : operacion === "actualizacion" ? "Actualización" : "Registro"} parcial; revise los avisos antes de continuar.`,
         ...ids,
         ...avisos,
         ...omisiones,
@@ -223,13 +244,16 @@ export function resumirRespuestaMid(
   return {
     tipo: "success",
     mensaje: respuesta.Message,
-    detalle: detalle || "El MID confirmó el registro.",
+    detalle: detalle || `El MID confirmó ${nombreOperacion(operacion)}.`,
     proveedorId,
     terceroId,
   };
 }
 
-export function resumirErrorMid(error: unknown): ResultadoEnvioMid {
+export function resumirErrorMid(
+  error: unknown,
+  operacion: OperacionMid = "registro",
+): ResultadoEnvioMid {
   if (error instanceof GestionPersonasMidConfigurationError) {
     return {
       tipo: "error",
@@ -238,19 +262,33 @@ export function resumirErrorMid(error: unknown): ResultadoEnvioMid {
     };
   }
   if (error instanceof GestionPersonasMidProtocolError) {
+    if (operacion === "consulta") {
+      return {
+        tipo: "error",
+        mensaje: "La respuesta de consulta del MID no es válida.",
+        detalle: error.message,
+      };
+    }
     return {
       tipo: "indeterminate",
-      mensaje: "No se pudo validar la respuesta del MID.",
-      detalle: `${error.message} No vuelva a enviar el registro hasta verificarlo.`,
+      mensaje: `No se pudo validar ${nombreOperacion(operacion)}.`,
+      detalle: `${error.message} Verifique el estado antes de repetir la solicitud.`,
     };
   }
   if (error instanceof HttpErrorResponse) {
     const mensaje = mensajeDeEnvelope(error.error);
     if (error.status === 0 || error.status >= 500) {
+      if (operacion === "consulta") {
+        return {
+          tipo: "error",
+          mensaje: mensaje ?? "No se pudo completar la consulta del MID.",
+          detalle: `HTTP ${error.status || "sin respuesta"}. Puede volver a consultar; no se aplican reintentos automáticos.`,
+        };
+      }
       return {
         tipo: "indeterminate",
-        mensaje: mensaje ?? "No se pudo confirmar el resultado del registro.",
-        detalle: `HTTP ${error.status || "sin respuesta"}. El MID puede haber materializado datos; no repita el POST sin verificar el estado.`,
+        mensaje: mensaje ?? `No se pudo confirmar ${nombreOperacion(operacion)}.`,
+        detalle: `HTTP ${error.status || "sin respuesta"}. El MID puede haber aplicado cambios; consulte el estado antes de repetir la solicitud.`,
       };
     }
     if (error.status === 401 || error.status === 403) {
@@ -267,15 +305,30 @@ export function resumirErrorMid(error: unknown): ResultadoEnvioMid {
         detalle: `HTTP ${error.status}. Revise el contrato y los datos enviados.`,
       };
     }
+    if (error.status === 404 && operacion === "actualizacion") {
+      return {
+        tipo: "indeterminate",
+        mensaje: "El MID devolvió un 404 no definido para PATCH.",
+        detalle:
+          "El contrato no permite inferir si el upsert materializó datos. Consulte el proveedor antes de repetir la actualización.",
+      };
+    }
+    if (error.status === 404 && operacion === "consulta") {
+      return {
+        tipo: "rejected",
+        mensaje: mensaje ?? "No existe un proveedor con ese identificador.",
+        detalle: "Verifique el Id del proveedor e intente nuevamente.",
+      };
+    }
     return {
       tipo: "error",
-      mensaje: mensaje ?? "No se pudo completar el registro en el MID.",
+      mensaje: mensaje ?? `No se pudo completar ${nombreOperacion(operacion)} en el MID.`,
       detalle: `HTTP ${error.status || "sin respuesta"}.`,
     };
   }
   return {
     tipo: "error",
-    mensaje: "No se pudo completar el registro en el MID.",
+    mensaje: `No se pudo completar ${nombreOperacion(operacion)} en el MID.`,
     detalle: error instanceof Error ? error.message : "Error no identificado.",
   };
 }
@@ -283,6 +336,43 @@ export function resumirErrorMid(error: unknown): ResultadoEnvioMid {
 @Injectable({ providedIn: "root" })
 export class GestionPersonasMidService {
   constructor(private readonly http: HttpClient) {}
+
+  consultarProveedor(id: number): Observable<RespuestaMid> {
+    return defer(() => {
+      if (!Number.isSafeInteger(id) || id <= 0) {
+        throw new GestionPersonasMidProtocolError(
+          "El Id del proveedor debe ser un entero positivo seguro.",
+        );
+      }
+      const baseUrl = this.urlBaseConfigurada();
+      const request: ConsultaProveedorMidRequest = { id };
+      return this.http
+        .post<unknown>(`${baseUrl}/proveedor/consulta`, request)
+        .pipe(map(interpretarRespuestaMid));
+    });
+  }
+
+  actualizarPersonaNatural(
+    payload: ActualizarProveedorNaturalMidPayload,
+  ): Observable<RespuestaMid> {
+    return defer(() => {
+      const baseUrl = this.urlBaseConfigurada();
+      return this.http
+        .patch<unknown>(`${baseUrl}/proveedor`, payload)
+        .pipe(map(interpretarRespuestaMid));
+    });
+  }
+
+  actualizarPersonaJuridica(
+    payload: ActualizarProveedorJuridicoMidPayload,
+  ): Observable<RespuestaMid> {
+    return defer(() => {
+      const baseUrl = this.urlBaseConfigurada();
+      return this.http
+        .patch<unknown>(`${baseUrl}/proveedor`, payload)
+        .pipe(map(interpretarRespuestaMid));
+    });
+  }
 
   registrarPersonaNatural(
     payload: NuevoProveedorNaturalMidPayload,
