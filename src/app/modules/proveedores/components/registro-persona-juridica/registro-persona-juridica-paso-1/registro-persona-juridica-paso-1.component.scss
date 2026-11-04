@@ -58,7 +58,8 @@ direccion-dian {
 
 /* El botón Relacionar se alinea con los controles de la fila. */
 .campo--alineado {
-  justify-content: flex-end;
+  justify-content: flex-start;
+  margin-top: 0.85rem;
 }
 
 /* La razón social ocupa toda la fila, como en el mockup. */

@@ -2,18 +2,21 @@
 
 .rp-consentimiento--exito {
   --estado-tono: var(--agora-success);
+  --estado-tono-hover: color-mix(in srgb, var(--agora-success) 82%, var(--agora-text));
   --estado-superficie: var(--agora-success-surface);
   --estado-borde: var(--agora-success-border);
 }
 
 .rp-consentimiento--error {
   --estado-tono: var(--agora-error);
+  --estado-tono-hover: color-mix(in srgb, var(--agora-error) 82%, var(--agora-text));
   --estado-superficie: var(--agora-error-surface);
   --estado-borde: var(--agora-error-border);
 }
 
 .rp-consentimiento--primario {
   --estado-tono: var(--agora-primary);
+  --estado-tono-hover: var(--agora-primary-dark);
   --estado-superficie: color-mix(in srgb, var(--agora-text-muted) 5%, var(--agora-surface));
   --estado-borde: color-mix(in srgb, var(--agora-border-strong) 40%, transparent);
 }
@@ -113,8 +116,7 @@
   font: inherit;
   font-size: 13px;
   cursor: pointer;
-  transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out,
-    color 0.2s ease-in-out, box-shadow 0.2s ease-in-out, transform 0.1s ease-in-out;
+  transition: .3s ease all;
 }
 
 @media (min-width: t.$bp-xs) {
@@ -124,9 +126,11 @@
   }
 }
 
-.rp-consentimiento-boton:hover {
-  background-color: color-mix(in srgb, var(--agora-text-muted) 5%, var(--agora-surface));
-  border-color: color-mix(in srgb, var(--agora-primary) 60%, transparent);
+.rp-consentimiento-boton:hover,
+.rp-consentimiento-boton:focus-visible {
+  border-color: var(--estado-tono);
+  color: var(--estado-tono-hover);
+  background-color: color-mix(in srgb, var(--estado-tono) 10%, var(--agora-surface));
 }
 
 .rp-consentimiento-boton:active {
@@ -144,24 +148,16 @@
   height: 20px;
 }
 
-.rp-consentimiento-boton--destacado,
-.rp-consentimiento-boton--destacado:hover {
+.rp-consentimiento-boton--destacado {
   border-color: var(--estado-tono);
   color: var(--agora-on-primary);
   background-color: var(--estado-tono);
 }
 
-.rp-consentimiento-boton--destacado:hover {
-  filter: saturate(60%);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .rp-consentimiento-boton {
-    transition: none;
-  }
-
-  .rp-consentimiento-boton:active {
-    transform: none;
-  }
+.rp-consentimiento-boton--destacado:hover,
+.rp-consentimiento-boton--destacado:focus-visible {
+  border-color: var(--estado-tono-hover);
+  color: var(--agora-on-primary);
+  background-color: var(--estado-tono-hover);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 10%), 0 4px 6px -2px rgb(0 0 0 / 10%);
 }

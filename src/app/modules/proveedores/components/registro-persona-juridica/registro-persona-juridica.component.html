@@ -1,7 +1,7 @@
 <plantilla-pagina-contenedora
   [icon]="'corporate_fare'"
   [title]="'Registro Único de Persona Jurídica'"
-  [breadcrumb]="'<p>Gestión de Proveedores > <b>Persona Jurídica</b></p>'"
+  [breadcrumb]="'<p>Gestión de Proveedores > Registro > <b>Formulario de Persona Jurídica</b></p>'"
   [mostrarBotonRegresar]="true"
   (regresar)="regresarARegistroInicial()"
 >
@@ -65,7 +65,7 @@
         (reintentar)="reintentarCatalogos()"
       ></registro-persona-juridica-estado-catalogos>
       @switch (pasoActual) {
-        <!-- @case (1) {
+        @case (1) {
           <registro-persona-juridica-paso-1
             [(formulario)]="formulario"
             [catalogos]="catalogos"
@@ -90,8 +90,8 @@
           <registro-persona-juridica-paso-3
             [(formulario)]="formulario"
           ></registro-persona-juridica-paso-3>
-        } -->
-        @case (1) {
+        }
+        @case (4) {
           <registro-persona-juridica-paso-4
             [(formulario)]="formulario"
             [catalogoCiiu]="catalogoCiiu"
