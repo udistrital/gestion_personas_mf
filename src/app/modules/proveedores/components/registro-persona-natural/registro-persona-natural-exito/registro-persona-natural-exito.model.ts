@@ -1,14 +1,18 @@
 /**
  * Datos que alimentan la constancia de radicación exitosa del registro de
- * persona natural. El contenedor del registro los construye a partir del
- * formulario y de la respuesta del MID.
+ * proveedores (persona natural o jurídica). El contenedor de cada formulario
+ * los construye a partir del formulario y de la respuesta del MID.
  */
-export interface ResumenRadicacionPersonaNatural {
+export interface ResumenRadicacionProveedor {
   nombreCompleto: string;
   tipoDocumento: string;
   numeroDocumento: string;
   ciudadExpedicion: string;
   tipoSolicitante: string;
+  /** Representante legal de la persona jurídica; vacío en persona natural. */
+  representanteLegal?: string;
+  /** Documento del representante legal; vacío en persona natural. */
+  documentoRepresentante?: string;
   ciiuPrincipal: string;
   ciiuSecundarias: string[];
   correoPersonal: string;

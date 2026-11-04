@@ -4,9 +4,11 @@ import {
   CatalogosPersonaJuridica,
   OpcionCatalogo,
 } from '../services/registro-persona-juridica-catalogos.service';
-import {
-  OpcionLugar,
-} from '../services/registro-persona-juridica-ubicaciones.service';
+
+interface Opcion<T> {
+  label: string;
+  value: T;
+}
 
 @Component({
   selector: 'registro-persona-juridica-paso-2',
@@ -17,49 +19,57 @@ import {
 export class RegistroPersonaJuridicaPaso2Component {
   @Input() formulario: FormGroup = new FormGroup({});
   @Input() catalogos: CatalogosPersonaJuridica | null = null;
-  @Input() pais: OpcionLugar | null = null;
-  @Input() departamentos: OpcionLugar[] = [];
-  @Input() ciudades: OpcionLugar[] = [];
-  @Input() cargandoDepartamentos = false;
-  @Input() cargandoCiudades = false;
-  @Input() errorDepartamentos: string | null = null;
-  @Input() errorCiudades: string | null = null;
   @Output() formularioChange = new EventEmitter<FormGroup>();
-  @Output() reintentarDepartamentos = new EventEmitter<void>();
-  @Output() reintentarCiudades = new EventEmitter<void>();
 
-  get opcionesTipoConstitucion(): OpcionCatalogo[] {
-    return this.catalogos?.tipoCapital ?? [];
-  }
+  /** Referencia estable para no recrear el arreglo en cada detección de cambios. */
+  private readonly sinOpciones: OpcionCatalogo[] = [];
 
   get opcionesBanco(): OpcionCatalogo[] {
-    return this.catalogos?.entidadesBancarias ?? [];
+    return this.catalogos?.entidadesBancarias ?? this.sinOpciones;
   }
 
   get opcionesTipoCuenta(): OpcionCatalogo[] {
-    return this.catalogos?.tiposCuentaBancaria ?? [];
+    return this.catalogos?.tiposCuentaBancaria ?? this.sinOpciones;
   }
 
-  readonly opcionesSiNo = [
-    { label: 'Sí', value: true },
-    { label: 'No', value: false },
+  readonly opcionesTipoConformacion: Opcion<string>[] = [
+    { label: 'Individual / Principal', value: 'individual' },
+    { label: 'Conjunta / Mancomunada', value: 'conjunta' },
+    { label: 'Consorcio / Unión Temporal', value: 'consorcial' },
   ];
 
-  umbralMinimo = 1.50;
-
-  get indicadorLiquidez(): string {
-    // TODO: Mock
-    const activos = Number(this.formulario.get('activosTotales')?.value ?? 0);
-    const pasivos = Number(this.formulario.get('pasivosTotales')?.value ?? 0);
-    return pasivos > 0 ? (activos / pasivos).toFixed(2) : '0.00';
+  /** true cuando los dos números de cuenta coinciden y no están vacíos. */
+  get coincideCuenta(): boolean {
+    const cuenta = String(this.formulario.get('numeroCuenta')?.value ?? '').trim();
+    const confirmacion = String(
+      this.formulario.get('numeroCuentaConfirmacion')?.value ?? '',
+    ).trim();
+    return cuenta.length > 0 && cuenta === confirmacion;
   }
 
-  get cumpleIndicadorLiquidez(): boolean {
-    return Number(this.indicadorLiquidez) > this.umbralMinimo;
+  /** true cuando los dos correos de tesorería coinciden y no están vacíos. */
+  get correosPagoConfirmados(): boolean {
+    const correo = String(this.formulario.get('correoPagos')?.value ?? '')
+      .trim()
+      .toLocaleLowerCase();
+    const confirmacion = String(
+      this.formulario.get('correoPagosConfirmacion')?.value ?? '',
+    )
+      .trim()
+      .toLocaleLowerCase();
+    return correo.length > 0 && correo === confirmacion;
   }
 
-  darFormatoDinero(number: number): string {
-    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(number);
+  /** true cuando el control es obligatorio, está vacío y fue tocado. */
+  errorRequerido(form: FormGroup, control: string): boolean {
+    const campo = form.get(control);
+    return !!campo && campo.touched && campo.hasError('required');
+  }
+
+  /** true cuando el control tocado tiene el error indicado. */
+  errorCampo(form: FormGroup, control: string, error: string): boolean {
+    const campo = form.get(control);
+    return !!campo && campo.touched && campo.hasError(error);
   }
 
   emitirCambio(): void {

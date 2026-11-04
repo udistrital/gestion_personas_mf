@@ -42,7 +42,7 @@ import {
   resumirRespuestaMid,
 } from "../../services/gestion-personas-mid.service";
 import { textoPlanoDesdeHtml } from "src/app/shared/utils/texto-plano";
-import { ResumenRadicacionPersonaNatural } from "./registro-persona-natural-exito/registro-persona-natural-exito.model";
+import { ResumenRadicacionProveedor } from "./registro-persona-natural-exito/registro-persona-natural-exito.model";
 import { CIIU_PERSONA_NATURAL } from "./registro-persona-natural-paso-4/ciiu-persona-natural";
 
 export interface EstadoCatalogoNatural {
@@ -145,7 +145,7 @@ export class RegistroPersonaNaturalComponent implements OnInit {
   /** true cuando el MID confirmó el registro y debe mostrarse la constancia. */
   registroCompletado = false;
   /** Datos de la constancia; null mientras no se haya radicado. */
-  resumenRadicacion: ResumenRadicacionPersonaNatural | null = null;
+  resumenRadicacion: ResumenRadicacionProveedor | null = null;
 
   /**
    * TEMPORAL: identifica la constancia abierta con datos de ejemplo desde el
@@ -826,7 +826,7 @@ export class RegistroPersonaNaturalComponent implements OnInit {
     this.resumenRadicacion = null;
   }
 
-  private crearResumenEjemplo(): ResumenRadicacionPersonaNatural {
+  private crearResumenEjemplo(): ResumenRadicacionProveedor {
     const ciiu =
       CIIU_PERSONA_NATURAL.find((actividad) => actividad.principal)
       ?? CIIU_PERSONA_NATURAL[0];
@@ -969,7 +969,7 @@ export class RegistroPersonaNaturalComponent implements OnInit {
 
   private construirResumenRadicacion(
     resultado: ResultadoEnvioMid,
-  ): ResumenRadicacionPersonaNatural {
+  ): ResumenRadicacionProveedor {
     const valores = this.personaNaturalForm.getRawValue() as Record<
       string,
       Record<string, unknown> | undefined
@@ -1083,7 +1083,7 @@ export class RegistroPersonaNaturalComponent implements OnInit {
    * sirve para que la constancia tenga una huella verificable del envío.
    */
   private async calcularHashRadicacion(
-    resumen: ResumenRadicacionPersonaNatural,
+    resumen: ResumenRadicacionProveedor,
   ): Promise<string | null> {
     const subtle = globalThis.crypto?.subtle;
     if (!subtle) {

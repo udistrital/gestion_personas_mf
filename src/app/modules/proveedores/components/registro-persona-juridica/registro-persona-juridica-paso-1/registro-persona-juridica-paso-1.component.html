@@ -1,325 +1,786 @@
-<form [formGroup]="formulario">
+<div
+  class="formulario-material paso-1"
+  [formGroup]="formulario"
+  (input)="emitirCambio()"
+  (change)="emitirCambio()"
+>
+  <banner-paso
+    icono="verified_user"
+    titulo="Paso 1: Identificación Societaria y Representación Legal"
+    [etiquetas]="['Ley 1581 de 2012', 'Confecámaras / RUES', 'Decreto 1082 / Normativa UD']"
+    descripcion="Valide la información tributaria, la razón social y la representación legal cotejadas con el Registro Único Empresarial y Social (RUES) y la plataforma Muisca de la DIAN para el expediente único de la Universidad Distrital."
+  ></banner-paso>
+
+  <!-- ───────────────── 1. IDENTIFICACIÓN TRIBUTARIA ───────────────── -->
   <plantilla-tarjeta-contenedora
-    [icon]="'business'"
-    [title]="'1. Identificación Tributaria y Razón Social de la Entidad'"
-    [description]="'Conforme a certificación de existencia y representación legal de Cámara de Comercio y Registro Único Tributario (RUT).'"
+    icon="business"
+    title="1. Identificación Tributaria y Razón Social de la Entidad"
+    description="Conforme a la certificación de existencia y representación legal de Cámara de Comercio y al Registro Único Tributario (RUT)."
   >
+    <ng-container acciones>
+      <span class="chip chip--recto">Tipo Persona: Jurídica</span>
+    </ng-container>
+
     <div class="campo-grid campo-grid--four">
-      <label class="campo">
-        <span>NIT de la Empresa <b>*</b></span>
-        <input formControlName="nit" type="text">
-      </label>
-      <label class="campo">
-        <span>Dígito Verif. (DV)</span>
-        <input formControlName="digitoVerificacion" type="text">
-      </label>
-      <label class="campo">
-        <span>Confirmar NIT <b>*</b></span>
-        <input formControlName="nitConfirmacion" type="text">
-      </label>
-      <label class="campo">
-        <span>Procedencia de la Empresa <b>*</b></span>
-        <select formControlName="procedencia">
-          <option [ngValue]="null">Seleccione...</option>
-          @for (opcion of opcionesProcedencia; track opcion.id) {
-            <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+      <div class="campo">
+        <label class="campo__etiqueta" for="nit">
+          <span>NIT de la Empresa <b aria-hidden="true">*</b></span>
+        </label>
+        <mat-form-field appearance="outline">
+          <mat-icon matPrefix aria-hidden="true">badge</mat-icon>
+          <input
+            matInput
+            id="nit"
+            type="text"
+            inputmode="numeric"
+            maxlength="9"
+            formControlName="nit"
+            placeholder="Ej. 900845120"
+            autocomplete="off"
+          />
+          @if (errorRequerido(formulario, "nit")) {
+            <mat-error>Este campo es obligatorio.</mat-error>
+          } @else if (errorCampo(formulario, "nit", "pattern")) {
+            <mat-error>El NIT debe tener 9 dígitos.</mat-error>
           }
-        </select>
-      </label>
-    </div>
-    <div class="campo-grid campo-grid--three">
-      <label class="campo campo--wide">
-        <span>Razón Social Completa Registrada en Cámara <b>*</b></span>
-        <input formControlName="razonSocial" type="text">
-      </label>
-      <label class="campo">
-        <span>Nombre Comercial / Sigla</span>
-        <input formControlName="nombreComercial" type="text">
-      </label>
-    </div>
-    <div class="campo-grid campo-grid--four">
-      <label class="campo">
-        <span>Matrícula Mercantil <b>*</b></span>
-        <input formControlName="matriculaMercantil" type="text">
-      </label>
-      <label class="campo">
-        <span>Cámara de Comercio <b>*</b></span>
-        <select formControlName="camaraComercio">
-          <option [ngValue]="null">Seleccione...</option>
-          @for (opcion of opcionesCamaraComercio; track opcion.id) {
-            <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+          @if (formulario.get("nit")?.valid && formulario.get("nit")?.value) {
+            <mat-icon matSuffix class="campo__validado" aria-hidden="true">
+              check_circle
+            </mat-icon>
           }
-        </select>
-      </label>
-      <label class="campo">
-        <span>Fecha Constitución <b>*</b></span>
-        <input formControlName="fechaConstitucion" type="date">
-      </label>
-      <label class="campo">
-        <span>Fecha Renovación Matrícula <b>*</b></span>
-        <input formControlName="fechaRenovacion" type="date">
-      </label>
-      <label class="campo campo--wide">
-        <span>Tipo de Organización / Figura Jurídica <b>*</b></span>
-        <select formControlName="tipoOrganizacion">
-          <option [ngValue]="null">Seleccione...</option>
-          @for (opcion of opcionesTipoOrganizacion; track opcion.id) {
-            <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+        </mat-form-field>
+      </div>
+
+      <div class="campo">
+        <label class="campo__etiqueta campo__etiqueta--con-icono" for="digitoVerificacion">
+          <span>Dígito Verif. (DV)</span>
+          <mat-icon class="campo__etiqueta-icono" aria-hidden="true" title="Módulo 11 DIAN">info</mat-icon>
+        </label>
+        <mat-form-field appearance="outline">
+          <input
+            matInput
+            id="digitoVerificacion"
+            type="text"
+            inputmode="numeric"
+            maxlength="1"
+            formControlName="digitoVerificacion"
+            placeholder="Ej. 3"
+            autocomplete="off"
+          />
+          @if (errorCampo(formulario, "digitoVerificacion", "pattern")) {
+            <mat-error>El dígito de verificación debe ser numérico.</mat-error>
           }
-        </select>
-      </label>
-      <label class="campo campo--wide">
-        <span>Tamaño Empresarial (Decreto 957/2019) <b>*</b></span>
-        <select formControlName="tamanoEmpresarial">
-          <option [ngValue]="null">Seleccione...</option>
-          @for (opcion of opcionesTamanoEmpresarial; track opcion.id) {
-            <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+        </mat-form-field>
+        <span class="campo__ayuda">Módulo 11 DIAN</span>
+      </div>
+
+      <div class="campo">
+        <label class="campo__etiqueta" for="nitConfirmacion">
+          <span>Confirmar NIT <b aria-hidden="true">*</b></span>
+        </label>
+        <mat-form-field appearance="outline">
+          <mat-icon matPrefix aria-hidden="true">done_all</mat-icon>
+          <input
+            matInput
+            id="nitConfirmacion"
+            type="text"
+            inputmode="numeric"
+            maxlength="9"
+            formControlName="nitConfirmacion"
+            placeholder="Repita el NIT"
+            autocomplete="off"
+          />
+          @if (errorRequerido(formulario, "nitConfirmacion")) {
+            <mat-error>Este campo es obligatorio.</mat-error>
+          } @else if (errorCampo(formulario, "nitConfirmacion", "pattern")) {
+            <mat-error>El NIT debe tener 9 dígitos.</mat-error>
           }
-        </select>
-      </label>
+        </mat-form-field>
+        @if (nitConfirmado) {
+          <span class="campo__exito">
+            <mat-icon aria-hidden="true">check_circle</mat-icon>
+            Coincidencia exacta
+          </span>
+        }
+      </div>
+
+      <div class="campo">
+        <label class="campo__etiqueta" for="procedencia">
+          <span>Procedencia de la Empresa <b aria-hidden="true">*</b></span>
+        </label>
+        <mat-form-field appearance="outline">
+          <mat-select
+            id="procedencia"
+            formControlName="procedencia"
+            placeholder="Seleccione..."
+            aria-label="Procedencia de la empresa"
+          >
+            @for (opcion of opcionesProcedencia; track opcion.id) {
+              <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+            }
+          </mat-select>
+          @if (errorRequerido(formulario, "procedencia")) {
+            <mat-error>Seleccione la procedencia.</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <div class="campo campo--full">
+        <label class="campo__etiqueta" for="razonSocial">
+          <span>Razón Social Completa Registrada en Cámara <b aria-hidden="true">*</b></span>
+        </label>
+        <mat-form-field appearance="outline">
+          <mat-icon matPrefix aria-hidden="true">corporate_fare</mat-icon>
+          <input
+            matInput
+            id="razonSocial"
+            type="text"
+            formControlName="razonSocial"
+            placeholder="Ej. Soluciones Tecnológicas e Integraciones S.A.S."
+            autocomplete="organization"
+          />
+          @if (errorRequerido(formulario, "razonSocial")) {
+            <mat-error>Este campo es obligatorio.</mat-error>
+          }
+        </mat-form-field>
+      </div>
     </div>
   </plantilla-tarjeta-contenedora>
 
   <aviso-legal-formulario
+    icon="gavel"
     [title]="'Aviso Legal Obligatorio • Transparencia y Cumplimiento SAGRILAFT / PTEE'"
   >
-    <p>En cumplimiento de la <strong>Directiva Presidencial 01 de 2023</strong> y las directrices de la <strong>Superintendencia de Sociedades</strong>, la Universidad Distrital realiza validación obligatoria en listas restrictivas vinculantes (OFAC, ONU, Contraloría General, Procuraduría y Policía Nacional) de socios con participación igual o superior al 5% y del Representante Legal.</p>
+    <p>
+      En cumplimiento de la <strong>Directiva Presidencial 01 de 2023</strong> y
+      las directrices de la <strong>Superintendencia de Sociedades</strong>, la
+      Universidad Distrital realiza validación obligatoria en listas
+      restrictivas vinculantes (OFAC, ONU, Contraloría General, Procuraduría y
+      Policía Nacional) de socios con participación igual o superior al 5% y del
+      Representante Legal.
+    </p>
   </aviso-legal-formulario>
 
+  <!-- ───────────────── 2. REPRESENTACIÓN LEGAL ───────────────── -->
   <plantilla-tarjeta-contenedora
-    [icon]="'group'"
-    [title]="'2. Representación Legal Principal y Facultades Contractuales'"
-    [description]="'Datos de la persona facultada conforme al Certificado de Existencia y Representación Legal.'"
+    icon="group"
+    title="2. Representación Legal Principal y Facultades Contractuales"
+    description="Datos de la persona facultada conforme al Certificado de Existencia y Representación Legal."
   >
     <div class="vinculacion">
-      <h3><mat-icon>person_search</mat-icon> Búsqueda y Vinculación Asistida de Persona Natural</h3>
-      <p>Cotejo con Censo Ciudadano</p>
-      <div class="campo-grid campo-grid--three">
-        <label class="campo"><span>Documento Identificación <b>*</b></span><input formControlName="documentoRepresentante" type="text"></label>
-        <label class="campo"><span>Cargo Representante <b>*</b></span><select formControlName="cargoRepresentante">
-          <option [ngValue]="null">Seleccione...</option>
-          @for (opcion of opcionesCargo; track opcion.id) {
-            <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
-          }
-        </select></label>
-        <button class="boton boton--primary" type="button">Relacionar</button>
+      <div class="vinculacion__cabecera">
+        <h3 class="seccion-titulo">
+          <mat-icon aria-hidden="true">person_search</mat-icon>
+          Búsqueda y Vinculación Asistida de Persona Natural
+        </h3>
+        <span class="chip chip--recto">Poder Vigente Registrado</span>
+      </div>
+      <p class="vinculacion__nota">Cotejo con Censo Ciudadano</p>
+
+      <div class="campo-grid campo-grid--four">
+        <div class="campo">
+          <label class="campo__etiqueta" for="tipoDocumentoRepresentante">
+            <span>Tipo de Documento <b aria-hidden="true">*</b></span>
+          </label>
+          <mat-form-field appearance="outline">
+            <mat-select
+              id="tipoDocumentoRepresentante"
+              formControlName="tipoDocumentoRepresentante"
+              placeholder="Seleccione..."
+              aria-label="Tipo de documento del representante legal"
+            >
+              @for (opcion of opcionesTipoDocumentoRepresentante; track opcion.value) {
+                <mat-option [value]="opcion.value">{{ opcion.label }}</mat-option>
+              }
+            </mat-select>
+            @if (errorRequerido(formulario, "tipoDocumentoRepresentante")) {
+              <mat-error>Seleccione el tipo de documento.</mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <div class="campo">
+          <label class="campo__etiqueta" for="documentoRepresentante">
+            <span>Documento Identificación <b aria-hidden="true">*</b></span>
+          </label>
+          <mat-form-field appearance="outline">
+            <input
+              matInput
+              id="documentoRepresentante"
+              type="text"
+              inputmode="numeric"
+              formControlName="documentoRepresentante"
+              placeholder="Número de documento"
+              autocomplete="off"
+            />
+            @if (errorRequerido(formulario, "documentoRepresentante")) {
+              <mat-error>Este campo es obligatorio.</mat-error>
+            } @else if (errorCampo(formulario, "documentoRepresentante", "pattern")) {
+              <mat-error>El documento debe contener solo números.</mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <div class="campo">
+          <label class="campo__etiqueta" for="cargoRepresentante">
+            <span>Cargo Representante <b aria-hidden="true">*</b></span>
+          </label>
+          <app-search-selection
+            id="cargoRepresentante"
+            formControlName="cargoRepresentante"
+            [items]="opcionesCargo"
+            labelKey="nombre"
+            valueKey="id"
+            placeholder="Seleccione un cargo"
+            ariaLabel="Cargo del representante legal"
+            noSelectionErrorMessage="Seleccione el cargo del representante."
+          ></app-search-selection>
+        </div>
+
+        <div class="campo campo--alineado">
+          <button
+            mat-flat-button
+            type="button"
+            class="boton-primario"
+            title="Integración con Censo Ciudadano pendiente"
+          >
+            <mat-icon aria-hidden="true">link</mat-icon>
+            Relacionar
+          </button>
+        </div>
       </div>
     </div>
+
     <div class="campo-grid campo-grid--four">
-      <label class="campo"><span>Primer Apellido <b>*</b></span><input formControlName="primerApellido" type="text"></label>
-      <label class="campo"><span>Segundo Apellido</span><input formControlName="segundoApellido" type="text"></label>
-      <label class="campo"><span>Primer Nombre <b>*</b></span><input formControlName="primerNombre" type="text"></label>
-      <label class="campo"><span>Segundo Nombre</span><input formControlName="segundoNombre" type="text"></label>
-      <label class="campo campo--wide"><span>Correo Corporativo Representante <b>*</b></span><input formControlName="correoRepresentante" type="email"></label>
-      <label class="campo campo--wide"><span>Teléfono Celular Directo <b>*</b></span><input formControlName="telefonoRepresentante" type="tel"></label>
+      <div class="campo">
+        <label class="campo__etiqueta" for="primerApellido">
+          <span>Primer Apellido <b aria-hidden="true">*</b></span>
+        </label>
+        <mat-form-field appearance="outline">
+          <input
+            matInput
+            id="primerApellido"
+            type="text"
+            formControlName="primerApellido"
+            placeholder="Ej. González"
+            autocomplete="family-name"
+          />
+          @if (errorRequerido(formulario, "primerApellido")) {
+            <mat-error>Este campo es obligatorio.</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <div class="campo">
+        <label class="campo__etiqueta" for="segundoApellido">
+          <span>Segundo Apellido</span>
+        </label>
+        <mat-form-field appearance="outline">
+          <input
+            matInput
+            id="segundoApellido"
+            type="text"
+            formControlName="segundoApellido"
+            placeholder="Ej. Pérez"
+            autocomplete="additional-name"
+          />
+        </mat-form-field>
+      </div>
+
+      <div class="campo">
+        <label class="campo__etiqueta" for="primerNombre">
+          <span>Primer Nombre <b aria-hidden="true">*</b></span>
+        </label>
+        <mat-form-field appearance="outline">
+          <input
+            matInput
+            id="primerNombre"
+            type="text"
+            formControlName="primerNombre"
+            placeholder="Ej. Carlos"
+            autocomplete="given-name"
+          />
+          @if (errorRequerido(formulario, "primerNombre")) {
+            <mat-error>Este campo es obligatorio.</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <div class="campo">
+        <label class="campo__etiqueta" for="segundoNombre">
+          <span>Segundo Nombre</span>
+        </label>
+        <mat-form-field appearance="outline">
+          <input
+            matInput
+            id="segundoNombre"
+            type="text"
+            formControlName="segundoNombre"
+            placeholder="Ej. Javier"
+            autocomplete="additional-name"
+          />
+        </mat-form-field>
+      </div>
     </div>
-    <div class="opciones" role="group" aria-labelledby="limitacion-estatutaria-titulo">
-      <span class="opciones__titulo" id="limitacion-estatutaria-titulo">¿Tiene limitación estatutaria en cuantía para celebrar contratos o comprometer a la sociedad? <b>*</b></span>
-      @for (opcion of opcionesLimitacionEstatutaria; track opcion.value) {
-        <label><input formControlName="limitacionEstatutaria" [value]="opcion.value" type="radio"> {{ opcion.label }}</label>
-      }
-    </div>
-    <label class="checkbox-line"><input formControlName="registrarSuplente" type="checkbox"><span>Registrar Representante Legal Suplente o Apoderado Especial con Poder Vigente</span><small>Opcional según estatutos</small></label>
   </plantilla-tarjeta-contenedora>
 
+  <!-- ───────────────── 3. INFORMACIÓN TRIBUTARIA ───────────────── -->
   <plantilla-tarjeta-contenedora
-    [icon]="'wallet'"
-    [title]="'3. Beneficiarios Finales, SAGRILAFT y Responsabilidades Tributarias'"
-    [description]="'Determinación de control societario, revisoría fiscal y obligaciones Casilla 53 del RUT.'"
+    icon="receipt_long"
+    title="3. Información Tributaria y Régimen de la Persona Jurídica"
+    description="Clasificación de responsabilidades tributarias, aduaneras, cambiarias y régimen societario ante la DIAN y la Universidad Distrital."
   >
     <div class="campo-grid campo-grid--three">
-      <label class="campo campo--question"><span>¿Cuenta con Beneficiarios Finales reportados en el RUB? <b>*</b></span><select formControlName="beneficiariosFinales">
-        <option [ngValue]="null">Seleccione...</option>
-        @for (opcion of opcionesSiNo; track opcion.value) {
-          <option [ngValue]="opcion.value">{{ opcion.label }}</option>
-        }
-      </select></label>
-      <label class="campo campo--question"><span>¿Cotiza en la Bolsa de Valores de Colombia (BVC)? <b>*</b></span><select formControlName="cotizaBolsa">
-        <option [ngValue]="null">Seleccione...</option>
-        @for (opcion of opcionesSiNo; track opcion.value) {
-          <option [ngValue]="opcion.value">{{ opcion.label }}</option>
-        }
-      </select></label>
-      <label class="campo campo--question"><span>¿Obligada a contar con Revisor Fiscal? <b>*</b></span><select formControlName="revisorFiscal">
-        <option [ngValue]="null">Seleccione...</option>
-        @for (opcion of opcionesSiNo; track opcion.value) {
-          <option [ngValue]="opcion.value">{{ opcion.label }}</option>
-        }
-      </select></label>
-      <label class="campo campo--question"><span>¿Gran Contribuyente DIAN? <b>*</b></span><select formControlName="granContribuyente">
-        <option [ngValue]="null">Seleccione...</option>
-        @for (opcion of opcionesSiNo; track opcion.value) {
-          <option [ngValue]="opcion.value">{{ opcion.label }}</option>
-        }
-      </select></label>
-      <label class="campo campo--question"><span>¿Es Autorretenedor en Renta? <b>*</b></span><select formControlName="autorretenedor">
-        <option [ngValue]="null">Seleccione...</option>
-        @for (opcion of opcionesSiNo; track opcion.value) {
-          <option [ngValue]="opcion.value">{{ opcion.label }}</option>
-        }
-      </select></label>
-      <label class="campo campo--question"><span>¿Aplica Exención ICA Bogotá? <b>*</b></span><select formControlName="exencionIca">
-        <option [ngValue]="null">Seleccione...</option>
-        @for (opcion of opcionesSiNo; track opcion.value) {
-          <option [ngValue]="opcion.value">{{ opcion.label }}</option>
-        }
-      </select></label>
-    </div>
-    <fieldset class="responsabilidades">
-      <legend>Responsabilidades Fiscales en Casilla 53 del RUT vigente: <b>*</b></legend>
-      <div class="responsabilidades-contenido">
-        <div class="campo-grid campo-grid--three responsabilidades-selector">
-          <label class="campo"><span>Buscar responsabilidad fiscal</span>
-            <input
-              [value]="busquedaResponsabilidadFiscal"
-              (input)="busquedaResponsabilidadFiscal = $any($event.target).value"
-              type="search"
-              autocomplete="off"
-            >
-          </label>
-          <label class="campo"><span>Responsabilidad disponible</span>
-            <select [formControl]="responsabilidadFiscalDisponibleId">
-              <option [ngValue]="null">Seleccione...</option>
-              @for (opcion of responsabilidadesFiscalesDisponibles; track opcion.id) {
-                <option [ngValue]="opcion.id">
-                  {{ opcion.codigo ? opcion.codigo + ' — ' : '' }}{{ opcion.nombre }}
-                </option>
-              }
-            </select>
-          </label>
-          <button
-            class="boton boton--primary"
-            type="button"
-            [disabled]="responsabilidadFiscalDisponibleId.value === null"
-            (click)="agregarResponsabilidadFiscal()"
-          >Agregar responsabilidad</button>
-        </div>
-        @if (
-          opcionesResponsabilidadesFiscales.length > 0 &&
-          responsabilidadesFiscalesDisponibles.length === 0
-        ) {
-          <p>No hay responsabilidades fiscales disponibles para agregar.</p>
-        }
-        <div class="responsabilidades-seleccionadas">
-          @for (opcion of responsabilidadesFiscalesSeleccionadas; track opcion.id) {
-            <div class="vinculacion responsabilidad-seleccionada">
-              <span>{{ opcion.codigo ? opcion.codigo + ' — ' : '' }}{{ opcion.nombre }}</span>
-              <button
-                class="boton boton--ligero"
-                type="button"
-                (click)="quitarResponsabilidadFiscal(opcion.id)"
-              >Retirar</button>
-            </div>
+      <div class="campo">
+        <label class="campo__etiqueta" for="regimenContributivo">
+          <span>Régimen Contributivo <b aria-hidden="true">*</b></span>
+        </label>
+        <mat-form-field appearance="outline">
+          <mat-icon matPrefix aria-hidden="true">assured_workload</mat-icon>
+          <mat-select
+            id="regimenContributivo"
+            formControlName="regimenContributivo"
+            placeholder="Seleccione..."
+            aria-label="Régimen contributivo"
+          >
+            @for (opcion of opcionesRegimenContributivo; track opcion) {
+              <mat-option [value]="opcion">{{ opcion }}</mat-option>
+            }
+          </mat-select>
+          @if (errorRequerido(formulario, "regimenContributivo")) {
+            <mat-error>Seleccione el régimen contributivo.</mat-error>
           }
-        </div>
-        @if (
-          formulario.get('responsabilidades')?.touched &&
-          formulario.get('responsabilidades')?.invalid
-        ) {
-          <small class="field-error">
-            Seleccione al menos una responsabilidad fiscal.
-          </small>
+        </mat-form-field>
+      </div>
+
+      <div class="campo">
+        <label
+          class="campo__etiqueta campo__etiqueta--con-icono"
+          id="sujeto-retencion-etiqueta"
+        >
+          <span>Sujeto de Retención <b aria-hidden="true">*</b></span>
+          <mat-icon
+            class="campo__etiqueta-icono"
+            aria-hidden="true"
+            title="Aplica retención en la fuente a título de renta"
+          >
+            help
+          </mat-icon>
+        </label>
+        <mat-radio-group
+          formControlName="sujetoRetencion"
+          class="opciones-radio"
+          aria-labelledby="sujeto-retencion-etiqueta"
+        >
+          @for (opcion of opcionesSiNo; track opcion.value) {
+            <mat-radio-button [value]="opcion.value">
+              {{ opcion.label }}
+            </mat-radio-button>
+          }
+        </mat-radio-group>
+        @if (errorRequerido(formulario, "sujetoRetencion")) {
+          <span class="campo__fallo" role="alert">Seleccione una opción.</span>
         }
       </div>
-    </fieldset>
+
+      <div class="campo">
+        <label
+          class="campo__etiqueta campo__etiqueta--con-icono"
+          id="agente-retenedor-etiqueta"
+        >
+          <span>Agente Retenedor <b aria-hidden="true">*</b></span>
+          <mat-icon
+            class="campo__etiqueta-icono"
+            aria-hidden="true"
+            title="Facultad legal para practicar retenciones"
+          >
+            help
+          </mat-icon>
+        </label>
+        <mat-radio-group
+          formControlName="agenteRetenedor"
+          class="opciones-radio"
+          aria-labelledby="agente-retenedor-etiqueta"
+        >
+          @for (opcion of opcionesSiNo; track opcion.value) {
+            <mat-radio-button [value]="opcion.value">
+              {{ opcion.label }}
+            </mat-radio-button>
+          }
+        </mat-radio-group>
+        @if (errorRequerido(formulario, "agenteRetenedor")) {
+          <span class="campo__fallo" role="alert">Seleccione una opción.</span>
+        }
+      </div>
+
+      <div class="campo">
+        <label class="campo__etiqueta" for="responsableIca">
+          <span>Responsable de ICA (Bogotá D.C. - SHD) <b aria-hidden="true">*</b></span>
+        </label>
+        <mat-form-field appearance="outline">
+          <mat-icon matPrefix aria-hidden="true">payments</mat-icon>
+          <mat-select
+            id="responsableIca"
+            formControlName="responsableIca"
+            placeholder="Seleccione..."
+            aria-label="Responsable de ICA"
+          >
+            @for (opcion of opcionesResponsableIca; track opcion) {
+              <mat-option [value]="opcion">{{ opcion }}</mat-option>
+            }
+          </mat-select>
+          @if (errorRequerido(formulario, "responsableIca")) {
+            <mat-error>Seleccione el régimen de ICA.</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <div class="campo">
+        <label class="campo__etiqueta" for="responsableIva">
+          <span>Responsable de IVA (Cód. 48 RUT) <b aria-hidden="true">*</b></span>
+        </label>
+        <mat-form-field appearance="outline">
+          <mat-icon matPrefix aria-hidden="true">percent</mat-icon>
+          <mat-select
+            id="responsableIva"
+            formControlName="responsableIva"
+            placeholder="Seleccione..."
+            aria-label="Responsable de IVA"
+          >
+            @for (opcion of opcionesResponsableIva; track opcion) {
+              <mat-option [value]="opcion">{{ opcion }}</mat-option>
+            }
+          </mat-select>
+          @if (errorRequerido(formulario, "responsableIva")) {
+            <mat-error>Seleccione la condición frente al IVA.</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <div class="campo">
+        <label class="campo__etiqueta" for="clasificacionPyme">
+          <span>Clasificación PYME / Tamaño Empresarial <b aria-hidden="true">*</b></span>
+        </label>
+        <mat-form-field appearance="outline">
+          <mat-icon matPrefix aria-hidden="true">stacked_bar_chart</mat-icon>
+          <mat-select
+            id="clasificacionPyme"
+            formControlName="clasificacionPyme"
+            placeholder="Seleccione..."
+            aria-label="Clasificación PYME"
+          >
+            @for (opcion of opcionesClasificacionPyme; track opcion) {
+              <mat-option [value]="opcion">{{ opcion }}</mat-option>
+            }
+          </mat-select>
+          @if (errorRequerido(formulario, "clasificacionPyme")) {
+            <mat-error>Seleccione el tamaño empresarial.</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <div class="campo">
+        <label class="campo__etiqueta" for="registroMercantilActivo">
+          <span>Registro Mercantil / Matrícula Activa <b aria-hidden="true">*</b></span>
+        </label>
+        <mat-form-field appearance="outline">
+          <mat-icon matPrefix aria-hidden="true">verified</mat-icon>
+          <mat-select
+            id="registroMercantilActivo"
+            formControlName="registroMercantilActivo"
+            placeholder="Seleccione..."
+            aria-label="Registro mercantil activo"
+          >
+            @for (opcion of opcionesRegistroMercantil; track opcion) {
+              <mat-option [value]="opcion">{{ opcion }}</mat-option>
+            }
+          </mat-select>
+          @if (errorRequerido(formulario, "registroMercantilActivo")) {
+            <mat-error>Indique si la matrícula está activa.</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <div class="campo">
+        <label class="campo__etiqueta" for="exclusividadImportacion">
+          <span>Exclusividad Producto de Importación <b aria-hidden="true">*</b></span>
+        </label>
+        <mat-form-field appearance="outline">
+          <mat-icon matPrefix aria-hidden="true">local_shipping</mat-icon>
+          <mat-select
+            id="exclusividadImportacion"
+            formControlName="exclusividadImportacion"
+            placeholder="Seleccione..."
+            aria-label="Exclusividad de producto de importación"
+          >
+            @for (opcion of opcionesExclusividadImportacion; track opcion) {
+              <mat-option [value]="opcion">{{ opcion }}</mat-option>
+            }
+          </mat-select>
+          @if (errorRequerido(formulario, "exclusividadImportacion")) {
+            <mat-error>Seleccione una opción.</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <div class="campo">
+        <label class="campo__etiqueta" for="calidadGranContribuyente">
+          <span>Calidad de Gran Contribuyente (DIAN) <b aria-hidden="true">*</b></span>
+        </label>
+        <mat-form-field appearance="outline">
+          <mat-icon matPrefix aria-hidden="true">military_tech</mat-icon>
+          <mat-select
+            id="calidadGranContribuyente"
+            formControlName="calidadGranContribuyente"
+            placeholder="Seleccione..."
+            aria-label="Calidad de gran contribuyente"
+          >
+            @for (opcion of opcionesCalidadGranContribuyente; track opcion) {
+              <mat-option [value]="opcion">{{ opcion }}</mat-option>
+            }
+          </mat-select>
+          @if (errorRequerido(formulario, "calidadGranContribuyente")) {
+            <mat-error>Seleccione la calidad tributaria.</mat-error>
+          }
+        </mat-form-field>
+      </div>
+    </div>
   </plantilla-tarjeta-contenedora>
 
+  <!-- ───────────────── 4. DOMICILIO Y CONTACTO ───────────────── -->
   <plantilla-tarjeta-contenedora
-    [icon]="'markunreadmailbox'"
-    [title]="'4. Domicilio Principal y Canales de Contacto Oficial (Estándar DIAN)'"
-    [description]="'Diligencie la nomenclatura oficial para notificaciones judiciales y administrativas de la Universidad.'"
+    icon="markunreadmailbox"
+    title="4. Domicilio Principal y Canales de Contacto Oficial (Estándar DIAN)"
+    description="Diligencie la nomenclatura oficial para notificaciones judiciales y administrativas de la Universidad."
   >
-    <div class="campo-grid campo-grid--two">
-      <label class="campo"><span>País</span><input [value]="pais?.nombre ?? ''" type="text" readonly></label>
-      <label class="campo"><span>Departamento de Sede Principal <b>*</b></span><select formControlName="departamento">
-        <option [ngValue]="null">Seleccione...</option>
-        @for (opcion of departamentos; track opcion.id) {
-          <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
-        }
-      </select>
+    <div class="campo-grid campo-grid--three">
+      <div class="campo">
+        <label class="campo__etiqueta" for="pais">
+          <span>País</span>
+        </label>
+        <mat-form-field appearance="outline">
+          <input
+            matInput
+            id="pais"
+            type="text"
+            [value]="pais?.nombre ?? 'Colombia'"
+            readonly
+            aria-label="País de domicilio"
+          />
+        </mat-form-field>
+      </div>
+
+      <div class="campo">
+        <label class="campo__etiqueta" for="departamento">
+          <span>Departamento de Sede Principal <b aria-hidden="true">*</b></span>
+        </label>
+        <app-search-selection
+          id="departamento"
+          formControlName="departamento"
+          [items]="departamentos"
+          labelKey="nombre"
+          valueKey="id"
+          placeholder="Seleccione un departamento"
+          ariaLabel="Departamento de la sede principal"
+          noSelectionErrorMessage="Seleccione el departamento."
+        ></app-search-selection>
         @if (cargandoDepartamentos) {
-          <small>Cargando departamentos...</small>
+          <span class="campo__ayuda">Cargando departamentos…</span>
         } @else if (errorDepartamentos) {
-          <small role="alert">{{ errorDepartamentos }}</small>
-          <button class="boton boton--secundario" type="button" (click)="reintentarDepartamentos.emit()">Reintentar</button>
+          <span class="campo__fallo" role="alert">
+            {{ errorDepartamentos }}
+            <button type="button" class="campo__reintentar" (click)="reintentarDepartamentos.emit()">
+              Reintentar
+            </button>
+          </span>
         } @else if (departamentos.length === 0) {
-          <small>No hay departamentos disponibles.</small>
+          <span class="campo__ayuda">No hay departamentos disponibles.</span>
         }
-      </label>
-      <label class="campo"><span>Ciudad / Municipio <b>*</b></span><select formControlName="ciudad">
-        <option [ngValue]="null">Seleccione...</option>
-        @for (opcion of ciudades; track opcion.id) {
-          <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
-        }
-      </select>
-        @if (cargandoCiudades) {
-          <small>Cargando ciudades...</small>
-        } @else if (errorCiudades) {
-          <small role="alert">{{ errorCiudades }}</small>
-          <button class="boton boton--secundario" type="button" (click)="reintentarCiudades.emit()">Reintentar</button>
-        } @else if (formulario.get('departamento')?.value && ciudades.length === 0) {
-          <small>No hay ciudades disponibles para este departamento.</small>
-        }
-      </label>
-    </div>
-    <div class="direccion">
-      <h3><mat-icon>signpost</mat-icon> Generador de Nomenclatura Estándar DIAN (RUT)</h3>
-      <div class="campo-grid campo-grid--direccion">
-        <label class="campo">
-          <span>Vía *</span>
-          <select formControlName="tipoVia">
-            <option [ngValue]="null">Seleccione...</option>
-            @for (opcion of opcionesTipoVia; track opcion.id) {
-              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
-            }
-          </select>
-          @if (catalogos && opcionesTipoVia.length === 0) {
-            <small>No hay opciones de vía disponibles en Ubicaciones.</small>
-          }
-        </label>
-        <label class="campo"><span>Detalle Vía *</span><input formControlName="detalleVia" type="text"></label>
-        <span class="separador-direccion" aria-hidden="true">#</span>
-        <label class="campo"><span>Número Cruce *</span><input formControlName="numeroCruce" type="text"></label>
-        <span class="separador-direccion" aria-hidden="true">-</span>
-        <label class="campo"><span>Placa Puerta *</span><input formControlName="placaPuerta" type="text"></label>
-        <label class="campo">
-          <span>Interior 1</span>
-          <select formControlName="interiorTipo">
-            <option [ngValue]="null">Seleccione...</option>
-            @for (opcion of opcionesTipoInterior; track opcion.id) {
-              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
-            }
-          </select>
-          @if (catalogos && opcionesTipoInterior.length === 0) {
-            <small>No hay opciones de interior disponibles en Ubicaciones.</small>
-          }
-        </label>
-        <label class="campo"><span>Det. Interior</span><input formControlName="detalleInterior" type="text"></label>
       </div>
-      <direccion-generada
-        [direccion]="direccionGenerada"
-      ></direccion-generada>
-    </div>
-    <h3 class="subtitulo"><mat-icon>contact_phone</mat-icon> Información de Canales de Contacto Directo y Notificaciones</h3>
-    <div class="campo-grid campo-grid--four">
-      <label class="campo"><span>Correo Notificaciones Judiciales *</span><input formControlName="correoNotificaciones" type="email"></label>
-      <label class="campo"><span>Confirmar Correo *</span><input formControlName="correoNotificacionesConfirmacion" type="email"></label>
-      <label class="campo"><span>PBX Corporativo / Teléfono Fijo *</span><input formControlName="telefonoFijo" type="tel"></label>
-      <label class="campo"><span>Extensión Telefónica</span><input formControlName="extension" type="text"></label>
-      <label class="campo"><span>Teléfono Celular / Alterno *</span><input formControlName="telefonoAlterno" type="tel"></label>
-      <label class="campo"><span>Sitio Web Corporativo</span><input formControlName="sitioWeb" type="url"></label>
-      <label class="campo"><span>Contacto Comercial / Asesor</span><input formControlName="contactoComercial" type="text"></label>
-      <label class="campo"><span>Teléfono Asesor Comercial</span><input formControlName="telefonoAsesor" type="tel"></label>
-    </div>
-  </plantilla-tarjeta-contenedora>
 
-  <plantilla-tarjeta-contenedora
-    [icon]="'policy'"
-    [title]="'5. Términos de Registro y Autorización de Tratamiento de Datos (Ley 1581 de 2012)'"
-  >
-    <div>
-      <p>La persona jurídica solicitante certifica que los datos consignados en este formulario son veraces, actualizados y corresponden íntegramente a los asientos mercantiles y tributarios vigentes. Autoriza de manera libre, expresa y previa a la Universidad Distrital Francisco José de Caldas a recolectar, verificar ante entidades oficiales (RUES, DIAN, Contraloría, Policía Nacional) y almacenar la información personal y societaria para efectos contractuales y misionales institucionales.</p>
+      <div class="campo">
+        <label class="campo__etiqueta" for="ciudad">
+          <span>Ciudad / Municipio <b aria-hidden="true">*</b></span>
+        </label>
+        <app-search-selection
+          id="ciudad"
+          formControlName="ciudad"
+          [items]="ciudades"
+          labelKey="nombre"
+          valueKey="id"
+          placeholder="Seleccione una ciudad"
+          ariaLabel="Ciudad o municipio de la sede principal"
+          noSelectionErrorMessage="Seleccione la ciudad."
+        ></app-search-selection>
+        @if (cargandoCiudades) {
+          <span class="campo__ayuda">Cargando ciudades…</span>
+        } @else if (errorCiudades) {
+          <span class="campo__fallo" role="alert">
+            {{ errorCiudades }}
+            <button type="button" class="campo__reintentar" (click)="reintentarCiudades.emit()">
+              Reintentar
+            </button>
+          </span>
+        } @else if (formulario.get("departamento")?.value && ciudades.length === 0) {
+          <span class="campo__ayuda">No hay ciudades disponibles para este departamento.</span>
+        }
+      </div>
     </div>
-    <label class="checkbox-line"><input id="terminos" formControlName="aceptaTerminos" type="checkbox" required><span>Acepto los Términos, Condiciones y Autorizo el Tratamiento de Datos Personales y Societarios</span></label>
+
+    <direccion-dian
+      [formGroup]="formulario"
+      controlVia="tipoVia"
+      controlInterior="interiorTipo"
+      [opcionesVia]="opcionesTipoVia"
+      [opcionesInterior]="opcionesTipoInterior"
+    ></direccion-dian>
+
+    <h3 class="seccion-titulo">
+      <mat-icon aria-hidden="true">contact_phone</mat-icon>
+      Información de Canales de Contacto Directo y Notificaciones
+    </h3>
+
+    <div class="campo-grid campo-grid--four">
+      <div class="campo">
+        <label class="campo__etiqueta" for="correoNotificaciones">
+          <span>Correo Notificaciones Judiciales <b aria-hidden="true">*</b></span>
+        </label>
+        <mat-form-field appearance="outline">
+          <mat-icon matPrefix aria-hidden="true">mail</mat-icon>
+          <input
+            matInput
+            id="correoNotificaciones"
+            type="email"
+            formControlName="correoNotificaciones"
+            placeholder="notificaciones@empresa.com"
+            autocomplete="email"
+          />
+          @if (errorRequerido(formulario, "correoNotificaciones")) {
+            <mat-error>Este campo es obligatorio.</mat-error>
+          } @else if (errorCampo(formulario, "correoNotificaciones", "pattern")) {
+            <mat-error>Ingrese un correo válido.</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <div class="campo">
+        <label class="campo__etiqueta" for="correoNotificacionesConfirmacion">
+          <span>Confirmar Correo <b aria-hidden="true">*</b></span>
+        </label>
+        <mat-form-field appearance="outline">
+          <mat-icon matPrefix aria-hidden="true">mail</mat-icon>
+          <input
+            matInput
+            id="correoNotificacionesConfirmacion"
+            type="email"
+            formControlName="correoNotificacionesConfirmacion"
+            placeholder="Repita el correo"
+            autocomplete="email"
+          />
+          @if (errorRequerido(formulario, "correoNotificacionesConfirmacion")) {
+            <mat-error>Este campo es obligatorio.</mat-error>
+          } @else if (errorCampo(formulario, "correoNotificacionesConfirmacion", "pattern")) {
+            <mat-error>Ingrese un correo válido.</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <div class="campo">
+        <label class="campo__etiqueta" for="telefonoAlterno">
+          <span>Teléfono Celular / Alterno <b aria-hidden="true">*</b></span>
+        </label>
+        <mat-form-field appearance="outline">
+          <mat-icon matPrefix aria-hidden="true">phone</mat-icon>
+          <input
+            matInput
+            id="telefonoAlterno"
+            type="tel"
+            formControlName="telefonoAlterno"
+            placeholder="Ej. 3186749920"
+            autocomplete="tel"
+          />
+          @if (errorRequerido(formulario, "telefonoAlterno")) {
+            <mat-error>Este campo es obligatorio.</mat-error>
+          } @else if (errorCampo(formulario, "telefonoAlterno", "pattern")) {
+            <mat-error>Ingrese un teléfono válido.</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <div class="campo">
+        <label class="campo__etiqueta" for="extension">
+          <span>Extensión Telefónica</span>
+        </label>
+        <mat-form-field appearance="outline">
+          <input
+            matInput
+            id="extension"
+            type="text"
+            inputmode="numeric"
+            formControlName="extension"
+            placeholder="Ej. 104"
+            autocomplete="off"
+          />
+          @if (errorCampo(formulario, "extension", "pattern")) {
+            <mat-error>La extensión debe ser numérica.</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <div class="campo campo--wide">
+        <label class="campo__etiqueta" for="sitioWeb">
+          <span>Sitio Web Corporativo</span>
+        </label>
+        <mat-form-field appearance="outline">
+          <mat-icon matPrefix aria-hidden="true">language</mat-icon>
+          <input
+            matInput
+            id="sitioWeb"
+            type="url"
+            formControlName="sitioWeb"
+            placeholder="https://www.empresa.com"
+            autocomplete="url"
+          />
+          @if (errorCampo(formulario, "sitioWeb", "pattern")) {
+            <mat-error>Ingrese una URL válida (http:// o https://).</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <div class="campo">
+        <label class="campo__etiqueta" for="contactoComercial">
+          <span>Contacto Comercial / Asesor</span>
+        </label>
+        <mat-form-field appearance="outline">
+          <input
+            matInput
+            id="contactoComercial"
+            type="text"
+            formControlName="contactoComercial"
+            placeholder="Nombre del contacto"
+            autocomplete="off"
+          />
+        </mat-form-field>
+      </div>
+
+      <div class="campo">
+        <label class="campo__etiqueta" for="telefonoAsesor">
+          <span>Teléfono Asesor Comercial</span>
+        </label>
+        <mat-form-field appearance="outline">
+          <input
+            matInput
+            id="telefonoAsesor"
+            type="tel"
+            formControlName="telefonoAsesor"
+            placeholder="Ej. 3186749920"
+            autocomplete="off"
+          />
+          @if (errorCampo(formulario, "telefonoAsesor", "pattern")) {
+            <mat-error>Ingrese un teléfono válido.</mat-error>
+          }
+        </mat-form-field>
+      </div>
+    </div>
   </plantilla-tarjeta-contenedora>
-</form>
+</div>

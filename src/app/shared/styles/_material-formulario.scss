@@ -213,6 +213,18 @@
     align-items: flex-start;
   }
 
+  /* Radios compactos en línea: círculo y etiqueta centrados entre sí. */
+  .formulario-material .opciones-radio .mat-mdc-radio-button .mdc-form-field {
+    align-items: center;
+  }
+
+  .formulario-material .opciones-radio .mat-mdc-radio-button .mdc-label {
+    display: flex;
+    align-items: center;
+    min-height: 2rem;
+    line-height: 1.2;
+  }
+
   .formulario-material .mat-mdc-checkbox label,
   .formulario-material .mat-mdc-radio-button label {
     line-height: 1.5;
@@ -327,6 +339,26 @@
     color: var(--agora-on-primary);
   }
 
+  /* Variante primaria para botones filled (mat-flat-button). */
+  .formulario-material :is(.boton-primario, .documento__boton--principal):is(.mat-mdc-flat-button, .mat-mdc-unelevated-button) {
+    --mat-button-filled-container-color: var(--agora-primary);
+    --mat-button-filled-label-text-color: var(--agora-on-primary);
+    --mat-button-filled-hover-state-layer-opacity: 0;
+    --mat-button-filled-focus-state-layer-opacity: 0;
+    --mat-button-filled-pressed-state-layer-opacity: 0;
+    background-color: var(--agora-primary);
+    color: var(--agora-on-primary);
+    transition: .3s ease all !important;
+  }
+
+  .formulario-material :is(.boton-primario, .documento__boton--principal):is(.mat-mdc-flat-button, .mat-mdc-unelevated-button):hover,
+  .formulario-material :is(.boton-primario, .documento__boton--principal):is(.mat-mdc-flat-button, .mat-mdc-unelevated-button):focus-visible {
+    --mat-button-filled-container-color: var(--agora-primary-dark);
+    --mat-button-filled-label-text-color: var(--agora-on-primary);
+    background-color: var(--agora-primary-dark);
+    color: var(--agora-on-primary);
+  }
+
   /* Icono + texto separados de forma consistente en los botones. */
   .formulario-material .mat-mdc-outlined-button .mdc-button__label {
     display: inline-flex;
@@ -334,23 +366,74 @@
     gap: 0.5rem;
   }
 
-  /* Botón Retirar de actividades CIIU: el estado presionado no tapa el texto. */
+  /* Botón Retirar de actividades CIIU: fondo surface y hover vino. */
   .formulario-material .mat-mdc-outlined-button.ciiu__retirar {
+    --mat-button-outlined-label-text-color: var(--agora-primary);
+    --mat-button-outlined-outline-color: var(--agora-borde-control);
     --mat-button-outlined-hover-state-layer-opacity: 0;
     --mat-button-outlined-focus-state-layer-opacity: 0;
     --mat-button-outlined-pressed-state-layer-opacity: 0;
+    background: var(--agora-surface);
+    color: var(--agora-primary);
+    transition: .3s ease all !important;
   }
 
   .formulario-material .mat-mdc-outlined-button.ciiu__retirar:hover,
   .formulario-material .mat-mdc-outlined-button.ciiu__retirar:focus-visible {
-    background-color: var(--agora-primary-light);
-    color: var(--agora-primary-dark);
+    --mat-button-outlined-label-text-color: var(--agora-on-primary);
+    --mat-button-outlined-outline-color: var(--agora-primary);
+    background: var(--agora-primary);
+    color: var(--agora-on-primary);
   }
 
   .formulario-material .mat-mdc-outlined-button.ciiu__retirar:active {
     --mat-button-outlined-label-text-color: var(--agora-on-primary);
-    background-color: var(--agora-primary-dark);
+    --mat-button-outlined-outline-color: var(--agora-primary-dark);
+    background: var(--agora-primary-dark);
     color: var(--agora-on-primary);
+  }
+
+  .formulario-material .ciiu__card.ciiu__card--principal .mat-mdc-outlined-button.ciiu__retirar:hover,
+  .formulario-material .ciiu__card.ciiu__card--principal .mat-mdc-outlined-button.ciiu__retirar:focus-visible {
+    --mat-button-outlined-outline-color: var(--agora-primary-dark);
+    background: var(--agora-primary-dark);
+    color: var(--agora-on-primary);
+  }
+
+  /* Tarjeta CIIU principal: fondo vino con texto claro. */
+  .formulario-material .ciiu__card.ciiu__card--principal {
+    border-color: var(--agora-primary);
+    background: var(--agora-primary);
+    color: var(--agora-surface);
+  }
+
+  .formulario-material .ciiu__card.ciiu__card--principal .ciiu__detalle h4 {
+    color: var(--agora-surface);
+  }
+
+  .formulario-material .ciiu__card.ciiu__card--principal .ciiu__detalle p {
+    color: var(--agora-surface-soft);
+  }
+
+  .formulario-material .ciiu__card.ciiu__card--principal .ciiu__badge--principal {
+    border-color: color-mix(in srgb, var(--agora-surface) 45%, transparent);
+    background: color-mix(in srgb, var(--agora-surface) 18%, transparent);
+    color: var(--agora-surface);
+  }
+
+  .formulario-material .ciiu__card.ciiu__card--principal .ciiu__principal {
+    border-color: var(--agora-surface);
+    background: var(--agora-surface);
+  }
+
+  .formulario-material .ciiu__card.ciiu__card--principal .ciiu__principal--activo {
+    border-color: var(--agora-surface);
+    background: var(--agora-surface);
+    box-shadow: inset 0 0 0 1px var(--agora-surface);
+  }
+
+  .formulario-material .ciiu__card.ciiu__card--principal .ciiu__principal .mat-mdc-radio-button.mat-mdc-radio-checked .mdc-label {
+    color: var(--agora-primary);
   }
 
   /* ── Capas emergentes (select, calendario) ─────────────────────────────── */

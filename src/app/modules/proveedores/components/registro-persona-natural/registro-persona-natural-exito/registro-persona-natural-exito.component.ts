@@ -9,7 +9,7 @@ import {
   ViewChild,
   inject,
 } from "@angular/core";
-import { ResumenRadicacionPersonaNatural } from "./registro-persona-natural-exito.model";
+import { ResumenRadicacionProveedor } from "./registro-persona-natural-exito.model";
 
 /** Mensaje que se muestra mientras el navegador confirma el copiado. */
 type EstadoCopia = "radicado" | "hash" | "error" | null;
@@ -54,7 +54,10 @@ const ESTILOS_IMPRESION = `
 })
 export class RegistroPersonaNaturalExitoComponent implements AfterViewInit {
   @Input({ required: true })
-  resumen!: ResumenRadicacionPersonaNatural;
+  resumen!: ResumenRadicacionProveedor;
+
+  /** Etiqueta del documento; jurídica usa "NIT". */
+  @Input() etiquetaDocumento = "Documento de Identificación";
 
   @Output()
   volverInicio = new EventEmitter<void>();

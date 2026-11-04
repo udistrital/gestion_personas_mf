@@ -1,125 +1,231 @@
-<form [formGroup]="formulario" (input)="emitirCambio()" (change)="emitirCambio()">
-  <plantilla-tarjeta-contenedora
-    [icon]="'account_balance'"
-    [title]="'1. Información Financiera Corporativa y Capital Social'"
-    [description]="'Conformación patrimonial y estados financieros certificados según NIIF para el Registro Único de Proponentes (RUP).'"
-  >
-    <div class="campo-grid campo-grid--three">
-      <label class="campo"><span>Tipo de Constitución de Capital <b>*</b></span><select formControlName="tipoConstitucion">
-        <option [ngValue]="null">Seleccione...</option>
-        @for (opcion of opcionesTipoConstitucion; track opcion.id) { <option [ngValue]="opcion.id">{{ opcion.nombre }}</option> }
-      </select></label>
-      <label class="campo"><span>Capital Autorizado (COP) <b>*</b></span><campo-dinero formControlName="capitalAutorizado"></campo-dinero></label>
-      <label class="campo"><span>Capital Suscrito y Pagado (COP) <b>*</b></span><campo-dinero formControlName="capitalSuscritoPagado"></campo-dinero></label>
-      <label class="campo"><span>Activos Totales (Corte 31 Dic 2024) <b>*</b></span><campo-dinero formControlName="activosTotales"></campo-dinero></label>
-      <label class="campo"><span>Pasivos Totales y Corrientes (COP) <b>*</b></span><campo-dinero formControlName="pasivosTotales"></campo-dinero></label>
-      <div class="vinculacion indicador-liquidez" [class.indicador-aprobado]="cumpleIndicadorLiquidez">
-        <h3><mat-icon>trending_up</mat-icon> Indicador de Liquidez Proyectado</h3>
-        <p><strong>{{ indicadorLiquidez }}</strong> Razón Corriente (Activo / Pasivo). Umbral mínimo exigido: {{ umbralMinimo }}.</p>
-      </div>
-    </div>
-  </plantilla-tarjeta-contenedora>
+<div
+  class="formulario-material paso-2"
+  [formGroup]="formulario"
+  (input)="emitirCambio()"
+  (change)="emitirCambio()"
+>
+  <banner-paso
+    icono="account_balance"
+    titulo="Paso 2: Información Financiera y Cuentas de Abono"
+    [etiquetas]="['Decreto 1082 de 2015', 'Estatuto Tributario', 'Superfinanciera']"
+    descripcion="Los pagos directos por órdenes contractuales expedidas por la Universidad Distrital Francisco José de Caldas se realizarán exclusivamente mediante transferencia electrónica ACH a cuentas institucionales activas a nombre de la sociedad contratista titular. Los estados financieros deben coincidir con la información depositada en RUES/Cámara de Comercio."
+  ></banner-paso>
 
+  <!-- ───────────────── 1. CUENTA BANCARIA DE GIRO ───────────────── -->
   <plantilla-tarjeta-contenedora
-    [icon]="'credit_card'"
-    [title]="'2. Cuentas Bancarias para Giro y Dispersión de Pagos'"
-    [description]="'La cuenta debe pertenecer exclusivamente a la sociedad titular inscrita.'"
+    icon="credit_card"
+    title="1. Información Financiera y Cuenta Bancaria de Giro"
+    description="La cuenta debe pertenecer exclusivamente a la sociedad titular inscrita. No se permiten terceros cesionarios sin poder notariado."
   >
-    <div class="vinculacion">
-      <h3>Cuenta Principal de Abonos</h3>
+    <div class="cuenta-bancaria">
+      <span class="chip chip--recto">Cuenta Principal de Abonos</span>
+
       <div class="campo-grid campo-grid--three">
-        <label class="campo"><span>Entidad Bancaria Autorizada <b>*</b></span><select formControlName="banco">
-          <option [ngValue]="null">Seleccione...</option>
-          @for (opcion of opcionesBanco; track opcion.id) { <option [ngValue]="opcion.id">{{ opcion.nombre }}</option> }
-        </select></label>
-        <label class="campo"><span>Tipo de Cuenta <b>*</b></span><select formControlName="tipoCuenta">
-          <option [ngValue]="null">Seleccione...</option>
-          @for (opcion of opcionesTipoCuenta; track opcion.id) { <option [ngValue]="opcion.id">{{ opcion.nombre }}</option> }
-        </select></label>
-        <label class="campo"><span>Departamento de Apertura <b>*</b></span><select formControlName="departamentoApertura">
-          <option [ngValue]="null">Seleccione...</option>
-          @for (opcion of departamentos; track opcion.id) { <option [ngValue]="opcion.id">{{ opcion.nombre }}</option> }
-        </select>
-          @if (cargandoDepartamentos) {
-            <small>Cargando departamentos...</small>
-          } @else if (errorDepartamentos) {
-            <small role="alert">{{ errorDepartamentos }}</small>
-            <button class="boton boton--secundario" type="button" (click)="reintentarDepartamentos.emit()">Reintentar</button>
-          } @else if (departamentos.length === 0) {
-            <small>No hay departamentos disponibles.</small>
+        <div class="campo">
+          <label class="campo__etiqueta" for="banco">
+            <span>Entidad Bancaria Autorizada <b aria-hidden="true">*</b></span>
+          </label>
+          <app-search-selection
+            id="banco"
+            formControlName="banco"
+            [items]="opcionesBanco"
+            labelKey="nombre"
+            valueKey="id"
+            icon="account_balance"
+            placeholder="Seleccione una entidad bancaria"
+            ariaLabel="Entidad bancaria autorizada"
+            noSelectionErrorMessage="Seleccione la entidad bancaria."
+          ></app-search-selection>
+        </div>
+
+        <div class="campo">
+          <label class="campo__etiqueta" for="tipoCuenta">
+            <span>Tipo de Cuenta <b aria-hidden="true">*</b></span>
+          </label>
+          <mat-form-field appearance="outline">
+            <mat-select
+              id="tipoCuenta"
+              formControlName="tipoCuenta"
+              placeholder="Seleccione..."
+              aria-label="Tipo de cuenta bancaria"
+            >
+              @for (opcion of opcionesTipoCuenta; track opcion.id) {
+                <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+              }
+            </mat-select>
+            @if (errorRequerido(formulario, "tipoCuenta")) {
+              <mat-error>Seleccione el tipo de cuenta.</mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <div class="campo">
+          <label class="campo__etiqueta" for="tipoConformacion">
+            <span>Tipo de Conformación <b aria-hidden="true">*</b></span>
+          </label>
+          <mat-form-field appearance="outline">
+            <mat-select
+              id="tipoConformacion"
+              formControlName="tipoConformacion"
+              placeholder="Seleccione..."
+              aria-label="Tipo de conformación de la cuenta"
+            >
+              @for (opcion of opcionesTipoConformacion; track opcion.value) {
+                <mat-option [value]="opcion.value">{{ opcion.label }}</mat-option>
+              }
+            </mat-select>
+            @if (errorRequerido(formulario, "tipoConformacion")) {
+              <mat-error>Seleccione el tipo de conformación.</mat-error>
+            }
+          </mat-form-field>
+          <span class="campo__ayuda">Modalidad de titularidad y suscripción de la cuenta.</span>
+        </div>
+
+        <div class="campo">
+          <label class="campo__etiqueta" for="numeroCuenta">
+            <span>Número de Cuenta Bancaria <b aria-hidden="true">*</b></span>
+          </label>
+          <mat-form-field appearance="outline">
+            <input
+              matInput
+              id="numeroCuenta"
+              type="text"
+              inputmode="numeric"
+              formControlName="numeroCuenta"
+              placeholder="11 dígitos"
+              autocomplete="off"
+            />
+            @if (errorRequerido(formulario, "numeroCuenta")) {
+              <mat-error>Este campo es obligatorio.</mat-error>
+            } @else if (errorCampo(formulario, "numeroCuenta", "pattern")) {
+              <mat-error>El número de cuenta debe tener entre 8 y 20 dígitos.</mat-error>
+            }
+          </mat-form-field>
+          <span class="campo__ayuda">Sin guiones ni espacios intermedios.</span>
+        </div>
+
+        <div class="campo">
+          <label class="campo__etiqueta" for="numeroCuentaConfirmacion">
+            <span>Confirmar Número de Cuenta <b aria-hidden="true">*</b></span>
+          </label>
+          <mat-form-field appearance="outline">
+            <input
+              matInput
+              id="numeroCuentaConfirmacion"
+              type="text"
+              inputmode="numeric"
+              formControlName="numeroCuentaConfirmacion"
+              placeholder="Repita el número de cuenta"
+              autocomplete="off"
+            />
+            @if (errorRequerido(formulario, "numeroCuentaConfirmacion")) {
+              <mat-error>Este campo es obligatorio.</mat-error>
+            } @else if (errorCampo(formulario, "numeroCuentaConfirmacion", "pattern")) {
+              <mat-error>El número de cuenta debe tener entre 8 y 20 dígitos.</mat-error>
+            }
+          </mat-form-field>
+          @if (coincideCuenta) {
+            <span class="campo__exito">
+              <mat-icon aria-hidden="true">check_circle</mat-icon>
+              Coincidencia exacta
+            </span>
           }
-        </label>
-        <label class="campo"><span>Ciudad / Plaza de Apertura <b>*</b></span><select formControlName="ciudadApertura">
-          <option [ngValue]="null">Seleccione...</option>
-          @for (opcion of ciudades; track opcion.id) { <option [ngValue]="opcion.id">{{ opcion.nombre }}</option> }
-        </select>
-          @if (cargandoCiudades) {
-            <small>Cargando ciudades...</small>
-          } @else if (errorCiudades) {
-            <small role="alert">{{ errorCiudades }}</small>
-            <button class="boton boton--secundario" type="button" (click)="reintentarCiudades.emit()">Reintentar</button>
-          } @else if (formulario.get('departamentoApertura')?.value && ciudades.length === 0) {
-            <small>No hay ciudades disponibles para este departamento.</small>
-          }
-        </label>
-        <label class="campo"><span>Número de Cuenta Bancaria <b>*</b></span><input formControlName="numeroCuenta" type="text"></label>
-        <label class="campo"><span>Confirmar Número de Cuenta <b>*</b></span><input formControlName="numeroCuentaConfirmacion" type="text"></label>
-        <label class="campo"><span>Nombre del Titular Registrado en Banco</span><input formControlName="titularCuenta" type="text" readonly></label>
+        </div>
+
+        <div class="campo">
+          <label class="campo__etiqueta" for="capitalAutorizado">
+            <span>Monto Capital Autorizado <b aria-hidden="true">*</b></span>
+          </label>
+          <mat-form-field appearance="outline">
+            <span matPrefix class="prefijo-capital">
+              <mat-icon aria-hidden="true">monetization_on</mat-icon>
+              <span>$ COP</span>
+            </span>
+            <input
+              matInput
+              id="capitalAutorizado"
+              type="text"
+              inputmode="numeric"
+              formControlName="capitalAutorizado"
+              placeholder="Ingrese el valor"
+              autocomplete="off"
+            />
+            @if (errorRequerido(formulario, "capitalAutorizado")) {
+              <mat-error>Este campo es obligatorio.</mat-error>
+            } @else if (errorCampo(formulario, "capitalAutorizado", "pattern")) {
+              <mat-error>Ingrese solo números, sin puntos ni comas.</mat-error>
+            }
+          </mat-form-field>
+          <span class="campo__ayuda">
+            Capital suscrito y pagado / autorizado según Certificado RUES.
+          </span>
+        </div>
       </div>
     </div>
   </plantilla-tarjeta-contenedora>
 
+  <!-- ───────────────── 2. TESORERÍA ───────────────── -->
   <plantilla-tarjeta-contenedora
-    [icon]="'forward_to_inbox'"
-    [title]="'3. Notificación y Contacto Directo de Tesorería del Proveedor'"
-    [description]="'Canal para notificaciones de órdenes de giro, retenciones y comprobantes de pago.'"
+    icon="forward_to_inbox"
+    title="2. Notificación y Contacto Directo de Tesorería del Proveedor"
+    description="A este canal digital se enviarán las notificaciones de órdenes de giro, retenciones en la fuente ICA/Renta y comprobantes de pago de la UD."
   >
     <div class="campo-grid campo-grid--two">
-      <label class="campo"><span>Correo Exclusivo para Pagos y Notificaciones de Giro <b>*</b></span><input formControlName="correoPagos" type="email"></label>
-      <label class="campo"><span>Confirmar Correo Exclusivo <b>*</b></span><input formControlName="correoPagosConfirmacion" type="email"></label>
-      <label class="campo"><span>Responsable de Cartera / Tesorería <b>*</b></span><input formControlName="responsableTesoreria" type="text"></label>
-      <label class="campo"><span>Teléfono / Línea Directa con Extensión <b>*</b></span><input formControlName="telefonoTesoreria" type="tel"></label>
-    </div>
-    <aviso-legal-formulario [title]="'Aviso Importante de Pagaduría Central'">
-      <p>Los certificados tributarios de retención en la fuente (Formulario 220 y Certificados de Retención de ICA distrital) correspondientes a los pagos expedidos por la Universidad Distrital Francisco José de Caldas serán emitidos con corte semestral y remitidos al buzón anterior o descargables en el Portal ÁGORA.</p>
-    </aviso-legal-formulario>
-  </plantilla-tarjeta-contenedora>
-
-  <plantilla-tarjeta-contenedora
-    [icon]="'receipt_long'"
-    [title]="'4. Facturación Electrónica y Certificación Bancaria'"
-    [description]="'Validación DIAN y certificación bancaria con expedición no mayor a 30 días.'"
-  >
-    <section class="campo-grid campo-grid--two">
-      <div class="vinculacion">
-        <h3><mat-icon>verified</mat-icon>Parámetros de Facturación DIAN</h3>
-        <div class="campo-grid campo-grid--two">
-          <label class="campo"><span>Obligado a Facturar Electrónicamente <b>*</b></span><select formControlName="obligadoFacturar">
-          <option [ngValue]="null">Seleccione...</option>
-          @for (opcion of opcionesSiNo; track opcion.value) {
-            <option [ngValue]="opcion.value">{{ opcion.label }}</option>
+      <div class="campo">
+        <label class="campo__etiqueta" for="correoPagos">
+          <span>Correo Exclusivo para Pagos y Notificaciones de Giro <b aria-hidden="true">*</b></span>
+        </label>
+        <mat-form-field appearance="outline">
+          <mat-icon matPrefix aria-hidden="true">mail</mat-icon>
+          <input
+            matInput
+            id="correoPagos"
+            type="email"
+            formControlName="correoPagos"
+            placeholder="pagos@empresa.com"
+            autocomplete="email"
+          />
+          @if (errorRequerido(formulario, "correoPagos")) {
+            <mat-error>Este campo es obligatorio.</mat-error>
+          } @else if (errorCampo(formulario, "correoPagos", "pattern")) {
+            <mat-error>Ingrese un correo válido.</mat-error>
           }
-        </select></label>
-          <label class="campo"><span>Prefijo y Rango de Facturación</span><input formControlName="prefijoFacturacion" type="text"></label>
-          <label class="campo"><span>Resolución de Autorización DIAN</span><input formControlName="resolucionDian" type="text"></label>
-          <label class="campo"><span>Operaciones en Moneda Extranjera</span><select formControlName="monedaExtranjera">
-            <option [ngValue]="null">Seleccione...</option>
-            @for (opcion of opcionesSiNo; track opcion.value) {
-              <option [ngValue]="opcion.value">{{ opcion.label }}</option>
-            }
-          </select></label>
-        </div>
+        </mat-form-field>
+        <span class="campo__ayuda">
+          Buzón monitoreado por el departamento financiero o de tesorería.
+        </span>
       </div>
-      <article class="documento-card">
-        <div class="documento-icono"><mat-icon>picture_as_pdf</mat-icon></div>
-        <h3>Certificación bancaria</h3>
-        <p>Documento expedido por la entidad bancaria con una antigüedad no mayor a 30 días.</p>
-        <label class="campo"><span>Archivo cargado</span><input formControlName="certificacionBancaria" type="text" readonly></label>
-        <div class="documento-acciones">
-          <button class="boton boton--secundario" type="button"><mat-icon>visibility</mat-icon> Ver documento</button>
-          <button class="boton boton--ligero" type="button"><mat-icon>cached</mat-icon> Reemplazar</button>
-        </div>
-      </article>
-    </section>
+
+      <div class="campo">
+        <label class="campo__etiqueta" for="correoPagosConfirmacion">
+          <span>Confirmar Correo Exclusivo <b aria-hidden="true">*</b></span>
+        </label>
+        <mat-form-field appearance="outline">
+          <mat-icon matPrefix aria-hidden="true">mark_email_read</mat-icon>
+          <input
+            matInput
+            id="correoPagosConfirmacion"
+            type="email"
+            formControlName="correoPagosConfirmacion"
+            placeholder="Repita el correo"
+            autocomplete="email"
+          />
+          @if (errorRequerido(formulario, "correoPagosConfirmacion")) {
+            <mat-error>Este campo es obligatorio.</mat-error>
+          } @else if (errorCampo(formulario, "correoPagosConfirmacion", "pattern")) {
+            <mat-error>Ingrese un correo válido.</mat-error>
+          }
+        </mat-form-field>
+        @if (correosPagoConfirmados) {
+          <span class="campo__exito">
+            <mat-icon aria-hidden="true">check_circle</mat-icon>
+            Validado
+          </span>
+        }
+        <span class="campo__ayuda">
+          Verifique minuciosamente para evitar demoras en la notificación de egreso.
+        </span>
+      </div>
+    </div>
   </plantilla-tarjeta-contenedora>
-</form>
+</div>

@@ -136,6 +136,16 @@ export class RegistroPersonaNaturalPaso4Component {
       === id;
   }
 
+  /** Permite seleccionar la actividad principal haciendo clic en toda la píldora. */
+  seleccionarPrincipal(id: number): void {
+    if (this.esPrincipal(id)) {
+      return;
+    }
+    this.actividadDeclaracionForm
+      .get('actividadCiiuPrincipalId')
+      ?.setValue(id);
+  }
+
   agregarActividadCiiu(): void {
     const id = this.actividadCiiuDisponibleId.value;
     if (id === null || this.idsSeleccionados.includes(id)) {

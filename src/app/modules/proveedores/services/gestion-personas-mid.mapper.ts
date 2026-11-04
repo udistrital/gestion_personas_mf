@@ -170,28 +170,6 @@ function fechaOpcional(
   return fecha;
 }
 
-function fechaRequerida(
-  datos: Record<string, unknown>,
-  campo: string,
-): string {
-  const fecha = fechaOpcional(datos, campo);
-  if (!fecha) {
-    throw new Error(`El campo ${campo} no contiene una fecha válida.`);
-  }
-  return fecha;
-}
-
-function booleanoRequerido(
-  datos: Record<string, unknown>,
-  campo: string,
-): boolean {
-  const valor = datos[campo];
-  if (typeof valor !== "boolean") {
-    throw new Error(`El campo ${campo} debe ser una respuesta Sí/No.`);
-  }
-  return valor;
-}
-
 function booleanoOpcional(
   datos: Record<string, unknown>,
   campo: string,
@@ -644,10 +622,14 @@ export function mapearActualizacionPersonaJuridicaMid(
     }
   }
 
-  const descripcionPortafolio = textoOpcional(
+  const descripcionPortafolioHtml = textoOpcional(
     formulario,
     "descripcionServicios",
   );
+  // El editor enriquecido guarda HTML; el MID espera texto legible.
+  const descripcionPortafolio = descripcionPortafolioHtml
+    ? textoPlanoDesdeHtml(descripcionPortafolioHtml)
+    : undefined;
   if (descripcionPortafolio !== undefined) {
     camposActualizados += 1;
   }
@@ -964,22 +946,55 @@ export function mapearPersonaJuridicaMid(
     NombreCompleto: textoRequerido(formulario, "razonSocial"),
   };
 
-  const proveedorJuridico: ProveedorJuridicoMid = {
-    MatriculaMercantil: enteroMatriculaMercantil(
-      formulario["matriculaMercantil"],
-    ),
-    FechaConstitucion: fechaRequerida(formulario, "fechaConstitucion"),
-    FechaRenovacion: fechaRequerida(formulario, "fechaRenovacion"),
-    ReportaBeneficiosFinales: booleanoRequerido(
-      formulario,
-      "beneficiariosFinales",
-    ),
-    CotizaBolsa: booleanoRequerido(formulario, "cotizaBolsa"),
-    RequiereRevisorFiscal: booleanoRequerido(formulario, "revisorFiscal"),
-  };
+  // El refinamiento retiró varios datos societarios del formulario. El
+  // contrato del MID los admite como opcionales, así que solo se envían si el
+  // formulario todavía los aporta (por ejemplo, en un borrador anterior).
+  const proveedorJuridico: ProveedorJuridicoMid = {};
+  const camposSocietariosOmitidos: string[] = [];
+
+  const matricula = textoOpcional(formulario, "matriculaMercantil");
+  if (matricula !== undefined) {
+    proveedorJuridico.MatriculaMercantil = enteroMatriculaMercantil(matricula);
+  } else {
+    camposSocietariosOmitidos.push("MatriculaMercantil");
+  }
+
+  const fechaConstitucion = fechaOpcional(formulario, "fechaConstitucion");
+  if (fechaConstitucion !== undefined) {
+    proveedorJuridico.FechaConstitucion = fechaConstitucion;
+  } else {
+    camposSocietariosOmitidos.push("FechaConstitucion");
+  }
+
+  const fechaRenovacion = fechaOpcional(formulario, "fechaRenovacion");
+  if (fechaRenovacion !== undefined) {
+    proveedorJuridico.FechaRenovacion = fechaRenovacion;
+  } else {
+    camposSocietariosOmitidos.push("FechaRenovacion");
+  }
+
+  for (const [campoFormulario, campoMid] of [
+    ["beneficiariosFinales", "ReportaBeneficiosFinales"],
+    ["cotizaBolsa", "CotizaBolsa"],
+    ["revisorFiscal", "RequiereRevisorFiscal"],
+  ] as const) {
+    const valor = booleanoOpcional(formulario, campoFormulario);
+    if (valor !== undefined) {
+      proveedorJuridico[campoMid] = valor;
+    } else {
+      camposSocietariosOmitidos.push(campoMid);
+    }
+  }
+
   const nombreComercial = textoOpcional(formulario, "nombreComercial");
   if (nombreComercial) {
     proveedorJuridico.NombreComercial = nombreComercial;
+  }
+
+  if (camposSocietariosOmitidos.length > 0) {
+    omisiones.push(
+      `ProveedorJuridico parcial: se omitieron ${camposSocietariosOmitidos.join(", ")} porque el formulario ya no los captura.`,
+    );
   }
 
   const cuentaBancaria: CuentaBancariaMid | undefined = (() => {
@@ -1020,10 +1035,14 @@ export function mapearPersonaJuridicaMid(
     }
     return cuenta;
   })();
-  const descripcionPortafolio = textoOpcional(
+  const descripcionPortafolioHtml = textoOpcional(
     formulario,
     "descripcionServicios",
   );
+  // El editor enriquecido guarda HTML; el MID espera texto legible.
+  const descripcionPortafolio = descripcionPortafolioHtml
+    ? textoPlanoDesdeHtml(descripcionPortafolioHtml)
+    : undefined;
   const payload: NuevoProveedorJuridicoMidPayload = {
     Tercero: tercero,
     ProveedorJuridico: proveedorJuridico,

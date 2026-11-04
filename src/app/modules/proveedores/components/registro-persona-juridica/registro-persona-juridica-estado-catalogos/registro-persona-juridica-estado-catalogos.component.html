@@ -1,10 +1,22 @@
 @if (cargando) {
-  <p aria-live="polite">Cargando catálogos...</p>
+  <div class="estado-catalogos estado-catalogos--cargando" aria-live="polite">
+    <mat-icon aria-hidden="true">hourglass_top</mat-icon>
+    <span>Cargando catálogos…</span>
+  </div>
 } @else if (error) {
-  <div class="estado-error">
-    <p role="alert">{{ error }}</p>
-    <button class="boton boton--secundario" type="button" (click)="reintentar.emit()">Reintentar carga de catálogos</button>
+  <div class="estado-catalogos estado-catalogos--error" role="alert">
+    <mat-icon aria-hidden="true">error</mat-icon>
+    <span>{{ error }}</span>
+    <button mat-stroked-button type="button" (click)="reintentar.emit()">
+      Reintentar carga de catálogos
+    </button>
   </div>
 } @else if (sinRegistros) {
-  <p role="status">La carga terminó correctamente, pero uno o más catálogos documentados no tienen opciones disponibles.</p>
+  <div class="estado-catalogos estado-catalogos--aviso" role="status">
+    <mat-icon aria-hidden="true">info</mat-icon>
+    <span>
+      La carga terminó correctamente, pero uno o más catálogos documentados no
+      tienen opciones disponibles.
+    </span>
+  </div>
 }

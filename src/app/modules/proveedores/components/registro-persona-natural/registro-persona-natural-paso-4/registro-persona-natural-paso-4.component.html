@@ -110,6 +110,7 @@
                   <div
                     class="ciiu__principal pregunta-card__opciones"
                     [class.ciiu__principal--activo]="esPrincipal(actividad.id)"
+                    (click)="seleccionarPrincipal(actividad.id)"
                   >
                     <mat-radio-button
                       [value]="actividad.id"
@@ -143,7 +144,7 @@
                   {{ esPrincipal(actividad.id) ? "Principal" : "Secundaria" }}
                 </span>
 
-                <div>
+                <div class="ciiu__detalle">
                   <h4>CIIU {{ actividad.codigo }}</h4>
                   <p>{{ actividad.descripcion || actividad.nombre }}</p>
                 </div>
@@ -214,9 +215,9 @@
 
   <!-- 03. TÉRMINOS Y CONSENTIMIENTO -->
   <plantilla-tarjeta-contenedora
-    icon="gavel"
-    title="Términos de Registro y Consentimiento"
-    description="Autorización expresa de tratamiento de datos personales conforme al Régimen Constitucional y al Estatuto de Contratación Pública."
+    icon="policy"
+    title="Consentimiento de Tratamiento de Datos Personales"
+    description="Autorización expresa para el tratamiento de datos personales conforme a la Ley 1581 de 2012."
   >
     <div class="consentimiento">
       <div class="consentimiento__icono" aria-hidden="true">
@@ -224,16 +225,13 @@
       </div>
 
       <div class="consentimiento__textos">
-        <h3>Consentimiento Expreso de Registro y Verificación</h3>
+        <h3>Consentimiento de Tratamiento de Datos Personales</h3>
         <p>
-          Acepta y reconoce bajo consentimiento propio, expreso, previo e
-          informado, el registro, verificación y tratamiento de su información
-          personal y jurídica en el
-          <strong>
-            Sistema de Registro Único de Personas y Banco de Proveedores de la
-            Universidad Distrital Francisco José de Caldas
-          </strong>, para fines estrictamente institucionales y contractuales de
-          conformidad con la normativa vigente.
+          Autorizo a la Universidad Distrital Francisco José de Caldas a
+          custodiar, procesar y validar ante bases de datos del Estado la
+          información personal, societaria, tributaria y contractual
+          suministrada para fines exclusivos de registro y contratación estatal
+          institucional, conforme a la Ley 1581 de 2012.
         </p>
 
         <button class="consentimiento__politica" type="button">

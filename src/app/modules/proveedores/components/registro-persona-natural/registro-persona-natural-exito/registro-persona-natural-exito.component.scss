@@ -351,6 +351,11 @@
   overflow-wrap: anywhere;
 }
 
+.constancia__documento-representante {
+  color: var(--agora-text-muted);
+  font-weight: 500;
+}
+
 .constancia__dato--con-punto {
   display: flex;
   align-items: center;

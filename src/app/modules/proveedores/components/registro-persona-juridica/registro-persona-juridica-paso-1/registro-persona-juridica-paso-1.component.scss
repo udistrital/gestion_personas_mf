@@ -1,86 +1,153 @@
-@use 'src/app/shared/styles/tokens' as t;
+@use "src/app/shared/styles/tokens" as t;
+@use "src/app/shared/styles/campos-registro" as campos-registro;
+@use "src/app/shared/styles/paso-asistente" as paso-asistente;
 
-@use 'src/app/shared/styles/registro-formulario' as registro-formulario;
-
-@include registro-formulario.styles;
+@include campos-registro.estilos;
+@include paso-asistente.styles;
 
 :host {
-	display: block;
+  display: block;
 }
 
-.campo-grid--direccion {
-	--columnas: 1;
+.paso-1 {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
-@media (min-width: t.$bp-sm) {
-	.campo-grid--direccion {
-		--columnas: 3;
-	}
+app-search-selection,
+direccion-dian {
+  display: block;
+  width: 100%;
 }
 
-@media (min-width: t.$bp-xl) {
-	.campo-grid--direccion {
-		grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.2fr) auto minmax(0, 1fr) auto minmax(0, 1fr) minmax(0, 0.8fr) minmax(0, 1fr);
-		--columnas: 8;
-	}
+/* ── Bloque de vinculación del representante ───────────────────────────── */
+.vinculacion {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 1px dotted var(--agora-primary);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-surface);
 }
 
-.separador-direccion {
-	align-self: end;
-	padding-bottom: 0.7rem;
-	color: var(--agora-text-muted);
-	font-size: 1rem;
-	font-weight: 700;
+.vinculacion__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
 }
 
-.responsabilidades-contenido {
-	display: grid;
-	width: 100%;
-	min-width: 0;
-	gap: 1rem;
+.vinculacion__cabecera .seccion-titulo {
+  margin: 0;
 }
 
-.responsabilidades {
-	display: block;
+.vinculacion__nota {
+  margin: 0;
+  color: var(--agora-text-muted);
+  font-size: t.$fuente-sm;
+  line-height: 1.4;
 }
 
-.responsabilidades-selector {
-	margin: 0;
+.vinculacion .campo-grid {
+  margin-bottom: 0;
+  margin-top: 0.25rem;
 }
 
-.responsabilidades .responsabilidades-selector > .campo {
-	display: flex;
-	min-width: 0;
-	flex-direction: column;
-	align-items: stretch;
-	gap: 0.35rem;
-	font-size: t.$fuente-xs;
-	line-height: 1.3;
+/* El botón Relacionar se alinea con los controles de la fila. */
+.campo--alineado {
+  justify-content: flex-end;
 }
 
-.responsabilidades-seleccionadas {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: flex-start;
-	gap: 0.75rem;
+/* La razón social ocupa toda la fila, como en el mockup. */
+.campo--full {
+  grid-column: 1 / -1;
 }
 
-.responsabilidad-seleccionada {
-	display: flex;
-	align-items: center;
-	gap: 1rem;
-	width: fit-content;
-	max-width: 100%;
-	margin: 0;
-	padding: 0.625rem 0.75rem;
+.campo--alineado .mat-mdc-unelevated-button {
+  width: 100%;
+  min-height: 2.5rem;
+  margin-top: 0.35rem;
 }
 
-.responsabilidad-seleccionada span {
-	min-width: 0;
-	overflow-wrap: anywhere;
+/* Etiquetas con icono de ayuda, como en el mockup. */
+.campo > .campo__etiqueta--con-icono {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
 }
 
-.responsabilidad-seleccionada > .boton {
-	align-self: center;
-	flex: 0 0 auto;
+.campo__etiqueta-icono {
+  flex: 0 0 auto;
+  width: 0.875rem;
+  height: 0.875rem;
+  color: var(--agora-texto-neutro);
+  font-size: 0.875rem;
+  /* La etiqueta es uppercase; evita romper la ligadura del icono. */
+  text-transform: none;
+}
+
+/* Icono de validación dentro del campo. */
+.campo__validado {
+  color: var(--agora-success);
+}
+
+/* ── Indicador de coincidencia ─────────────────────────────────────────── */
+.campo__exito {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--agora-success);
+  font-size: t.$fuente-xs;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.campo__exito mat-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  font-size: 0.875rem;
+}
+
+/* ── Radios compactos del régimen tributario ────────────────────────────── */
+.opciones-radio {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 1.25rem;
+  min-height: 2.5rem;
+  padding: 0.25rem 0.75rem;
+  border: 1px solid var(--agora-borde-control);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-superficie-neutra);
+}
+
+.opciones-radio .mat-mdc-radio-button {
+  --mdc-radio-state-layer-size: 2rem;
+}
+
+/* ── Reintento de una lista de catálogo ─────────────────────────────────── */
+.campo__reintentar {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--agora-primary);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+@media (max-width: t.$bp-sm) {
+  .vinculacion {
+    padding: 0.75rem;
+  }
+
+  .campo--alineado .mat-mdc-unelevated-button {
+    margin-top: 0;
+  }
 }

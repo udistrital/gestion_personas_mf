@@ -87,9 +87,22 @@
             <dd>{{ resumen.nombreCompleto }}</dd>
           </div>
           <div class="constancia__dato">
-            <dt>Documento de Identificación</dt>
+            <dt>{{ etiquetaDocumento }}</dt>
             <dd>{{ documentoTexto }}</dd>
           </div>
+          @if (resumen.representanteLegal) {
+            <div class="constancia__dato constancia__dato--ancho">
+              <dt>Representante Legal</dt>
+              <dd>
+                {{ resumen.representanteLegal }}
+                @if (resumen.documentoRepresentante) {
+                  <span class="constancia__documento-representante">
+                    — {{ resumen.documentoRepresentante }}
+                  </span>
+                }
+              </dd>
+            </div>
+          }
           <div class="constancia__dato">
             <dt>Tipo de Solicitante</dt>
             <dd class="constancia__dato--con-punto">
