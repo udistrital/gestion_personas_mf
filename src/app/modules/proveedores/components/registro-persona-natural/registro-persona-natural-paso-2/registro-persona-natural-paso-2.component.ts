@@ -20,32 +20,59 @@ export class RegistroPersonaNaturalPaso2Component {
   @Output() reintentarCatalogos = new EventEmitter<void>();
 
   readonly opcionesSiNo = [
-  { value: "no", label: "No, cotizante activo" },
-  { value: "si", label: "Sí, pensionado" },
-];
+    { value: "no", label: "No, cotizante activo" },
+    { value: "si", label: "Sí, pensionado" },
+  ];
+
+  /** Referencia estable para no recrear el arreglo en cada detección de cambios. */
+  private readonly sinOpciones: OpcionNatural[] = [];
 
   get opcionesEps(): OpcionNatural[] {
-    return this.catalogos?.eps ?? [];
+    return this.catalogos?.eps ?? this.sinOpciones;
   }
 
   get opcionesAfp(): OpcionNatural[] {
-    return this.catalogos?.afp ?? [];
+    return this.catalogos?.afp ?? this.sinOpciones;
   }
 
   get opcionesCcf(): OpcionNatural[] {
-    return this.catalogos?.ccf ?? [];
+    return this.catalogos?.ccf ?? this.sinOpciones;
   }
 
   get opcionesEntidadesBancarias(): OpcionNatural[] {
-    return this.catalogos?.entidadesBancarias ?? [];
+    return this.catalogos?.entidadesBancarias ?? this.sinOpciones;
   }
 
   get opcionesTipoCuenta(): OpcionNatural[] {
-    return this.catalogos?.tiposCuenta ?? [];
+    return this.catalogos?.tiposCuenta ?? this.sinOpciones;
   }
 
-  esInvalido(controlName: string): boolean {
+  /** Mensaje de error de un control, o null si no aplica. */
+  mensajeError(controlName: string, tipo: "required" | "email" = "required"): string | null {
     const control = this.afiliacionesFinanzasForm.get(controlName);
-    return !!control && control.invalid && control.touched;
+    if (!control || !control.touched || !control.hasError(tipo)) {
+      return null;
+    }
+    if (tipo === "email") {
+      return "Ingrese un correo electrónico válido.";
+    }
+    switch (controlName) {
+      case "eps":
+        return "Seleccione una EPS.";
+      case "afp":
+        return "Seleccione una AFP.";
+      case "entidadBancaria":
+        return "Seleccione una entidad bancaria.";
+      case "tipoCuenta":
+        return "Seleccione el tipo de cuenta.";
+      case "numeroCuentaBancaria":
+        return "El número de cuenta es obligatorio.";
+      case "capitalAutorizadoPatrimonio":
+        return "Este valor es obligatorio.";
+      case "pensionadoAsignacionRetiro":
+        return "Indique si es pensionado.";
+      default:
+        return "Este campo es obligatorio.";
+    }
   }
 }

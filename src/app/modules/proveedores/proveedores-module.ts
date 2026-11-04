@@ -13,6 +13,7 @@ import { RegistroPersonaNaturalPaso1Component } from "./components/registro-pers
 import { RegistroPersonaNaturalPaso2Component } from "./components/registro-persona-natural/registro-persona-natural-paso-2/registro-persona-natural-paso-2.component";
 import { RegistroPersonaNaturalPaso3Component } from "./components/registro-persona-natural/registro-persona-natural-paso-3/registro-persona-natural-paso-3.component";
 import { RegistroPersonaNaturalPaso4Component } from "./components/registro-persona-natural/registro-persona-natural-paso-4/registro-persona-natural-paso-4.component";
+import { RegistroPersonaNaturalExitoComponent } from "./components/registro-persona-natural/registro-persona-natural-exito/registro-persona-natural-exito.component";
 import { ConsentimientoDialogComponent } from "./components/registro-inicio/consentimiento-dialog/consentimiento-dialog.component";
 import { OpcionesRegistroComponent } from "./components/registro-inicio/opciones-registro/opciones-registro.component";
 import { BotonTratamientoInformacionComponent } from "./components/registro-inicio/boton-tratamiento-informacion/boton-tratamiento-informacion.component";
@@ -29,6 +30,7 @@ import { BotonTratamientoInformacionComponent } from "./components/registro-inic
     RegistroPersonaNaturalComponent,
     RegistroPersonaNaturalPaso1Component,
     RegistroPersonaNaturalPaso2Component,
+    RegistroPersonaNaturalExitoComponent,
     ConsentimientoDialogComponent,
     OpcionesRegistroComponent,
     BotonTratamientoInformacionComponent,

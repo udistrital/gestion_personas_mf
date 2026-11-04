@@ -2,6 +2,7 @@
 @use '@angular/material' as mat;
 @use 'src/app/shared/styles/tokens' as tokens;
 @use 'src/app/shared/styles/sweetalert';
+@use 'src/app/shared/styles/material-formulario' as material-formulario;
 
 /* ---------------------------------------------------------------------------
    Bootstrap 5.3 — solo variables, mixins y utilities.
@@ -24,6 +25,9 @@
 
 /* Tokens de diseño compartidos (colores, tipografía, radios, sombras). */
 @include tokens.tokens;
+
+/* Skin de Angular Material para los formularios de registro. */
+@include material-formulario.estilos;
 
 :root {
   /* Ajustes mínimos para asegurar que las utilities de radio funcionen sin root/reboot */

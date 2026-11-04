@@ -1,0 +1,323 @@
+<div class="constancia-exito formulario-material">
+  <!-- ════════════════════ BANNER DE CONFIRMACIÓN ════════════════════ -->
+  <header class="exito-hero" aria-labelledby="exito-titulo">
+    <div class="exito-hero__sello" aria-hidden="true">
+      <mat-icon>task_alt</mat-icon>
+    </div>
+
+    <div class="exito-hero__textos">
+      <h2 id="exito-titulo" #tituloExito tabindex="-1">
+        ¡Registro Completado con Éxito!
+      </h2>
+      <p>
+        El registro del solicitante ha sido completado ante el Sistema de
+        Registro Único de Personas y Banco de Proveedores Ágora de la
+        Universidad Distrital Francisco José de Caldas.
+      </p>
+    </div>
+  </header>
+
+  @if (resumen.parcial) {
+    <section class="exito-aviso" role="alert">
+      <mat-icon aria-hidden="true">info</mat-icon>
+      <div>
+        <strong>Radicación con observaciones</strong>
+        <p>
+          El MID confirmó el registro, pero reportó avisos que deben revisarse:
+          {{ resumen.observaciones || "consulte el detalle del envío." }}
+        </p>
+      </div>
+    </section>
+  }
+
+  <div class="exito-grid">
+    <!-- ════════════════ CONSTANCIA OFICIAL ════════════════ -->
+    <article
+      class="constancia"
+      id="constancia-certificado"
+      #certificado
+      aria-labelledby="constancia-titulo"
+    >
+      <div class="constancia__marca-agua" aria-hidden="true">
+        <mat-icon>account_balance</mat-icon>
+      </div>
+
+      <header class="constancia__cabecera">
+        <span class="constancia__sello" aria-hidden="true">
+          <mat-icon>verified_user</mat-icon>
+        </span>
+        <p class="constancia__institucion">
+          Universidad Distrital Francisco José de Caldas
+        </p>
+        <h3 id="constancia-titulo">Constancia de Radicación Exitosa</h3>
+        <p class="constancia__sistema">
+          Sistema de Registro Único de Personas y Banco de Proveedores ÁGORA
+        </p>
+      </header>
+
+      <div class="constancia__radicado">
+        <span class="constancia__radicado-etiqueta">
+          Número de radicado oficial
+        </span>
+        <strong>{{ resumen.radicado }}</strong>
+        <button
+          class="constancia__copiar no-imprimir"
+          type="button"
+          (click)="copiarRadicado()"
+          [attr.aria-label]="'Copiar el número de radicado ' + resumen.radicado"
+        >
+          <mat-icon aria-hidden="true">content_copy</mat-icon>
+        </button>
+        @if (copiado === "radicado") {
+          <span class="constancia__acuse" role="status" aria-live="polite">
+            Copiado
+          </span>
+        }
+      </div>
+
+      <section class="constancia__datos" aria-labelledby="constancia-datos">
+        <div class="constancia__seccion-cabecera">
+          <mat-icon aria-hidden="true">badge</mat-icon>
+          <h4 id="constancia-datos">Datos del expediente y titular</h4>
+        </div>
+
+        <dl class="constancia__grid">
+          <div class="constancia__dato">
+            <dt>Nombre / Razón Social</dt>
+            <dd>{{ resumen.nombreCompleto }}</dd>
+          </div>
+          <div class="constancia__dato">
+            <dt>Documento de Identificación</dt>
+            <dd>{{ documentoTexto }}</dd>
+          </div>
+          <div class="constancia__dato">
+            <dt>Tipo de Solicitante</dt>
+            <dd class="constancia__dato--con-punto">
+              <span class="constancia__punto" aria-hidden="true"></span>
+              {{ resumen.tipoSolicitante }}
+            </dd>
+          </div>
+          <div class="constancia__dato">
+            <dt>Actividad Principal CIIU</dt>
+            <dd>{{ resumen.ciiuPrincipal }}</dd>
+          </div>
+
+          @if (resumen.ciiuSecundarias.length > 0) {
+            <div class="constancia__dato constancia__dato--ancho">
+              <dt>Actividades Económicas Secundarias</dt>
+              <dd class="constancia__ciiu-secundarias">
+                @for (actividad of resumen.ciiuSecundarias; track actividad) {
+                  <span class="chip-ciiu">{{ actividad }}</span>
+                }
+              </dd>
+            </div>
+          }
+        </dl>
+
+        <div class="constancia__correos">
+          <span class="constancia__correos-etiqueta">
+            Correos notificados para pagos y notificaciones oficiales
+          </span>
+          <div class="constancia__chips">
+            @if (resumen.correoPersonal) {
+              <span class="chip-correo">
+                <mat-icon aria-hidden="true">mail</mat-icon>
+                {{ resumen.correoPersonal }}
+              </span>
+            }
+            @if (resumen.correoTesoreria) {
+              <span class="chip-correo">
+                <mat-icon aria-hidden="true">mark_email_read</mat-icon>
+                {{ resumen.correoTesoreria }}
+              </span>
+            }
+          </div>
+        </div>
+      </section>
+
+      <footer class="constancia__firma">
+        <span class="constancia__firma-linea" aria-hidden="true"></span>
+        <p class="constancia__firma-titulo">
+          <mat-icon aria-hidden="true">verified_user</mat-icon>
+          Constancia de radicación generada por el sistema
+        </p>
+        <p class="constancia__firma-texto">
+          Documento informativo expedido el {{ fechaRadicacionTexto }}. La
+          validez oficial está sujeta a la verificación institucional.
+        </p>
+
+        <dl class="constancia__hash">
+          <div>
+            <dt>Fecha de radicación</dt>
+            <dd>{{ fechaRadicacionTexto }}</dd>
+          </div>
+          <div>
+            <dt>Hash SHA-256 (referencia local)</dt>
+            <dd>
+              <code [title]="resumen.hash || 'No disponible'">
+                {{ hashAbreviado }}
+              </code>
+              @if (resumen.hash) {
+                <button
+                  class="constancia__copiar constancia__copiar--hash no-imprimir"
+                  type="button"
+                  (click)="copiarHash()"
+                  aria-label="Copiar el hash SHA-256 completo"
+                >
+                  <mat-icon aria-hidden="true">content_copy</mat-icon>
+                </button>
+              }
+              @if (copiado === "hash") {
+                <span class="constancia__acuse" role="status" aria-live="polite">
+                  Copiado
+                </span>
+              }
+            </dd>
+          </div>
+          @if (resumen.proveedorId) {
+            <div>
+              <dt>Id del proveedor</dt>
+              <dd>{{ resumen.proveedorId }}</dd>
+            </div>
+          }
+        </dl>
+      </footer>
+    </article>
+
+    <!-- ════════════════ PANEL LATERAL ════════════════ -->
+    <aside class="exito-panel">
+      <section class="qr" aria-labelledby="qr-titulo">
+        <h4 id="qr-titulo">Verificación en línea</h4>
+        <div class="qr__marco" aria-hidden="true">
+          <mat-icon>qr_code_2</mat-icon>
+        </div>
+        <code class="qr__codigo">{{ resumen.radicado }}</code>
+        <button
+          mat-stroked-button
+          type="button"
+          class="qr__copiar"
+          (click)="copiarRadicado()"
+        >
+          <mat-icon aria-hidden="true">content_copy</mat-icon>
+          Copiar código
+        </button>
+        <p class="qr__nota">
+          El código QR escaneable se habilitará cuando el servicio de
+          verificación esté disponible.
+        </p>
+        @if (copiado === "radicado") {
+          <span class="qr__acuse" role="status" aria-live="polite">
+            Código copiado
+          </span>
+        }
+      </section>
+
+      <section class="acciones" aria-labelledby="acciones-titulo">
+        <h4 id="acciones-titulo">Acciones disponibles</h4>
+
+        <button
+          mat-stroked-button
+          type="button"
+          class="acciones__boton boton-primario"
+          (click)="imprimir()"
+        >
+          <mat-icon aria-hidden="true">picture_as_pdf</mat-icon>
+          Descargar Certificado en PDF
+        </button>
+
+        <button
+          mat-stroked-button
+          type="button"
+          class="acciones__boton"
+          (click)="imprimir()"
+        >
+          <mat-icon aria-hidden="true">print</mat-icon>
+          Imprimir constancia
+        </button>
+
+        <button
+          mat-stroked-button
+          type="button"
+          class="acciones__boton"
+          disabled
+          aria-describedby="constancia-correo-nota"
+        >
+          <mat-icon aria-hidden="true">outgoing_mail</mat-icon>
+          Enviar copia a mi correo
+        </button>
+        <p id="constancia-correo-nota" class="acciones__nota">
+          Disponible cuando se conecte el servicio de notificaciones.
+        </p>
+
+        <button
+          mat-stroked-button
+          type="button"
+          class="acciones__boton acciones__boton--volver"
+          (click)="volver()"
+        >
+          <mat-icon aria-hidden="true">arrow_back</mat-icon>
+          Volver al inicio
+        </button>
+
+        @if (copiado === "error") {
+          <span class="acciones__error" role="status" aria-live="polite">
+            No se pudo copiar automáticamente. Seleccione el código y cópielo
+            manualmente.
+          </span>
+        }
+      </section>
+
+      <section class="siguiente" aria-labelledby="siguiente-titulo">
+        <h4 id="siguiente-titulo">¿Qué sigue después de radicar?</h4>
+        <ol>
+          <li>
+            <mat-icon aria-hidden="true">fact_check</mat-icon>
+            <div>
+              <strong>Verificación institucional</strong>
+              <span>
+                La Universidad revisará la información y los documentos
+                radicados.
+              </span>
+            </div>
+          </li>
+          <li>
+            <mat-icon aria-hidden="true">mail</mat-icon>
+            <div>
+              <strong>Notificación</strong>
+              <span>
+                Las novedades se enviarán a los correos registrados en el
+                expediente.
+              </span>
+            </div>
+          </li>
+          <li>
+            <mat-icon aria-hidden="true">update</mat-icon>
+            <div>
+              <strong>Actualización</strong>
+              <span>
+                Mantenga sus datos actualizados para los próximos procesos
+                institucionales.
+              </span>
+            </div>
+          </li>
+        </ol>
+      </section>
+    </aside>
+  </div>
+
+  <footer class="exito-pie">
+    <div class="exito-pie__datos">
+      <span>Universidad Distrital Francisco José de Caldas</span>
+      <span aria-hidden="true">•</span>
+      <span>NIT: 899.999.230-7</span>
+      <span aria-hidden="true">•</span>
+      <span>Bogotá D.C. - Colombia</span>
+      <span aria-hidden="true">•</span>
+      <span>Sistema Integrado de Gestión Institucional ÁGORA</span>
+    </div>
+    <p>
+      Constancia informativa generada por el sistema. La validez oficial está
+      sujeta a la verificación institucional.
+    </p>
+  </footer>
+</div>

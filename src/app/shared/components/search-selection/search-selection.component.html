@@ -1,0 +1,41 @@
+<mat-form-field class="buscador" appearance="outline">
+  @if (label) {
+    <mat-label>{{ label }}</mat-label>
+  }
+
+  @if (icon) {
+    <mat-icon matPrefix color="primary">{{ icon }}</mat-icon>
+  }
+
+  <mat-select
+    #matSelect
+    [multiple]="multiple"
+    [formControl]="control"
+    [errorStateMatcher]="errorStateMatcher"
+    [placeholder]="placeholder"
+    [attr.aria-label]="ariaLabelSelect"
+    (openedChange)="alCerrarPanel($event)"
+  >
+    <mat-option>
+      <ngx-mat-select-search
+        [formControl]="formFilterControl"
+        placeholderLabel="Buscar..."
+        noEntriesFoundLabel="No hay opciones"
+      ></ngx-mat-select-search>
+    </mat-option>
+
+    @for (selectable of (filteredSelectables | async); track selectable) {
+      <mat-option [value]="selectable.value">
+        {{ selectable.label }}
+      </mat-option>
+    }
+  </mat-select>
+
+  @if (mostrarErrorSeleccion) {
+    <mat-error>{{ noSelectionErrorMessage }}</mat-error>
+  }
+
+  @if (mostrarErrorSinOpciones) {
+    <mat-error>{{ noOptionsErrorMessage }}</mat-error>
+  }
+</mat-form-field>

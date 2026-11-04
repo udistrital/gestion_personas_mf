@@ -35,87 +35,149 @@
   <!-- STEPPER                                                   -->
   <!-- ========================================================= -->
 
-  <div class="persona-natural-stepper">
-    <stepper-visual
-      [pasoActual]="currentStep"
-      [pasos]="pasosStepper"
-      (pasoActualChange)="irAlPaso($event)"
-      label="Progreso del registro de Persona Natural"
-    ></stepper-visual>
-  </div>
-
-
-  <section class="contenido-pasos" aria-label="Información del registro">
-
-    <!-- ========================================================= -->
-    <!-- PASO 1                                                    -->
-    <!-- ========================================================= -->
-
-    @if (currentStep === 1) {
-
-      <app-registro-persona-natural-paso-1
-        [identificacionForm]="identificacionForm"
-        [caracterizacionForm]="caracterizacionForm"
-        [experienciaForm]="experienciaForm"
-        [tributarioForm]="tributarioForm"
-        [residenciaForm]="residenciaForm"
-        [contactoForm]="contactoForm"
-        [catalogos]="catalogosPaso1"
-        [estadoCatalogos]="estadoPaso1"
-        [geografia]="geografia"
-        (reintentarCatalogos)="cargarCatalogosPaso1()"
-        (reintentarGeografia)="reintentarGeografia($event)"
-      ></app-registro-persona-natural-paso-1>
-
+  @if (registroCompletado && resumenRadicacion) {
+    @if (esConstanciaEjemplo) {
+      <div class="aviso-ejemplo" role="status">
+        <mat-icon aria-hidden="true">science</mat-icon>
+        <div class="aviso-ejemplo__texto">
+          <strong>Vista previa con datos de ejemplo</strong>
+          <span>
+            Esta constancia no corresponde a un registro real y no se envió
+            nada al MID.
+          </span>
+        </div>
+        <button
+          class="aviso-ejemplo__volver"
+          type="button"
+          (click)="volverDesdeConstancia()"
+        >
+          Volver al formulario
+        </button>
+      </div>
     }
 
+    <div class="persona-natural-stepper">
+      <stepper-visual
+        [pasoActual]="totalSteps"
+        [pasoAlcanzado]="0"
+        [pasos]="pasosStepperExito"
+        label="Registro de Persona Natural completado"
+      ></stepper-visual>
+    </div>
 
-    <!-- ========================================================= -->
-    <!-- PASO 2                                                    -->
-    <!-- ========================================================= -->
+    <section
+      class="contenido-pasos contenido-pasos--exito"
+      aria-label="Constancia de radicación"
+    >
+      <app-registro-persona-natural-exito
+        [resumen]="resumenRadicacion"
+        (volverInicio)="volverDesdeConstancia()"
+      ></app-registro-persona-natural-exito>
+    </section>
+  } @else {
+    <div class="persona-natural-stepper">
+      <stepper-visual
+        [pasoActual]="currentStep"
+        [pasos]="pasosStepper"
+        (pasoActualChange)="irAlPaso($event)"
+        label="Progreso del registro de Persona Natural"
+      ></stepper-visual>
+    </div>
 
-    @if (currentStep === 2) {
 
-      <app-registro-persona-natural-paso-2
-        [afiliacionesFinanzasForm]="afiliacionesFinanzasForm"
-        [catalogos]="catalogosPaso2"
-        [estadoCatalogos]="estadoPaso2"
-        (reintentarCatalogos)="cargarCatalogosPaso2()"
-      ></app-registro-persona-natural-paso-2>
+    <section class="contenido-pasos" aria-label="Información del registro">
 
-    }
+      <!-- ========================================================= -->
+      <!-- PASO 1                                                    -->
+      <!-- ========================================================= -->
+
+      @if (currentStep === 1) {
+        <app-registro-persona-natural-paso-1
+          [identificacionForm]="identificacionForm"
+          [caracterizacionForm]="caracterizacionForm"
+          [experienciaForm]="experienciaForm"
+          [tributarioForm]="tributarioForm"
+          [residenciaForm]="residenciaForm"
+          [contactoForm]="contactoForm"
+          [catalogos]="catalogosPaso1"
+          [estadoCatalogos]="estadoPaso1"
+          [geografia]="geografia"
+          (reintentarCatalogos)="cargarCatalogosPaso1()"
+          (reintentarGeografia)="reintentarGeografia($event)"
+        ></app-registro-persona-natural-paso-1>
+      }
 
 
-    <!-- ========================================================= -->
-    <!-- PASO 3                                                    -->
-    <!-- ========================================================= -->
+      <!-- ========================================================= -->
+      <!-- PASO 2                                                    -->
+      <!-- ========================================================= -->
 
-    @if (currentStep === 3) {
-      <app-registro-persona-natural-paso-3
-        [documentosForm]="documentosForm"
-        (estadoCambio)="estadoMensaje = $event.mensaje; estadoDetalle = $event.detalle"
-        (solicitarPersistencia)="persistirBorrador($event)"
-      ></app-registro-persona-natural-paso-3>
-    }
+      @if (currentStep === 2) {
+        <app-registro-persona-natural-paso-2
+          [afiliacionesFinanzasForm]="afiliacionesFinanzasForm"
+          [catalogos]="catalogosPaso2"
+          [estadoCatalogos]="estadoPaso2"
+          (reintentarCatalogos)="cargarCatalogosPaso2()"
+        ></app-registro-persona-natural-paso-2>
+      }
 
-    @if (currentStep === 4) {
-      <app-registro-persona-natural-paso-4
-        [actividadDeclaracionForm]="actividadDeclaracionForm"
-      ></app-registro-persona-natural-paso-4>
-    }
 
-  </section>
+      <!-- ========================================================= -->
+      <!-- PASO 3                                                    -->
+      <!-- ========================================================= -->
 
-<barra-acciones-formulario
-    [mostrarRegreso]="currentStep > 1"
-    [esUltimoPaso]="currentStep === totalSteps"
-    [estadoMensaje]="estadoMensaje"
-    [estadoDetalle]="estadoDetalle"
-    (regreso)="regresar()"
-    (guardar)="guardarBorrador()"
-    (continuar)="continuar()"
-    (finalizar)="finalizarRegistro()"
-  ></barra-acciones-formulario>
+      @if (currentStep === 3) {
+        <app-registro-persona-natural-paso-3
+          [documentosForm]="documentosForm"
+          [declaranteRenta]="declaranteRenta"
+          (estadoCambio)="estadoMensaje = $event.mensaje; estadoDetalle = $event.detalle"
+          (solicitarPersistencia)="persistirBorrador($event)"
+          (editarDeclaranteRenta)="irAlPaso(1)"
+        ></app-registro-persona-natural-paso-3>
+      }
+
+      <!-- ========================================================= -->
+      <!-- PASO 4                                                    -->
+      <!-- ========================================================= -->
+
+      @if (currentStep === 4) {
+        <app-registro-persona-natural-paso-4
+          [actividadDeclaracionForm]="actividadDeclaracionForm"
+          [catalogoCiiu]="catalogoCiiu"
+          [cargandoCiiu]="estadoCiiu.cargando"
+          [errorCiiu]="estadoCiiu.error"
+          (reintentarCiiu)="cargarCatalogoCiiu()"
+        ></app-registro-persona-natural-paso-4>
+
+        <!-- TEMPORAL: acceso directo a la constancia con datos de ejemplo. -->
+        <div class="vista-previa">
+          <button
+            class="vista-previa__boton"
+            type="button"
+            (click)="verConstanciaEjemplo()"
+          >
+            <mat-icon aria-hidden="true">visibility</mat-icon>
+            Ver constancia de ejemplo
+          </button>
+          <span class="vista-previa__nota">
+            Abre la constancia con datos de ejemplo, sin enviar el registro.
+          </span>
+        </div>
+      }
+
+    </section>
+
+    <barra-acciones-formulario
+      [mostrarRegreso]="currentStep > 1"
+      [esUltimoPaso]="currentStep === totalSteps"
+      [estadoMensaje]="estadoMensaje"
+      [estadoDetalle]="estadoDetalle"
+      (regreso)="regresar()"
+      (guardar)="guardarBorrador()"
+      (continuar)="continuar()"
+      (finalizar)="finalizarRegistro()"
+    ></barra-acciones-formulario>
+  }
   </div>
 
 </ng-template>

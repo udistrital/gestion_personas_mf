@@ -13,6 +13,7 @@ export interface OpcionNatural {
   id: number;
   nombre: string;
   codigo?: string;
+  descripcion?: string;
 }
 
 export const PREGUNTAS_BOOLEANAS_PERSONA_NATURAL = {
@@ -109,6 +110,17 @@ export class RegistroPersonaNaturalCatalogosService {
     });
   }
 
+  /**
+   * Catálogo de actividades económicas CIIU. Es el mismo parámetro que usa
+   * persona jurídica; se filtra para exigir código, porque el formulario
+   * muestra y valida la actividad por su código.
+   */
+  obtenerCatalogoCiiu(): Observable<OpcionNatural[]> {
+    return this.parametro('CIIU').pipe(
+      map(opciones => opciones.filter(opcion => !!opcion.codigo)),
+    );
+  }
+
   // Departamentos de un país o ciudades de un departamento, según la relación padre-hijo de Ubicaciones.
   obtenerHijos(idPadre: number, codigoTipoHijo: 'D' | 'C'): Observable<OpcionNatural[]> {
     return this.consultar(
@@ -192,12 +204,22 @@ export class RegistroPersonaNaturalCatalogosService {
               typeof registro['CodigoAbreviacion'] === 'string'
                 ? registro['CodigoAbreviacion']
                 : undefined,
+            descripcion:
+              typeof registro['Descripcion'] === 'string'
+                && registro['Descripcion'].trim().length > 0
+                ? registro['Descripcion']
+                : undefined,
             orden: registro['NumeroOrden'],
           }));
         const ordenadas = opciones.every(opcion => typeof opcion.orden === 'number')
           ? [...opciones].sort((a, b) => Number(a.orden) - Number(b.orden))
           : opciones;
-        return ordenadas.map(({ id, nombre, codigo }) => ({ id, nombre, codigo }));
+        return ordenadas.map(({ id, nombre, codigo, descripcion }) => ({
+          id,
+          nombre,
+          codigo,
+          descripcion,
+        }));
       }),
     );
   }
@@ -208,6 +230,7 @@ export class RegistroPersonaNaturalCatalogosService {
     envueltaEnData: boolean,
   ): Observable<Registro[]> {
     const clave = `${url}|${query ?? ''}`;
+    const esCiiu = (query ?? '').includes('CIIU');
     const existente = this.solicitudes.get(clave);
     if (existente) {
       return existente;
@@ -215,13 +238,36 @@ export class RegistroPersonaNaturalCatalogosService {
 
     const solicitud = obtenerTodasLasPaginas<Registro>(
       (limit, offset) => {
-        let params = new HttpParams().set('limit', String(limit)).set('offset', String(offset));
+        let params = new HttpParams()
+          .set('limit', String(limit))
+          .set('offset', String(offset))
+          // Sin un orden estable, Beego/PostgreSQL puede devolver filas
+          // distintas para el mismo offset y la paginación no termina.
+          .set('sortby', 'Id')
+          .set('order', 'asc');
         if (query) {
           params = params.set('query', query);
         }
+        if (esCiiu) {
+          console.info(`[CIIU] Solicitando offset=${offset}, limit=${limit}.`);
+        }
         return this.http
           .get<unknown>(url, { params })
-          .pipe(map(respuesta => this.extraerRegistros(respuesta, url, envueltaEnData)));
+          .pipe(
+            map(respuesta => {
+              const registros = this.extraerRegistros(
+                respuesta,
+                url,
+                envueltaEnData,
+              );
+              if (esCiiu) {
+                console.info(
+                  `[CIIU] offset=${offset} devolvió ${registros.length} registros.`,
+                );
+              }
+              return registros;
+            }),
+          );
       },
       registro => registro['Id'] as number,
       url,

@@ -367,7 +367,11 @@ export class RegistroPersonaJuridicaCatalogosService {
         const params = new HttpParams()
           .set("query", query)
           .set("limit", String(limit))
-          .set("offset", String(offset));
+          .set("offset", String(offset))
+          // Sin orden estable, PostgreSQL puede devolver filas distintas para
+          // el mismo offset y la paginación no termina.
+          .set("sortby", "Id")
+          .set("order", "asc");
         return this.http
           .get<unknown>(url, { params })
           .pipe(

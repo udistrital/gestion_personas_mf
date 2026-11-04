@@ -15,6 +15,7 @@ import {
   TerceroMidActualizacion,
   TerceroMid,
 } from "./gestion-personas-mid.models";
+import { textoPlanoDesdeHtml } from "src/app/shared/utils/texto-plano";
 
 const LIMITE_MATRICULA_MERCANTIL = "999999999999999";
 
@@ -501,10 +502,14 @@ export function mapearActualizacionPersonaNaturalMid(
     }
   }
 
-  const descripcionPortafolio = textoOpcional(
+  const descripcionPortafolioHtml = textoOpcional(
     actividad,
     "portafolioCapacidadEntrega",
   );
+  // El editor enriquecido guarda HTML; el MID espera texto legible.
+  const descripcionPortafolio = descripcionPortafolioHtml
+    ? textoPlanoDesdeHtml(descripcionPortafolioHtml)
+    : undefined;
   if (descripcionPortafolio !== undefined) {
     camposActualizados += 1;
   }
@@ -881,10 +886,14 @@ export function mapearPersonaNaturalMid(
     ),
   };
 
-  const descripcionPortafolio = textoOpcional(
+  const descripcionPortafolioHtml = textoOpcional(
     actividad,
     "portafolioCapacidadEntrega",
   );
+  // El editor enriquecido guarda HTML; el MID espera texto legible.
+  const descripcionPortafolio = descripcionPortafolioHtml
+    ? textoPlanoDesdeHtml(descripcionPortafolioHtml)
+    : undefined;
   const omisiones = [
     "Contacto omitido: el contrato no documenta valores oficiales para Finalidad y TipoCanal.",
     "PerfilDeclarado omitido: el catálogo Grupo_5 del formulario no está confirmado como el catálogo Perfil del MID.",

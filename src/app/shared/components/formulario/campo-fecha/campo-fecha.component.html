@@ -1,0 +1,46 @@
+<div class="campo">
+  <label class="campo__etiqueta" [attr.for]="id">
+    <span>
+      {{ etiqueta }}
+      @if (requerido) {
+        <b aria-hidden="true">*</b>
+      }
+    </span>
+  </label>
+
+  <mat-form-field appearance="outline">
+    <input
+      matInput
+      [id]="id"
+      [matDatepicker]="picker"
+      [value]="fecha"
+      [min]="min"
+      [max]="max"
+      [disabled]="deshabilitado"
+      [placeholder]="placeholder"
+      [attr.aria-label]="etiqueta"
+      [errorStateMatcher]="errorStateMatcher"
+      (dateChange)="alCambiar($event)"
+      (blur)="alSalir()"
+    />
+
+    <mat-datepicker-toggle
+      matIconSuffix
+      [for]="picker"
+      [disabled]="deshabilitado"
+    ></mat-datepicker-toggle>
+
+    <mat-datepicker #picker></mat-datepicker>
+
+    @if (errorRequerido) {
+      <mat-error>{{ mensajeRequerido }}</mat-error>
+    }
+    @if (errorFormato) {
+      <mat-error>Ingrese una fecha válida.</mat-error>
+    }
+  </mat-form-field>
+
+  @if (ayuda) {
+    <span class="campo__ayuda">{{ ayuda }}</span>
+  }
+</div>

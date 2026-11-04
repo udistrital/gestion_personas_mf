@@ -1,4 +1,10 @@
-import { AfterViewInit, Component, DestroyRef, ElementRef, HostListener, OnInit, inject } from "@angular/core";
+import {
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  OnInit,
+  inject,
+} from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import {
   AbstractControl,
@@ -17,6 +23,7 @@ import {
   observeOn,
   switchMap,
   tap,
+  timeout,
 } from "rxjs/operators";
 import { BorradorRegistroService } from "../../services/borrador-registro.service";
 import {
@@ -30,9 +37,13 @@ import {
 } from "../../services/gestion-personas-mid.mapper";
 import {
   GestionPersonasMidService,
+  ResultadoEnvioMid,
   resumirErrorMid,
   resumirRespuestaMid,
 } from "../../services/gestion-personas-mid.service";
+import { textoPlanoDesdeHtml } from "src/app/shared/utils/texto-plano";
+import { ResumenRadicacionPersonaNatural } from "./registro-persona-natural-exito/registro-persona-natural-exito.model";
+import { CIIU_PERSONA_NATURAL } from "./registro-persona-natural-paso-4/ciiu-persona-natural";
 
 export interface EstadoCatalogoNatural {
   cargando: boolean;
@@ -63,14 +74,35 @@ interface EnlaceGeografia {
   styleUrls: ["./registro-persona-natural.component.scss"],
   standalone: false,
 })
-export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
+export class RegistroPersonaNaturalComponent implements OnInit {
   private static readonly SOLO_DIGITOS = /^\d+$/;
   private static readonly ALFANUMERICO = /^[A-Za-z0-9]+$/;
   private static readonly TELEFONO =
     /^\+?\d[\d\s().-]*(?:Ext\.\s*\d+)?$/;
+
+  /**
+   * Máximo de caracteres visibles de un texto enriquecido.
+   *
+   * El editor guarda HTML; contar el marcado haría que el límite se agotara
+   * antes de tiempo. La validación usa el texto plano del editor.
+   */
+  private static maxTextoEnriquecido(maximo: number): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const texto = textoPlanoDesdeHtml(String(control.value ?? ""));
+      return texto.length > maximo
+        ? {
+            maxlength: {
+              requiredLength: maximo,
+              actualLength: texto.length,
+            },
+          }
+        : null;
+    };
+  }
+
   private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
   private readonly borradorRegistroService = inject(BorradorRegistroService);
-  private readonly elementRef = inject(ElementRef<HTMLElement>);
   private readonly catalogosService = inject(RegistroPersonaNaturalCatalogosService);
   private readonly gestionPersonasMidService = inject(GestionPersonasMidService);
 
@@ -78,6 +110,10 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
   estadoPaso1: EstadoCatalogoNatural = { cargando: false, error: null };
   catalogosPaso2: CatalogosPersonaNaturalPaso2 | null = null;
   estadoPaso2: EstadoCatalogoNatural = { cargando: false, error: null };
+
+  /** Catálogo CIIU que alimenta el paso 4 y la constancia. */
+  catalogoCiiu: OpcionNatural[] = [];
+  estadoCiiu: EstadoCatalogoNatural = { cargando: false, error: null };
 
   readonly geografia: Record<ClaveGeografiaNatural, EstadoListaNatural> = {
     departamentosExpedicion: { opciones: [], cargando: false, error: null },
@@ -106,7 +142,22 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
   envioIndeterminado = false;
   proveedorMidId?: number;
 
-  readonly pasosStepper = [
+  /** true cuando el MID confirmó el registro y debe mostrarse la constancia. */
+  registroCompletado = false;
+  /** Datos de la constancia; null mientras no se haya radicado. */
+  resumenRadicacion: ResumenRadicacionPersonaNatural | null = null;
+
+  /**
+   * TEMPORAL: identifica la constancia abierta con datos de ejemplo desde el
+   * paso 4. Permite volver al formulario sin navegar fuera del registro.
+   */
+  esConstanciaEjemplo = false;
+
+  readonly pasosStepper: Array<{
+    numero: number;
+    nombre: string;
+    subtitulo?: string;
+  }> = [
     {
       numero: 1,
       nombre: "Identificación y Caracterización",
@@ -125,40 +176,14 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
     },
   ];
 
+  /** El paso 4 se muestra activo, con el sello de verificación y "Éxito". */
+  readonly pasosStepperExito = this.pasosStepper.map((paso) =>
+    paso.numero === this.totalSteps
+      ? { ...paso, icono: "verified", subtitulo: "Éxito" }
+      : paso,
+  );
+
   personaNaturalForm: FormGroup;
-
-  ngAfterViewInit(): void {
-    this.alinearBarraAcciones();
-  }
-
-  @HostListener("window:resize")
-  onWindowResize(): void {
-    this.alinearBarraAcciones();
-  }
-
-  private alinearBarraAcciones(): void {
-    const raiz = this.elementRef.nativeElement;
-
-    const contenedor = raiz.querySelector(
-      ".registro-persona-natural-contenido"
-    ) as HTMLElement | null;
-
-    const barra = raiz.querySelector(
-      "barra-acciones-formulario"
-    ) as HTMLElement | null;
-
-    if (!contenedor || !barra) {
-      return;
-    }
-
-    const rect = contenedor.getBoundingClientRect();
-
-    barra.style.setProperty("left", `${rect.left}px`, "important");
-    barra.style.setProperty("width", `${rect.width}px`, "important");
-    barra.style.setProperty("right", "auto", "important");
-    barra.style.setProperty("transform", "none", "important");
-
-  }
 
   // =========================================================
   // PASO 1
@@ -186,6 +211,11 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
 
   get contactoForm(): FormGroup {
     return this.personaNaturalForm.get("contacto") as FormGroup;
+  }
+
+  /** Respuesta del paso 1 sobre declaración de renta (fuente única). */
+  get declaranteRenta(): boolean | null {
+    return this.tributarioForm.get("declaranteRenta")?.value ?? null;
   }
 
   // =========================================================
@@ -410,13 +440,6 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
           "",
           Validators.required,
         ],
-
-        indiceLiquidezReferencial: [
-          {
-            value: "",
-            disabled: true,
-          },
-        ],
       }),
 
       // =======================================================
@@ -424,6 +447,9 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
       // =======================================================
 
       documentos: this.fb.group({
+        // Declaración de Renta
+        declaracionRentaArchivo: [null],
+
         // RUT
         rutArchivo: [null, Validators.required],
         rutNitCedula: [""],
@@ -433,33 +459,31 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
         rutFechaGeneracion: [""],
 
         // RUP
-        aplicaRup: ["", Validators.required],
+        aplicaRup: ["no"],
         certificadoRup: [null],
-        matriculaMercantil: [null],
-        capacidadResidual: [""],
-        fechaVencimientoRup: [""],
       }),
 
       // =======================================================
       // PASO 4 - ACTIVIDAD Y DECLARACIÓN
       // =======================================================
 
-      actividadDeclaracion: this.fb.group({
-        portafolioCapacidadEntrega: [
-          "",
-          Validators.maxLength(2000),
-        ],
+      actividadDeclaracion: this.fb.group(
+        {
+          actividadesCiiu: this.fb.control<number[]>([]),
+          actividadCiiuPrincipalId: this.fb.control<number | null>(null),
 
-        consentimientoExpreso: [
-          false,
-          Validators.requiredTrue,
-        ],
+          portafolioCapacidadEntrega: [
+            "",
+            RegistroPersonaNaturalComponent.maxTextoEnriquecido(2000),
+          ],
 
-        declaracionJuramentada: [
-          false,
-          Validators.requiredTrue,
-        ],
-      }),
+          consentimientoExpreso: [
+            false,
+            Validators.requiredTrue,
+          ],
+        },
+        { validators: [this.validarCiiu.bind(this)] },
+      ),
     });
 
     // =========================================================
@@ -493,6 +517,13 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
         }
 
         numeroHijos?.updateValueAndValidity();
+      });
+
+    this.personaNaturalForm
+      .get("tributario.declaranteRenta")
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.sincronizarValidadoresDeclaracionRenta();
       });
 
     this.enlazarGeografia(
@@ -679,6 +710,45 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
       });
   }
 
+  cargarCatalogoCiiu(): void {
+    if (this.estadoCiiu.cargando) {
+      return;
+    }
+    this.estadoCiiu = { cargando: true, error: null };
+    console.info("[CIIU] Carga del catálogo iniciada.");
+
+    this.catalogosService
+      .obtenerCatalogoCiiu()
+      .pipe(
+        timeout(60000),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (catalogo) => {
+          this.catalogoCiiu = catalogo;
+          this.estadoCiiu = { cargando: false, error: null };
+          // Revalida el paso 4: un borrador puede traer IDs que ya no existen.
+          this.actividadDeclaracionForm?.updateValueAndValidity();
+          // El catálogo llega en un callback asíncrono; se fuerza la
+          // detección para que el paso 4 salga inmediatamente del estado de
+          // carga en cuanto los datos están disponibles.
+          this.cdr.detectChanges();
+          console.info(
+            `[CIIU] Catálogo cargado: ${catalogo.length} actividades.`,
+          );
+        },
+        error: (error: unknown) => {
+          this.estadoCiiu = {
+            cargando: false,
+            error:
+              "No fue posible cargar el catálogo de actividades económicas CIIU. Intente nuevamente.",
+          };
+          this.cdr.detectChanges();
+          console.error("[CIIU] Error al cargar el catálogo:", error);
+        },
+      });
+  }
+
   // Recupera las listas dependientes de un borrador restaurado y fija Colombia para la residencia.
   private cargarGeografiaInicial(paises: OpcionNatural[]): void {
     const valor = (ruta: string): unknown => this.personaNaturalForm.get(ruta)?.value;
@@ -725,10 +795,69 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
     void this.router.navigateByUrl("/proveedores/registro-inicio-persona");
   }
 
+  // =========================================================
+  // TEMPORAL: VISTA PREVIA DE LA CONSTANCIA
+  // =========================================================
+  // Permite revisar el diseño de la constancia desde el paso 4 con datos de
+  // ejemplo, sin enviar el registro al MID. Eliminar este bloque y el botón
+  // "Ver constancia de ejemplo" cuando ya no se necesite.
+
+  verConstanciaEjemplo(): void {
+    const resumen = this.crearResumenEjemplo();
+    this.esConstanciaEjemplo = true;
+    this.resumenRadicacion = resumen;
+    this.registroCompletado = true;
+
+    void this.calcularHashRadicacion(resumen).then((hash) => {
+      if (this.resumenRadicacion === resumen) {
+        this.resumenRadicacion = { ...resumen, hash };
+      }
+    });
+  }
+
+  /** Vuelve al formulario solo si la constancia abierta es la de ejemplo. */
+  volverDesdeConstancia(): void {
+    if (!this.esConstanciaEjemplo) {
+      this.regresarARegistroInicial();
+      return;
+    }
+    this.esConstanciaEjemplo = false;
+    this.registroCompletado = false;
+    this.resumenRadicacion = null;
+  }
+
+  private crearResumenEjemplo(): ResumenRadicacionPersonaNatural {
+    const ciiu =
+      CIIU_PERSONA_NATURAL.find((actividad) => actividad.principal)
+      ?? CIIU_PERSONA_NATURAL[0];
+    const secundarias = CIIU_PERSONA_NATURAL
+      .filter((actividad) => !actividad.principal)
+      .map((actividad) => `CIIU ${actividad.codigo} - ${actividad.nombre}`);
+    return {
+      nombreCompleto: "Carlos Julián González Parra",
+      tipoDocumento: "C.C.",
+      numeroDocumento: "1.018.472.930",
+      ciudadExpedicion: "Bogotá D.C.",
+      tipoSolicitante: "Persona Natural - Contratista de Servicios",
+      ciiuPrincipal: ciiu
+        ? `CIIU ${ciiu.codigo} - ${ciiu.nombre}`
+        : "No registrada",
+      ciiuSecundarias: secundarias,
+      correoPersonal: "cjgonzalezp@udistrital.edu.co",
+      correoTesoreria: "pagos.contratos@udistrital.edu.co",
+      radicado: "RUPBP-74526255769",
+      fechaRadicacion: new Date(),
+      hash: null,
+      proveedorId: 74526255769,
+      parcial: false,
+    };
+  }
+
   ngOnInit(): void {
     this.restaurarBorrador();
     this.cargarCatalogosPaso1();
     this.cargarCatalogosPaso2();
+    this.cargarCatalogoCiiu();
     this.personaNaturalForm.valueChanges
       .pipe(debounceTime(800), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.persistirBorrador(true));
@@ -804,6 +933,10 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
           this.proveedorMidId = resultado.proveedorId;
           this.estadoMensaje = resultado.mensaje;
           this.estadoDetalle = resultado.detalle;
+
+          if (resultado.tipo === "success" || resultado.tipo === "partial") {
+            this.prepararConstancia(resultado);
+          }
         },
         error: (error: unknown) => {
           const resultado = resumirErrorMid(error);
@@ -813,6 +946,165 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
           this.estadoDetalle = resultado.detalle;
         },
       });
+  }
+
+  /**
+   * Sustituye el formulario del paso 4 por la constancia de radicación y
+   * cierra el borrador: un registro ya enviado no debe restaurarse al volver.
+   */
+  private prepararConstancia(resultado: ResultadoEnvioMid): void {
+    const resumen = this.construirResumenRadicacion(resultado);
+    this.resumenRadicacion = resumen;
+    this.registroCompletado = true;
+    this.borradorRestaurado = false;
+    this.suspenderAutoguardado = true;
+    this.borradorRegistroService.eliminar();
+
+    void this.calcularHashRadicacion(resumen).then((hash) => {
+      if (this.resumenRadicacion === resumen) {
+        this.resumenRadicacion = { ...resumen, hash };
+      }
+    });
+  }
+
+  private construirResumenRadicacion(
+    resultado: ResultadoEnvioMid,
+  ): ResumenRadicacionPersonaNatural {
+    const valores = this.personaNaturalForm.getRawValue() as Record<
+      string,
+      Record<string, unknown> | undefined
+    >;
+    const identificacion = valores["identificacion"] ?? {};
+    const finanzas = valores["afiliacionesFinanzas"] ?? {};
+    const contacto = valores["contacto"] ?? {};
+
+    const nombreCompleto = [
+      identificacion["primerNombre"],
+      identificacion["segundoNombre"],
+      identificacion["primerApellido"],
+      identificacion["segundoApellido"],
+    ]
+      .map((parte) => String(parte ?? "").trim())
+      .filter(Boolean)
+      .join(" ");
+
+    const actividadDeclaracion = valores["actividadDeclaracion"] ?? {};
+    const idsCiiu = Array.isArray(actividadDeclaracion["actividadesCiiu"])
+      ? actividadDeclaracion["actividadesCiiu"]
+      : [];
+    const principalId = actividadDeclaracion["actividadCiiuPrincipalId"];
+    const seleccionadas = (idsCiiu as unknown[])
+      .map((id) =>
+        this.catalogoCiiu.find(
+          (opcion) => String(opcion.id) === String(id),
+        ),
+      )
+      .filter((opcion): opcion is OpcionNatural => opcion !== undefined);
+    const principal =
+      seleccionadas.find(
+        (opcion) => String(opcion.id) === String(principalId),
+      )
+      ?? seleccionadas[0];
+    const secundarias = seleccionadas
+      .filter((opcion) => opcion.id !== principal?.id)
+      .map((opcion) => this.etiquetaCiiu(opcion));
+    const idRadicado = resultado.terceroId ?? resultado.proveedorId;
+
+    return {
+      nombreCompleto: nombreCompleto || "Sin nombre registrado",
+      tipoDocumento: this.nombreTipoDocumento(identificacion["tipoDocumento"]),
+      numeroDocumento: String(
+        identificacion["numeroDocumento"] ?? "",
+      ).trim(),
+      ciudadExpedicion: this.nombreCiudadExpedicion(
+        identificacion["ciudadExpedicion"],
+      ),
+      tipoSolicitante: this.nombreTipoSolicitante(
+        identificacion["perfilRolPrincipal"],
+      ),
+      ciiuPrincipal: principal
+        ? this.etiquetaCiiu(principal)
+        : "No registrada",
+      ciiuSecundarias: secundarias,
+      correoPersonal: String(contacto["correoElectronico"] ?? "").trim(),
+      correoTesoreria: String(
+        finanzas["correoNotificacionesTesoreria"] ?? "",
+      ).trim(),
+      radicado:
+        idRadicado !== undefined
+          ? `RUPBP-${idRadicado}`
+          : "RUPBP-PENDIENTE",
+      fechaRadicacion: new Date(),
+      hash: null,
+      proveedorId: resultado.proveedorId,
+      parcial: resultado.tipo === "partial",
+      observaciones:
+        resultado.tipo === "partial" ? resultado.detalle : undefined,
+    };
+  }
+
+  private nombreTipoDocumento(valor: unknown): string {
+    const opcion = this.catalogosPaso1?.tiposDocumento.find(
+      (tipo) => String(tipo.id) === String(valor),
+    );
+    return opcion?.nombre ?? this.codigoTipoDocumento(valor) ?? "Documento";
+  }
+
+  private nombreCiudadExpedicion(valor: unknown): string {
+    return (
+      this.geografia.ciudadesExpedicion.opciones.find(
+        (ciudad) => String(ciudad.id) === String(valor),
+      )?.nombre ?? ""
+    );
+  }
+
+  private nombreTipoSolicitante(valor: unknown): string {
+    const nombre = this.catalogosPaso1?.perfilRolPrincipal
+      .find((perfil) => String(perfil.id) === String(valor))
+      ?.nombre?.trim();
+    if (!nombre) {
+      return "Persona Natural";
+    }
+    return nombre.toLowerCase().includes("persona natural")
+      ? nombre
+      : `Persona Natural - ${nombre}`;
+  }
+
+  private etiquetaCiiu(opcion: OpcionNatural): string {
+    const nombre =
+      opcion.nombre?.trim()
+      || opcion.descripcion?.trim()
+      || "Actividad económica";
+    return `CIIU ${opcion.codigo ?? opcion.id} - ${nombre}`;
+  }
+
+  /**
+   * Hash de referencia local. No sustituye la firma ni el radicado del MID:
+   * sirve para que la constancia tenga una huella verificable del envío.
+   */
+  private async calcularHashRadicacion(
+    resumen: ResumenRadicacionPersonaNatural,
+  ): Promise<string | null> {
+    const subtle = globalThis.crypto?.subtle;
+    if (!subtle) {
+      return null;
+    }
+    try {
+      const texto = [
+        resumen.radicado,
+        resumen.proveedorId ?? "",
+        resumen.fechaRadicacion.toISOString(),
+      ].join("|");
+      const digest = await subtle.digest(
+        "SHA-256",
+        new TextEncoder().encode(texto),
+      );
+      return Array.from(new Uint8Array(digest))
+        .map((byte) => byte.toString(16).padStart(2, "0"))
+        .join("");
+    } catch {
+      return null;
+    }
   }
 
   regresar(): void {
@@ -898,6 +1190,33 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
       (nombreGrupo) =>
         this.personaNaturalForm.get(nombreGrupo)?.valid ?? false,
     );
+  }
+
+  /**
+   * Exige al menos una actividad CIIU y que la principal esté dentro de la
+   * selección. Los IDs viven en el formulario porque el paso 4 los administra.
+   */
+  private validarCiiu(group: AbstractControl): ValidationErrors | null {
+    const seleccion = group.get("actividadesCiiu")?.value;
+    const principal = group.get("actividadCiiuPrincipalId")?.value;
+    const ids: unknown[] = Array.isArray(seleccion) ? seleccion : [];
+
+    if (ids.length === 0) {
+      return { ciiuSinActividades: true };
+    }
+
+    // Cuando el catálogo ya cargó, la selección debe seguir existiendo en él.
+    if (this.catalogoCiiu.length > 0) {
+      const existentes = new Set(this.catalogoCiiu.map((opcion) => opcion.id));
+      if (ids.some((id) => !existentes.has(Number(id)))) {
+        return { ciiuNoDisponible: true };
+      }
+    }
+
+    if (!principal || !ids.includes(principal)) {
+      return { ciiuSinPrincipal: true };
+    }
+    return null;
   }
 
   private marcarPasoActualComoTouched(): void {
@@ -1062,6 +1381,7 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
 
   private sincronizarValidadoresCondicionales(): void {
     this.sincronizarValidadoresDocumento();
+    this.sincronizarValidadoresDeclaracionRenta();
 
     const tieneHijos = this.personaNaturalForm.get(
       "caracterizacion.tieneHijos",
@@ -1082,6 +1402,28 @@ export class RegistroPersonaNaturalComponent implements OnInit, AfterViewInit {
     }
 
     numeroHijos?.updateValueAndValidity({ emitEvent: false });
+  }
+
+  /**
+   * Exige el adjunto de la declaración de renta solo si el paso 1 indicó que
+   * la persona es declarante. La pregunta no se duplica en el paso 3.
+   */
+  private sincronizarValidadoresDeclaracionRenta(): void {
+    const declarante = this.personaNaturalForm.get(
+      "tributario.declaranteRenta",
+    )?.value;
+    const adjunto = this.documentosForm.get("declaracionRentaArchivo");
+    if (!adjunto) {
+      return;
+    }
+
+    if (declarante === true) {
+      adjunto.setValidators([Validators.required]);
+    } else {
+      adjunto.clearValidators();
+      adjunto.setValue(null, { emitEvent: false });
+    }
+    adjunto.updateValueAndValidity({ emitEvent: false });
   }
 
   persistirBorrador(esAutoguardado: boolean): void {
