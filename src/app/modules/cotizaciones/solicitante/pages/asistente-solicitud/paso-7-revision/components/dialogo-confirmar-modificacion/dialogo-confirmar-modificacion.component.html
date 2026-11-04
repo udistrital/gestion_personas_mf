@@ -1,0 +1,143 @@
+<section
+  class="dialogo"
+  aria-labelledby="dialogo-modificacion-titulo"
+  aria-describedby="dialogo-modificacion-aviso"
+>
+  <header class="dialogo__cabecera">
+    <span class="dialogo__icono" aria-hidden="true">
+      <mat-icon>edit_note</mat-icon>
+    </span>
+
+    <h2 id="dialogo-modificacion-titulo" class="dialogo__titulo">
+      ¿Solicitar la modificación?
+    </h2>
+
+    <span class="dialogo__sello">
+      <mat-icon aria-hidden="true">description</mat-icon>
+      <span>
+        {{ datos.solicitudId }} · {{ datos.versionActual }} · Modificación
+        restringida
+      </span>
+    </span>
+  </header>
+
+  <div class="dialogo__cuerpo">
+    <p id="dialogo-modificacion-aviso" class="dialogo__aviso">
+      La propuesta se enviará a la <strong>Oficina de Contratación</strong> para
+      su aprobación. Mientras no se apruebe, el expediente conserva la versión
+      publicada y los proveedores no verán los cambios.
+    </p>
+
+    <div class="dialogo__nota">
+      <span class="dialogo__nota-icono" aria-hidden="true">
+        <mat-icon>info</mat-icon>
+      </span>
+      <div class="dialogo__nota-textos">
+        <p>
+          Solo se modifican los bienes y servicios (paso 3) y la fecha de cierre
+          (paso 2); el resto del expediente viaja sin cambios.
+        </p>
+        <etiqueta-por-definir
+          texto="Aprobación RF-016 / S-08"
+          detalle="el flujo de aprobación aún no está implementado"
+        ></etiqueta-por-definir>
+      </div>
+    </div>
+
+    <section class="dialogo__cambios" aria-labelledby="cambios-titulo">
+      <div class="dialogo__cambios-cabecera">
+        <h3 id="cambios-titulo" class="dialogo__cambios-titulo">
+          Cambios que se solicitarán
+        </h3>
+        <span class="dialogo__total">
+          <mat-icon aria-hidden="true">difference</mat-icon>
+          <span>{{ totalTexto }}</span>
+        </span>
+      </div>
+
+      <ul class="cambios">
+        @for (grupo of datos.diferencias.grupos; track grupo.paso) {
+          <li class="cambio-grupo">
+            <span class="cambio-grupo__cabecera">
+              <mat-icon aria-hidden="true">{{ grupo.icono }}</mat-icon>
+              <span class="cambio-grupo__titulo">
+                Paso {{ grupo.paso }} · {{ grupo.titulo }}
+              </span>
+              <span class="cambio-grupo__contador">
+                {{ grupo.cambios.length }}
+                <span class="visually-oculto">
+                  {{ grupo.cambios.length === 1 ? "cambio" : "cambios" }}
+                </span>
+              </span>
+            </span>
+
+            <ul class="cambio-grupo__lista">
+              <!-- Lista de solo lectura: el índice evita llaves repetidas
+                   cuando dos ítems comparten nombre y campo. -->
+              @for (cambio of grupo.cambios; track $index) {
+                <li class="cambio">
+                  <span class="cambio__campo">{{ cambio.etiqueta }}</span>
+                  <span class="cambio__valores">
+                    <span class="cambio__anterior">
+                      <span class="visually-oculto">Valor anterior: </span>
+                      {{ cambio.anterior || "—" }}
+                    </span>
+                    <mat-icon class="cambio__flecha" aria-hidden="true">
+                      arrow_forward
+                    </mat-icon>
+                    <span class="cambio__nuevo">
+                      <span class="visually-oculto">Valor nuevo: </span>
+                      {{ cambio.nuevo || "—" }}
+                    </span>
+                  </span>
+                </li>
+              }
+            </ul>
+          </li>
+        }
+      </ul>
+    </section>
+
+    <section class="dialogo__justificacion" aria-labelledby="justificacion-titulo">
+      <h3 id="justificacion-titulo" class="dialogo__justificacion-titulo">
+        Justificación registrada
+      </h3>
+      <p class="dialogo__justificacion-texto">{{ datos.justificacion }}</p>
+    </section>
+
+    <label class="confirmacion">
+      <input
+        class="confirmacion__check"
+        type="checkbox"
+        [checked]="aceptado()"
+        (change)="alCambiarAceptacion($event)"
+      />
+      <span class="confirmacion__texto">
+        Entiendo que la solicitud queda
+        <strong>pendiente de aprobación</strong> y que la versión publicada no
+        cambia hasta que se apruebe.
+      </span>
+    </label>
+  </div>
+
+  <footer class="dialogo__pie">
+    <button
+      class="boton boton--secundario dialogo__seguir"
+      type="button"
+      (click)="cancelar()"
+    >
+      <mat-icon aria-hidden="true">arrow_back</mat-icon>
+      <span>Seguir editando</span>
+    </button>
+
+    <button
+      class="boton boton--primario dialogo__confirmar"
+      type="button"
+      [disabled]="!aceptado()"
+      (click)="confirmar()"
+    >
+      <mat-icon aria-hidden="true">send</mat-icon>
+      <span>Sí, solicitar modificación</span>
+    </button>
+  </footer>
+</section>

@@ -1,0 +1,53 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.lista {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lista li {
+  min-width: 0;
+}
+
+.vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2.5rem 1rem;
+  border: 1px dashed var(--agora-border-strong);
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-surface);
+  text-align: center;
+}
+
+.vacio mat-icon {
+  width: 2rem;
+  height: 2rem;
+  color: var(--agora-texto-deshabilitado);
+  font-size: 2rem;
+}
+
+.vacio h2,
+.vacio p {
+  margin: 0;
+}
+
+.vacio h2 {
+  color: var(--agora-text);
+  font-size: 1.1rem;
+}
+
+.vacio p {
+  max-width: 34rem;
+  color: var(--agora-text-muted);
+  line-height: 1.5;
+}

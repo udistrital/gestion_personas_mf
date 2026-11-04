@@ -1,0 +1,34 @@
+@use 'src/app/shared/styles/tokens' as t;
+
+.etiqueta-por-definir {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border: 1px dashed var(--agora-warning-border);
+  border-radius: t.$radio-sm;
+  background: var(--agora-warning-surface);
+  color: var(--agora-warning-text);
+  font-size: var(--agora-font-xs);
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.etiqueta-por-definir__icono {
+  width: 0.875rem;
+  height: 0.875rem;
+  font-size: 0.875rem;
+}
+
+.etiqueta-por-definir__detalle {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}

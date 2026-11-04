@@ -23,6 +23,12 @@
   }
 
   <ng-container acciones>
+    @if (soloLectura) {
+      <span class="chip chip--neutro">
+        <mat-icon aria-hidden="true">lock</mat-icon>
+        <span>Solo lectura en edición</span>
+      </span>
+    }
     @switch (vista()) {
       @case ('inicial') {
         <span class="chip chip--neutro">
@@ -71,10 +77,12 @@
         <span>Cruzando con SICAPITAL</span>
       </span>
     }
-    <button class="boton-recto" type="button" (click)="limpiarNecesidad()">
-      <mat-icon aria-hidden="true">restart_alt</mat-icon>
-      <span>Limpiar necesidad</span>
-    </button>
+    @if (!soloLectura) {
+      <button class="boton-recto" type="button" (click)="limpiarNecesidad()">
+        <mat-icon aria-hidden="true">restart_alt</mat-icon>
+        <span>Limpiar necesidad</span>
+      </button>
+    }
   </ng-container>
 
   @if (vista() === 'error') {
@@ -258,13 +266,23 @@
           <span class="chip-codigo">SICAPITAL v4.8 :: Endpoint UD-CORE</span>
         }
         @case ('cargado') {
-          <span class="acciones-tarjeta__ayuda">
-            Borra los campos para realizar otra consulta en SICAPITAL.
-          </span>
-          <span class="acciones-tarjeta__info">
-            <mat-icon aria-hidden="true">info</mat-icon>
-            <span>Registro validado presupuestalmente</span>
-          </span>
+          @if (soloLectura) {
+            <span class="acciones-tarjeta__info">
+              <mat-icon aria-hidden="true">info</mat-icon>
+              <span>
+                La necesidad y el CDP provienen del expediente radicado; la
+                edición no vuelve a consultar SICAPITAL.
+              </span>
+            </span>
+          } @else {
+            <span class="acciones-tarjeta__ayuda">
+              Borra los campos para realizar otra consulta en SICAPITAL.
+            </span>
+            <span class="acciones-tarjeta__info">
+              <mat-icon aria-hidden="true">info</mat-icon>
+              <span>Registro validado presupuestalmente</span>
+            </span>
+          }
         }
         @default {
           <span class="acciones-tarjeta__ayuda">

@@ -1,0 +1,31 @@
+:host {
+  display: inline-block;
+  max-width: 100%;
+}
+
+.contador {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  max-width: 100%;
+  color: var(--agora-success);
+  font-size: var(--agora-font-xs);
+  font-weight: 700;
+  white-space: normal;
+}
+
+.contador mat-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex: 0 0 auto;
+  font-size: 0.875rem;
+}
+
+.contador--proximo {
+  color: var(--agora-warning-text);
+}
+
+.contador--cerrado {
+  color: var(--agora-text-muted);
+  font-weight: 500;
+}

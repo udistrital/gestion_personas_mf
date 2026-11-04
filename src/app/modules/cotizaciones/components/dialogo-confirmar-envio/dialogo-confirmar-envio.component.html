@@ -1,0 +1,66 @@
+<section class="dialogo" aria-labelledby="dialogo-envio-titulo">
+  <header class="dialogo__cabecera">
+    <span class="dialogo__icono" aria-hidden="true">
+      <mat-icon>mark_email_read</mat-icon>
+    </span>
+
+    <div class="dialogo__cabecera-textos">
+      <span class="dialogo__etiqueta">Confirmación precontractual</span>
+      <h2 id="dialogo-envio-titulo" class="dialogo__titulo">
+        ¿Desea registrar su cotización formalmente?
+      </h2>
+    </div>
+  </header>
+
+  <div class="dialogo__cuerpo">
+    <div class="dialogo__aviso">
+      <p>
+        Una vez radicada, se generará el radicado electrónico de la respuesta y
+        se notificará a la dependencia solicitante.
+      </p>
+      <p class="dialogo__candado">
+        <mat-icon aria-hidden="true">lock</mat-icon>
+        <span>
+          No podrá modificar los valores unitarios ni los documentos anexos
+          desde esta pantalla.
+        </span>
+      </p>
+    </div>
+
+    <dl class="resumen" aria-label="Resumen de la cotización">
+      <div class="resumen__bloque">
+        <dt>Valor total con IVA</dt>
+        <dd>{{ formatoMoneda(datos.total) }}</dd>
+      </div>
+      <div class="resumen__bloque">
+        <dt>Vigencia de la oferta</dt>
+        <dd>{{ vigencia }}</dd>
+        <span class="resumen__detalle">Vence el {{ vencimiento }}</span>
+      </div>
+      <div class="resumen__bloque resumen__bloque--ancho">
+        <dt>Solicitud</dt>
+        <dd class="resumen__codigo">{{ datos.solicitudId }}</dd>
+      </div>
+    </dl>
+  </div>
+
+  <footer class="dialogo__pie">
+    <button
+      class="boton boton--secundario dialogo__revisar"
+      type="button"
+      (click)="revisar()"
+    >
+      <mat-icon aria-hidden="true">arrow_back</mat-icon>
+      <span>Cancelar y revisar</span>
+    </button>
+
+    <button
+      class="boton boton--primario"
+      type="button"
+      (click)="confirmar()"
+    >
+      <mat-icon aria-hidden="true">verified</mat-icon>
+      <span>Confirmar y registrar cotización</span>
+    </button>
+  </footer>
+</section>

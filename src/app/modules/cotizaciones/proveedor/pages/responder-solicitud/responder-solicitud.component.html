@@ -1,0 +1,983 @@
+<plantilla-pagina-contenedora
+  [breadcrumb]="breadcrumb"
+  title="Responder solicitud"
+  icon="edit_square"
+  [mostrarBotonRegresar]="true"
+  (regresar)="volverAlDetalle()"
+>
+  <div class="respuesta">
+    @switch (vista()) {
+      @case ("cargando") {
+        <div class="estado" role="status" aria-busy="true" aria-live="polite">
+          <mat-spinner diameter="36" aria-label="Cargando formulario"></mat-spinner>
+          <span>Cargando los datos de la solicitud…</span>
+        </div>
+      }
+      @case ("error") {
+        <section class="estado estado--error" role="alert" aria-live="assertive">
+          <mat-icon aria-hidden="true">error_outline</mat-icon>
+          <h2>No fue posible cargar el formulario</h2>
+          <p>{{ error() }}</p>
+          <button type="button" class="boton-recto" (click)="reintentar()">
+            <mat-icon aria-hidden="true">refresh</mat-icon>
+            Reintentar
+          </button>
+        </section>
+      }
+      @case ("no-encontrada") {
+        <section class="estado" role="status" aria-live="polite">
+          <mat-icon aria-hidden="true">search_off</mat-icon>
+          <h2>Solicitud no encontrada o sin acceso</h2>
+          <p>No se encontró una invitación asociada a esta solicitud.</p>
+          <button type="button" class="boton-recto" (click)="volverABandeja()">Volver a solicitudes</button>
+        </section>
+      }
+      @case ("bloqueada") {
+        <section class="estado" role="status" aria-live="polite">
+          <mat-icon aria-hidden="true">lock</mat-icon>
+          <h2>Respuesta no habilitada</h2>
+          <p>
+            Esta invitación ya fue respondida o su estado no permite iniciar una
+            respuesta desde P-04. Las actualizaciones posteriores corresponden
+            a un flujo futuro.
+          </p>
+          <button type="button" class="boton-recto" (click)="volverAlDetalle()">Volver al detalle</button>
+        </section>
+      }
+      @case ("listo") {
+        @if (detalle(); as d) {
+          <div class="encabezado-container">
+            <header class="encabezado-respuesta">
+              <div class="encabezado-respuesta__titulo">
+                <span class="encabezado-respuesta__codigo">{{ d.solicitud.id }}</span>
+                <h2>{{ d.solicitud.titulo }}</h2>
+                <div class="encabezado-respuesta__chips">
+                  <chip-estado [estado]="d.solicitud.estado"></chip-estado>
+                  <chip-estado [estado]="d.invitacion.estado"></chip-estado>
+                  <span class="chip chip--recto">Versión {{ d.solicitud.version }}</span>
+                </div>
+              </div>
+              <div class="encabezado-respuesta__plazo">
+                <span><mat-icon aria-hidden="true" color="primary">schedule</mat-icon> Cierre de recepción</span>
+                <contador-regresivo [fechaCierre]="d.solicitud.cierre"></contador-regresivo>
+              </div>
+            </header>
+
+            <p class="descripcion">
+              Diligencie la oferta económica y los soportes requeridos para esta invitación.
+              Los datos publicados de la solicitud se presentan en modo de solo lectura.
+            </p>
+
+            <asistente-pasos
+              [pasos]="pasos"
+              [pasoActual]="paso()"
+              [pasoAlcanzado]="pasoAlcanzado()"
+              [columnas]="4"
+              label="Progreso de respuesta"
+              (pasoActualChange)="cambiarPaso($event)"
+            ></asistente-pasos>
+          </div>
+
+          <form [formGroup]="formulario" class="formulario-respuesta" novalidate>
+            <section #inicioPaso tabindex="-1" class="paso-contenido" [attr.aria-labelledby]="'titulo-paso-' + paso()">
+              @if (paso() === 1) {
+                <banner-paso
+                  icono="inventory_2"
+                  titulo="Paso 1: Elementos y servicios"
+                  descripcion="Registre el valor unitario y el tratamiento de IVA para cada elemento solicitado."
+                ></banner-paso>
+                <plantilla-tarjeta-contenedora
+                  icon="request_quote"
+                  title="Oferta económica por ítem"
+                  description="La cantidad, unidad y descripción corresponden a la solicitud publicada y no se pueden modificar."
+                >
+                  <div formGroupName="paso1" class="oferta-tabla-wrapper">
+                    <div class="tabla-scroll oferta-tabla-scroll">
+                      <table class="tabla-oferta tabla-oferta--proveedor" aria-label="Ítems y valores de la oferta">
+                        <thead>
+                          <tr>
+                            <th scope="col" class="th-numero">#</th>
+                            <th scope="col">Nombre del bien / servicio</th>
+                            <th scope="col" class="th-descripcion">Descripción solicitada</th>
+                            <th scope="col" class="th-centro">Tipo</th>
+                            <th scope="col" class="th-centro">Unidad</th>
+                            <th scope="col" class="th-centro">Cant.</th>
+                            <th scope="col" class="th-valor">Valor unitario ofrecido *</th>
+                            <th scope="col" class="th-iva">IVA aplicable *</th>
+                            <th scope="col" class="th-observacion">Ficha técnica / Observación ofrecida</th>
+                            <th scope="col" class="th-subtotal">Subtotal COP</th>
+                          </tr>
+                        </thead>
+                        <tbody formArrayName="items">
+                          @for (item of itemsPaginados; track trackByItem($index, item); let iPagina = $index) {
+                            @let i = paginaItems * porPaginaItems + iPagina;
+                            <tr [formGroupName]="i">
+                              <td class="td-numero">{{ i + 1 | number: "2.0" }}</td>
+                              <td>
+                                <div class="oferta-item">
+                                  <span class="oferta-item__titulo">{{ item.nombre }}</span>
+                                </div>
+                              </td>
+                              <td>
+                                <p class="oferta-item__descripcion oferta-item__descripcion--larga">{{ item.descripcion }}</p>
+                              </td>
+                              <td class="td-centro">
+                                <span [class]="claseTipoItem(item.tipo)">{{ item.tipo === "bien" ? "Bien" : "Servicio" }}</span>
+                              </td>
+                              <td class="td-centro oferta-item__unidad">{{ item.unidad }}</td>
+                              <td class="td-centro oferta-item__cantidad">
+                                <span class="oferta-item__cantidad--cantidad">{{ item.cantidad }}</span>
+                              </td>
+                              <td>
+                                <div class="oferta-campo">
+                                  <label class="solo-lectura" [for]="'valor-' + i">Valor unitario (COP)</label>
+                                  <campo-dinero
+                                    [id]="'valor-' + i"
+                                    [ariaLabel]="'Valor unitario en pesos colombianos para ' + item.nombre"
+                                    formControlName="valorUnitario"
+                                  ></campo-dinero>
+                                  @if (filasOferta.at(i).get("valorUnitario")?.touched && filasOferta.at(i).get("valorUnitario")?.invalid) {
+                                    <span class="error-campo" aria-live="polite">Ingrese un valor unitario mayor que cero.</span>
+                                  }
+                                </div>
+                              </td>
+                              <td>
+                                <div class="oferta-campo">
+                                  <label class="solo-lectura" [for]="'iva-' + i">Tratamiento de IVA</label>
+                                  <select [id]="'iva-' + i" formControlName="iva" class="select-oferta">
+                                    <option value="19">19 % General</option>
+                                    <option value="5">5 %</option>
+                                    <option value="0">0 %</option>
+                                    <option value="excluido">Excluido</option>
+                                    <option value="exento">Exento</option>
+                                  </select>
+                                  <span class="celda-secundaria">{{ formatoMoneda(ivaDelItem(item)) }} estimado</span>
+                                </div>
+                              </td>
+                              <td>
+                                <div class="oferta-campo">
+                                  <label class="solo-lectura" [for]="'nota-' + i">Ficha técnica / Observación ofrecida</label>
+                                  <textarea [id]="'nota-' + i" rows="4" formControlName="nota" maxlength="500" placeholder="Especifique marca, modelo, garantía u observación..."></textarea>
+                                </div>
+                              </td>
+                              <td class="td-subtotal">
+                                <div class="subtotal-oferta">
+                                  <span class="subtotal-oferta__valor">{{ formatoMoneda(subtotalConIvaDelItem(item)) }}</span>
+                                  <span class="subtotal-oferta__iva">+ IVA: {{ formatoMoneda(ivaDelItem(item)) }}</span>
+                                </div>
+                              </td>
+                            </tr>
+                          } @empty {
+                            <tr><td colspan="10">La solicitud no tiene ítems para cotizar.</td></tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+                    @if (totalItemsOferta > 0) {
+                      <footer class="oferta-tabla-paginador">
+                        <div class="oferta-tabla-paginador__info">
+                          <span>Mostrar:</span>
+                          <div class="oferta-tabla-paginador__select">
+                            <select
+                              [value]="porPaginaItems"
+                              (change)="cambiarPorPaginaItems($event)"
+                              aria-label="Número de ítems por página"
+                            >
+                              @for (opcion of opcionesPorPagina; track opcion) {
+                                <option [value]="opcion">{{ opcion }}</option>
+                              }
+                            </select>
+                            <mat-icon aria-hidden="true">arrow_drop_down</mat-icon>
+                          </div>
+                          <span>por página</span>
+                        </div>
+                        <div class="oferta-tabla-paginador__rango">
+                          Mostrando
+                          <span class="oferta-tabla-paginador__rango-valor">{{ rangoInicioItems }}</span>–<span class="oferta-tabla-paginador__rango-valor">{{ rangoFinItems }}</span>
+                          de
+                          <span class="oferta-tabla-paginador__rango-valor">{{ totalItemsOferta }}</span>
+                          ítems
+                        </div>
+                        <nav aria-label="Paginación de ítems" class="oferta-tabla-paginador__navegacion">
+                          <button
+                            class="oferta-tabla-paginador__boton"
+                            type="button"
+                            title="Primera página"
+                            [disabled]="paginaItems === 0"
+                            (click)="irAPaginaItems(0)"
+                          >
+                            <mat-icon aria-hidden="true">first_page</mat-icon>
+                          </button>
+                          <button
+                            class="oferta-tabla-paginador__boton"
+                            type="button"
+                            title="Anterior"
+                            [disabled]="paginaItems === 0"
+                            (click)="irAPaginaItems(paginaItems - 1)"
+                          >
+                            <mat-icon aria-hidden="true">chevron_left</mat-icon>
+                          </button>
+                          @for (numero of paginasVisiblesItems; track numero) {
+                            <button
+                              class="oferta-tabla-paginador__boton oferta-tabla-paginador__boton--pagina"
+                              type="button"
+                              [attr.aria-current]="numero === paginaItems + 1 ? 'page' : null"
+                              [attr.aria-label]="'Página ' + numero"
+                              [class.oferta-tabla-paginador__boton--activo]="numero === paginaItems + 1"
+                              (click)="irAPaginaItems(numero - 1)"
+                            >
+                              {{ numero }}
+                            </button>
+                          }
+                          <button
+                            class="oferta-tabla-paginador__boton"
+                            type="button"
+                            title="Siguiente"
+                            [disabled]="paginaItems >= totalPaginasItems - 1"
+                            (click)="irAPaginaItems(paginaItems + 1)"
+                          >
+                            <mat-icon aria-hidden="true">chevron_right</mat-icon>
+                          </button>
+                          <button
+                            class="oferta-tabla-paginador__boton"
+                            type="button"
+                            title="Última página"
+                            [disabled]="paginaItems >= totalPaginasItems - 1"
+                            (click)="irAPaginaItems(totalPaginasItems - 1)"
+                          >
+                            <mat-icon aria-hidden="true">last_page</mat-icon>
+                          </button>
+                        </nav>
+                      </footer>
+                    }
+                  </div>
+                  <div class="resumen-economico" aria-live="polite">
+                    <div><span>Subtotal</span><strong>{{ formatoMoneda(totales.subtotal) }}</strong></div>
+                    <div><span>Descuento</span><strong>{{ formatoMoneda(totales.descuento) }}</strong></div>
+                    <div><span>IVA estimado</span><strong>{{ formatoMoneda(totales.iva) }}</strong></div>
+                    <div class="resumen-economico__total"><span>Total oferta</span><strong>{{ formatoMoneda(totales.total) }}</strong></div>
+                  </div>
+                  <p class="nota-provisional">
+                    Descuento porcentual se distribuye proporcionalmente antes del IVA.
+                  </p>
+                  @if (presupuestoDisponible !== null) {
+                    <section class="monitoreo-presupuesto" aria-labelledby="titulo-presupuesto">
+                      <div class="resumen-seccion__encabezado">
+                        <h3 id="titulo-presupuesto">Monitoreo presupuestal</h3>
+                        <span>{{ porcentajePresupuesto | number: "1.0-1" }} % del CDP</span>
+                      </div>
+                      <div
+                        class="monitoreo-presupuesto__barra"
+                        role="progressbar"
+                        aria-label="Porcentaje de la oferta frente al CDP"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                        [attr.aria-valuenow]="porcentajeBarraPresupuesto"
+                        [attr.aria-valuetext]="(porcentajePresupuesto | number: '1.0-1') + ' % del CDP'"
+                      >
+                        <span [style.width.%]="porcentajeBarraPresupuesto"></span>
+                      </div>
+                      <div class="monitoreo-presupuesto__valores">
+                        <span>Oferta: <strong>{{ formatoMoneda(totales.total) }}</strong></span>
+                        <span>CDP: <strong>{{ formatoMoneda(presupuestoDisponible) }}</strong></span>
+                      </div>
+                      @if (superaPresupuesto) {
+                        <p class="nota-provisional" role="status">
+                          El valor estimado de la oferta supera el CDP publicado. Debe ajustar los valores antes de avanzar: la respuesta no se puede radicar por encima del límite presupuestal.
+                        </p>
+                      }
+                    </section>
+                  }
+                </plantilla-tarjeta-contenedora>
+              } @else if (paso() === 2) {
+                <banner-paso
+                  icono="event"
+                  titulo="Paso 2: Vigencia y descuentos"
+                  descripcion="Indique hasta cuándo mantiene vigente su oferta y registre sus condiciones comerciales."
+                ></banner-paso>
+                <div formGroupName="paso2">
+                <plantilla-tarjeta-contenedora
+                  icon="event_available"
+                  title="Vigencia de la oferta"
+                  description="La oferta debe permanecer vigente, como mínimo, hasta el cierre de recepción."
+                >
+                  <div class="campos">
+                    <label class="campo">
+                      <span class="campo__etiqueta" id="fecha-vencimiento-etiqueta">
+                        Fecha de vencimiento de la cotización <strong aria-hidden="true">*</strong>
+                      </span>
+                      <span class="selector">
+                        <mat-icon class="selector__icono" aria-hidden="true">calendar_today</mat-icon>
+                        <input
+                          id="fecha-vencimiento"
+                          type="date"
+                          formControlName="fechaVencimiento"
+                          aria-labelledby="fecha-vencimiento-etiqueta"
+                          [attr.aria-describedby]="formulario.controls.paso2.controls.fechaVencimiento.touched && !fechaOfertaValida ? 'fecha-vencimiento-error' : 'fecha-vencimiento-ayuda'"
+                        />
+                      </span>
+                      <small id="fecha-vencimiento-ayuda">La oferta debe permanecer vigente al menos hasta el cierre de recepción.</small>
+                      @if (formulario.controls.paso2.controls.fechaVencimiento.touched && !fechaOfertaValida) {
+                        <span id="fecha-vencimiento-error" class="error-campo" aria-live="polite">La fecha no puede ser anterior al cierre de la solicitud.</span>
+                      }
+                    </label>
+                    @if (diasVigencia !== null) {
+                      <p class="ayuda" aria-live="polite">
+                        Vigencia calculada desde el cierre: <strong>{{ diasVigencia }} días calendario</strong>.
+                      </p>
+                    }
+                    <label class="campo">
+                      <span class="campo__etiqueta" id="descuento-etiqueta">Descuento comercial (%)</span>
+                      <span class="selector">
+                        <mat-icon class="selector__icono" aria-hidden="true">percent</mat-icon>
+                        <input
+                          id="descuento-comercial"
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="0.01"
+                          formControlName="descuentoPorcentaje"
+                          aria-labelledby="descuento-etiqueta"
+                          aria-describedby="descuento-ayuda"
+                        />
+                      </span>
+                      <small id="descuento-ayuda">Opcional · entre 0 % y 100 %. Se aplica antes de calcular el IVA.</small>
+                      @if (formulario.controls.paso2.controls.descuentoPorcentaje.touched && formulario.controls.paso2.controls.descuentoPorcentaje.invalid) {
+                        <span class="error-campo" aria-live="polite">Ingrese un porcentaje entre 0 y 100.</span>
+                      }
+                    </label>
+                    <div class="campo campo--editor">
+                      <span class="campo__etiqueta" id="condiciones-comerciales-etiqueta">Beneficios y condiciones comerciales</span>
+                      <editor-enriquecido
+                        formControlName="condicionesComerciales"
+                        idEtiqueta="condiciones-comerciales-etiqueta"
+                        pista="Describa beneficios, garantías u otras condiciones de su oferta…"
+                        ayuda="Opcional · el texto enriquecido se incluirá en la respuesta."
+                        [maxCaracteres]="600"
+                        [rows]="4"
+                      ></editor-enriquecido>
+                      @if (formulario.controls.paso2.controls.condicionesComerciales.touched && formulario.controls.paso2.controls.condicionesComerciales.hasError('maxlength')) {
+                        <span class="error-campo" aria-live="polite">El texto no puede superar los 600 caracteres.</span>
+                      }
+                    </div>
+                  </div>
+                  <section class="resumen-tarjetas" aria-labelledby="resumen-economico-titulo">
+                    <header class="resumen-tarjetas__cabecera">
+                      <span class="resumen-tarjetas__icono" aria-hidden="true">
+                        <mat-icon>payments</mat-icon>
+                      </span>
+                      <div class="resumen-tarjetas__textos">
+                        <h3 id="resumen-economico-titulo">Resumen económico consolidado</h3>
+                        <p>
+                          Valores calculados sobre los {{ totalItemsOferta }} ítems del paso 1;
+                          toda cifra está expresada en moneda legal colombiana.
+                        </p>
+                      </div>
+                      <span class="resumen-tarjetas__sello">Solo lectura</span>
+                    </header>
+
+                    <div class="resumen-tarjetas__grid">
+                      <div class="resumen-cifra">
+                        <span class="resumen-cifra__rotulo">Subtotal</span>
+                        <strong class="resumen-cifra__valor">{{ formatoMoneda(totales.subtotal) }}</strong>
+                        <span class="resumen-cifra__detalle">Suma de ítems antes de descuento</span>
+                      </div>
+
+                      <div class="resumen-cifra">
+                        <span class="resumen-cifra__rotulo">Descuento</span>
+                        <strong class="resumen-cifra__valor">{{ formatoMoneda(totales.descuento) }}</strong>
+                        <span class="resumen-cifra__detalle">
+                          @if (descuentoPorcentaje > 0) {
+                            {{ descuentoPorcentaje | number: "1.0-2" }} % aplicado sobre el subtotal
+                          } @else {
+                            Sin descuento comercial aplicado
+                          }
+                        </span>
+                      </div>
+
+                      <div class="resumen-cifra">
+                        <span class="resumen-cifra__rotulo">IVA estimado</span>
+                        <strong class="resumen-cifra__valor">{{ formatoMoneda(totales.iva) }}</strong>
+                        <span class="resumen-cifra__detalle">Según el tratamiento de IVA por ítem</span>
+                      </div>
+
+                      <div class="resumen-cifra resumen-cifra--total">
+                        <span class="resumen-cifra__rotulo">Total cotización con IVA</span>
+                        <strong class="resumen-cifra__valor">{{ formatoMoneda(totales.total) }}</strong>
+                        <span class="resumen-cifra__detalle">Valor que se radica con la respuesta</span>
+                      </div>
+                    </div>
+                  </section>
+                </plantilla-tarjeta-contenedora>
+                @if (solicitud()?.contratacion; as contratacion) {
+                  <plantilla-tarjeta-contenedora
+                    icon="payments"
+                    title="Condiciones institucionales de pago"
+                    description="Información publicada por la entidad para esta solicitud; no modifica los valores de su oferta."
+                  >
+                    <div class="condiciones-pago">
+                      <div class="condiciones-pago__aviso">
+                        <span class="condiciones-pago__aviso-icono" aria-hidden="true">
+                          <mat-icon>account_balance</mat-icon>
+                        </span>
+                        <div class="condiciones-pago__aviso-textos">
+                          <span class="condiciones-pago__aviso-titulo">
+                            Condición de pago institucional
+                          </span>
+                          <p>
+                            {{ contratacion.formaPagoNota || contratacion.medioPagoNota || "Sin nota adicional publicada para esta solicitud." }}
+                          </p>
+                        </div>
+                      </div>
+
+                      <dl class="datos-pago">
+                        <div class="dato-pago">
+                          <dt>
+                            <mat-icon aria-hidden="true">receipt_long</mat-icon>
+                            <span>Forma de pago</span>
+                          </dt>
+                          <dd>{{ contratacion.formaPago }}</dd>
+                        </div>
+                        <div class="dato-pago">
+                          <dt>
+                            <mat-icon aria-hidden="true">account_balance_wallet</mat-icon>
+                            <span>Medio de pago</span>
+                          </dt>
+                          <dd>{{ contratacion.medioPago }}</dd>
+                        </div>
+                      </dl>
+
+                      @if (contratacion.parametros.length > 0) {
+                        <div class="hitos-pago-bloque">
+                          <span class="hitos-pago-bloque__titulo">
+                            Hitos publicados para el pago
+                          </span>
+                          <ul class="hitos-pago" aria-label="Hitos publicados para el pago">
+                            @for (parametro of contratacion.parametros; track parametro.id) {
+                              <li>
+                                <span class="hito-pago__porcentaje">{{ parametro.porcentaje }} %</span>
+                                <span class="hito-pago__textos">
+                                  <span class="hito-pago__condicion">{{ parametro.condicion }}</span>
+                                  @if (parametro.nota) {
+                                    <small>{{ parametro.nota }}</small>
+                                  }
+                                </span>
+                              </li>
+                            }
+                          </ul>
+                        </div>
+                      }
+
+                      <p class="nota-provisional">
+                        Estas condiciones son informativas y corresponden a la solicitud publicada.
+                      </p>
+                    </div>
+                  </plantilla-tarjeta-contenedora>
+                }
+                <plantilla-tarjeta-contenedora
+                  icon="account_balance_wallet"
+                  title="Deducciones estimadas institucionales"
+                  description="Las siguientes cifras son orientativas y provisionales, según el diseño de referencia."
+                >
+                  <button acciones type="button" class="boton-normativa" (click)="mostrarInformacionTributaria()">
+                    <mat-icon aria-hidden="true">menu_book</mat-icon>
+                    <span>Ver normativa</span>
+                  </button>
+
+                  <ul class="deducciones-estimadas">
+                    @for (deduccion of deduccionesProvisionales; track deduccion.etiqueta) {
+                      <li>
+                        <span class="deduccion__textos">
+                          <span class="deduccion__etiqueta">{{ deduccion.etiqueta }}</span>
+                          <span class="deduccion__porcentaje">{{ deduccion.porcentaje }} %</span>
+                        </span>
+                        <strong class="deduccion__valor">{{ formatoMoneda(estimacionDeduccion(deduccion.porcentaje)) }}</strong>
+                      </li>
+                    }
+                    <li class="deducciones-estimadas__total">
+                      <span class="deduccion__textos">
+                        <span class="deduccion__etiqueta">Total deducciones estimadas</span>
+                        <span class="deduccion__porcentaje">Sobre el valor antes de IVA</span>
+                      </span>
+                      <strong class="deduccion__valor">{{ formatoMoneda(totalDeduccionesEstimadas) }}</strong>
+                    </li>
+                  </ul>
+
+                  <p class="nota-provisional">
+                    Estimaciones sobre el valor antes de IVA. La aplicabilidad, base y liquidación oficial dependen de la normativa vigente y del tipo de proveedor.
+                  </p>
+                </plantilla-tarjeta-contenedora>
+                </div>
+              } @else if (paso() === 3) {
+                <banner-paso
+                  icono="upload_file"
+                  titulo="Paso 3: Documentos y soportes"
+                  descripcion="Adjunte el soporte de la cotización y los documentos solicitados para la oferta."
+                ></banner-paso>
+                <plantilla-tarjeta-contenedora
+                  icon="description"
+                  title="Soporte de cotización"
+                  description="Adjunte el desglose económico formal de su oferta."
+                >
+                  <div formGroupName="paso3" class="documento-bloque">
+                    <section class="plantilla-cotizacion" aria-labelledby="plantilla-cotizacion-titulo">
+                      <span class="plantilla-cotizacion__icono" aria-hidden="true">
+                        <mat-icon>table_view</mat-icon>
+                      </span>
+
+                      <div class="plantilla-cotizacion__textos">
+                        <span class="plantilla-cotizacion__sello">Opcional</span>
+                        <h3 id="plantilla-cotizacion-titulo" class="plantilla-cotizacion__titulo">
+                          Descargue la plantilla de cotización
+                        </h3>
+                        <p>
+                          La plantilla incluye los ítems publicados en esta solicitud. Diligencie
+                          precios unitarios, marcas, tiempos de entrega y garantías, y luego adjunte
+                          el archivo firmado en el soporte de la cotización.
+                        </p>
+                        <span class="plantilla-cotizacion__meta">
+                          <mat-icon aria-hidden="true">info</mat-icon>
+                          Formato CSV compatible con Excel · {{ totalItemsOferta }} ítems de la solicitud
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        class="boton-plantilla"
+                        (click)="descargarPlantilla()"
+                      >
+                        <mat-icon aria-hidden="true">download</mat-icon>
+                        <span>Descargar plantilla</span>
+                      </button>
+                    </section>
+
+                    <span class="campo__etiqueta" id="soporte-cotizacion-etiqueta">
+                      Soporte detalle de la cotización <strong aria-hidden="true">*</strong>
+                    </span>
+                    <carga-archivos
+                      id="soporte-cotizacion"
+                      etiqueta="Seleccionar archivo desde el equipo"
+                      [formatos]="formatos"
+                      [tamanoMaxMb]="10"
+                      formControlName="soporte"
+                    ></carga-archivos>
+                    <small class="ayuda">
+                      Anexe el desglose pormenorizado de ítems con especificaciones, marcas,
+                      tiempos de entrega y precios unitarios en COP, firmado por el representante
+                      legal o el apoderado facultado.
+                    </small>
+                    @if (formulario.controls.paso3.controls.soporte.touched && formulario.controls.paso3.controls.soporte.invalid) {
+                      <span class="error-campo" aria-live="polite">El soporte de cotización es obligatorio.</span>
+                    }
+                  </div>
+                </plantilla-tarjeta-contenedora>
+                <plantilla-tarjeta-contenedora
+                  icon="fact_check"
+                  title="Documentos requeridos para la oferta"
+                  description="La clasificación proviene de la matriz documental publicada en la solicitud."
+                >
+                  <div formGroupName="paso3">
+                    <div formGroupName="requeridos" class="lista-documentos">
+                      @for (documento of documentos(); track documento.id) {
+                        <article class="documento-requerido">
+                          <div>
+                            <h3>{{ documento.nombre }}</h3>
+                            <span class="clasificacion-documento" [class.clasificacion-documento--obligatorio]="documento.clasificacion === 'obligatorio'">
+                              {{ documento.clasificacion === "obligatorio" ? "Obligatorio" : "Complementario" }}
+                            </span>
+                            <p>{{ documento.instruccion }}</p>
+                          </div>
+                          <carga-archivos
+                            [id]="'documento-' + documento.id"
+                            [etiqueta]="'Seleccionar ' + documento.nombre"
+                            [formatos]="formatos"
+                            [tamanoMaxMb]="10"
+                            [compacto]="true"
+                            [requerido]="documento.clasificacion === 'obligatorio'"
+                            [formControlName]="documento.id"
+                          ></carga-archivos>
+                          @if (documentoObligatorio(documento.id) && controlArchivo(documento.id)?.touched && controlArchivo(documento.id)?.invalid) {
+                            <span class="error-campo" aria-live="polite">Adjunte este documento obligatorio.</span>
+                          }
+                        </article>
+                      }
+                    </div>
+                  </div>
+                </plantilla-tarjeta-contenedora>
+              } @else {
+                <banner-paso
+                  icono="fact_check"
+                  titulo="Paso 4: Revisión y envío"
+                  descripcion="Revise la información de su oferta antes de radicar la respuesta. Una vez enviada no podrá modificarla desde esta pantalla."
+                ></banner-paso>
+
+                <plantilla-tarjeta-contenedora
+                  icon="list_alt"
+                  title="1. Ítems y valor económico"
+                  description="Desglose de especificaciones técnicas y precios unitarios ofertados."
+                >
+                  <button acciones type="button" class="boton-editar-paso" (click)="cambiarPaso(1)">
+                    <mat-icon aria-hidden="true">edit</mat-icon>
+                    <span>Editar paso 1</span>
+                  </button>
+
+                  <div class="oferta-tabla-wrapper">
+                    <div class="tabla-scroll oferta-tabla-scroll">
+                      <table class="tabla-oferta tabla-oferta--proveedor" aria-label="Detalle de los ítems ofertados">
+                        <thead>
+                          <tr>
+                            <th scope="col" class="th-numero">#</th>
+                            <th scope="col">Nombre del bien / servicio</th>
+                            <th scope="col" class="th-descripcion">Descripción solicitada</th>
+                            <th scope="col" class="th-centro">Tipo</th>
+                            <th scope="col" class="th-centro">Unidad</th>
+                            <th scope="col" class="th-centro">Cant.</th>
+                            <th scope="col" class="th-valor">Valor unitario ofrecido</th>
+                            <th scope="col" class="th-iva">IVA aplicable</th>
+                            <th scope="col" class="th-observacion">Ficha técnica / Observación ofrecida</th>
+                            <th scope="col" class="th-subtotal">Subtotal COP</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (item of itemsRevision; track item.id; let iPagina = $index) {
+                            @let i = paginaRevision * porPaginaRevision + iPagina;
+                            <tr>
+                              <td class="td-numero">{{ i + 1 | number: "2.0" }}</td>
+                              <td>
+                                <div class="oferta-item">
+                                  <span class="oferta-item__titulo">{{ item.nombre }}</span>
+                                </div>
+                              </td>
+                              <td>
+                                <p class="oferta-item__descripcion oferta-item__descripcion--larga">{{ item.descripcion }}</p>
+                              </td>
+                              <td class="td-centro">
+                                <span [class]="claseTipoItem(item.tipo)">{{ item.tipo === "bien" ? "Bien" : "Servicio" }}</span>
+                              </td>
+                              <td class="td-centro oferta-item__unidad">{{ item.unidad }}</td>
+                              <td class="td-centro oferta-item__cantidad">
+                                <span class="oferta-item__cantidad--cantidad">{{ item.cantidad }}</span>
+                              </td>
+                              <td class="td-subtotal">
+                                {{ formatoMoneda(ofertaPara(item.id)?.valorUnitario ?? 0) }}
+                              </td>
+                              <td class="td-centro">
+                                <span class="revision__iva">{{ etiquetaIva(ofertaPara(item.id)?.iva) }}</span>
+                              </td>
+                              <td>
+                                <span class="revision__observacion">
+                                  {{ ofertaPara(item.id)?.nota || "Sin observación registrada" }}
+                                </span>
+                              </td>
+                              <td class="td-subtotal">
+                                <div class="subtotal-oferta">
+                                  <span class="subtotal-oferta__valor">{{ formatoMoneda(valorTotalItem(item)) }}</span>
+                                  <span class="subtotal-oferta__iva">+ IVA: {{ formatoMoneda(ivaDelItem(item)) }}</span>
+                                </div>
+                              </td>
+                            </tr>
+                          } @empty {
+                            <tr><td colspan="10">La solicitud no tiene ítems para cotizar.</td></tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+                    @if (totalItemsOferta > 0) {
+                      <footer class="oferta-tabla-paginador">
+                        <div class="oferta-tabla-paginador__info">
+                          <span>Mostrar:</span>
+                          <div class="oferta-tabla-paginador__select">
+                            <select
+                              [value]="porPaginaRevision"
+                              (change)="cambiarPorPaginaRevision($event)"
+                              aria-label="Número de ítems por página"
+                            >
+                              @for (opcion of opcionesPorPagina; track opcion) {
+                                <option [value]="opcion">{{ opcion }}</option>
+                              }
+                            </select>
+                            <mat-icon aria-hidden="true">arrow_drop_down</mat-icon>
+                          </div>
+                          <span>por página</span>
+                        </div>
+                        <div class="oferta-tabla-paginador__rango">
+                          Mostrando
+                          <span class="oferta-tabla-paginador__rango-valor">{{ rangoInicioRevision }}</span>–<span class="oferta-tabla-paginador__rango-valor">{{ rangoFinRevision }}</span>
+                          de
+                          <span class="oferta-tabla-paginador__rango-valor">{{ totalItemsOferta }}</span>
+                          ítems
+                        </div>
+                        <nav aria-label="Paginación de ítems ofertados" class="oferta-tabla-paginador__navegacion">
+                          <button
+                            class="oferta-tabla-paginador__boton"
+                            type="button"
+                            title="Primera página"
+                            [disabled]="paginaRevision === 0"
+                            (click)="irAPaginaRevision(0)"
+                          >
+                            <mat-icon aria-hidden="true">first_page</mat-icon>
+                          </button>
+                          <button
+                            class="oferta-tabla-paginador__boton"
+                            type="button"
+                            title="Anterior"
+                            [disabled]="paginaRevision === 0"
+                            (click)="irAPaginaRevision(paginaRevision - 1)"
+                          >
+                            <mat-icon aria-hidden="true">chevron_left</mat-icon>
+                          </button>
+                          @for (numero of paginasVisiblesRevision; track numero) {
+                            <button
+                              class="oferta-tabla-paginador__boton oferta-tabla-paginador__boton--pagina"
+                              type="button"
+                              [attr.aria-current]="numero === paginaRevision + 1 ? 'page' : null"
+                              [attr.aria-label]="'Página ' + numero"
+                              [class.oferta-tabla-paginador__boton--activo]="numero === paginaRevision + 1"
+                              (click)="irAPaginaRevision(numero - 1)"
+                            >
+                              {{ numero }}
+                            </button>
+                          }
+                          <button
+                            class="oferta-tabla-paginador__boton"
+                            type="button"
+                            title="Siguiente"
+                            [disabled]="paginaRevision >= totalPaginasRevision - 1"
+                            (click)="irAPaginaRevision(paginaRevision + 1)"
+                          >
+                            <mat-icon aria-hidden="true">chevron_right</mat-icon>
+                          </button>
+                          <button
+                            class="oferta-tabla-paginador__boton"
+                            type="button"
+                            title="Última página"
+                            [disabled]="paginaRevision >= totalPaginasRevision - 1"
+                            (click)="irAPaginaRevision(totalPaginasRevision - 1)"
+                          >
+                            <mat-icon aria-hidden="true">last_page</mat-icon>
+                          </button>
+                        </nav>
+                      </footer>
+                    }
+                  </div>
+
+                  <div class="totales-revision" aria-label="Totales de la oferta">
+                    <div class="totales-revision__fila">
+                      <span>Subtotal neto</span>
+                      <strong>{{ formatoMoneda(totales.subtotal) }}</strong>
+                    </div>
+                    <div class="totales-revision__fila">
+                      <span>Descuento</span>
+                      <strong>{{ formatoMoneda(totales.descuento) }}</strong>
+                    </div>
+                    <div class="totales-revision__fila">
+                      <span>IVA estimado</span>
+                      <strong>{{ formatoMoneda(totales.iva) }}</strong>
+                    </div>
+                    <div class="totales-revision__total">
+                      <span>
+                        <span class="totales-revision__rotulo">Total con IVA</span>
+                        <span class="totales-revision__detalle">Pesos colombianos</span>
+                      </span>
+                      <strong>{{ formatoMoneda(totales.total) }}</strong>
+                    </div>
+                  </div>
+                </plantilla-tarjeta-contenedora>
+
+                <plantilla-tarjeta-contenedora
+                  icon="calendar_month"
+                  title="2. Vigencia y condiciones comerciales"
+                  description="Datos declarados en el paso 2 y publicados por la entidad."
+                >
+                  <button acciones type="button" class="boton-editar-paso" (click)="cambiarPaso(2)">
+                    <mat-icon aria-hidden="true">edit</mat-icon>
+                    <span>Editar paso 2</span>
+                  </button>
+
+                  <div class="revision-datos">
+                    <div class="revision-dato revision-dato--destacado">
+                      <span class="revision-dato__rotulo">Vencimiento de la oferta económica</span>
+                      <div class="revision-dato__fila">
+                        <strong class="revision-dato__valor">
+                          {{ formatearFecha(formulario.controls.paso2.controls.fechaVencimiento.value || "") }}
+                        </strong>
+                        <span class="revision-dato__chip">
+                          {{ diasVigencia !== null ? diasVigencia + " días calendario" : "Sin definir" }}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div class="revision-dato revision-dato--ancho">
+                      <span class="revision-dato__rotulo">Descuento comercial</span>
+                      <strong class="revision-dato__valor">
+                        {{ descuentoPorcentaje | number: "1.0-2" }} %
+                      </strong>
+                      <span class="revision-dato__detalle">{{ formatoMoneda(totales.descuento) }}</span>
+                    </div>
+
+                    <div class="revision-dato revision-dato--ancho">
+                      <span class="revision-dato__rotulo">Beneficios y condiciones comerciales</span>
+                      <div
+                        class="condiciones-resumen"
+                        [innerHTML]="(formulario.controls.paso2.controls.condicionesComerciales.value || '<p>Sin condiciones adicionales reportadas.</p>') | htmlSeguro"
+                      ></div>
+                    </div>
+                  </div>
+
+                  <p class="revision-ayuda">
+                    <mat-icon aria-hidden="true">info</mat-icon>
+                    La oferta debe permanecer vigente, como mínimo, hasta el cierre de recepción.
+                  </p>
+                </plantilla-tarjeta-contenedora>
+
+                <plantilla-tarjeta-contenedora
+                  icon="folder_open"
+                  title="3. Documentación aportada"
+                  description="Soportes cargados en el paso 3 para respaldar la oferta."
+                >
+                  <button acciones type="button" class="boton-editar-paso" (click)="cambiarPaso(3)">
+                    <mat-icon aria-hidden="true">edit</mat-icon>
+                    <span>Editar paso 3</span>
+                  </button>
+
+                  @if (archivosResumen.length > 0) {
+                    <ul class="documentos-revision">
+                      @for (archivo of archivosResumen; track archivo.requisito + archivo.nombre) {
+                        <li class="documento-revision">
+                          <span class="documento-revision__icono" aria-hidden="true">
+                            <mat-icon>{{ iconoArchivo(archivo.nombre) }}</mat-icon>
+                          </span>
+                          <span class="documento-revision__textos">
+                            <span class="documento-revision__nombre">{{ archivo.nombre }}</span>
+                            <span class="documento-revision__meta">
+                              {{ archivo.requisito }} · {{ archivo.tamano }}
+                            </span>
+                          </span>
+                          <span class="documento-revision__estado">
+                            <mat-icon aria-hidden="true">check_circle</mat-icon>
+                            Validado
+                          </span>
+                        </li>
+                      }
+                    </ul>
+
+                    <p class="documentos-revision__total">
+                      Total adjuntos: <strong>{{ totalArchivos }}</strong>
+                      {{ totalArchivos === 1 ? "archivo" : "archivos" }} ({{ pesoTotalArchivos }})
+                    </p>
+                  } @else {
+                    <div class="documentos-revision__vacio">
+                      <mat-icon aria-hidden="true">file_present</mat-icon>
+                      <span>No hay archivos adjuntos. Regrese al paso 3 para cargar los soportes.</span>
+                    </div>
+                  }
+
+                  <p class="documentos-revision__soporte">
+                    Soporte de cotización principal:
+                    <strong>{{ nombreSoporte }}</strong>
+                  </p>
+                </plantilla-tarjeta-contenedora>
+
+                <plantilla-tarjeta-contenedora
+                  icon="comment"
+                  title="4. Observaciones adicionales"
+                  description="Indique cualquier salvedad técnica, de embalaje o logística para el comité evaluador."
+                >
+                  <div class="campo campo--editor" formGroupName="paso4">
+                    <span class="campo__etiqueta" id="nota-adicional-etiqueta">
+                      Observaciones
+                    </span>
+                    <editor-enriquecido
+                      formControlName="notaAdicional"
+                      idEtiqueta="nota-adicional-etiqueta"
+                      pista="Escriba cualquier salvedad técnica, de embalaje o logística para el comité evaluador…"
+                      ayuda="Opcional · el texto se incluirá en la respuesta radicada."
+                      [maxCaracteres]="500"
+                      [rows]="4"
+                    ></editor-enriquecido>
+                    <div class="campo__contador">
+                      <small>Máximo 500 caracteres.</small>
+                      <small>{{ longitudNotaAdicional }} / 500</small>
+                    </div>
+                    @if (formulario.controls.paso4.controls.notaAdicional.touched && formulario.controls.paso4.controls.notaAdicional.hasError("maxlength")) {
+                      <span class="error-campo" aria-live="polite">
+                        El texto no puede superar los 500 caracteres.
+                      </span>
+                    }
+                  </div>
+                </plantilla-tarjeta-contenedora>
+
+                <section class="aviso-preclusivo" role="note" aria-labelledby="aviso-preclusivo-titulo">
+                  <span class="aviso-preclusivo__icono" aria-hidden="true">
+                    <mat-icon>warning</mat-icon>
+                  </span>
+                  <div class="aviso-preclusivo__textos">
+                    <h3 id="aviso-preclusivo-titulo">Advertencia de radicación preclusiva</h3>
+                    <p>
+                      Solo se permite responder la cotización una vez. Verifique la información:
+                      una vez enviada no podrá modificarla, salvo que el solicitante modifique la
+                      solicitud mediante adenda.
+                    </p>
+                    <span class="aviso-preclusivo__nota">
+                      Fundamento legal: principio de preclusión de etapas precontractuales
+                      (Estatuto General de Contratación UD).
+                    </span>
+                  </div>
+                </section>
+
+                <plantilla-tarjeta-contenedora icon="verified_user" title="5. Declaración juramentada">
+                  <label class="declaracion" formGroupName="paso4">
+                    <input type="checkbox" formControlName="declaracionAceptada" />
+                    <span class="declaracion__textos">
+                      <strong>Declaración juramentada y aceptación de términos</strong>
+                      <span>
+                        Confirmo que la información suministrada es veraz y acepto las condiciones
+                        del proceso de cotización y el Estatuto de Contratación de la Universidad
+                        Distrital Francisco José de Caldas.
+                      </span>
+                    </span>
+                  </label>
+                  @if (formulario.controls.paso4.controls.declaracionAceptada.touched && formulario.controls.paso4.controls.declaracionAceptada.invalid) {
+                    <span class="error-campo" aria-live="polite">
+                      Debe aceptar la declaración para continuar.
+                    </span>
+                  }
+                </plantilla-tarjeta-contenedora>
+              }
+            </section>
+          </form>
+
+          @if (error()) {
+            <div class="error-envio" role="alert" aria-live="assertive">
+              <mat-icon aria-hidden="true">error_outline</mat-icon>
+              <span>{{ error() }}</span>
+              @if (paso() === 4) {
+                <button type="button" class="boton-recto" [disabled]="enviando()" (click)="enviar()">
+                  Reintentar envío
+                </button>
+              }
+            </div>
+          }
+
+          <barra-acciones-formulario
+            [mostrarRegreso]="true"
+            [tituloRegresar]="paso() > 1 ? 'Regresar' : 'Salir'"
+            [esUltimoPaso]="paso() === 4"
+            [tituloFinal]="'Registrar cotización'"
+            [iconoFinal]="'send'"
+            [mostrarGuardar]="true"
+            [tituloGuardar]="'Guardar borrador'"
+            [deshabilitarGuardar]="guardando() || enviando()"
+            [deshabilitarContinuar]="!pasoActualValido || enviando() || confirmandoEnvio() || guardando()"
+            [estadoMensaje]="guardando() ? 'Guardando borrador…' : mensajeGuardado()"
+            [estadoDetalle]="'El borrador se conserva en este equipo; los archivos no se guardan localmente.'"
+            (regreso)="regresarPaso()"
+            (guardar)="guardarBorrador()"
+            (continuar)="continuar()"
+            (finalizar)="enviar()"
+          ></barra-acciones-formulario>
+        }
+      }
+    }
+  </div>
+</plantilla-pagina-contenedora>

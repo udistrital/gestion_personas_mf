@@ -35,8 +35,26 @@ export class BarraAccionesComponent {
    */
   @Input() deshabilitarContinuar = false;
   @Input() ayudaContinuar?: string;
+  /**
+   * Muestra el botón de guardado. En la edición (S-04) se reutiliza con otra
+   * etiqueta; en la creación conserva el "Guardar Borrador" de siempre.
+   */
+  @Input() mostrarGuardar = true;
+  /** Etiqueta del botón de guardado. */
+  @Input() tituloGuardar = 'Guardar Borrador';
+  /** Muestra la acción de descartar (solo edición). */
+  @Input() mostrarDescartar = false;
+  /** Etiqueta de la acción de descartar. */
+  @Input() tituloDescartar = 'Descartar cambios';
+  /** Bloquea el guardado (edición sin cambios o con validaciones pendientes). */
+  @Input() deshabilitarGuardar = false;
+  /** Explica por qué el guardado está deshabilitado. */
+  @Input() ayudaGuardar?: string;
+  /** Bloquea la acción de descartar (p. ej. mientras se guarda). */
+  @Input() deshabilitarDescartar = false;
   @Output() regreso = new EventEmitter<void>();
   @Output() guardar = new EventEmitter<void>();
+  @Output() descartar = new EventEmitter<void>();
   @Output() continuar = new EventEmitter<void>();
   @Output() finalizar = new EventEmitter<void>();
 }

@@ -19,6 +19,14 @@ export class AcordeonPasoComponent {
   /** Resumen del paso ya diligenciado. */
   @Input({ required: true }) resumen!: AcordeonRevision;
 
+  /**
+   * true si el paso admite cambios.
+   *
+   * En la edición (S-04) los pasos no editables ocultan la acción "Editar" y
+   * anuncian "Solo lectura"; en la creación todos son editables.
+   */
+  @Input() editable = true;
+
   /** Notifica el paso al que el usuario quiere volver para editarlo. */
   @Output() editar = new EventEmitter<number>();
 }

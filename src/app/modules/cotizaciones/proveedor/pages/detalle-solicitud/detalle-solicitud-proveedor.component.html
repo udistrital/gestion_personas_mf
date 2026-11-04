@@ -1,0 +1,985 @@
+<plantilla-pagina-contenedora
+  [breadcrumb]="breadcrumb"
+  title="Detalle de la solicitud"
+  [mostrarBotonRegresar]="true"
+  (regresar)="volver()"
+>
+  <div class="detalle">
+    @if (vista() === "cargando") {
+      <div class="estado" aria-busy="true" aria-live="polite">
+        <mat-spinner diameter="40"></mat-spinner>
+        <h2 class="estado__titulo">Cargando detalle de la solicitud…</h2>
+      </div>
+    } @else if (vista() === "error") {
+      <section class="estado" role="alert">
+        <mat-icon class="estado__icono estado__icono--error" aria-hidden="true">
+          error_outline
+        </mat-icon>
+        <h2 class="estado__titulo">No pudimos cargar el detalle</h2>
+        <p class="estado__texto">{{ mensajeError() }}</p>
+        <button class="boton-recto" type="button" (click)="reintentar()">
+          <mat-icon aria-hidden="true">refresh</mat-icon>
+          <span>Reintentar</span>
+        </button>
+      </section>
+    } @else if (vista() === "no-encontrada") {
+      <section class="estado" role="status" aria-live="polite">
+        <mat-icon class="estado__icono" aria-hidden="true">search_off</mat-icon>
+        <h2 class="estado__titulo">Solicitud no encontrada o sin acceso</h2>
+        <p class="estado__texto">
+          No se encontró una invitación que permita consultar esta solicitud.
+        </p>
+        <button class="boton-recto" type="button" (click)="volver()">
+          <mat-icon aria-hidden="true">arrow_back</mat-icon>
+          <span>Volver a solicitudes</span>
+        </button>
+      </section>
+    } @else if (detalle(); as d) {
+      <section class="detalle-proveedor">
+        <header class="cabecera" aria-labelledby="objeto-solicitud-proveedor">
+          <div class="cabecera__principal">
+            <div class="cabecera__textos">
+              <div class="cabecera__antetitulo">
+                <span class="cabecera__modulo">Módulo de Contratación</span>
+                <span class="cabecera__sistema">SISTEMA INTEGRADO ÁGORA</span>
+              </div>
+              <h2 id="objeto-solicitud-proveedor" class="cabecera__titulo">
+                {{ d.solicitud.titulo }}
+              </h2>
+              <div class="cabecera__chips">
+                <span class="chip chip--recto">
+                  <span class="cabecera__chip-etiqueta">N.° Solicitud:</span>
+                  <span class="cabecera__chip-valor">{{ d.solicitud.id }}</span>
+                </span>
+                <span class="chip chip--recto">
+                  <span class="cabecera__chip-etiqueta">Vigencia:</span>
+                  <span class="cabecera__chip-valor">{{
+                    d.solicitud.vigencia
+                  }}</span>
+                </span>
+                <span class="chip chip--recto">
+                  <span class="cabecera__chip-etiqueta">Versión:</span>
+                  <span class="cabecera__chip-valor">{{
+                    d.solicitud.version
+                  }}</span>
+                </span>
+                <chip-estado [estado]="d.solicitud.estado"></chip-estado>
+                <chip-estado [estado]="d.invitacion.estado"></chip-estado>
+                <span class="chip chip--recto">
+                  {{
+                    d.yaRespondio
+                      ? "Postulación radicada"
+                      : "Sin respuesta radicada"
+                  }}
+                </span>
+              </div>
+            </div>
+
+            <div class="cabecera__lateral">
+              @if (!solicitudCerrada) {
+                <div class="metrica" aria-label="Plazo de participación">
+                  <span class="metrica__icono" aria-hidden="true">
+                    <mat-icon>schedule</mat-icon>
+                  </span>
+                  <div>
+                    <div class="metrica__texto">Cierre de recepción</div>
+                    <contador-regresivo
+                      [fechaCierre]="d.solicitud.cierre"
+                    ></contador-regresivo>
+                  </div>
+                </div>
+              }
+              <div class="cabecera__acciones">
+                @if (puedeObservar) {
+                  <button
+                    class="boton-recto boton-recto--vino"
+                    type="button"
+                    (click)="navegarA('observar')"
+                  >
+                    <mat-icon aria-hidden="true">visibility</mat-icon>
+                    <span>Ver observaciones</span>
+                  </button>
+                }
+                <button
+                  class="boton-recto"
+                  type="button"
+                  [matMenuTriggerFor]="menuAccionesProveedor"
+                  aria-haspopup="true"
+                >
+                  <span>Más acciones</span>
+                  <mat-icon aria-hidden="true">arrow_drop_down</mat-icon>
+                </button>
+                <mat-menu #menuAccionesProveedor="matMenu" xPosition="before">
+                  <button
+                    mat-menu-item
+                    type="button"
+                    [disabled]="!puedeResponder"
+                    [attr.aria-describedby]="
+                      !puedeResponder && solicitudCerrada
+                        ? 'detalle-acciones-ayuda'
+                        : null
+                    "
+                    (click)="navegarA('responder')"
+                  >
+                    <mat-icon aria-hidden="true" color="primary"
+                      >edit_square</mat-icon
+                    >
+                    <span>Responder solicitud</span>
+                  </button>
+                  <button mat-menu-item type="button" (click)="descargarPdf()">
+                    <mat-icon aria-hidden="true" color="primary">
+                      picture_as_pdf
+                    </mat-icon>
+                    <span>Descargar solicitud (PDF)</span>
+                  </button>
+                </mat-menu>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        @if (solicitudCerrada) {
+          <p
+            id="detalle-acciones-ayuda"
+            class="detalle-proveedor__ayuda-acciones"
+            role="note"
+          >
+            {{ textoCierre() }}
+          </p>
+        }
+
+        @if (d.adenda) {
+          <section
+            class="detalle-proveedor__aviso detalle-proveedor__aviso--adenda"
+            role="status"
+            aria-live="polite"
+          >
+            <mat-icon aria-hidden="true">campaign</mat-icon>
+            <div>
+              <h2>Adenda publicada</h2>
+              <p>
+                Se publicó la versión {{ d.adenda.versionVigente }} el
+                {{ d.adenda.publicadaEl }}. Consulte los cambios frente a la
+                versión {{ d.adenda.versionAnterior }}.
+              </p>
+              @if (d.adenda.diferencias.total > 0) {
+                <ul class="detalle-proveedor__cambios">
+                  @for (
+                    grupo of d.adenda.diferencias.grupos;
+                    track grupo.paso
+                  ) {
+                    @for (cambio of grupo.cambios; track cambio.etiqueta) {
+                      <li>
+                        <strong>{{ cambio.etiqueta }}:</strong>
+                        <span>{{ cambio.anterior }}</span>
+                        <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+                        <span>{{ cambio.nuevo }}</span>
+                      </li>
+                    }
+                  }
+                </ul>
+              }
+            </div>
+          </section>
+        }
+
+        @if (solicitudCerrada) {
+          <section
+            class="detalle-proveedor__aviso detalle-proveedor__aviso--cerrada"
+            role="status"
+          >
+            <mat-icon aria-hidden="true">lock_clock</mat-icon>
+            <div>
+              <h2>Solicitud cerrada</h2>
+              <p>{{ textoCierre() }}</p>
+            </div>
+          </section>
+        }
+
+        <section
+          class="detalle-proveedor__cronograma"
+          aria-labelledby="cronograma-titulo"
+        >
+          <div class="detalle-proveedor__cronograma-cabecera">
+            <span
+              class="detalle-proveedor__cronograma-icono"
+              aria-hidden="true"
+            >
+              <mat-icon>calendar_month</mat-icon>
+            </span>
+            <div>
+              <h2 id="cronograma-titulo">Cronograma de la solicitud</h2>
+              <p>Fechas clave publicadas para este proceso de cotización.</p>
+            </div>
+          </div>
+          <ol>
+            <li>
+              <span class="detalle-proveedor__hito-punto">1</span>
+              <div class="detalle-proveedor__hito-contenido">
+                <span class="detalle-proveedor__hito">Apertura</span>
+                <time>{{ d.solicitud.apertura || "Por definir" }}</time>
+              </div>
+            </li>
+            <li>
+              <span class="detalle-proveedor__hito-punto">2</span>
+              <div class="detalle-proveedor__hito-contenido">
+                <span class="detalle-proveedor__hito">Cierre de recepción</span>
+                <time>{{ d.solicitud.cierre || "Por definir" }}</time>
+              </div>
+            </li>
+            <li>
+              <span class="detalle-proveedor__hito-punto">3</span>
+              <div class="detalle-proveedor__hito-contenido">
+                <span class="detalle-proveedor__hito">Evaluación</span>
+                <etiqueta-por-definir texto="Por definir" />
+              </div>
+            </li>
+            <li>
+              <span class="detalle-proveedor__hito-punto">4</span>
+              <div class="detalle-proveedor__hito-contenido">
+                <span class="detalle-proveedor__hito">
+                  Publicación de resultados
+                </span>
+                <etiqueta-por-definir texto="Por definir" />
+              </div>
+            </li>
+            <li>
+              <span class="detalle-proveedor__hito-punto">5</span>
+              <div class="detalle-proveedor__hito-contenido">
+                <span class="detalle-proveedor__hito">Adjudicación</span>
+                <etiqueta-por-definir texto="Por definir" />
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <tarjeta-seccion
+          icono="badge"
+          titulo="Responsables y datos generales"
+          subtitulo="Información de contacto y descripción oficial del proceso"
+        >
+          <div class="datos-grid datos-grid--tres">
+            <par-etiqueta-valor
+              etiqueta="Número de solicitud"
+              [valor]="d.solicitud.id"
+            />
+            <par-etiqueta-valor
+              etiqueta="Vigencia"
+              [valor]="'' + d.solicitud.vigencia"
+            />
+            <par-etiqueta-valor
+              etiqueta="Dependencia"
+              [valor]="d.solicitud.dependencia"
+            />
+            <par-etiqueta-valor
+              etiqueta="Responsable"
+              [valor]="
+                d.solicitud.general.responsable.nombres +
+                ' ' +
+                d.solicitud.general.responsable.apellidos
+              "
+            />
+            <par-etiqueta-valor
+              etiqueta="Identificación"
+              [valor]="d.solicitud.general.responsable.identificacion"
+            />
+            <par-etiqueta-valor
+              etiqueta="Ordenador del gasto"
+              [valor]="d.solicitud.general.responsable.ordenadorGasto"
+              [nota]="d.solicitud.general.responsable.ordenadorCargo"
+            />
+            <par-etiqueta-valor
+              etiqueta="Dependencia solicitante"
+              [valor]="d.solicitud.general.responsable.dependenciaSolicitante"
+            />
+            <par-etiqueta-valor
+              etiqueta="Dependencia destino"
+              [valor]="d.solicitud.general.responsable.dependenciaDestino"
+            />
+            <par-etiqueta-valor
+              etiqueta="Unidad ejecutora"
+              [valor]="d.solicitud.general.responsable.unidadEjecutora"
+            />
+          </div>
+          <div class="detalle-proveedor__texto">
+            <h3>Objeto / tema</h3>
+            <div
+              [innerHTML]="
+                d.solicitud.general.caracteristicas.objetivo | htmlSeguro
+              "
+            ></div>
+          </div>
+          <div class="detalle-proveedor__texto">
+            <h3>Requisitos habilitantes mínimos</h3>
+            <p>{{ d.solicitud.general.caracteristicas.requisitos }}</p>
+            <div class="detalle-proveedor__clasificaciones">
+              <span class="dato__etiqueta">
+                Clasificaciones CIIU, SNIES y registro RUP
+              </span>
+              <etiqueta-por-definir
+                texto="Aplicabilidad por definir"
+                detalle="Los requisitos públicos CIIU, SNIES y RUP aún no están separados de la segmentación de proveedores objetivo."
+              />
+            </div>
+          </div>
+          <div class="detalle-proveedor__texto">
+            <h3>Criterio de selección</h3>
+            <div
+              [innerHTML]="
+                d.solicitud.general.caracteristicas.criterioSeleccion
+                  | htmlSeguro
+              "
+            ></div>
+          </div>
+          <div class="detalle-proveedor__texto">
+            <h3>Ubicación de entrega</h3>
+            <p>{{ d.solicitud.itemsDetalle.sede }}</p>
+          </div>
+        </tarjeta-seccion>
+
+        <tarjeta-seccion
+          icono="account_tree"
+          titulo="Plan de acción relacionado"
+          [subtitulo]="d.solicitud.general.planAccion.codigo"
+        >
+          <div
+            class="detalle-proveedor__texto"
+            [innerHTML]="
+              d.solicitud.general.planAccion.descripcion | htmlSeguro
+            "
+          ></div>
+          <div class="detalle-proveedor__metadatos">
+            <span>{{ d.solicitud.general.planAccion.eje }}</span>
+            <span>{{ d.solicitud.general.planAccion.aprobacion }}</span>
+          </div>
+        </tarjeta-seccion>
+
+        <tarjeta-seccion
+          icono="account_balance"
+          titulo="Presupuesto, CDP y rubro"
+          subtitulo="Información presupuestal publicada para el proceso"
+        >
+          @if (d.solicitud.presupuesto; as presupuesto) {
+            <div class="datos-grid datos-grid--tres">
+              <par-etiqueta-valor
+                etiqueta="Valor del CDP"
+                [valor]="formatoDinero(presupuesto.valorCdp)"
+              />
+              <par-etiqueta-valor
+                etiqueta="Número de CDP"
+                [valor]="presupuesto.saldo.numeroCdp"
+              />
+              <par-etiqueta-valor
+                etiqueta="Fecha de expedición"
+                [valor]="presupuesto.saldo.fechaExpedicion"
+              />
+              <par-etiqueta-valor
+                etiqueta="Saldo disponible"
+                [valor]="formatoDinero(presupuesto.saldo.saldoDisponible)"
+              />
+            </div>
+            <p class="detalle-proveedor__nota-presupuesto">
+              {{ presupuesto.descripcionCdp }}
+            </p>
+            <div class="tabla-detalle__scroll">
+              <table
+                class="tabla-detalle"
+                aria-label="Rubro presupuestal publicado"
+              >
+                <caption class="tabla-detalle__caption">
+                  Rubro presupuestal y valores imputados
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col" class="tabla-detalle__th">Vigencia</th>
+                    <th scope="col" class="tabla-detalle__th">Rubro</th>
+                    <th scope="col" class="tabla-detalle__th">Descripción</th>
+                    <th
+                      scope="col"
+                      class="tabla-detalle__th tabla-detalle__th--numero"
+                    >
+                      Valor
+                    </th>
+                    <th scope="col" class="tabla-detalle__th">Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (
+                    imputacion of filasPagina(
+                      presupuesto.imputaciones,
+                      "presupuesto"
+                    );
+                    track imputacion.numeroCdp + imputacion.rubro
+                  ) {
+                    <tr class="tabla-detalle__fila">
+                      <td class="tabla-detalle__td">
+                        {{ imputacion.vigencia }}
+                      </td>
+                      <td class="tabla-detalle__td tabla-detalle__td--fuerte">
+                        {{ imputacion.rubro }}
+                      </td>
+                      <td class="tabla-detalle__td">
+                        {{ imputacion.rubroNombre }}
+                      </td>
+                      <td class="tabla-detalle__td tabla-detalle__td--numero">
+                        {{ formatoDinero(imputacion.valor) }}
+                      </td>
+                      <td class="tabla-detalle__td">
+                        <span [class]="claseEstadoPresupuesto(imputacion.tono)">
+                          {{ imputacion.estado }}
+                        </span>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <ng-container
+              [ngTemplateOutlet]="paginadorTabla"
+              [ngTemplateOutletContext]="{
+                tabla: 'presupuesto',
+                total: presupuesto.imputaciones.length,
+                etiqueta: 'imputaciones presupuestales',
+              }"
+            />
+          } @else {
+            <p>La información presupuestal no está disponible.</p>
+          }
+        </tarjeta-seccion>
+
+        <tarjeta-seccion
+          icono="inventory_2"
+          titulo="Ítems y valores techo"
+          subtitulo="Bienes o servicios incluidos en la solicitud"
+        >
+          <p class="detalle-proveedor__ubicacion">
+            {{ d.solicitud.itemsDetalle.unidadEjecutora }} ·
+            {{ d.solicitud.itemsDetalle.sede }}
+          </p>
+          @if (d.solicitud.items.length) {
+            <div class="tabla-detalle__scroll">
+              <table class="tabla-detalle" aria-label="Ítems de la solicitud">
+                <caption class="tabla-detalle__caption">
+                  Lista de ítems con especificaciones, cantidad y valor unitario
+                  techo
+                </caption>
+                <thead>
+                  <tr>
+                    <th
+                      scope="col"
+                      class="tabla-detalle__th tabla-detalle__th--centro"
+                    >
+                      N.°
+                    </th>
+                    <th scope="col" class="tabla-detalle__th">
+                      Nombre del ítem
+                    </th>
+                    <th scope="col" class="tabla-detalle__th">
+                      Descripción técnica y especificaciones
+                    </th>
+                    <th
+                      scope="col"
+                      class="tabla-detalle__th tabla-detalle__th--centro"
+                    >
+                      Tipo
+                    </th>
+                    <th
+                      scope="col"
+                      class="tabla-detalle__th tabla-detalle__th--centro"
+                    >
+                      Unidad de medida
+                    </th>
+                    <th
+                      scope="col"
+                      class="tabla-detalle__th tabla-detalle__th--numero"
+                    >
+                      Cantidad
+                    </th>
+                    <th
+                      scope="col"
+                      class="tabla-detalle__th tabla-detalle__th--numero"
+                    >
+                      Valor unitario techo
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (
+                    item of filasPagina(d.solicitud.items, "items");
+                    track item.id;
+                    let indice = $index
+                  ) {
+                    <tr class="tabla-detalle__fila">
+                      <td
+                        class="tabla-detalle__td tabla-detalle__td--centro tabla-detalle__td--fuerte"
+                      >
+                        {{
+                          numeroFila("items", indice, d.solicitud.items.length)
+                        }}
+                      </td>
+                      <td class="tabla-detalle__td">
+                        <span class="tabla-detalle__celda-titulo">
+                          {{ item.nombre }}
+                        </span>
+                      </td>
+                      <td class="tabla-detalle__td">
+                        <span
+                          [innerHTML]="item.descripcion | htmlSeguro"
+                        ></span>
+                      </td>
+                      <td class="tabla-detalle__td tabla-detalle__td--centro">
+                        <span [class]="claseTipo(item.tipo)">
+                          <mat-icon aria-hidden="true">
+                            {{
+                              item.tipo === "bien" ? "devices" : "room_service"
+                            }}
+                          </mat-icon>
+                          {{ item.tipo === "bien" ? "Bien" : "Servicio" }}
+                        </span>
+                      </td>
+                      <td class="tabla-detalle__td tabla-detalle__td--centro">
+                        {{ item.unidad }}
+                      </td>
+                      <td class="tabla-detalle__td tabla-detalle__td--numero">
+                        {{ item.cantidad }}
+                      </td>
+                      <td class="tabla-detalle__td tabla-detalle__td--numero">
+                        @if (
+                          item.valorUnitarioTecho !== null &&
+                          item.valorUnitarioTecho !== undefined
+                        ) {
+                          {{ formatoDinero(item.valorUnitarioTecho) }}
+                        } @else {
+                          <etiqueta-por-definir
+                            texto="Por definir"
+                            detalle="El valor techo no está disponible en los datos simulados."
+                          />
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <ng-container
+              [ngTemplateOutlet]="paginadorTabla"
+              [ngTemplateOutletContext]="{
+                tabla: 'items',
+                total: d.solicitud.items.length,
+                etiqueta: 'ítems',
+              }"
+            />
+          } @else {
+            <p>No hay ítems publicados para esta solicitud.</p>
+          }
+        </tarjeta-seccion>
+
+        <tarjeta-seccion
+          icono="description"
+          titulo="Contratación, pagos y garantías"
+          subtitulo="Condiciones contractuales publicadas"
+        >
+          @if (d.solicitud.contratacion; as contrato) {
+            <div class="datos-grid datos-grid--tres">
+              <par-etiqueta-valor
+                etiqueta="Tipo de contrato"
+                [valor]="contrato.tipoContrato"
+                [nota]="contrato.tipoContratoNorma"
+              />
+              <par-etiqueta-valor
+                etiqueta="Modalidad de selección"
+                [valor]="contrato.modalidadSeleccion"
+                [nota]="contrato.modalidadNota"
+              />
+              <par-etiqueta-valor
+                etiqueta="Plazo de ejecución"
+                [valor]="contrato.plazoEjecucion"
+                [nota]="contrato.plazoNota"
+              />
+              <par-etiqueta-valor
+                etiqueta="Lugar de ejecución"
+                [valor]="contrato.lugarEjecucion"
+                [nota]="contrato.lugarDireccion"
+              />
+              <par-etiqueta-valor
+                etiqueta="Medio de pago"
+                [valor]="contrato.medioPago"
+                [nota]="contrato.medioPagoNota"
+              />
+              <par-etiqueta-valor
+                etiqueta="Forma de pago"
+                [valor]="contrato.formaPago"
+                [nota]="contrato.formaPagoNota"
+              />
+              <par-etiqueta-valor
+                etiqueta="Supervisor"
+                [valor]="contrato.supervisor.cargo"
+              />
+            </div>
+            <div class="detalle-proveedor__texto">
+              <h3>Supervisión técnica</h3>
+              <div
+                [innerHTML]="contrato.supervisor.parrafoHtml | htmlSeguro"
+              ></div>
+            </div>
+            <div class="detalle-proveedor__garantias">
+              <h3>Garantías y validaciones</h3>
+              @for (garantia of contrato.garantias; track garantia.titulo) {
+                <article>
+                  <mat-icon aria-hidden="true" color="primary">{{
+                    garantia.icono
+                  }}</mat-icon>
+                  <div>
+                    <strong>{{ garantia.titulo }}</strong>
+                    <p>{{ garantia.descripcion }}</p>
+                  </div>
+                </article>
+              }
+            </div>
+            <div class="detalle-proveedor__pagos">
+              <h3>Cronograma de pagos</h3>
+              <div class="detalle-proveedor__pagos-lista">
+                @for (
+                  pago of contrato.parametros;
+                  track pago.id;
+                  let indice = $index
+                ) {
+                  <article class="detalle-proveedor__pago">
+                    <div class="detalle-proveedor__pago-cabecera">
+                      <span class="detalle-proveedor__pago-numero">
+                        Hito {{ indice + 1 }}
+                      </span>
+                      <span class="chip chip--recto">
+                        {{ pago.porcentaje }}% del valor
+                      </span>
+                    </div>
+                    <h4>{{ pago.condicion }}</h4>
+                    <div
+                      class="detalle-proveedor__pago-progreso"
+                      role="img"
+                      [attr.aria-label]="
+                        pago.porcentaje +
+                        '% del valor contractual asignado a este hito'
+                      "
+                    >
+                      <span [style.width.%]="pago.porcentaje"></span>
+                    </div>
+                    @if (pago.nota) {
+                      <p>{{ pago.nota }}</p>
+                    }
+                    @if (pago.requisitos?.length) {
+                      <div class="detalle-proveedor__pago-requisitos">
+                        @for (
+                          requisito of pago.requisitos;
+                          track requisito.etiqueta
+                        ) {
+                          <span class="chip">
+                            <mat-icon aria-hidden="true">
+                              {{ requisito.icono }}
+                            </mat-icon>
+                            {{ requisito.etiqueta }}
+                          </span>
+                        }
+                      </div>
+                    }
+                  </article>
+                }
+              </div>
+            </div>
+          } @else {
+            <p>Las condiciones contractuales no están disponibles.</p>
+          }
+        </tarjeta-seccion>
+
+        <tarjeta-seccion
+          icono="folder_open"
+          titulo="Anexos oficiales y documentos requeridos"
+          subtitulo="Anexos del proceso y matriz documental exigida al oferente"
+        >
+          @if (errorDescarga()) {
+            <div class="detalle-proveedor__error-descarga" role="alert">
+              <mat-icon aria-hidden="true">error_outline</mat-icon>
+              <span>{{ errorDescarga() }}</span>
+              <button
+                type="button"
+                (click)="cerrarErrorDescarga()"
+                aria-label="Cerrar error de descarga"
+              >
+                <mat-icon aria-hidden="true">close</mat-icon>
+              </button>
+            </div>
+          }
+          <div class="detalle-proveedor__documentos">
+            <h3>Anexos oficiales</h3>
+            <div class="tabla-detalle__scroll">
+              <table
+                class="tabla-detalle"
+                aria-label="Anexos oficiales de la solicitud"
+              >
+                <caption class="tabla-detalle__caption">
+                  Anexos publicados para la solicitud, su descripción y la
+                  acción para descargarlos
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col" class="tabla-detalle__th">Tipo</th>
+                    <th scope="col" class="tabla-detalle__th">
+                      Nombre del archivo
+                    </th>
+                    <th scope="col" class="tabla-detalle__th">Descripción</th>
+                    <th
+                      scope="col"
+                      class="tabla-detalle__th tabla-detalle__th--numero"
+                    >
+                      Acciones
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (
+                    anexo of filasPagina(
+                      d.solicitud.documentos?.anexos ?? [],
+                      "anexos"
+                    );
+                    track anexo.id
+                  ) {
+                    <tr class="tabla-detalle__fila">
+                      <td class="tabla-detalle__td">
+                        <span class="chip chip--formato">
+                          <mat-icon aria-hidden="true">{{
+                            anexo.icono
+                          }}</mat-icon>
+                          {{ formatoArchivo(anexo.nombre) }}
+                        </span>
+                      </td>
+                      <td class="tabla-detalle__td">
+                        <span class="tabla-detalle__celda-titulo">
+                          {{ anexo.nombre }}
+                        </span>
+                      </td>
+                      <td class="tabla-detalle__td">
+                        {{ anexo.descripcion || "Sin descripción" }}
+                      </td>
+                      <td class="tabla-detalle__td tabla-detalle__td--numero">
+                        <button
+                          class="boton-recto boton-recto--vino"
+                          type="button"
+                          [disabled]="
+                            !puedeDescargarAnexos || descargando() === anexo.id
+                          "
+                          [attr.aria-label]="'Descargar ' + anexo.nombre"
+                          (click)="descargarAnexo(anexo)"
+                        >
+                          @if (descargando() === anexo.id) {
+                            <mat-spinner diameter="14"></mat-spinner>
+                          } @else {
+                            <mat-icon aria-hidden="true">download</mat-icon>
+                          }
+                          <span>Descargar</span>
+                        </button>
+                      </td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="4" class="tabla-detalle__vacio">
+                        <mat-icon aria-hidden="true">folder_open</mat-icon>
+                        <span>No hay anexos oficiales publicados.</span>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <ng-container
+              [ngTemplateOutlet]="paginadorTabla"
+              [ngTemplateOutletContext]="{
+                tabla: 'anexos',
+                total: d.solicitud.documentos?.anexos?.length ?? 0,
+                etiqueta: 'anexos oficiales',
+              }"
+            />
+          </div>
+          <div class="detalle-proveedor__documentos">
+            <h3>Matriz documental del oferente</h3>
+            <div class="tabla-detalle__scroll">
+              <table
+                class="tabla-detalle"
+                aria-label="Documentos exigidos al oferente"
+              >
+                <caption class="tabla-detalle__caption">
+                  Matriz documental exigida al oferente con clasificación y
+                  requisito
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col" class="tabla-detalle__th">
+                      Documento exigido
+                    </th>
+                    <th scope="col" class="tabla-detalle__th">Clasificación</th>
+                    <th scope="col" class="tabla-detalle__th">
+                      Requisito / descripción
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (
+                    documento of filasPagina(
+                      d.solicitud.documentos?.requeridos ?? [],
+                      "requeridos"
+                    );
+                    track documento.id
+                  ) {
+                    <tr class="tabla-detalle__fila">
+                      <td class="tabla-detalle__td">
+                        <span class="tabla-detalle__celda-titulo">
+                          {{ documento.nombre }}
+                        </span>
+                      </td>
+                      <td class="tabla-detalle__td">
+                        <span
+                          class="chip chip--clasificacion"
+                          [class.chip--clasificacion--obligatorio]="
+                            documento.clasificacion === 'obligatorio'
+                          "
+                        >
+                          {{
+                            documento.clasificacion === "obligatorio"
+                              ? "Obligatorio"
+                              : "Complementario"
+                          }}
+                        </span>
+                      </td>
+                      <td class="tabla-detalle__td">
+                        {{ documento.instruccion }}
+                      </td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="3" class="tabla-detalle__vacio">
+                        <mat-icon aria-hidden="true">
+                          assignment_turned_in
+                        </mat-icon>
+                        <span>No se ha publicado una matriz documental.</span>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <ng-container
+              [ngTemplateOutlet]="paginadorTabla"
+              [ngTemplateOutletContext]="{
+                tabla: 'requeridos',
+                total: d.solicitud.documentos?.requeridos?.length ?? 0,
+                etiqueta: 'documentos exigidos',
+              }"
+            />
+          </div>
+        </tarjeta-seccion>
+        <ng-template
+          #paginadorTabla
+          let-tabla="tabla"
+          let-total="total"
+          let-etiqueta="etiqueta"
+        >
+          <footer class="bandeja__paginador">
+            <div class="bandeja__paginador-info">
+              <span>Mostrar:</span>
+              <div class="bandeja__paginador-select">
+                <select
+                  [value]="tamanoPagina(tabla)"
+                  [attr.aria-label]="etiqueta + ' por página'"
+                  (change)="cambiarPorPagina(tabla, $event)"
+                >
+                  @for (opcion of opcionesPorPagina; track opcion) {
+                    <option [value]="opcion">{{ opcion }}</option>
+                  }
+                </select>
+                <mat-icon aria-hidden="true">arrow_drop_down</mat-icon>
+              </div>
+              <span>por página</span>
+            </div>
+            <div class="bandeja__paginador-rango">
+              Mostrando
+              <span class="bandeja__paginador-rango-valor">
+                {{ rangoPagina(tabla, total).desde }} </span
+              >–<span class="bandeja__paginador-rango-valor">
+                {{ rangoPagina(tabla, total).hasta }}
+              </span>
+              de
+              <span class="bandeja__paginador-rango-valor">{{ total }}</span>
+              {{ etiqueta }}
+            </div>
+            <nav
+              class="bandeja__paginador-navegacion"
+              [attr.aria-label]="'Paginación: ' + etiqueta"
+            >
+              <button
+                class="bandeja__paginador-boton"
+                type="button"
+                title="Primera página"
+                aria-label="Primera página"
+                [disabled]="paginaActual(tabla) === 0"
+                (click)="irAPagina(tabla, 0, total)"
+              >
+                <mat-icon aria-hidden="true">first_page</mat-icon>
+              </button>
+              <button
+                class="bandeja__paginador-boton"
+                type="button"
+                title="Anterior"
+                aria-label="Página anterior"
+                [disabled]="paginaActual(tabla) === 0"
+                (click)="irAPagina(tabla, paginaActual(tabla) - 1, total)"
+              >
+                <mat-icon aria-hidden="true">chevron_left</mat-icon>
+              </button>
+              @for (numero of numerosPagina(tabla, total); track numero) {
+                <button
+                  class="bandeja__paginador-boton bandeja__paginador-boton--pagina"
+                  type="button"
+                  [attr.aria-current]="
+                    numero === paginaActual(tabla) + 1 ? 'page' : null
+                  "
+                  [attr.aria-label]="'Página ' + numero"
+                  [class.bandeja__paginador-boton--activo]="
+                    numero === paginaActual(tabla) + 1
+                  "
+                  (click)="irAPagina(tabla, numero - 1, total)"
+                >
+                  {{ numero }}
+                </button>
+              }
+              <button
+                class="bandeja__paginador-boton"
+                type="button"
+                title="Siguiente"
+                aria-label="Página siguiente"
+                [disabled]="
+                  paginaActual(tabla) + 1 >= totalPaginas(tabla, total)
+                "
+                (click)="irAPagina(tabla, paginaActual(tabla) + 1, total)"
+              >
+                <mat-icon aria-hidden="true">chevron_right</mat-icon>
+              </button>
+              <button
+                class="bandeja__paginador-boton"
+                type="button"
+                title="Última página"
+                aria-label="Última página"
+                [disabled]="
+                  paginaActual(tabla) + 1 >= totalPaginas(tabla, total)
+                "
+                (click)="
+                  irAPagina(tabla, totalPaginas(tabla, total) - 1, total)
+                "
+              >
+                <mat-icon aria-hidden="true">last_page</mat-icon>
+              </button>
+            </nav>
+          </footer>
+        </ng-template>
+      </section>
+    }
+  </div>
+</plantilla-pagina-contenedora>

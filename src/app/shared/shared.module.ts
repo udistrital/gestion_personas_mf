@@ -18,7 +18,10 @@ import { ListadoFiltrosComponent } from "./components/listado-filtros/listado-fi
 import { AsistentePasosComponent } from "./components/asistente-pasos/asistente-pasos.component";
 import { BannerPasoComponent } from "./components/banner-paso/banner-paso.component";
 import { EditorEnriquecidoComponent } from "./components/editor-enriquecido/editor-enriquecido.component";
+import { EtiquetaPorDefinirComponent } from "./components/etiqueta-por-definir/etiqueta-por-definir.component";
+import { ContadorRegresivoComponent } from "./components/contador-regresivo/contador-regresivo.component";
 import { HtmlSeguroPipe } from "./pipes/html-seguro.pipe";
+import { CargaArchivosComponent } from "./components/carga-archivos/carga-archivos.component";
 import { QuillModule } from "ngx-quill";
 
 @NgModule({
@@ -37,7 +40,10 @@ import { QuillModule } from "ngx-quill";
     AsistentePasosComponent,
     BannerPasoComponent,
     EditorEnriquecidoComponent,
+    EtiquetaPorDefinirComponent,
+    ContadorRegresivoComponent,
     HtmlSeguroPipe,
+    CargaArchivosComponent,
   ],
   imports: [
     CommonModule,
@@ -68,8 +74,11 @@ import { QuillModule } from "ngx-quill";
     AsistentePasosComponent,
     BannerPasoComponent,
     EditorEnriquecidoComponent,
+    EtiquetaPorDefinirComponent,
+    ContadorRegresivoComponent,
     QuillModule,
     HtmlSeguroPipe,
+    CargaArchivosComponent,
   ],
 })
 export class SharedModule {}

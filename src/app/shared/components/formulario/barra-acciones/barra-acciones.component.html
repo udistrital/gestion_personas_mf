@@ -18,9 +18,27 @@
       <span>{{ tituloRegresar }}</span>
     </button>
 
-    <button class="boton-borrador" type="button" (click)="guardar.emit()">
+    <button
+      *ngIf="mostrarDescartar"
+      class="boton-borrador boton-borrador--peligro"
+      type="button"
+      [disabled]="deshabilitarDescartar"
+      (click)="descartar.emit()"
+    >
+      <mat-icon aria-hidden="true">delete_outline</mat-icon>
+      <span>{{ tituloDescartar }}</span>
+    </button>
+
+    <button
+      *ngIf="mostrarGuardar"
+      class="boton-borrador"
+      type="button"
+      [disabled]="deshabilitarGuardar"
+      [attr.title]="deshabilitarGuardar ? ayudaGuardar : null"
+      (click)="guardar.emit()"
+    >
       <mat-icon aria-hidden="true">save</mat-icon>
-      <span>Guardar Borrador</span>
+      <span>{{ tituloGuardar }}</span>
     </button>
 
     <button

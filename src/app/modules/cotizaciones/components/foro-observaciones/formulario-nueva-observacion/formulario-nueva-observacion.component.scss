@@ -1,0 +1,110 @@
+@use "src/app/shared/styles/tokens" as t;
+
+:host {
+  display: block;
+}
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-surface);
+}
+
+.formulario__cabecera,
+.formulario__cabecera h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.formulario__cabecera {
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.formulario__cabecera h3 {
+  margin: 0;
+  color: var(--agora-text);
+  font-size: 1.1rem;
+}
+
+.formulario__cabecera mat-icon {
+  color: var(--agora-primary);
+}
+
+.formulario__ayuda {
+  margin: 0;
+  color: var(--agora-text-muted);
+  font-size: var(--agora-font-sm);
+}
+
+.formulario__etiqueta {
+  color: var(--agora-texto-neutro);
+  font-size: var(--agora-font-md);
+  font-weight: 600;
+}
+
+.formulario__error {
+  margin: 0;
+  color: var(--agora-error-dark);
+  font-size: var(--agora-font-sm);
+}
+
+.formulario__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.boton {
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  border: 0;
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-primary);
+  color: var(--agora-on-primary);
+  font: inherit;
+  font-size: var(--agora-font-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s ease all;
+}
+
+.boton:focus-visible {
+  outline: 2px solid var(--agora-primary);
+  outline-offset: 2px;
+}
+
+.boton:hover {
+  background: var(--agora-primary-dark);
+}
+
+.boton--secundario {
+  border: 1px solid var(--agora-borde-control);
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-text);
+}
+
+.boton--secundario:hover {
+  background: var(--agora-resalte-neutro);
+}
+
+.boton:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+@media (max-width: t.$bp-xs) {
+  .boton {
+    width: 100%;
+  }
+}

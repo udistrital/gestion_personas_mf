@@ -13,6 +13,18 @@
       <mat-icon aria-hidden="true">event_repeat</mat-icon>
       <span>Regla 3 días hábiles</span>
     </span>
+    @if (esEdicion) {
+      <span class="chip chip--recto">
+        <mat-icon aria-hidden="true">edit_note</mat-icon>
+        <span>Modo edición</span>
+      </span>
+    }
+    @if (esRestringida) {
+      <span class="chip chip--bloqueo">
+        <mat-icon aria-hidden="true">lock</mat-icon>
+        <span>Solo fecha de cierre</span>
+      </span>
+    }
   </ng-container>
 </banner-paso>
 
@@ -156,6 +168,12 @@
         </mat-icon>
       </span>
       <span class="campo__ayuda">Dependencia que formula la solicitud.</span>
+      @if (!campoEditable("dependenciaSolicitante")) {
+        <span class="campo__ayuda campo__ayuda--bloqueo">
+          <mat-icon aria-hidden="true">lock</mat-icon>
+          Solo lectura en esta modificación restringida.
+        </span>
+      }
     </div>
 
     <div class="campo">
@@ -179,6 +197,12 @@
         </mat-icon>
       </span>
       <span class="campo__ayuda">Dependencia que recibe la cotización.</span>
+      @if (!campoEditable("dependenciaDestino")) {
+        <span class="campo__ayuda campo__ayuda--bloqueo">
+          <mat-icon aria-hidden="true">lock</mat-icon>
+          Solo lectura en esta modificación restringida.
+        </span>
+      }
     </div>
   </div>
 </plantilla-tarjeta-contenedora>
@@ -209,6 +233,12 @@
         <span class="campo__ayuda">{{ cronograma().aperturaLarga }}</span>
       } @else {
         <span class="campo__ayuda">Fecha de publicación del proceso.</span>
+      }
+      @if (!campoEditable("fechaApertura")) {
+        <span class="campo__ayuda campo__ayuda--bloqueo">
+          <mat-icon aria-hidden="true">lock</mat-icon>
+          Solo lectura en esta modificación restringida.
+        </span>
       }
     </div>
 
@@ -244,6 +274,12 @@
       } @else {
         <span class="campo__ayuda">
           El cierre se calcula desde la fecha de apertura.
+        </span>
+      }
+      @if (esRestringida) {
+        <span class="campo__ayuda campo__ayuda--habilitado">
+          <mat-icon aria-hidden="true">check_circle</mat-icon>
+          Campo habilitado en esta modificación restringida.
         </span>
       }
     </div>
@@ -418,6 +454,12 @@
         indicará para redacción manual.
       </p>
     </div>
+    @if (!campoEditable("criterioSeleccion")) {
+      <span class="campo__ayuda campo__ayuda--bloqueo">
+        <mat-icon aria-hidden="true">lock</mat-icon>
+        Solo lectura en esta modificación restringida.
+      </span>
+    }
   </div>
 </plantilla-tarjeta-contenedora>
 
@@ -457,6 +499,12 @@
         adquisiciones, plan de mejoramiento, plan de acreditación, etc.).
       </p>
     </div>
+    @if (!campoEditable("planAccion")) {
+      <span class="campo__ayuda campo__ayuda--bloqueo">
+        <mat-icon aria-hidden="true">lock</mat-icon>
+        Solo lectura en esta modificación restringida.
+      </span>
+    }
   </div>
 </plantilla-tarjeta-contenedora>
 

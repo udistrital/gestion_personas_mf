@@ -20,15 +20,22 @@
     </span>
 
     <span class="acordeon__acciones">
-      <button
-        class="acordeon__editar"
-        type="button"
-        [attr.aria-label]="'Editar ' + resumen.titulo"
-        (click)="editar.emit(resumen.numero); $event.preventDefault()"
-      >
-        <mat-icon aria-hidden="true">edit</mat-icon>
-        <span>Editar</span>
-      </button>
+      @if (editable) {
+        <button
+          class="acordeon__editar"
+          type="button"
+          [attr.aria-label]="'Editar ' + resumen.titulo"
+          (click)="editar.emit(resumen.numero); $event.preventDefault()"
+        >
+          <mat-icon aria-hidden="true">edit</mat-icon>
+          <span>Editar</span>
+        </button>
+      } @else {
+        <span class="acordeon__solo-lectura">
+          <mat-icon aria-hidden="true">lock</mat-icon>
+          <span>Solo lectura</span>
+        </span>
+      }
       <mat-icon class="acordeon__flecha" aria-hidden="true">expand_more</mat-icon>
     </span>
   </summary>

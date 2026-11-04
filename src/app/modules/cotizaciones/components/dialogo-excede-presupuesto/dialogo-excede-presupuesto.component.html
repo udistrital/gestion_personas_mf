@@ -1,0 +1,81 @@
+<section class="dialogo" aria-labelledby="aviso-presupuesto-titulo">
+  <header class="dialogo__cabecera">
+    <span class="dialogo__icono" aria-hidden="true">
+      <mat-icon>priority_high</mat-icon>
+    </span>
+
+    <span class="dialogo__etiqueta">Importante</span>
+
+    <h2 id="aviso-presupuesto-titulo" class="dialogo__titulo">
+      El precio de la cotización excede el límite presupuestal
+    </h2>
+
+    @if (datos.solicitudId) {
+      <span class="dialogo__sello">
+        <mat-icon aria-hidden="true">request_quote</mat-icon>
+        <span>{{ datos.solicitudId }}</span>
+      </span>
+    }
+  </header>
+
+  <div class="dialogo__cuerpo">
+    <p class="dialogo__aviso">
+      El precio de la cotización excede el límite del presupuesto destinado
+      para la cotización. Por favor verifique los valores ingresados: las
+      cotizaciones con valores superiores al límite presupuestal no serán
+      tenidas en cuenta.
+    </p>
+
+    <dl class="cifras">
+      <div class="cifra cifra--limite">
+        <dt class="cifra__rotulo">Límite de contratación</dt>
+        <dd class="cifra__valor">
+          {{ formatoMoneda(datos.limite) }}
+          <span class="cifra__moneda">pesos (COP)</span>
+        </dd>
+      </div>
+
+      <div class="cifra cifra--excedido">
+        <dt class="cifra__rotulo">Su precio de cotización es</dt>
+        <dd class="cifra__valor">
+          {{ formatoMoneda(datos.total) }}
+          <span class="cifra__moneda">pesos (COP)</span>
+        </dd>
+      </div>
+    </dl>
+
+    <p class="dialogo__exceso">
+      <mat-icon aria-hidden="true">trending_up</mat-icon>
+      <span>
+        Exceso de <strong>{{ formatoMoneda(exceso) }}</strong>
+        ({{ porcentajeExceso | number: "1.0-1" }} % sobre el límite
+        publicado).
+      </span>
+    </p>
+
+    <p class="dialogo__nota">
+      Debe ajustar los valores unitarios del paso 1 antes de continuar con la
+      respuesta.
+    </p>
+  </div>
+
+  <footer class="dialogo__pie">
+    <button
+      class="boton boton--secundario"
+      type="button"
+      (click)="cerrar()"
+    >
+      <mat-icon aria-hidden="true">close</mat-icon>
+      <span>Cerrar</span>
+    </button>
+
+    <button
+      class="boton boton--primario dialogo__revisar"
+      type="button"
+      (click)="revisarValores()"
+    >
+      <mat-icon aria-hidden="true">edit_note</mat-icon>
+      <span>Revisar valores del paso 1</span>
+    </button>
+  </footer>
+</section>

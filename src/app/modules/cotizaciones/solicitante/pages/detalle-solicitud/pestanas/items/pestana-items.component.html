@@ -147,19 +147,6 @@
                     <span class="tabla-detalle__celda-titulo">
                       {{ item.nombre }}
                     </span>
-                    @if (item.codigoUnspsc) {
-                      <span class="tabla-detalle__celda-nota">
-                        UNSPSC: {{ item.codigoUnspsc }}
-                      </span>
-                    }
-                    @if (item.notaTecnica) {
-                      <span [class]="claseNota(item.tipo)">
-                        <mat-icon aria-hidden="true">
-                          {{ item.iconoNota || "verified" }}
-                        </mat-icon>
-                        <span>{{ item.notaTecnica }}</span>
-                      </span>
-                    }
                   </span>
                 </td>
                 <td class="tabla-detalle__td">
@@ -167,13 +154,6 @@
                     class="item__descripcion"
                     [innerHTML]="item.descripcion | htmlSeguro"
                   ></p>
-                  @if (item.especificaciones?.length) {
-                    <div class="item__etiquetas">
-                      @for (etiqueta of item.especificaciones; track etiqueta) {
-                        <span class="item__etiqueta">{{ etiqueta }}</span>
-                      }
-                    </div>
-                  }
                 </td>
                 <td class="tabla-detalle__td tabla-detalle__td--centro">
                   <span [class]="claseTipo(item.tipo)">

@@ -148,7 +148,17 @@
               <tbody>
                 @for (fila of filasVisibles; track fila.id) {
                   <tr class="listado__fila">
-                    <td class="listado__td listado__td--numero">{{ fila.id }}</td>
+                    <td class="listado__td listado__td--numero">
+                      <span class="listado__numero">{{ fila.id }}</span>
+                      @if (fila.version || fila.revision) {
+                        <span class="listado__version">
+                          {{ versionDe(fila) }}
+                          @if (fila.revision) {
+                            · Rev. {{ fila.revision }}
+                          }
+                        </span>
+                      }
+                    </td>
                     <td class="listado__td listado__td--muted">
                       {{ fila.vigencia }}
                     </td>
@@ -174,6 +184,12 @@
                     </td>
                     <td class="listado__td">
                       <chip-estado [estado]="fila.estado" />
+                      @if (fila.modificacionPendiente) {
+                        <span class="listado__pendiente">
+                          <mat-icon aria-hidden="true">hourglass_top</mat-icon>
+                          <span>Modificación pendiente</span>
+                        </span>
+                      }
                     </td>
                     <td class="listado__td listado__td--acciones">
                       <button
@@ -205,7 +221,7 @@
                             <mat-icon aria-hidden="true" color="primary">
                               {{ ACCIONES[accion].icono }}
                             </mat-icon>
-                            <span>{{ ACCIONES[accion].etiqueta }}</span>
+                            <span>{{ etiquetaAccion(accion, fila) }}</span>
                           </button>
                         }
                       </mat-menu>

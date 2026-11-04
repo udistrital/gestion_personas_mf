@@ -1,0 +1,54 @@
+<section class="dialogo" aria-labelledby="dialogo-exito-titulo">
+  <header class="dialogo__cabecera">
+    <span class="dialogo__icono" aria-hidden="true">
+      <mat-icon>task_alt</mat-icon>
+    </span>
+    <span class="dialogo__etiqueta">Radicación exitosa</span>
+    <h2 id="dialogo-exito-titulo" class="dialogo__titulo">
+      ¡Cotización radicada con éxito!
+    </h2>
+    <p class="dialogo__mensaje">
+      Su respuesta fue registrada y enviada a la dependencia solicitante.
+    </p>
+  </header>
+
+  <div class="dialogo__cuerpo">
+    <div class="radicado">
+      <span class="radicado__rotulo">Radicado electrónico</span>
+      <span class="radicado__codigo">{{ datos.radicado }}</span>
+    </div>
+
+    <dl class="detalle" aria-label="Detalle de la radicación">
+      <div class="detalle__fila">
+        <dt>Solicitud</dt>
+        <dd>{{ datos.solicitudId }}</dd>
+      </div>
+      <div class="detalle__fila">
+        <dt>Valor total con IVA</dt>
+        <dd>{{ formatoMoneda(datos.total) }}</dd>
+      </div>
+      <div class="detalle__fila">
+        <dt>Fecha y hora</dt>
+        <dd>{{ fecha }}</dd>
+      </div>
+    </dl>
+
+    <p class="dialogo__nota">
+      <mat-icon aria-hidden="true">lock</mat-icon>
+      <span>
+        La respuesta quedó radicada y no podrá modificarse desde esta pantalla.
+      </span>
+    </p>
+  </div>
+
+  <footer class="dialogo__pie">
+    <button
+      class="boton boton--primario dialogo__volver"
+      type="button"
+      (click)="volverABandeja()"
+    >
+      <mat-icon aria-hidden="true">list_alt</mat-icon>
+      <span>Ir a la bandeja de solicitudes</span>
+    </button>
+  </footer>
+</section>

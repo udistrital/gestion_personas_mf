@@ -1,0 +1,289 @@
+@use "src/app/shared/styles/tokens" as t;
+@use "src/app/shared/styles/detalle-solicitud" as detalle;
+
+/* Chips, botones rectangulares y bloques comunes del módulo. */
+@include detalle.styles;
+
+:host {
+  display: block;
+}
+
+.edicion {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+/* ── Estado de carga ────────────────────────────────────────────────────── */
+.cargando {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-surface);
+}
+
+.cargando__bloque {
+  height: 1rem;
+  border-radius: var(--agora-radio-md);
+  background: color-mix(
+    in srgb,
+    var(--agora-text-muted) 12%,
+    var(--agora-surface)
+  );
+  animation: pulso 1.4s ease-in-out infinite;
+}
+
+.cargando__bloque--titulo {
+  width: 40%;
+  height: 1.5rem;
+}
+
+.cargando__bloque--alto {
+  height: 12rem;
+}
+
+@keyframes pulso {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cargando__bloque {
+    animation: none;
+  }
+}
+
+/* ── Pantalla de bloqueo ────────────────────────────────────────────────── */
+.bloqueo {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.75rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-left: 0.25rem solid var(--agora-primary);
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-surface);
+  box-shadow: var(--agora-sombra-tarjeta);
+}
+
+.bloqueo__cabecera {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.bloqueo__sello {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--agora-primary) 12%, var(--agora-surface));
+  color: var(--agora-primary);
+}
+
+.bloqueo__sello mat-icon {
+  font-size: 1.5rem;
+}
+
+.bloqueo__textos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.bloqueo__antetitulo {
+  color: var(--agora-text-muted);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.bloqueo__titulo {
+  margin: 0;
+  color: var(--agora-primary);
+  font-size: clamp(1.25rem, 3vw, 1.625rem);
+  line-height: 1.25;
+}
+
+.bloqueo__motivo {
+  margin: 0;
+  max-width: 52rem;
+  color: var(--agora-text-muted);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.bloqueo__expediente {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.bloqueo__pildora {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--agora-surface) 80%, var(--agora-primary) 4%);
+  color: var(--agora-text);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.bloqueo__pildora mat-icon {
+  width: 1rem;
+  height: 1rem;
+  font-size: 1rem;
+}
+
+.bloqueo__pildora-etiqueta {
+  color: var(--agora-text-muted);
+  font-weight: 400;
+}
+
+.bloqueo__objeto {
+  margin: 0;
+  color: var(--agora-text);
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.bloqueo__metricas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.bloqueo__metrica {
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-md);
+  background: color-mix(in srgb, var(--agora-surface) 85%, var(--agora-primary) 3%);
+}
+
+.bloqueo__metrica dt {
+  color: var(--agora-text-muted);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.bloqueo__metrica dd {
+  margin: 0.25rem 0 0;
+  color: var(--agora-primary);
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.bloqueo__nota {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  border-radius: var(--agora-radio-md);
+  background: color-mix(in srgb, var(--agora-primary) 6%, var(--agora-surface));
+  color: var(--agora-text-muted);
+}
+
+.bloqueo__nota mat-icon {
+  flex: 0 0 auto;
+  color: var(--agora-primary);
+}
+
+.bloqueo__nota p {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+}
+
+.bloqueo__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+/* ── Estados de error / no encontrada ───────────────────────────────────── */
+.estado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 4rem 1.5rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-surface);
+  box-shadow: var(--agora-sombra-xs);
+  text-align: center;
+}
+
+.estado__icono {
+  width: 2.5rem;
+  height: 2.5rem;
+  color: var(--agora-primary);
+  font-size: 2.5rem;
+}
+
+.estado__icono--error {
+  color: var(--agora-error);
+}
+
+.estado__titulo {
+  margin: 0;
+  color: var(--agora-text);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.estado__texto {
+  margin: 0;
+  max-width: 32rem;
+  color: var(--agora-text-muted);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.estado__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+@media (max-width: t.$bp-sm) {
+  .edicion {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .bloqueo__cabecera {
+    flex-direction: column;
+  }
+
+  .bloqueo__acciones {
+    flex-direction: column-reverse;
+  }
+
+  .bloqueo__acciones .boton-recto {
+    width: 100%;
+  }
+}
