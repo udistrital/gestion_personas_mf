@@ -1,9 +1,7 @@
 import { Injectable } from "@angular/core";
 import { Observable, of, throwError, delay } from "rxjs";
-import {
-  EstadoSolicitud,
-  MATRIZ_ACCIONES_POR_ESTADO,
-} from "src/app/core/constants/estados-solicitud.const";
+import { EstadoSolicitud } from "src/app/core/constants/estados-solicitud.const";
+import { ACCIONES_SOLICITUD_POR_ESTADO } from "src/app/core/constants/acciones-por-rol-y-estado.const";
 import type {
   ConteosFiltrosInvitaciones,
   DetalleInvitacionProveedor,
@@ -81,10 +79,6 @@ import {
   versionSolicitud,
 } from "../models/edicion-solicitud.model";
 import type { ResultadoCruce } from "../models/necesidad.model";
-import {
-  DEPENDENCIAS_DESTINO,
-  DEPENDENCIAS_SOLICITANTES,
-} from "../models/datos-generales.model";
 import { DiferenciasSolicitudService } from "./diferencias-solicitud.service";
 import { textoPlanoDesdeHtml } from "src/app/shared/utils/texto-plano";
 import { MIN_CARACTERES_JUSTIFICACION } from "src/app/shared/validators/justificacion.validator";
@@ -192,6 +186,31 @@ export abstract class SolicitudesService {
    * @param id identificador del anexo (único en todo el repositorio)
    */
   abstract obtenerDocumento(id: string): Observable<DocumentoResuelto>;
+}
+
+/**
+ * Fecha `dd/MM/yyyy` a N días de hoy.
+ *
+ * Las semillas representan procesos abiertos. Si el cierre queda congelado en
+ * una fecha fija, al pasar ese día las acciones que dependen del plazo
+ * ("Responder", formular observaciones) desaparecen solas y parece que la
+ * matriz de permisos está mal.
+ */
+function fechaCortaRelativa(dias: number): string {
+  const fecha = new Date();
+  fecha.setDate(fecha.getDate() + dias);
+  const dia = String(fecha.getDate()).padStart(2, "0");
+  const mes = String(fecha.getMonth() + 1).padStart(2, "0");
+  return `${dia}/${mes}/${fecha.getFullYear()}`;
+}
+
+/** Límite de observaciones (23:59 -05:00) a N días de hoy. */
+function fechaLimiteRelativa(dias: number): string {
+  const fecha = new Date();
+  fecha.setDate(fecha.getDate() + dias);
+  const dia = String(fecha.getDate()).padStart(2, "0");
+  const mes = String(fecha.getMonth() + 1).padStart(2, "0");
+  return `${fecha.getFullYear()}-${mes}-${dia}T23:59:00-05:00`;
 }
 
 const DATOS_MOCK: readonly Solicitud[] = [
@@ -463,12 +482,15 @@ const SOLICITUDES_PROVEEDOR_MOCK: readonly Solicitud[] = [
     unidadEjecutora: "1",
     titulo:
       "Adquisición de equipamiento de servidores y virtualización para el centro de cómputo",
-    apertura: "01/10/2026",
-    cierre: "30/10/2026",
+    // Proceso abierto: su invitación INV-0142 está en borrador y el proveedor
+    // debe poder responder. Las fechas se calculan desde hoy para que la
+    // semilla no caduque.
+    apertura: fechaCortaRelativa(-5),
+    cierre: fechaCortaRelativa(7),
     dependencia: "DIRTEI (Tecnología)",
     tipoCotizacion: "BIEN",
     estado: "enviada-proveedores",
-    fechaLimiteObservaciones: "2026-10-29T23:59:00-05:00",
+    fechaLimiteObservaciones: fechaLimiteRelativa(5),
   },
   {
     id: "SOL-2026-0139",
@@ -2173,21 +2195,15 @@ function hashIntegridad(semilla: string): string {
   return `SHA-256: ${hex.slice(0, 4)}...${hex.slice(4)}`;
 }
 
-/** Valor de catálogo de una dependencia a partir de su etiqueta visible. */
-function valorDependencia(
-  catalogo: readonly { readonly valor: string; readonly etiqueta: string }[],
-  etiqueta: string,
-): string {
-  return catalogo.find((opcion) => opcion.etiqueta === etiqueta)?.valor ?? "";
-}
-
-/** Etiqueta visible de una dependencia (para el listado y la cabecera). */
-function etiquetaDependencia(
-  catalogo: readonly { readonly valor: string; readonly etiqueta: string }[],
-  valor: string,
-  reserva: string,
-): string {
-  return catalogo.find((opcion) => opcion.valor === valor)?.etiqueta ?? reserva;
+/**
+ * Etiqueta visible de una dependencia (para el listado y la cabecera).
+ *
+ * Las dependencias se cargan de Oikos (`DependenciasService`) y la fotografía
+ * editable del mock conserva el nombre ya resuelto; por eso aquí solo hay que
+ * caer a la etiqueta anterior cuando la edición no trae el dato.
+ */
+function etiquetaDependencia(valor: string, reserva: string): string {
+  return valor || reserva;
 }
 
 /**
@@ -2275,14 +2291,8 @@ function datosEdicionDesdeDetalle(solicitud: Solicitud): DatosEdicionSolicitud {
       numeroNecesidad: resultadoCruceDesdeDetalle(solicitud).necesidad.valor,
     },
     datosGenerales: {
-      dependenciaSolicitante: valorDependencia(
-        DEPENDENCIAS_SOLICITANTES,
-        general.responsable.dependenciaSolicitante,
-      ),
-      dependenciaDestino: valorDependencia(
-        DEPENDENCIAS_DESTINO,
-        general.responsable.dependenciaDestino,
-      ),
+      dependenciaSolicitante: general.responsable.dependenciaSolicitante,
+      dependenciaDestino: general.responsable.dependenciaDestino,
       fechaApertura: fechaIsoDesdeCorta(solicitud.apertura),
       fechaCierre: fechaIsoDesdeCorta(solicitud.cierre),
       criterioSeleccion: general.caracteristicas.criterioSeleccion,
@@ -2333,12 +2343,10 @@ function generalDesdeEdicion(
     responsable: {
       ...base.responsable,
       dependenciaSolicitante: etiquetaDependencia(
-        DEPENDENCIAS_SOLICITANTES,
         edicion.datosGenerales.dependenciaSolicitante,
         base.responsable.dependenciaSolicitante,
       ),
       dependenciaDestino: etiquetaDependencia(
-        DEPENDENCIAS_DESTINO,
         edicion.datosGenerales.dependenciaDestino,
         base.responsable.dependenciaDestino,
       ),
@@ -2943,7 +2951,6 @@ export class SolicitudesServiceMock extends SolicitudesService {
           fechaCortaDesdeIso(valores.datosGenerales.fechaApertura) || null,
         cierre: fechaCortaDesdeIso(valores.datosGenerales.fechaCierre) || null,
         dependencia: etiquetaDependencia(
-          DEPENDENCIAS_DESTINO,
           valores.datosGenerales.dependenciaDestino,
           actual.dependencia,
         ),
@@ -3028,7 +3035,7 @@ export class SolicitudesServiceMock extends SolicitudesService {
       ).pipe(delay(retardo));
     }
 
-    if (!MATRIZ_ACCIONES_POR_ESTADO[actual.estado].includes("cancelar")) {
+    if (!ACCIONES_SOLICITUD_POR_ESTADO[actual.estado].includes("cancelar")) {
       return throwError(
         () =>
           new Error("La solicitud cambió de estado y ya no se puede cancelar."),
@@ -3289,7 +3296,6 @@ export class SolicitudesServiceMock extends SolicitudesService {
       cierre:
         fechaCortaDesdeIso(version.valores.datosGenerales.fechaCierre) || null,
       dependencia: etiquetaDependencia(
-        DEPENDENCIAS_DESTINO,
         version.valores.datosGenerales.dependenciaDestino,
         semilla.dependencia,
       ),

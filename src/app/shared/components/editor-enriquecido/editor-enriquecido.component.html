@@ -11,9 +11,9 @@
   ></quill-editor>
 </div>
 
-@if (minCaracteres > 0 || nota) {
+@if (minCaracteres > 0 || maxCaracteres > 0 || nota) {
   <div class="editor__pie">
-    @if (minCaracteres > 0) {
+    @if (minCaracteres > 0 || maxCaracteres > 0) {
       <span
         [id]="idContador"
         class="editor__contador"
@@ -21,7 +21,9 @@
         [class.editor__contador--excede]="excedeMaximo"
       >
         {{ contador }} caracteres
-        <span>· mínimo {{ minCaracteres }}</span>
+        @if (minCaracteres > 0) {
+          <span>· mínimo {{ minCaracteres }}</span>
+        }
         @if (maxCaracteres > 0) {
           <span>· máximo {{ maxCaracteres }}</span>
         }

@@ -17,4 +17,20 @@ export const environment = {
   /* API pública de días festivos (Nager.Date v3). */
   CALENDARIO_FESTIVOS_URL:
     "https://date.nager.at/api/v3/PublicHolidays",
+
+  /*
+   * Roles del módulo tal como los entrega el proveedor de identidad (token
+   * del Root). `core/constants/roles.const.ts` los usa como única fuente:
+   * si el token empieza a entregar otro literal, se cambia aquí y no en el
+   * código.
+   */
+  ROL: {
+    PROVEEDOR: "PROVEEDOR",
+    JEFE_DEPENDENCIA: "JEFE_DEPENDENCIA",
+    ORDENADOR_DEL_GASTO: "ORDENADOR_DEL_GASTO",
+  } as const,
+  /* Roles que pueden crear y editar solicitudes de cotización. */
+  ROLES_CREACION: {
+    SOLICITUD: ["JEFE_DEPENDENCIA", "ORDENADOR_DEL_GASTO"],
+  },
 };

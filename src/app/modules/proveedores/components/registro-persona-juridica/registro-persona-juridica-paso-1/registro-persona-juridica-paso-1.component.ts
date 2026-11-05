@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { FormControl, FormGroup } from '@angular/forms';
+import { FormGroup } from '@angular/forms';
 import {
   CatalogosPersonaJuridica,
   OpcionCatalogo,
@@ -34,53 +34,23 @@ export class RegistroPersonaJuridicaPaso1Component {
   @Output() reintentarDepartamentos = new EventEmitter<void>();
   @Output() reintentarCiudades = new EventEmitter<void>();
 
-  responsabilidadFiscalDisponibleId = new FormControl<number | null>(null);
-  busquedaResponsabilidadFiscal = '';
+  /** Referencia estable para no recrear el arreglo en cada detección de cambios. */
+  private readonly sinOpciones: OpcionCatalogo[] = [];
 
   get opcionesProcedencia(): OpcionCatalogo[] {
-    return this.catalogos?.procedencia ?? [];
-  }
-
-  get opcionesCamaraComercio(): OpcionCatalogo[] {
-    return this.catalogos?.camaraComercio ?? [];
-  }
-
-  get opcionesTipoOrganizacion(): OpcionCatalogo[] {
-    return this.catalogos?.tipoOrganizacion ?? [];
-  }
-
-  get opcionesTamanoEmpresarial(): OpcionCatalogo[] {
-    return this.catalogos?.tamanoEmpresa ?? [];
+    return this.catalogos?.procedencia ?? this.sinOpciones;
   }
 
   get opcionesCargo(): OpcionCatalogo[] {
-    return this.catalogos?.cargo ?? [];
+    return this.catalogos?.cargo ?? this.sinOpciones;
   }
 
-  get opcionesResponsabilidadesFiscales(): OpcionCatalogo[] {
-    return this.catalogos?.responsabilidadFiscal ?? [];
+  get opcionesTipoVia(): OpcionCatalogo[] {
+    return this.catalogos?.tipoVia ?? this.sinOpciones;
   }
 
-  get responsabilidadesFiscalesDisponibles(): OpcionCatalogo[] {
-    const texto = this.busquedaResponsabilidadFiscal.trim().toLocaleLowerCase();
-    const seleccionadas = new Set(this.idsResponsabilidadesSeleccionadas());
-
-    return this.opcionesResponsabilidadesFiscales.filter(
-      opcion =>
-        !seleccionadas.has(opcion.id)
-        && (
-          texto.length === 0
-          || `${opcion.codigo ?? ''} ${opcion.nombre} ${opcion.descripcion ?? ''}`
-            .toLocaleLowerCase()
-            .includes(texto)
-        ),
-    );
-  }
-
-  get responsabilidadesFiscalesSeleccionadas(): OpcionCatalogo[] {
-    return this.idsResponsabilidadesSeleccionadas()
-      .map(id => this.opcionesResponsabilidadesFiscales.find(opcion => opcion.id === id))
-      .filter((opcion): opcion is OpcionCatalogo => opcion !== undefined);
+  get opcionesTipoInterior(): OpcionCatalogo[] {
+    return this.catalogos?.tipoInterior ?? this.sinOpciones;
   }
 
   readonly opcionesSiNo: Opcion<boolean>[] = [
@@ -88,66 +58,78 @@ export class RegistroPersonaJuridicaPaso1Component {
     { label: 'No', value: false },
   ];
 
-  opcionesLimitacionEstatutaria: Opcion<boolean>[] = [
-    { label: 'No, facultades amplias y suficientes sin límite de cuantía (Estatutos tipo S.A.S.)', value: false },
-    { label: 'Sí, requiere autorización previa de Junta Directiva / Asamblea de Accionistas', value: true }
+  readonly opcionesTipoDocumentoRepresentante: Opcion<string>[] = [
+    { label: 'C.C.', value: 'CC' },
+    { label: 'C.E.', value: 'CE' },
+    { label: 'Pasaporte', value: 'PA' },
   ];
 
-  get opcionesTipoVia(): OpcionCatalogo[] {
-    return this.catalogos?.tipoVia ?? [];
+  readonly opcionesRegimenContributivo: string[] = [
+    'Común / Ordinario (Impuesto sobre la Renta)',
+    'Régimen Simple de Tributación (RST)',
+    'Régimen Tributario Especial (ESAL / Fundaciones)',
+    'Entidad de Derecho Público / Oficial',
+  ];
+
+  readonly opcionesResponsableIca: string[] = [
+    'Régimen Común (Bimestral SHD)',
+    'Régimen Simplificado / Preferencial',
+    'No Sujeto / Exento de ICA Distrital',
+    'Régimen Especial Consorcios / UT',
+  ];
+
+  readonly opcionesResponsableIva: string[] = [
+    'Responsable de IVA (Gravado / Bimestral o Cuatrimestral)',
+    'No Responsable de IVA (Antiguo Simplificado)',
+    'Exento de IVA por Operaciones Especiales',
+  ];
+
+  readonly opcionesClasificacionPyme: string[] = [
+    'Sí - Pequeña Empresa (Hasta 204.653 UVT)',
+    'Sí - Microempresa (Hasta 23.563 UVT)',
+    'Sí - Mediana Empresa (Hasta 483.034 UVT)',
+    'No - Gran Empresa (Mayor a 483.034 UVT)',
+  ];
+
+  readonly opcionesRegistroMercantil: string[] = [
+    'Sí (Matrícula mercantil activa y renovada)',
+    'No (Exenta conforme a régimen legal)',
+  ];
+
+  readonly opcionesExclusividadImportacion: string[] = [
+    'No (Distribución local / Servicios nacionales)',
+    'Sí - Distribuidor o representante exclusivo importado',
+    'Sí - Importador directo no exclusivo',
+  ];
+
+  readonly opcionesCalidadGranContribuyente: string[] = [
+    'No (Contribuyente Régimen Ordinario Común)',
+    'Sí - Calificado por Resolución DIAN vigente',
+    'Autorretenedor por Resolución',
+  ];
+
+  /** true cuando los dos NIT coinciden y no están vacíos. */
+  get nitConfirmado(): boolean {
+    const nit = String(this.formulario.get('nit')?.value ?? '').trim();
+    const confirmacion = String(
+      this.formulario.get('nitConfirmacion')?.value ?? '',
+    ).trim();
+    return nit.length > 0 && nit === confirmacion;
   }
 
-  get opcionesTipoInterior(): OpcionCatalogo[] {
-    return this.catalogos?.tipoInterior ?? [];
+  /** true cuando el control es obligatorio, está vacío y fue tocado. */
+  errorRequerido(form: FormGroup, control: string): boolean {
+    const campo = form.get(control);
+    return !!campo && campo.touched && campo.hasError('required');
   }
 
-  get direccionGenerada(): string {
-    const tipoVia = this.nombreOpcion(this.opcionesTipoVia, this.formulario.get('tipoVia')?.value);
-    const detalleVia = this.formulario.get('detalleVia')?.value ?? '';
-    const numeroCruce = this.formulario.get('numeroCruce')?.value ?? '';
-    const placaPuerta = this.formulario.get('placaPuerta')?.value ?? '';
-    const interiorTipo = this.nombreOpcion(
-      this.opcionesTipoInterior,
-      this.formulario.get('interiorTipo')?.value,
-    );
-    const detalleInterior = this.formulario.get('detalleInterior')?.value ?? '';
-    const via = [tipoVia, detalleVia].filter(Boolean).join(' ').toUpperCase();
-    const cruce = [numeroCruce, placaPuerta].filter(Boolean).join(' - ');
-    const interior = [interiorTipo, detalleInterior].filter(Boolean).join(' ').toUpperCase();
-
-    return [via, cruce ? `# ${cruce}` : '', interior].filter(Boolean).join(' ');
+  /** true cuando el control tocado tiene el error indicado. */
+  errorCampo(form: FormGroup, control: string, error: string): boolean {
+    const campo = form.get(control);
+    return !!campo && campo.touched && campo.hasError(error);
   }
 
-  private nombreOpcion(opciones: OpcionCatalogo[], id: unknown): string {
-    return opciones.find(opcion => opcion.id === id)?.nombre ?? '';
-  }
-
-  agregarResponsabilidadFiscal(): void {
-    const id = this.responsabilidadFiscalDisponibleId.value;
-    const seleccionadas = this.idsResponsabilidadesSeleccionadas();
-    if (id === null || seleccionadas.includes(id)) {
-      return;
-    }
-
-    const control = this.formulario.get('responsabilidades');
-    control?.setValue([...seleccionadas, id]);
-    control?.markAsTouched();
-    this.responsabilidadFiscalDisponibleId.setValue(null);
+  emitirCambio(): void {
     this.formularioChange.emit(this.formulario);
   }
-
-  quitarResponsabilidadFiscal(id: number): void {
-    const control = this.formulario.get('responsabilidades');
-    control?.setValue(this.idsResponsabilidadesSeleccionadas().filter(valor => valor !== id));
-    control?.markAsTouched();
-    this.formularioChange.emit(this.formulario);
-  }
-
-  private idsResponsabilidadesSeleccionadas(): number[] {
-    const valor: unknown = this.formulario.get('responsabilidades')?.value;
-    return Array.isArray(valor)
-      ? valor.filter((id): id is number => typeof id === 'number' && Number.isInteger(id))
-      : [];
-  }
-
 }

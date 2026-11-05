@@ -9,6 +9,8 @@ import { PlantillaTarjetaContenedoraComponent } from "./components/templates/pla
 import { StepperVisualComponent } from "./components/stepper-visual/stepper-visual.component";
 import { AvisoLegalComponent } from "./components/formulario/aviso-legal/aviso-legal.component";
 import { BarraAccionesComponent } from "./components/formulario/barra-acciones/barra-acciones.component";
+import { CampoFechaComponent } from "./components/formulario/campo-fecha/campo-fecha.component";
+import { DireccionDianComponent } from "./components/formulario/direccion-dian/direccion-dian.component";
 import { DireccionGeneradaComponent } from "./components/formulario/direccion-generada/direccion-generada.component";
 import { CampoDineroComponent } from "./components/formulario/campo-dinero/campo-dinero.component";
 import { ValidacionCampoDirective } from "./directives/validacion-campo.directive";
@@ -20,9 +22,11 @@ import { BannerPasoComponent } from "./components/banner-paso/banner-paso.compon
 import { EditorEnriquecidoComponent } from "./components/editor-enriquecido/editor-enriquecido.component";
 import { EtiquetaPorDefinirComponent } from "./components/etiqueta-por-definir/etiqueta-por-definir.component";
 import { ContadorRegresivoComponent } from "./components/contador-regresivo/contador-regresivo.component";
+import { SearchSelectionComponent } from "./components/search-selection/search-selection.component";
 import { HtmlSeguroPipe } from "./pipes/html-seguro.pipe";
 import { CargaArchivosComponent } from "./components/carga-archivos/carga-archivos.component";
 import { QuillModule } from "ngx-quill";
+import { NgxMatSelectSearchModule } from "ngx-mat-select-search";
 
 @NgModule({
   declarations: [
@@ -31,6 +35,8 @@ import { QuillModule } from "ngx-quill";
     StepperVisualComponent,
     AvisoLegalComponent,
     BarraAccionesComponent,
+    CampoFechaComponent,
+    DireccionDianComponent,
     DireccionGeneradaComponent,
     CampoDineroComponent,
     ValidacionCampoDirective,
@@ -42,6 +48,7 @@ import { QuillModule } from "ngx-quill";
     EditorEnriquecidoComponent,
     EtiquetaPorDefinirComponent,
     ContadorRegresivoComponent,
+    SearchSelectionComponent,
     HtmlSeguroPipe,
     CargaArchivosComponent,
   ],
@@ -52,6 +59,7 @@ import { QuillModule } from "ngx-quill";
     MaterialModule,
     IconosModule,
     QuillModule.forRoot(),
+    NgxMatSelectSearchModule,
   ],
   exports: [
     CommonModule,
@@ -65,6 +73,8 @@ import { QuillModule } from "ngx-quill";
     StepperVisualComponent,
     AvisoLegalComponent,
     BarraAccionesComponent,
+    CampoFechaComponent,
+    DireccionDianComponent,
     DireccionGeneradaComponent,
     CampoDineroComponent,
     ValidacionCampoDirective,
@@ -76,6 +86,7 @@ import { QuillModule } from "ngx-quill";
     EditorEnriquecidoComponent,
     EtiquetaPorDefinirComponent,
     ContadorRegresivoComponent,
+    SearchSelectionComponent,
     QuillModule,
     HtmlSeguroPipe,
     CargaArchivosComponent,

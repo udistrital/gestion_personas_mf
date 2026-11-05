@@ -131,9 +131,11 @@
                 <th scope="col" class="bandeja__th">Ordenador del gasto</th>
                 <th scope="col" class="bandeja__th">Tipo</th>
                 <th scope="col" class="bandeja__th">Estado</th>
-                <th scope="col" class="bandeja__th bandeja__th--acciones">
-                  Acciones
-                </th>
+                @if (hayColumnaAcciones()) {
+                  <th scope="col" class="bandeja__th bandeja__th--acciones">
+                    Acciones
+                  </th>
+                }
               </tr>
             </thead>
             <tbody>
@@ -172,46 +174,48 @@
                   <td class="bandeja__td">
                     <chip-estado [estado]="fila.invitacion.estado" />
                   </td>
-                  <td class="bandeja__td bandeja__td--acciones">
-                    <button
-                      mat-icon-button
-                      type="button"
-                      class="bandeja__boton-acciones"
-                      [class.bandeja__boton-acciones--activo]="
-                        filaMenuAbierto === fila.invitacion.id
-                      "
-                      [matMenuTriggerFor]="menuAcciones"
-                      [attr.aria-label]="
-                        'Acciones de la solicitud ' + fila.solicitud.id
-                      "
-                      (menuOpened)="abrirMenuAcciones(fila.invitacion.id)"
-                      (menuClosed)="cerrarMenuAcciones()"
-                    >
-                      <mat-icon aria-hidden="true" color="primary">
-                        more_vert
-                      </mat-icon>
-                    </button>
-                    <mat-menu
-                      #menuAcciones="matMenu"
-                      panelClass="bandeja__menu-acciones"
-                      xPosition="before"
-                    >
-                      @for (accion of accionesDe(fila); track accion) {
-                        <button
-                          mat-menu-item
-                          type="button"
-                          (click)="ejecutarAccion(accion, fila)"
-                        >
-                          <mat-icon aria-hidden="true" color="primary">
-                            {{ acciones[accion].icono }}
-                          </mat-icon>
-                          <span>
-                            {{ permisos.etiquetaAccionInvitacion(accion) }}
-                          </span>
-                        </button>
-                      }
-                    </mat-menu>
-                  </td>
+                  @if (hayColumnaAcciones()) {
+                    <td class="bandeja__td bandeja__td--acciones">
+                      <button
+                        mat-icon-button
+                        type="button"
+                        class="bandeja__boton-acciones"
+                        [class.bandeja__boton-acciones--activo]="
+                          filaMenuAbierto === fila.invitacion.id
+                        "
+                        [matMenuTriggerFor]="menuAcciones"
+                        [attr.aria-label]="
+                          'Acciones de la solicitud ' + fila.solicitud.id
+                        "
+                        (menuOpened)="abrirMenuAcciones(fila.invitacion.id)"
+                        (menuClosed)="cerrarMenuAcciones()"
+                      >
+                        <mat-icon aria-hidden="true" color="primary">
+                          more_vert
+                        </mat-icon>
+                      </button>
+                      <mat-menu
+                        #menuAcciones="matMenu"
+                        panelClass="bandeja__menu-acciones"
+                        xPosition="before"
+                      >
+                        @for (accion of accionesDe(fila); track accion) {
+                          <button
+                            mat-menu-item
+                            type="button"
+                            (click)="ejecutarAccion(accion, fila)"
+                          >
+                            <mat-icon aria-hidden="true" color="primary">
+                              {{ acciones[accion].icono }}
+                            </mat-icon>
+                            <span>
+                              {{ permisos.etiquetaAccionInvitacion(accion) }}
+                            </span>
+                          </button>
+                        }
+                      </mat-menu>
+                    </td>
+                  }
                 </tr>
               }
             </tbody>

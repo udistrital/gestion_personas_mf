@@ -1,32 +1,21 @@
-
 export const camposPorPaso: Record<number, string[]> = {
   1: [
     'nit', 'digitoVerificacion', 'nitConfirmacion', 'procedencia', 'razonSocial',
-    'nombreComercial', 'matriculaMercantil', 'camaraComercio', 'fechaConstitucion',
-    'fechaRenovacion', 'tipoOrganizacion', 'tamanoEmpresarial', 'documentoRepresentante',
-    'cargoRepresentante', 'primerApellido', 'segundoApellido', 'primerNombre',
-    'segundoNombre', 'correoRepresentante', 'telefonoRepresentante',
-    'limitacionEstatutaria', 'registrarSuplente', 'beneficiariosFinales', 'cotizaBolsa',
-    'revisorFiscal', 'granContribuyente', 'autorretenedor', 'exencionIca',
-    'responsabilidades', 'departamento', 'ciudad', 'tipoVia', 'detalleVia', 'numeroCruce',
+    'tipoDocumentoRepresentante', 'documentoRepresentante', 'cargoRepresentante',
+    'primerApellido', 'segundoApellido', 'primerNombre', 'segundoNombre',
+    'regimenContributivo', 'sujetoRetencion', 'agenteRetenedor', 'responsableIca',
+    'responsableIva', 'clasificacionPyme', 'registroMercantilActivo',
+    'exclusividadImportacion', 'calidadGranContribuyente',
+    'departamento', 'ciudad', 'tipoVia', 'detalleVia', 'numeroCruce',
     'placaPuerta', 'interiorTipo', 'detalleInterior', 'correoNotificaciones',
-    'correoNotificacionesConfirmacion', 'telefonoFijo', 'extension', 'telefonoAlterno',
-    'sitioWeb', 'contactoComercial', 'telefonoAsesor', 'aceptaTerminos',
+    'correoNotificacionesConfirmacion', 'telefonoAlterno', 'extension',
+    'sitioWeb', 'contactoComercial', 'telefonoAsesor',
   ],
   2: [
-    'tipoConstitucion', 'capitalAutorizado', 'capitalSuscritoPagado', 'activosTotales',
-    'pasivosTotales', 'banco', 'tipoCuenta', 'departamentoApertura', 'ciudadApertura', 'numeroCuenta',
-    'numeroCuentaConfirmacion', 'titularCuenta', 'correoPagos', 'correoPagosConfirmacion',
-    'responsableTesoreria', 'telefonoTesoreria', 'obligadoFacturar', 'prefijoFacturacion',
-    'resolucionDian', 'monedaExtranjera', 'certificacionBancaria',
+    'banco', 'tipoCuenta', 'numeroCuenta', 'numeroCuentaConfirmacion',
+    'tipoConformacion', 'capitalAutorizado', 'correoPagos',
+    'correoPagosConfirmacion',
   ],
-  3: [
-    'rutArchivo', 'certificadoExistenciaArchivo', 'cedulaRepresentanteArchivo',
-    'tieneRup', 'rupArchivo', 'vigenciaRup', 'certificadoParafiscales',
-    'aportesSeguridadSocial',
-  ],
-  4: [
-    'actividadesCiiu', 'descripcionServicios', 'declaraciones',
-    'tokenOtp', 'aceptaTratamiento',
-  ]
+  3: ['rutArchivo', 'tieneRup', 'rupArchivo'],
+  4: ['actividadesCiiu', 'actividadCiiuPrincipalId', 'descripcionServicios', 'aceptaTratamiento'],
 };

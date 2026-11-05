@@ -84,9 +84,10 @@ export class EditorEnriquecidoComponent
       ["bold", "italic", "underline"], // Botones de formato
       // ["blockquote", "code-block"],
       [{ list: "ordered" }, { list: "bullet" }], // Listas
+      ["link"], // Enlace
       // [{ header: [1, 2, 3, false] }], // Encabezados
       // [{ color: [] }, { background: [] }], // Colores
-      // ["link", "image"], // Enlace e imágenes
+      // ["image"], // Imágenes
       // ["clean"], // Eliminar formato
     ],
   };
@@ -119,7 +120,7 @@ export class EditorEnriquecidoComponent
     if (this.nota) {
       ids.push(this.idNota);
     }
-    if (this.minCaracteres > 0) {
+    if (this.minCaracteres > 0 || this.maxCaracteres > 0) {
       ids.push(this.idContador);
     }
     return ids.length ? ids.join(" ") : null;

@@ -1,0 +1,162 @@
+<section class="direccion-dian">
+  <header class="direccion-dian__cabecera">
+    <mat-icon aria-hidden="true">signpost</mat-icon>
+
+    <div class="direccion-dian__textos">
+      <h3>Generador de Nomenclatura Estándar DIAN (RUT)</h3>
+      <p>Registre la dirección utilizando la nomenclatura estandarizada.</p>
+    </div>
+
+    <span class="direccion-dian__norma">Norma Técnica Geográfica</span>
+  </header>
+
+  <div class="direccion-dian__grid" [formGroup]="formGroup">
+    <div class="campo">
+      <label class="campo__etiqueta" [attr.for]="'dian-via'">
+        <span>Vía <b aria-hidden="true">*</b></span>
+      </label>
+
+      <mat-form-field appearance="outline">
+        <mat-select
+          id="dian-via"
+          [formControlName]="controlVia"
+          placeholder="Seleccione..."
+          aria-label="Tipo de vía"
+        >
+          <mat-option value="">Seleccione...</mat-option>
+          @for (opcion of opcionesVia; track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
+        </mat-select>
+
+        @if (esInvalido(controlVia)) {
+          <mat-error>Este campo es obligatorio.</mat-error>
+        }
+      </mat-form-field>
+
+      @if (cargandoVia) {
+        <span class="campo__ayuda">Cargando tipos de vía…</span>
+      } @else if (errorVia) {
+        <span class="campo__fallo" role="alert">
+          {{ errorVia }}
+          <button type="button" class="campo__reintentar" (click)="reintentarVia.emit()">
+            Reintentar
+          </button>
+        </span>
+      }
+    </div>
+
+    <div class="campo">
+      <label class="campo__etiqueta" [attr.for]="'dian-detalle-via'">
+        <span>Detalle Vía <b aria-hidden="true">*</b></span>
+      </label>
+
+      <mat-form-field appearance="outline">
+        <input
+          matInput
+          id="dian-detalle-via"
+          [formControlName]="controlDetalleVia"
+          placeholder="Ej. 45"
+          aria-label="Detalle de la vía"
+        />
+        @if (esInvalido(controlDetalleVia)) {
+          <mat-error>Este campo es obligatorio.</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <span class="direccion-dian__separador" aria-hidden="true">#</span>
+
+    <div class="campo">
+      <label class="campo__etiqueta" [attr.for]="'dian-cruce'">
+        <span>Número Cruce <b aria-hidden="true">*</b></span>
+      </label>
+
+      <mat-form-field appearance="outline">
+        <input
+          matInput
+          id="dian-cruce"
+          [formControlName]="controlNumeroCruce"
+          placeholder="Ej. 26"
+          aria-label="Número de cruce"
+        />
+        @if (esInvalido(controlNumeroCruce)) {
+          <mat-error>Este campo es obligatorio.</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <span class="direccion-dian__separador" aria-hidden="true">-</span>
+
+    <div class="campo">
+      <label class="campo__etiqueta" [attr.for]="'dian-placa'">
+        <span>Placa Puerta <b aria-hidden="true">*</b></span>
+      </label>
+
+      <mat-form-field appearance="outline">
+        <input
+          matInput
+          id="dian-placa"
+          [formControlName]="controlPlacaPuerta"
+          placeholder="Ej. 85"
+          aria-label="Placa de puerta"
+        />
+        @if (esInvalido(controlPlacaPuerta)) {
+          <mat-error>Este campo es obligatorio.</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="campo">
+      <label class="campo__etiqueta" [attr.for]="'dian-interior'">
+        <span>Interior 1</span>
+      </label>
+
+      <mat-form-field appearance="outline">
+        <mat-select
+          id="dian-interior"
+          [formControlName]="controlInterior"
+          placeholder="Seleccione..."
+          aria-label="Tipo de interior"
+        >
+          <mat-option value="">Seleccione...</mat-option>
+          @for (opcion of opcionesInterior; track opcion.id) {
+            <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      @if (cargandoInterior) {
+        <span class="campo__ayuda">Cargando tipos de interior…</span>
+      } @else if (errorInterior) {
+        <span class="campo__fallo" role="alert">
+          {{ errorInterior }}
+          <button type="button" class="campo__reintentar" (click)="reintentarInterior.emit()">
+            Reintentar
+          </button>
+        </span>
+      }
+    </div>
+
+    <div class="campo">
+      <label class="campo__etiqueta" [attr.for]="'dian-detalle-interior'">
+        <span>Det. Interior</span>
+      </label>
+
+      <mat-form-field appearance="outline">
+        <input
+          matInput
+          id="dian-detalle-interior"
+          [formControlName]="controlDetalleInterior"
+          placeholder="Detalle adicional"
+          aria-label="Detalle del interior"
+        />
+      </mat-form-field>
+    </div>
+  </div>
+
+  <direccion-generada
+    [direccion]="direccionGenerada || 'Sin dirección registrada'"
+    [estado]="estadoNomenclatura"
+  ></direccion-generada>
+</section>

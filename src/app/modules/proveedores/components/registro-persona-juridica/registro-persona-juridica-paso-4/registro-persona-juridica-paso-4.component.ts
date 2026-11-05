@@ -1,10 +1,29 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { FormControl, FormGroup } from '@angular/forms';
 import {
-  CatalogosPersonaJuridica,
-  OpcionCatalogo,
-} from '../services/registro-persona-juridica-catalogos.service';
-import { OpcionUnspsc } from '../services/registro-persona-juridica-unspsc.service';
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  OnInit,
+  Output,
+  SimpleChanges,
+} from '@angular/core';
+import { FormControl, FormGroup } from '@angular/forms';
+import { OpcionCatalogo } from '../services/registro-persona-juridica-catalogos.service';
+
+/** Actividad CIIU resuelta contra el catálogo para pintar la tarjeta. */
+interface ActividadCiiuSeleccionada {
+  id: number;
+  codigo: string;
+  nombre: string;
+  descripcion: string;
+  disponible: boolean;
+}
+
+/** Opción del buscador de actividades CIIU. */
+interface OpcionCiiu {
+  id: number;
+  etiqueta: string;
+}
 
 @Component({
   selector: 'registro-persona-juridica-paso-4',
@@ -12,147 +31,159 @@ import { OpcionUnspsc } from '../services/registro-persona-juridica-unspsc.servi
   styleUrls: ['./registro-persona-juridica-paso-4.component.scss'],
   standalone: false,
 })
-export class RegistroPersonaJuridicaPaso4Component {
+export class RegistroPersonaJuridicaPaso4Component
+  implements OnInit, OnChanges
+{
   @Input() formulario: FormGroup = new FormGroup({});
-  @Input() catalogos: CatalogosPersonaJuridica | null = null;
-  @Input() cargandoCatalogos = false;
-  @Input() errorCatalogos: string | null = null;
-  @Input() catalogoUnspsc: OpcionUnspsc[] = [];
-  @Input() cargandoUnspsc = false;
-  @Input() errorUnspsc: string | null = null;
+  @Input() catalogoCiiu: OpcionCatalogo[] = [];
+  @Input() cargandoCiiu = false;
+  @Input() errorCiiu: string | null = null;
   @Output() formularioChange = new EventEmitter<FormGroup>();
-  @Output() reintentarUnspsc = new EventEmitter<void>();
+  @Output() reintentarCiiu = new EventEmitter<void>();
 
-  actividadCiiuDisponibleId = new FormControl<number | null>(null);
-  unspscDisponibleId = new FormControl<number | null>(null);
-  busquedaCiiu = '';
-  busquedaUnspsc = '';
+  /** Selección provisional del buscador; se limpia después de agregar. */
+  readonly actividadCiiuDisponibleId = new FormControl<number | null>(null);
 
-  get actividadesCiiu(): OpcionCatalogo[] {
-    return this.catalogos?.actividadEconomicaCiiu ?? [];
+  /** Opciones ya filtradas; se recalculan al cambiar catálogo o selección. */
+  actividadesCiiuDisponibles: OpcionCiiu[] = [];
+
+  /** Anuncio para lectores de pantalla después de agregar o retirar. */
+  anuncioCiiu = '';
+
+  ngOnInit(): void {
+    this.actualizarOpcionesCiiu();
   }
 
-  get declaraciones(): OpcionCatalogo[] {
-    return this.catalogos?.tipoDeclaracion ?? [];
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['catalogoCiiu']) {
+      this.actualizarOpcionesCiiu();
+    }
   }
 
-  get actividadesCiiuDisponibles(): OpcionCatalogo[] {
-    const texto = this.busquedaCiiu.trim().toLocaleLowerCase();
-    const seleccionadas = new Set(this.idsSeleccionados('actividadesCiiu'));
-    return this.actividadesCiiu.filter(
-      actividad =>
-        !seleccionadas.has(actividad.id)
-        && (
-          texto.length === 0
-          || `${actividad.codigo ?? ''} ${actividad.nombre} ${actividad.descripcion ?? ''}`
-            .toLocaleLowerCase()
-            .includes(texto)
-        ),
+  get actividadesCiiuSeleccionadas(): ActividadCiiuSeleccionada[] {
+    return this.idsSeleccionados().map(id => {
+      const opcion = this.catalogoCiiu.find(actividad => actividad.id === id);
+      if (!opcion) {
+        return {
+          id,
+          codigo: String(id),
+          nombre: 'Actividad no disponible en el catálogo',
+          descripcion: '',
+          disponible: false,
+        };
+      }
+      return {
+        id,
+        codigo: opcion.codigo ?? String(opcion.id),
+        nombre: opcion.nombre,
+        descripcion: opcion.descripcion ?? '',
+        disponible: true,
+      };
+    });
+  }
+
+  get hayActividadesNoDisponibles(): boolean {
+    return this.actividadesCiiuSeleccionadas.some(
+      actividad => !actividad.disponible,
     );
   }
 
-  get actividadesCiiuSeleccionadas(): OpcionCatalogo[] {
-    const ids = this.idsSeleccionados('actividadesCiiu');
-    return ids
-      .map(id => this.actividadesCiiu.find(actividad => actividad.id === id))
-      .filter((actividad): actividad is OpcionCatalogo => actividad !== undefined);
+  get mostrarErrorActividades(): boolean {
+    const campo = this.formulario.get('actividadesCiiu');
+    return !!campo && campo.touched && campo.hasError('minlength');
   }
 
-  get unspscDisponibles(): OpcionUnspsc[] {
-    return this.unspscCoincidentesDisponibles.slice(0, 100);
+  get mostrarErrorPrincipal(): boolean {
+    const campo = this.formulario.get('actividadCiiuPrincipalId');
+    return !!campo && campo.touched && campo.hasError('required');
   }
 
-  get unspscCoincidentesDisponibles(): OpcionUnspsc[] {
-    const texto = this.busquedaUnspsc.trim().toLocaleLowerCase();
-    const seleccionadas = new Set(this.idsSeleccionados('unspscSeleccionados'));
-    return this.unspscCoincidentes.filter(opcion => !seleccionadas.has(opcion.id));
+  get excedeDescripcion(): boolean {
+    const campo = this.formulario.get('descripcionServicios');
+    return !!campo && campo.touched && campo.hasError('maxlength');
   }
 
-  get unspscCoincidentes(): OpcionUnspsc[] {
-    const texto = this.busquedaUnspsc.trim().toLocaleLowerCase();
-    return this.catalogoUnspsc.filter(
-      opcion =>
-        `${opcion.codigo} ${opcion.titulo}`.toLocaleLowerCase().includes(texto),
-    );
+  esPrincipal(id: number): boolean {
+    return this.formulario.get('actividadCiiuPrincipalId')?.value === id;
   }
 
-  get hayMasResultadosUnspsc(): boolean {
-    return this.unspscCoincidentesDisponibles.length > this.unspscDisponibles.length;
-  }
-
-  get unspscSeleccionados(): OpcionUnspsc[] {
-    const ids = this.idsSeleccionados('unspscSeleccionados');
-    return ids
-      .map(id => this.catalogoUnspsc.find(opcion => opcion.id === id))
-      .filter((opcion): opcion is OpcionUnspsc => opcion !== undefined);
-  }
-
-  get cantidadCaracteres(): number {
-    return String(this.formulario.get('descripcionServicios')?.value ?? '').length;
+  /** Permite seleccionar la actividad principal haciendo clic en toda la píldora. */
+  seleccionarPrincipal(id: number): void {
+    if (this.esPrincipal(id)) {
+      return;
+    }
+    this.formulario.get('actividadCiiuPrincipalId')?.setValue(id);
+    this.emitirCambio();
   }
 
   agregarActividadCiiu(): void {
     const id = this.actividadCiiuDisponibleId.value;
-    if (id === null || this.idsSeleccionados('actividadesCiiu').includes(id)) {
+    if (id === null || this.idsSeleccionados().includes(id)) {
       return;
     }
-    this.formulario.get('actividadesCiiu')?.setValue([
-      ...this.idsSeleccionados('actividadesCiiu'),
-      id,
-    ]);
+
+    const ids = [...this.idsSeleccionados(), id];
+    this.formulario.get('actividadesCiiu')?.setValue(ids);
+
+    const principal = this.formulario.get('actividadCiiuPrincipalId')?.value;
+    if (typeof principal !== 'number' || !ids.includes(principal)) {
+      this.formulario.get('actividadCiiuPrincipalId')?.setValue(id);
+    }
+
+    this.anuncioCiiu = `Actividad CIIU ${this.codigoActividad(id)} agregada.`;
     this.actividadCiiuDisponibleId.setValue(null);
+    this.actualizarOpcionesCiiu();
     this.emitirCambio();
   }
 
   quitarActividadCiiu(id: number): void {
-    this.formulario.get('actividadesCiiu')?.setValue(
-      this.idsSeleccionados('actividadesCiiu').filter(actividadId => actividadId !== id),
+    const restantes = this.idsSeleccionados().filter(
+      actividadId => actividadId !== id,
     );
-    this.emitirCambio();
-  }
+    this.formulario.get('actividadesCiiu')?.setValue(restantes);
 
-  agregarUnspsc(): void {
-    const id = this.unspscDisponibleId.value;
-    if (id === null || this.idsSeleccionados('unspscSeleccionados').includes(id)) {
-      return;
+    const principal = this.formulario.get('actividadCiiuPrincipalId')?.value;
+    if (principal === id) {
+      this.formulario
+        .get('actividadCiiuPrincipalId')
+        ?.setValue(restantes[0] ?? null);
     }
-    this.formulario.get('unspscSeleccionados')?.setValue([
-      ...this.idsSeleccionados('unspscSeleccionados'),
-      id,
-    ]);
-    this.unspscDisponibleId.setValue(null);
+
+    this.anuncioCiiu = `Actividad CIIU ${this.codigoActividad(id)} retirada.`;
+    this.actualizarOpcionesCiiu();
     this.emitirCambio();
   }
 
-  quitarUnspsc(id: number): void {
-    this.formulario.get('unspscSeleccionados')?.setValue(
-      this.idsSeleccionados('unspscSeleccionados').filter(codigoId => codigoId !== id),
-    );
-    this.emitirCambio();
-  }
-
-  estaDeclaracionSeleccionada(id: number): boolean {
-    return this.formulario.get('declaraciones')?.value?.includes(id) ?? false;
-  }
-
-  cambiarDeclaracion(id: number, seleccionada: boolean): void {
-    const declaraciones = this.idsSeleccionados('declaraciones');
-    const actualizadas = seleccionada
-      ? [...declaraciones, id]
-      : declaraciones.filter((declaracionId: number) => declaracionId !== id);
-
-    this.formulario.get('declaraciones')?.setValue([...new Set(actualizadas)]);
-    this.emitirCambio();
+  reintentar(): void {
+    this.reintentarCiiu.emit();
   }
 
   emitirCambio(): void {
     this.formularioChange.emit(this.formulario);
   }
 
-  private idsSeleccionados(controlName: string): number[] {
-    const valor: unknown = this.formulario.get(controlName)?.value;
+  /** Recalcula las opciones disponibles sin perder la búsqueda del usuario. */
+  private actualizarOpcionesCiiu(): void {
+    const seleccionadas = new Set(this.idsSeleccionados());
+    this.actividadesCiiuDisponibles = this.catalogoCiiu
+      .filter(actividad => !seleccionadas.has(actividad.id))
+      .map(actividad => ({
+        id: actividad.id,
+        etiqueta: `${actividad.codigo ?? actividad.id} — ${actividad.nombre}`,
+      }));
+  }
+
+  private idsSeleccionados(): number[] {
+    const valor: unknown = this.formulario.get('actividadesCiiu')?.value;
     return Array.isArray(valor)
       ? valor.filter((id): id is number => typeof id === 'number' && Number.isInteger(id))
       : [];
+  }
+
+  private codigoActividad(id: number): string {
+    return (
+      this.catalogoCiiu.find(actividad => actividad.id === id)?.codigo
+      ?? String(id)
+    );
   }
 }

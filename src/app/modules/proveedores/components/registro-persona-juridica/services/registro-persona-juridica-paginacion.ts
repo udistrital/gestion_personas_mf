@@ -1,10 +1,12 @@
 import { defer, EMPTY, expand, map, Observable, reduce, throwError } from 'rxjs';
 
-export const TAMANO_PAGINA = 100;
+export const TAMANO_PAGINA = 1000;
 const MAXIMO_PAGINAS = 500;
 
 /**
  * Los CRUD (Beego) responden con un máximo de 10 registros si no se indica `limit`.
+ * Se solicita una página grande (1000) para que los catálogos extensos, como
+ * CIIU, se resuelvan en una o dos peticiones en lugar de decenas.
  * Recupera todas las páginas avanzando `offset` según los registros realmente recibidos.
  * Termina únicamente con una página vacía. Una página no vacía sin ningún ID nuevo indica
  * que el servicio ignoró `offset` (o devolvió datos repetidos), por lo que se propaga un

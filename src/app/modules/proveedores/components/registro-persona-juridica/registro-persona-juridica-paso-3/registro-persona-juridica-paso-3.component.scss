@@ -1,69 +1,198 @@
-@use 'src/app/shared/styles/tokens' as t;
+@use "src/app/shared/styles/tokens" as t;
+@use "src/app/shared/styles/campos-registro" as campos-registro;
+@use "src/app/shared/styles/paso-asistente" as paso-asistente;
 
-@use 'src/app/shared/styles/registro-formulario' as registro-formulario;
-
-@include registro-formulario.styles;
+@include campos-registro.estilos;
+@include paso-asistente.styles;
 
 :host {
-	display: block;
+  display: block;
 }
 
-.rup-encabezado {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: end;
-	justify-content: space-between;
-	gap: 0.75rem;
-	margin-bottom: 1rem;
+.paso-3 {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
-.aportes-grid {
-	display: grid;
-	grid-template-columns: 1fr;
-	gap: 1rem;
+/* ── Fila de documento ────────────────────────────────────────────────── */
+.documento {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.875rem 1rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-surface);
 }
 
-.rup-encabezado .campo {
-	min-width: min(100%, 20rem);
+.documento--vacio {
+  border-style: dashed;
+  background: var(--agora-superficie-neutra);
 }
 
-.rup-contenido {
-	display: grid;
-	gap: 1rem;
+.documento__icono {
+  display: flex;
+  flex: 0 0 2.5rem;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-surface);
+  color: var(--agora-primary);
 }
 
-.datos-documento {
-	margin-bottom: 1rem;
+.documento__icono mat-icon {
+  width: 1.375rem;
+  height: 1.375rem;
+  font-size: 1.375rem;
 }
 
-.datos-documento .campo-grid {
-	margin: 1rem 0 0;
+.documento__textos {
+  display: flex;
+  flex: 1 1 14rem;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
 }
 
-.soporte-rup {
-	align-items: center;
-	background: var(--agora-surface);
+.documento__textos strong {
+  overflow: hidden;
+  color: var(--agora-text);
+  font-size: t.$fuente-lg;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.aporte-card {
-	display: flex;
-	align-items: flex-start;
-	gap: 0.75rem;
-	padding: 1rem;
-	flex: 1 1 15rem;
+.documento__textos span {
+  color: var(--agora-text-muted);
+  font-size: t.$fuente-sm;
+  line-height: 1.4;
 }
 
-.aporte-card > mat-icon {
-	color: var(--agora-primary);
+.documento__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
-.aporte-card--soporte {
-	align-items: center;
-	justify-content: space-between;
+.documento__boton {
+  cursor: pointer;
 }
 
-@media (min-width: t.$bp-lg) {
-	.aportes-grid {
-		grid-template-columns: repeat(3, minmax(0, 1fr));
-	}
+.documento__error {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0.5rem 0 0;
+  color: var(--agora-error);
+  font-size: t.$fuente-sm;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.documento__error mat-icon {
+  width: 1rem;
+  height: 1rem;
+  font-size: 1rem;
+}
+
+/* ── Toggle de RUP ─────────────────────────────────────────────────────── */
+.rup-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+  margin-bottom: 1rem;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-superficie-neutra);
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.rup-toggle--activo {
+  border-color: var(--agora-primary);
+}
+
+.rup-toggle__textos {
+  display: flex;
+  flex: 1 1 22rem;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.rup-toggle__etiqueta {
+  color: var(--agora-text);
+  font-size: t.$fuente-xl;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.rup-toggle__estado {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--agora-borde-control);
+  border-radius: 999px;
+  background: var(--agora-surface);
+  color: var(--agora-text-muted);
+  font-size: t.$fuente-lg;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.rup-toggle__estado--activo {
+  border-color: var(--agora-success-border);
+  background: var(--agora-success-surface);
+  color: var(--agora-success);
+}
+
+.rup-toggle__estado mat-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  font-size: 1.125rem;
+}
+
+.rup-toggle__ayuda {
+  color: var(--agora-text-muted);
+  font-size: t.$fuente-sm;
+  line-height: 1.45;
+}
+
+/* ── Nota informativa ──────────────────────────────────────────────────── */
+.nota {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  margin: 0;
+  color: var(--agora-text-muted);
+  font-size: t.$fuente-sm;
+  line-height: 1.45;
+}
+
+.nota mat-icon {
+  flex: 0 0 auto;
+  width: 1rem;
+  height: 1rem;
+  margin-top: 0.1rem;
+  font-size: 1rem;
+}
+
+@media (max-width: t.$bp-sm) {
+  .documento__textos strong {
+    white-space: normal;
+  }
+
+  .documento__acciones {
+    width: 100%;
+  }
 }

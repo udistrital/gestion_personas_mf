@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, signal } from "@angular/core";
+import { Component, DestroyRef, OnInit, computed, signal } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { Router } from "@angular/router";
 import { Subscription } from "rxjs";
@@ -8,6 +8,8 @@ import {
   ESTADOS_POSTULACION_PROVEEDOR,
 } from "src/app/core/constants/estados-solicitud.const";
 import { PermisosSolicitudService } from "src/app/core/services/permisos-solicitud.service";
+import { RolService } from "src/app/core/services/rol.service";
+import { ACCIONES_INVITACION_POR_ROL_Y_ESTADO } from "src/app/core/constants/acciones-por-rol-y-estado.const";
 import {
   CampoFiltro,
   FiltroRapido,
@@ -38,6 +40,7 @@ export class BandejaSolicitudesComponent implements OnInit {
   constructor(
     private readonly servicio: SolicitudesService,
     readonly permisos: PermisosSolicitudService,
+    private readonly rol: RolService,
     private readonly router: Router,
     private readonly alerta: AlertService,
     private readonly destroyRef: DestroyRef,
@@ -46,6 +49,15 @@ export class BandejaSolicitudesComponent implements OnInit {
   readonly breadcrumb =
     "<p>Gestión Proveedor › Cotizaciones › <b>Bandeja de solicitudes de cotización</b></p>";
   readonly acciones = ACCIONES_INVITACION_PROVEEDOR;
+
+  /**
+   * La columna de acciones solo aparece si el rol del usuario tiene algo que
+   * ofrecer en la matriz rol+estado de invitaciones.
+   */
+  readonly hayColumnaAcciones = computed(() =>
+    this.rol.mostrarAcciones(ACCIONES_INVITACION_POR_ROL_Y_ESTADO),
+  );
+
   readonly vigenciaActual = VIGENCIA_ACTUAL;
   readonly grupos = GRUPOS_FILTRO_INVITACION;
   readonly opcionesVigencia = [

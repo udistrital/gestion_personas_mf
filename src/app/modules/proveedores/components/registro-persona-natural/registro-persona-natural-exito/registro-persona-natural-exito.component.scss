@@ -1,0 +1,742 @@
+@use "src/app/shared/styles/tokens" as t;
+
+:host {
+  display: block;
+}
+
+.constancia-exito {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  box-sizing: border-box;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  width: 100%;
+}
+
+/* ── Banner de confirmación ────────────────────────────────────────────── */
+.exito-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  overflow: hidden;
+  padding: 1.75rem 2rem;
+  border-radius: var(--agora-radio-lg);
+  background:
+    radial-gradient(
+      circle at 92% 120%,
+      color-mix(in srgb, var(--agora-on-primary) 16%, transparent),
+      transparent 55%
+    ),
+    linear-gradient(120deg, var(--agora-primary-dark), var(--agora-primary));
+  color: var(--agora-on-primary);
+  box-shadow: var(--agora-sombra-tarjeta);
+}
+
+.exito-hero__sello {
+  display: flex;
+  flex: 0 0 4.25rem;
+  align-items: center;
+  justify-content: center;
+  width: 4.25rem;
+  height: 4.25rem;
+  border: 1px solid color-mix(in srgb, var(--agora-on-primary) 28%, transparent);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--agora-on-primary) 14%, transparent);
+  color: var(--agora-on-primary);
+}
+
+.exito-hero__sello mat-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: 2.5rem;
+}
+
+.exito-hero__textos {
+  min-width: 0;
+}
+
+.exito-hero__textos h2 {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.exito-hero__textos h2:focus-visible {
+  outline: 2px solid var(--agora-on-primary);
+  outline-offset: 4px;
+  border-radius: 0.25rem;
+}
+
+.exito-hero__textos p {
+  max-width: 46rem;
+  margin: 0.5rem 0 0;
+  color: color-mix(in srgb, var(--agora-on-primary) 88%, transparent);
+  font-size: t.$fuente-lg;
+  line-height: 1.6;
+}
+
+/* ── Aviso de radicación parcial ───────────────────────────────────────── */
+.exito-aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--agora-warning-border);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-warning-surface);
+  color: var(--agora-warning-text);
+}
+
+.exito-aviso mat-icon {
+  flex: 0 0 auto;
+  color: var(--agora-warning-text);
+}
+
+.exito-aviso strong {
+  display: block;
+  font-size: t.$fuente-md;
+}
+
+.exito-aviso p {
+  margin: 0.25rem 0 0;
+  font-size: t.$fuente-sm;
+  line-height: 1.5;
+}
+
+/* ── Rejilla principal ─────────────────────────────────────────────────── */
+.exito-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 1.25rem;
+}
+
+/* ── Constancia oficial ────────────────────────────────────────────────── */
+.constancia {
+  position: relative;
+  overflow: hidden;
+  padding: 2rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-surface);
+  box-shadow: var(--agora-sombra-tarjeta);
+}
+
+.constancia::before,
+.constancia::after {
+  position: absolute;
+  right: 0;
+  left: 0;
+  height: 0.375rem;
+  background: var(--agora-primary);
+  content: "";
+}
+
+.constancia::before {
+  top: 0;
+}
+
+.constancia::after {
+  bottom: 0;
+}
+
+.constancia__marca-agua {
+  position: absolute;
+  right: -3rem;
+  bottom: -3rem;
+  color: var(--agora-primary);
+  opacity: 0.05;
+  pointer-events: none;
+  user-select: none;
+}
+
+.constancia__marca-agua mat-icon {
+  width: 16rem;
+  height: 16rem;
+  font-size: 16rem;
+}
+
+.constancia__cabecera {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--agora-borde-tarjeta);
+  text-align: center;
+}
+
+.constancia__sello {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 0.5rem;
+  border-radius: 50%;
+  background: var(--agora-primary-light);
+  color: var(--agora-primary);
+}
+
+.constancia__sello mat-icon {
+  width: 1.75rem;
+  height: 1.75rem;
+  font-size: 1.75rem;
+}
+
+.constancia__institucion {
+  margin: 0;
+  color: var(--agora-text);
+  font-size: t.$fuente-sm;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.constancia__cabecera h3 {
+  margin: 0.25rem 0 0;
+  color: var(--agora-primary);
+  font-size: 1.375rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.constancia__sistema {
+  margin: 0;
+  color: var(--agora-text-muted);
+  font-size: t.$fuente-xs;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1.45;
+  text-transform: uppercase;
+}
+
+/* ── Radicado ──────────────────────────────────────────────────────────── */
+.constancia__radicado {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin: 1.25rem 0;
+  padding: 0.875rem 1rem;
+  border: 1px dashed var(--agora-primary);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-primary-light);
+}
+
+.constancia__radicado-etiqueta {
+  width: 100%;
+  color: var(--agora-primary-dark);
+  font-size: t.$fuente-xs;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.constancia__radicado strong {
+  color: var(--agora-primary-dark);
+  font-family: ui-monospace, "SFMono-Regular", "Menlo", "Consolas", monospace;
+  font-size: 1.375rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.constancia__copiar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--agora-primary) 35%, transparent);
+  border-radius: 0.375rem;
+  background: var(--agora-surface);
+  color: var(--agora-primary);
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+.constancia__copiar:hover,
+.constancia__copiar:focus-visible {
+  border-color: var(--agora-primary-dark);
+  background: var(--agora-primary-dark);
+  color: var(--agora-on-primary);
+}
+
+.constancia__copiar mat-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  font-size: 1.125rem;
+}
+
+.constancia__copiar--hash {
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-left: 0.375rem;
+  vertical-align: middle;
+}
+
+.constancia__acuse {
+  align-self: center;
+  color: var(--agora-success);
+  font-size: t.$fuente-sm;
+  font-weight: 700;
+}
+
+/* ── Datos del expediente ──────────────────────────────────────────────── */
+.constancia__datos {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.constancia__seccion-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.constancia__seccion-cabecera mat-icon {
+  color: var(--agora-primary);
+}
+
+.constancia__seccion-cabecera h4 {
+  margin: 0;
+  color: var(--agora-text);
+  font-size: t.$fuente-md;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.constancia__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.constancia__dato {
+  min-width: 0;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-superficie-neutra);
+}
+
+.constancia__dato dt {
+  color: var(--agora-text-muted);
+  font-size: t.$fuente-xs;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.constancia__dato dd {
+  margin: 0.25rem 0 0;
+  color: var(--agora-text);
+  font-size: t.$fuente-lg;
+  font-weight: 700;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.constancia__documento-representante {
+  color: var(--agora-text-muted);
+  font-weight: 500;
+}
+
+.constancia__dato--con-punto {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.constancia__dato--ancho {
+  grid-column: 1 / -1;
+}
+
+.constancia__ciiu-secundarias {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.chip-ciiu {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-surface);
+  color: var(--agora-text);
+  font-size: t.$fuente-xs;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.constancia__punto {
+  display: inline-block;
+  flex: 0 0 0.5rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--agora-primary);
+}
+
+/* ── Correos ───────────────────────────────────────────────────────────── */
+.constancia__correos {
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-superficie-neutra);
+}
+
+.constancia__correos-etiqueta {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--agora-text-muted);
+  font-size: t.$fuente-xs;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.constancia__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.chip-correo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  max-width: 100%;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-surface);
+  color: var(--agora-text);
+  font-family: ui-monospace, "SFMono-Regular", "Menlo", "Consolas", monospace;
+  font-size: t.$fuente-sm;
+  overflow-wrap: anywhere;
+}
+
+.chip-correo mat-icon {
+  flex: 0 0 auto;
+  width: 1rem;
+  height: 1rem;
+  color: var(--agora-primary);
+  font-size: 1rem;
+}
+
+/* ── Firma y hash ──────────────────────────────────────────────────────── */
+.constancia__firma {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--agora-borde-tarjeta);
+}
+
+.constancia__firma-linea {
+  display: block;
+  width: 12rem;
+  max-width: 100%;
+  height: 1px;
+  margin-bottom: 0.5rem;
+  background: var(--agora-borde-control);
+}
+
+.constancia__firma-titulo {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0;
+  color: var(--agora-primary);
+  font-size: t.$fuente-sm;
+  font-weight: 700;
+}
+
+.constancia__firma-titulo mat-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  font-size: 1.125rem;
+}
+
+.constancia__firma-texto {
+  margin: 0;
+  color: var(--agora-text-muted);
+  font-size: t.$fuente-sm;
+  line-height: 1.55;
+}
+
+.constancia__hash {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.5rem;
+  margin: 0.75rem 0 0;
+}
+
+.constancia__hash dt {
+  color: var(--agora-text-muted);
+  font-size: t.$fuente-xs;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.constancia__hash dd {
+  margin: 0.125rem 0 0;
+  color: var(--agora-text);
+  font-size: t.$fuente-sm;
+  font-weight: 600;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.constancia__hash code {
+  color: var(--agora-primary-dark);
+  font-family: ui-monospace, "SFMono-Regular", "Menlo", "Consolas", monospace;
+  font-size: t.$fuente-xs;
+}
+
+/* ── Panel lateral ─────────────────────────────────────────────────────── */
+.exito-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.qr,
+.acciones,
+.siguiente {
+  padding: 1.25rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-surface);
+  box-shadow: var(--agora-sombra-tarjeta);
+}
+
+.qr h4,
+.acciones h4,
+.siguiente h4 {
+  margin: 0 0 0.75rem;
+  color: var(--agora-text-muted);
+  font-size: t.$fuente-xs;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+/* ── Tarjeta de verificación (marco decorativo) ────────────────────────── */
+.qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+}
+
+.qr__marco {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 9rem;
+  height: 9rem;
+  margin: 0.25rem 0;
+  border: 1px dashed var(--agora-borde-control);
+  border-radius: var(--agora-radio-lg);
+  background:
+    repeating-linear-gradient(
+      45deg,
+      var(--agora-superficie-neutra),
+      var(--agora-superficie-neutra) 0.5rem,
+      var(--agora-surface) 0.5rem,
+      var(--agora-surface) 1rem
+    );
+}
+
+.qr__marco mat-icon {
+  width: 5rem;
+  height: 5rem;
+  color: var(--agora-texto-deshabilitado);
+  font-size: 5rem;
+  opacity: 0.7;
+}
+
+.qr__codigo {
+  display: inline-block;
+  max-width: 100%;
+  padding: 0.35rem 0.6rem;
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-primary-dark);
+  font-family: ui-monospace, "SFMono-Regular", "Menlo", "Consolas", monospace;
+  font-size: t.$fuente-md;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.qr__copiar {
+  width: 100%;
+}
+
+.qr__nota {
+  margin: 0;
+  color: var(--agora-text-muted);
+  font-size: t.$fuente-xs;
+  line-height: 1.45;
+}
+
+.qr__acuse {
+  color: var(--agora-success);
+  font-size: t.$fuente-sm;
+  font-weight: 700;
+}
+
+/* ── Acciones ──────────────────────────────────────────────────────────── */
+.acciones {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.acciones__boton {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.acciones__nota {
+  margin: -0.125rem 0 0.25rem;
+  color: var(--agora-text-muted);
+  font-size: t.$fuente-xs;
+  line-height: 1.45;
+}
+
+.acciones__boton--volver {
+  margin-top: 0.25rem;
+}
+
+.acciones__error {
+  margin-top: 0.25rem;
+  color: var(--agora-error);
+  font-size: t.$fuente-xs;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+/* ── ¿Qué sigue? ───────────────────────────────────────────────────────── */
+.siguiente ol {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.siguiente li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.siguiente li mat-icon {
+  flex: 0 0 auto;
+  margin-top: 0.125rem;
+  color: var(--agora-primary);
+}
+
+.siguiente li strong {
+  display: block;
+  color: var(--agora-text);
+  font-size: t.$fuente-sm;
+  font-weight: 700;
+}
+
+.siguiente li span {
+  display: block;
+  margin-top: 0.125rem;
+  color: var(--agora-text-muted);
+  font-size: t.$fuente-xs;
+  line-height: 1.45;
+}
+
+/* ── Pie institucional ─────────────────────────────────────────────────── */
+.exito-pie {
+  padding: 0.5rem 0 1rem;
+  text-align: center;
+}
+
+.exito-pie__datos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem 0.75rem;
+  color: var(--agora-texto-neutro);
+  font-size: t.$fuente-xs;
+  font-weight: 600;
+}
+
+.exito-pie p {
+  margin: 0.5rem 0 0;
+  color: var(--agora-texto-neutro);
+  font-size: t.$fuente-xs;
+  line-height: 1.5;
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────── */
+@media (min-width: t.$bp-md) {
+  .constancia__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .constancia__hash {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: t.$bp-xl) {
+  .exito-grid {
+    grid-template-columns: minmax(0, 2fr) minmax(18rem, 1fr);
+  }
+}
+
+@media (max-width: t.$bp-sm) {
+  .exito-hero {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 1.25rem;
+  }
+
+  .exito-hero__textos h2 {
+    font-size: 1.375rem;
+  }
+
+  .constancia {
+    padding: 1.25rem;
+  }
+
+  .constancia__radicado strong {
+    font-size: 1.125rem;
+  }
+}

@@ -1,9 +1,5 @@
 import { Injectable } from "@angular/core";
-import {
-  DEPENDENCIAS_DESTINO,
-  DEPENDENCIAS_SOLICITANTES,
-  formatoFechaCorta,
-} from "../models/datos-generales.model";
+import { formatoFechaCorta } from "../models/datos-generales.model";
 import {
   FORMAS_PAGO,
   MEDIOS_PAGO,
@@ -90,14 +86,14 @@ export class DiferenciasSolicitudService {
       this.cambio(
         2,
         "Dependencia solicitante",
-        etiquetaDependencia(DEPENDENCIAS_SOLICITANTES, antes.dependenciaSolicitante),
-        etiquetaDependencia(DEPENDENCIAS_SOLICITANTES, ahora.dependenciaSolicitante),
+        etiquetaDependencia(antes.dependenciaSolicitante),
+        etiquetaDependencia(ahora.dependenciaSolicitante),
       ),
       this.cambio(
         2,
         "Dependencia destino",
-        etiquetaDependencia(DEPENDENCIAS_DESTINO, antes.dependenciaDestino),
-        etiquetaDependencia(DEPENDENCIAS_DESTINO, ahora.dependenciaDestino),
+        etiquetaDependencia(antes.dependenciaDestino),
+        etiquetaDependencia(ahora.dependenciaDestino),
       ),
       this.cambio(
         2,
@@ -345,13 +341,13 @@ export class DiferenciasSolicitudService {
   }
 }
 
-/** Etiqueta de una opción de dependencia (valor vacío = sin definir). */
-function etiquetaDependencia(
-  catalogo: readonly { readonly valor: string; readonly etiqueta: string }[],
-  valor: string,
-): string {
-  if (!valor) {
-    return "—";
-  }
-  return catalogo.find((opcion) => opcion.valor === valor)?.etiqueta ?? valor;
+/**
+ * Etiqueta legible de una dependencia (valor vacío = sin definir).
+ *
+ * Las dependencias ya no viven en un catálogo mock: Oikos entrega el `Id` y el
+ * nombre, y la fotografía editable del mock guarda la etiqueta visible. Cuando
+ * exista el backend, el `Id` viajará en el payload y el nombre llegará resuelto.
+ */
+function etiquetaDependencia(valor: string): string {
+  return valor || "—";
 }

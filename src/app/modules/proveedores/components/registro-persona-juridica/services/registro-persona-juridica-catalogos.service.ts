@@ -95,10 +95,11 @@ export interface CatalogosPersonaJuridica {
   tipoInterior: OpcionCatalogo[];
 }
 
-// Las vías e interiores se obtienen de Ubicaciones; este servicio cubre Terceros y Parámetros.
+// Las vías e interiores se obtienen de Ubicaciones; el CIIU se carga aparte
+// para que un catálogo lento no bloquee el resto del formulario.
 export type CatalogosTercerosParametros = Omit<
   CatalogosPersonaJuridica,
-  "tipoVia" | "tipoInterior"
+  "tipoVia" | "tipoInterior" | "actividadEconomicaCiiu"
 >;
 
 interface OpcionesParametro {
@@ -228,7 +229,6 @@ export class RegistroPersonaJuridicaCatalogosService {
       camaraComercio: parametro("CAM_COM"),
       entidadesBancarias: parametro("EB"),
       tiposCuentaBancaria: parametro("TCB"),
-      actividadEconomicaCiiu: parametro("CIIU", { exigirCodigo: true }),
       // Catálogos que usa el formulario y que no figuran en PERSONA_JURIDICA_CONSUMO.md.
       responsabilidadFiscal: parametro("RESP_FIS"),
       tipoDocumento: parametro("TIP_DOC", {
@@ -237,6 +237,33 @@ export class RegistroPersonaJuridicaCatalogosService {
       }),
       tipoDeclaracion: parametro("TIP_DEC", { codigoArea: "IT" }),
     });
+  }
+
+  /**
+   * Carga el catálogo CIIU por separado.
+   *
+   * Es el catálogo más extenso del formulario; separarlo evita que su tiempo
+   * de respuesta bloquee los demás catálogos y permite mostrar el paso 4 en
+   * cuanto esté listo.
+   */
+  obtenerCatalogoCiiu(): Observable<OpcionCatalogo[]> {
+    const memo = new Map<string, Observable<RegistroCatalogo[]>>();
+    const memorizar = (
+      clave: string,
+      crear: () => Observable<RegistroCatalogo[]>,
+    ) => {
+      let solicitud = memo.get(clave);
+      if (!solicitud) {
+        solicitud = crear().pipe(shareReplay(1));
+        memo.set(clave, solicitud);
+      }
+      return solicitud;
+    };
+    return this.obtenerParametrosPorTipo(
+      "CIIU",
+      { exigirCodigo: true },
+      memorizar,
+    );
   }
 
   private obtenerInfoComplementaria(
@@ -367,7 +394,11 @@ export class RegistroPersonaJuridicaCatalogosService {
         const params = new HttpParams()
           .set("query", query)
           .set("limit", String(limit))
-          .set("offset", String(offset));
+          .set("offset", String(offset))
+          // Sin orden estable, PostgreSQL puede devolver filas distintas para
+          // el mismo offset y la paginación no termina.
+          .set("sortby", "Id")
+          .set("order", "asc");
         return this.http
           .get<unknown>(url, { params })
           .pipe(
