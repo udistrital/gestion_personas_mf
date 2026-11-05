@@ -1,5 +1,4 @@
 import { Injectable, inject } from "@angular/core";
-import { ROLES_SOLICITANTE } from "../constants/roles.const";
 import { RolService } from "./rol.service";
 import {
   ACCIONES_INVITACION_PROVEEDOR,
@@ -9,10 +8,12 @@ import {
   AccionSolicitudMeta,
   ESTADOS_SOLICITUD,
   EstadoSolicitud,
-  MATRIZ_ACCIONES_INVITACION_PROVEEDOR,
-  MATRIZ_ACCIONES_POR_ESTADO,
   MATRIZ_SOLICITUD_PERMITE_RESPUESTA,
 } from "../constants/estados-solicitud.const";
+import {
+  ACCIONES_INVITACION_POR_ROL_Y_ESTADO,
+  accionesSolicitudPorRoles,
+} from "../constants/acciones-por-rol-y-estado.const";
 import type {
   InvitacionProveedor,
 } from "src/app/modules/cotizaciones/models/invitacion-proveedor.model";
@@ -34,28 +35,19 @@ type SolicitudForoPermisable = Pick<
 export class PermisosSolicitudService {
   private readonly rol = inject(RolService);
 
-  /** Acciones que el menú de la fila debe mostrar para esa solicitud. */
+  /**
+   * Acciones que el menú de la fila debe mostrar para esa solicitud.
+   *
+   * Se resuelven con la matriz rol+estado: si el usuario tiene varios roles se
+   * acumulan (sin duplicados) y sin roles conocidos no se ofrece ninguna.
+   */
   accionesPermitidas(
     solicitud: SolicitudPermisable,
   ): readonly AccionSolicitud[] {
-    const acciones = MATRIZ_ACCIONES_POR_ESTADO[solicitud.estado] ?? [];
-    const accionesSinAccionesProveedor = acciones.filter(
-      (accion) => accion !== "formular-observacion",
-    );
     if (!this.rol.estaCargado()) {
-      return accionesSinAccionesProveedor.filter(
-        (accion) => accion !== "cancelar" && accion !== "foro",
-      );
+      return [];
     }
-
-    const esSolicitante = ROLES_SOLICITANTE.some((rol) =>
-      this.rol.tieneRol(rol),
-    );
-    return esSolicitante
-      ? accionesSinAccionesProveedor
-      : accionesSinAccionesProveedor.filter(
-          (accion) => accion !== "cancelar" && accion !== "foro",
-        );
+    return accionesSolicitudPorRoles(this.rol.roles(), solicitud.estado);
   }
 
   /** true si la acción está permitida en el estado de la solicitud. */
@@ -97,6 +89,18 @@ export class PermisosSolicitudService {
     return meta.rutaPorEstado?.[solicitud.estado] ?? meta.ruta;
   }
 
+  /**
+   * Acciones de la invitación para el rol proveedor en un estado dado.
+   *
+   * Único punto que lee la matriz de invitaciones; el resto de la clase aplica
+   * encima las reglas de fecha.
+   */
+  private accionesInvitacionDe(
+    estado: InvitacionPermisable["estado"],
+  ): readonly AccionInvitacionProveedor[] {
+    return ACCIONES_INVITACION_POR_ROL_Y_ESTADO[ROL_PROVEEDOR]?.[estado] ?? [];
+  }
+
   /** Acciones de la bandeja del proveedor según estado, solicitud y cierre. */
   accionesInvitacionPermitidas(
     invitacion: InvitacionPermisable,
@@ -109,7 +113,7 @@ export class PermisosSolicitudService {
       return [];
     }
 
-    return MATRIZ_ACCIONES_INVITACION_PROVEEDOR[invitacion.estado].filter(
+    return this.accionesInvitacionDe(invitacion.estado).filter(
       (accion) => {
         if (accion === "descargar-anexo") {
           return false;
@@ -136,12 +140,12 @@ export class PermisosSolicitudService {
     if (
       !this.rol.estaCargado() ||
       !this.rol.tieneRol(ROL_PROVEEDOR) ||
-      !MATRIZ_ACCIONES_INVITACION_PROVEEDOR[invitacion.estado].includes(
+      !this.accionesInvitacionDe(invitacion.estado).includes(
         "formular-observacion",
       ) ||
-      !MATRIZ_ACCIONES_POR_ESTADO[solicitud.estado].includes(
-        "formular-observacion",
-      ) ||
+      // El foro se abre en la misma ventana que la respuesta (la solicitud
+      // debe estar publicada a proveedores, no en borrador ni cerrada).
+      !MATRIZ_SOLICITUD_PERMITE_RESPUESTA[solicitud.estado] ||
       this.solicitudCerradaPorFecha(solicitud)
     ) {
       return false;
@@ -157,9 +161,7 @@ export class PermisosSolicitudService {
     return (
       this.rol.estaCargado() &&
       this.rol.tieneRol(ROL_PROVEEDOR) &&
-      MATRIZ_ACCIONES_INVITACION_PROVEEDOR[invitacion.estado].includes(
-        "descargar-anexo",
-      )
+      this.accionesInvitacionDe(invitacion.estado).includes("descargar-anexo")
     );
   }
 
@@ -171,9 +173,7 @@ export class PermisosSolicitudService {
     return (
       this.rol.estaCargado() &&
       this.rol.tieneRol(ROL_PROVEEDOR) &&
-      MATRIZ_ACCIONES_INVITACION_PROVEEDOR[invitacion.estado].includes(
-        "responder",
-      ) &&
+      this.accionesInvitacionDe(invitacion.estado).includes("responder") &&
       MATRIZ_SOLICITUD_PERMITE_RESPUESTA[solicitud.estado] &&
       !this.solicitudCerradaPorFecha(solicitud)
     );

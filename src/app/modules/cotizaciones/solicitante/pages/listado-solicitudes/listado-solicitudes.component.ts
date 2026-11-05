@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, signal } from "@angular/core";
+import { Component, DestroyRef, OnInit, computed, signal } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { Router } from "@angular/router";
 import { MatDialog } from "@angular/material/dialog";
@@ -10,6 +10,9 @@ import {
   ESTADOS_SOLICITUD,
 } from "src/app/core/constants/estados-solicitud.const";
 import { PermisosSolicitudService } from "src/app/core/services/permisos-solicitud.service";
+import { RolService } from "src/app/core/services/rol.service";
+import { ROLES_CREACION_SOLICITUD } from "src/app/core/constants/roles.const";
+import { ACCIONES_SOLICITUD_POR_ROL_Y_ESTADO } from "src/app/core/constants/acciones-por-rol-y-estado.const";
 import { CampoFiltro } from "src/app/shared/components/listado-filtros/listado-filtros.component";
 import { AlertService } from "src/app/shared/services/alert.service";
 import {
@@ -43,6 +46,7 @@ export class ListadoSolicitudesComponent implements OnInit {
     private readonly servicio: SolicitudesService,
     private readonly catalogos: RegistroPersonaJuridicaCatalogosService,
     private readonly permisos: PermisosSolicitudService,
+    private readonly rol: RolService,
     private readonly router: Router,
     private readonly alerta: AlertService,
     private readonly destroyRef: DestroyRef,
@@ -51,6 +55,19 @@ export class ListadoSolicitudesComponent implements OnInit {
 
   /** Acceso a la matriz desde la plantilla (etiquetas, iconos, peligro). */
   readonly ACCIONES = ACCIONES_SOLICITUD;
+
+  /**
+   * La columna de acciones solo aparece si algún rol del usuario tiene algo
+   * que ofrecer en la matriz rol+estado.
+   */
+  readonly hayColumnaAcciones = computed(() =>
+    this.rol.mostrarAcciones(ACCIONES_SOLICITUD_POR_ROL_Y_ESTADO),
+  );
+
+  /** Crear solicitudes: roles declarados en `environment.ROLES_CREACION`. */
+  readonly puedeCrearSolicitud = computed(() =>
+    this.rol.permisoCreacion(ROLES_CREACION_SOLICITUD),
+  );
 
   readonly breadcrumb =
     "<p>Gestión Proveedor › Cotizaciones › <b>Mis Solicitudes de Cotización</b></p>";

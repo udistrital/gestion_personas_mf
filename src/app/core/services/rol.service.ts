@@ -1,9 +1,7 @@
-import { Injectable } from "@angular/core";
+import { Injectable, signal } from "@angular/core";
 import { ImplicitAutenticationService } from "./implicit_autentication.service";
-import {
-  Rol,
-  ROLES_DISPONIBLES,
-} from "../constants/roles.const";
+import { Rol, ROLES_DISPONIBLES } from "../constants/roles.const";
+import type { MatrizAccionesPorRol } from "../constants/acciones-por-rol-y-estado.const";
 import { firstValueFrom } from "rxjs";
 import { singleSpaPropsSubject } from "src/single-spa/single-spa-props";
 
@@ -11,11 +9,20 @@ import { singleSpaPropsSubject } from "src/single-spa/single-spa-props";
   providedIn: "root",
 })
 export class RolService {
-  private roles: Rol[] = [];
-  private rolActivo: Rol | null = null;
+  /**
+   * Roles del usuario como señal.
+   *
+   * Es la fuente reactiva: los `computed` de las pantallas (menús, columnas de
+   * acciones) se recalculan solos cuando la carga asíncrona del token termina.
+   */
+  private readonly rolesSignal = signal<readonly Rol[]>([]);
+  private readonly rolActivoSignal = signal<Rol | null>(null);
   private cargaRoles?: Promise<void>;
   /** true cuando la carga de roles terminó (con o sin roles). */
   private cargado = false;
+
+  /** Roles del usuario, solo lectura, para usar dentro de `computed`. */
+  readonly roles = this.rolesSignal.asReadonly();
 
   constructor(private readonly autenticationService: ImplicitAutenticationService) { }
 
@@ -34,16 +41,18 @@ export class RolService {
         this.autenticationService.getRole(),
         firstValueFrom(singleSpaPropsSubject),
       ]);
-      this.roles = ROLES_DISPONIBLES.filter((rol) =>
+      const roles = ROLES_DISPONIBLES.filter((rol) =>
         rolesObtenidos.includes(rol),
       );
+      this.rolesSignal.set(roles);
       const rolSolicitado = props.rolActivo;
-      this.rolActivo =
-        rolSolicitado && this.roles.includes(rolSolicitado)
+      this.rolActivoSignal.set(
+        rolSolicitado && roles.includes(rolSolicitado)
           ? rolSolicitado
-          : this.roles.length === 1
-            ? this.roles[0]
-            : null;
+          : roles.length === 1
+            ? roles[0]
+            : null,
+      );
     } finally {
       this.cargado = true;
     }
@@ -55,7 +64,7 @@ export class RolService {
   }
 
   getRoles(): Rol[] {
-    return this.roles;
+    return [...this.rolesSignal()];
   }
 
   /**
@@ -67,11 +76,11 @@ export class RolService {
    * `tieneAlgunRol` sobre todos los roles del usuario.
    */
   getRolActivo(): Rol | null {
-    return this.rolActivo;
+    return this.rolActivoSignal();
   }
 
   tieneRol(rol: string): boolean {
-    return this.roles.some((rolDisponible) => rolDisponible === rol);
+    return this.rolesSignal().some((rolDisponible) => rolDisponible === rol);
   }
 
   /**
@@ -86,24 +95,35 @@ export class RolService {
   }
 
   // Permiso para creación y edición
-  permisoCreacion(rolesModulo: string[]): boolean {
+  permisoCreacion(rolesModulo: readonly string[]): boolean {
     return rolesModulo.some((rol) =>
-      this.roles.some((rolDisponible) => rolDisponible === rol),
+      this.rolesSignal().some((rolDisponible) => rolDisponible === rol),
     );
   }
 
-  // Permiso para mostrar columna de acciones en un módulo en especifico
-  mostrarAcciones(accionesModulo: { [rol: string]: { [estado: number]: string[] } }): boolean {
-    return this.roles.some((rol) => {
+  /**
+   * Permiso para mostrar la columna de acciones de un módulo.
+   *
+   * Devuelve true si alguno de los roles del usuario tiene al menos una acción
+   * en algún estado de la matriz. Al leer `rolesSignal` es seguro llamarlo
+   * dentro de un `computed`.
+   */
+  mostrarAcciones(accionesModulo: MatrizAccionesPorRol): boolean {
+    return this.rolesSignal().some((rol) => {
       const accionesPorEstado = accionesModulo[rol];
-      return accionesPorEstado && Object.values(accionesPorEstado).some((acciones) => acciones.length > 0);
+      return (
+        !!accionesPorEstado &&
+        Object.values(accionesPorEstado).some(
+          (acciones) => (acciones?.length ?? 0) > 0,
+        )
+      );
     });
   }
 
   getRolPrioritario(rolPrioridad: string[]): string | null {
     return (
       rolPrioridad.find((rol) =>
-        this.roles.some((rolDisponible) => rolDisponible === rol),
+        this.rolesSignal().some((rolDisponible) => rolDisponible === rol),
       ) ?? null
     );
   }

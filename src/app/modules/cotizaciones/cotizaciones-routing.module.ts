@@ -12,11 +12,6 @@ import { EntradaCotizacionesComponent } from "./pages/entrada-cotizaciones/entra
 
 const routes: Routes = [
   {
-    path: "bandeja-solicitudes",
-    redirectTo: "/cotizaciones/solicitudes",
-    pathMatch: "full",
-  },
-  {
     path: "solicitudes",
     canMatch: [rolGuard],
     data: { roles: ROLES_SOLICITANTE },
@@ -25,6 +20,12 @@ const routes: Routes = [
         (m) => m.SolicitanteModule,
       ),
   },
+  /*
+   * El orden importa: esta ruta debe evaluarse ANTES del redirect de
+   * `bandeja-solicitudes`. Si el redirect va primero, captura la URL con
+   * `pathMatch: "full"` y manda al proveedor al área solicitante, donde el
+   * `rolGuard` lo rechaza y la bandeja queda inalcanzable.
+   */
   {
     path: "bandeja-solicitudes",
     canMatch: [rolGuard],
@@ -33,6 +34,16 @@ const routes: Routes = [
       import("./proveedor/proveedor.module").then(
         (m) => m.ProveedorModule,
       ),
+  },
+  /*
+   * Fallback para los roles que no son proveedor: si el Root enlaza a
+   * "Bandeja de solicitudes", un JD/OG aterriza en su listado en vez de ver un
+   * error de ruta.
+   */
+  {
+    path: "bandeja-solicitudes",
+    redirectTo: "/cotizaciones/solicitudes",
+    pathMatch: "full",
   },
   {
     path: "",

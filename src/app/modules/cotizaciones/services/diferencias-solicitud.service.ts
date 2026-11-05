@@ -342,11 +342,11 @@ export class DiferenciasSolicitudService {
 }
 
 /**
- * Etiqueta visible de una dependencia.
+ * Etiqueta legible de una dependencia (valor vacío = sin definir).
  *
- * El asistente guarda la etiqueta resuelta desde Oikos (`OpcionDependencia`),
- * no el identificador del catálogo, por lo que aquí solo hay que caer al
- * guion cuando el valor llega vacío.
+ * Las dependencias ya no viven en un catálogo mock: Oikos entrega el `Id` y el
+ * nombre, y la fotografía editable del mock guarda la etiqueta visible. Cuando
+ * exista el backend, el `Id` viajará en el payload y el nombre llegará resuelto.
  */
 function etiquetaDependencia(valor: string): string {
   return valor || "—";

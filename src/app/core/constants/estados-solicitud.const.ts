@@ -1,10 +1,10 @@
 /**
- * ÚNICA matriz de estados y acciones de una solicitud.
+ * Estados, catálogo de acciones y metadatos visuales de una solicitud.
  *
- * Todo lo que depende de "qué se puede hacer en
- * cada estado" (menús, botones, guards de acción) debe leerse desde aquí vía
- * `PermisosSolicitudService`; si en el equipo se cambian las reglas, se edita
- * este archivo y no todas las pantallas.
+ * Qué puede hacer cada rol en cada estado se declara en
+ * `acciones-por-rol-y-estado.const.ts` y se consulta a través de
+ * `PermisosSolicitudService`; aquí solo vive el vocabulario (estados y
+ * acciones) y sus etiquetas, iconos y rutas.
  */
 
 export type EstadoSolicitud =
@@ -281,66 +281,10 @@ export const ACCIONES_INVITACION_PROVEEDOR: Readonly<
  * La consulta del foro está disponible para toda invitación. Formular requiere
  * además que la invitación y la solicitud sigan habilitadas y que el plazo
  * específico de observaciones no haya vencido.
+ *
+ * Las acciones por estado de la invitación viven en
+ * `acciones-por-rol-y-estado.const.ts` (eje rol + estado de postulación).
  */
-export const MATRIZ_ACCIONES_INVITACION_PROVEEDOR: Readonly<
-  Record<EstadoPostulacionProveedor, readonly AccionInvitacionProveedor[]>
-> = {
-  borrador: [
-    "ver-detalle-proveedor",
-    "observar",
-    "formular-observacion",
-    "responder",
-    "descargar-anexo",
-  ],
-  enviada: [
-    "ver-detalle-proveedor",
-    "observar",
-    "formular-observacion",
-    "descargar-anexo",
-  ],
-  "pendiente-ajuste": [
-    "ver-detalle-proveedor",
-    "observar",
-    "formular-observacion",
-    "descargar-anexo",
-  ],
-  excluida: ["ver-detalle-proveedor", "observar", "descargar-anexo"],
-  aceptada: ["ver-detalle-proveedor", "observar", "descargar-anexo"],
-  rechazada: ["ver-detalle-proveedor", "observar", "descargar-anexo"],
-  declinada: ["ver-detalle-proveedor", "observar", "descargar-anexo"],
-  vencida: ["ver-detalle-proveedor", "observar", "descargar-anexo"],
-};
-
-/**
- * Acciones permitidas por estado.
- * `ver-detalle` siempre está: ver el detalle nunca debería estar bloqueado.
- */
-export const MATRIZ_ACCIONES_POR_ESTADO: Readonly<
-  Record<EstadoSolicitud, readonly AccionSolicitud[]>
-> = {
-  borrador: ["ver-detalle", "modificar", "cancelar"],
-  "enviada-proveedores": [
-    "ver-detalle",
-    "modificar",
-    "foro",
-    "formular-observacion",
-    "oferentes",
-    "cancelar",
-  ],
-  "en-aprobacion": ["ver-detalle", "foro", "oferentes"],
-  "enviada-con-modificaciones": [
-    "ver-detalle",
-    "modificar",
-    "foro",
-    "formular-observacion",
-    "oferentes",
-    "cancelar",
-  ],
-  "en-evaluacion": ["ver-detalle", "foro", "oferentes"],
-  adjudicada: ["ver-detalle", "foro", "oferentes"],
-  desierta: ["ver-detalle"],
-  cancelada: ["ver-detalle"],
-};
 
 /** Estados del proceso en los que puede recibirse una respuesta de proveedor. */
 export const MATRIZ_SOLICITUD_PERMITE_RESPUESTA: Readonly<

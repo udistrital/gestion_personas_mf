@@ -11,14 +11,16 @@
           y compras institucionales.
         </p>
       </div>
-      <button
-        class="listado__boton-nueva"
-        type="button"
-        (click)="nuevaSolicitud()"
-      >
-        <mat-icon aria-hidden="true">add</mat-icon>
-        <span>Nueva solicitud</span>
-      </button>
+      @if (puedeCrearSolicitud()) {
+        <button
+          class="listado__boton-nueva"
+          type="button"
+          (click)="nuevaSolicitud()"
+        >
+          <mat-icon aria-hidden="true">add</mat-icon>
+          <span>Nueva solicitud</span>
+        </button>
+      }
     </header>
 
     <!-- 2. Pestañas institucionales -->
@@ -140,9 +142,11 @@
                   <th scope="col" class="listado__th">Dependencia</th>
                   <th scope="col" class="listado__th">Tipo de Cotización</th>
                   <th scope="col" class="listado__th">Estado</th>
-                  <th scope="col" class="listado__th listado__th--acciones">
-                    Acciones
-                  </th>
+                  @if (hayColumnaAcciones()) {
+                    <th scope="col" class="listado__th listado__th--acciones">
+                      Acciones
+                    </th>
+                  }
                 </tr>
               </thead>
               <tbody>
@@ -191,41 +195,43 @@
                         </span>
                       }
                     </td>
-                    <td class="listado__td listado__td--acciones">
-                      <button
-                        mat-icon-button
-                        type="button"
-                        class="listado__boton-acciones"
-                        [class.listado__boton-acciones--activo]="
-                          filaMenuAbierto === fila.id
-                        "
-                        [matMenuTriggerFor]="menuAcciones"
-                        [attr.aria-label]="'Acciones de la solicitud ' + fila.id"
-                        (menuOpened)="abrirMenuAcciones(fila.id)"
-                        (menuClosed)="cerrarMenuAcciones()"
-                      >
-                        <mat-icon aria-hidden="true" color="primary">more_vert</mat-icon>
-                      </button>
-                      <mat-menu
-                        #menuAcciones="matMenu"
-                        panelClass="listado__menu-acciones"
-                        xPosition="before"
-                      >
-                        @for (accion of accionesDe(fila); track accion) {
-                          <button
-                            mat-menu-item
-                            type="button"
-                            [class.listado__menu-item--peligro]="esPeligro(accion)"
-                            (click)="ejecutarAccion(accion, fila)"
-                          >
-                            <mat-icon aria-hidden="true" color="primary">
-                              {{ ACCIONES[accion].icono }}
-                            </mat-icon>
-                            <span>{{ etiquetaAccion(accion, fila) }}</span>
-                          </button>
-                        }
-                      </mat-menu>
-                    </td>
+                    @if (hayColumnaAcciones()) {
+                      <td class="listado__td listado__td--acciones">
+                        <button
+                          mat-icon-button
+                          type="button"
+                          class="listado__boton-acciones"
+                          [class.listado__boton-acciones--activo]="
+                            filaMenuAbierto === fila.id
+                          "
+                          [matMenuTriggerFor]="menuAcciones"
+                          [attr.aria-label]="'Acciones de la solicitud ' + fila.id"
+                          (menuOpened)="abrirMenuAcciones(fila.id)"
+                          (menuClosed)="cerrarMenuAcciones()"
+                        >
+                          <mat-icon aria-hidden="true" color="primary">more_vert</mat-icon>
+                        </button>
+                        <mat-menu
+                          #menuAcciones="matMenu"
+                          panelClass="listado__menu-acciones"
+                          xPosition="before"
+                        >
+                          @for (accion of accionesDe(fila); track accion) {
+                            <button
+                              mat-menu-item
+                              type="button"
+                              [class.listado__menu-item--peligro]="esPeligro(accion)"
+                              (click)="ejecutarAccion(accion, fila)"
+                            >
+                              <mat-icon aria-hidden="true" color="primary">
+                                {{ ACCIONES[accion].icono }}
+                              </mat-icon>
+                              <span>{{ etiquetaAccion(accion, fila) }}</span>
+                            </button>
+                          }
+                        </mat-menu>
+                      </td>
+                    }
                   </tr>
                 }
               </tbody>

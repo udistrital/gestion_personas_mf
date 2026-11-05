@@ -1,6 +1,6 @@
 import { Injectable } from "@angular/core";
 import { Observable, of, throwError, delay } from "rxjs";
-import { MATRIZ_ACCIONES_POR_ESTADO } from "src/app/core/constants/estados-solicitud.const";
+import { ACCIONES_SOLICITUD_POR_ESTADO } from "src/app/core/constants/acciones-por-rol-y-estado.const";
 import { PermisosSolicitudService } from "src/app/core/services/permisos-solicitud.service";
 import type { EstadoPostulacionProveedor } from "src/app/core/constants/estados-solicitud.const";
 import type { InvitacionProveedor } from "../models/invitacion-proveedor.model";
@@ -298,7 +298,7 @@ export class ObservacionesServiceMock extends ObservacionesService {
     if (fallo) {
       return this.error(fallo);
     }
-    if (!MATRIZ_ACCIONES_POR_ESTADO[solicitud.estado].includes("foro")) {
+    if (!ACCIONES_SOLICITUD_POR_ESTADO[solicitud.estado].includes("foro")) {
       return this.error("El foro no está habilitado para esta solicitud.");
     }
     const observacion = this.observaciones.find(

@@ -29,7 +29,6 @@ import {
   etiquetaUnidadEjecutora,
 } from "../../../../models/solicitud.model";
 import { AlertService } from "src/app/shared/services/alert.service";
-import { RegistroPersonaJuridicaCatalogosService } from "src/app/modules/proveedores/components/registro-persona-juridica/services/registro-persona-juridica-catalogos.service";
 import { DialogoAcuerdoComponent } from "./components/dialogo-acuerdo/dialogo-acuerdo.component";
 
 /** Estados visibles del paso 1 (cruz de tarjetas y banner). */
@@ -58,7 +57,17 @@ export type EstadoCruce =
 })
 export class PasoNecesidadComponent implements OnInit {
   readonly formatoCop = formatoCop;
-  unidades: readonly { valor: string; etiqueta: string }[] = [];
+  /**
+   * Unidades ejecutoras disponibles.
+   *
+   * Se usa la misma lista con la que el listado y el detalle resuelven la
+   * etiqueta (`etiquetaUnidadEjecutora`), de modo que los valores `1..4` sigan
+   * coincidiendo con lo que espera el cruce de SICAPITAL. Si el catálogo se
+   * publica en Parámetros, se reemplaza aquí por
+   * `obtenerCatalogoParametro(<código del tipo de unidad ejecutora>)`.
+   */
+  unidades: readonly { valor: string; etiqueta: string }[] =
+    UNIDADES_EJECUTORAS;
   readonly vigencias = VIGENCIAS_NECESIDAD;
 
   /** Subgrupo `necesidad` del `FormGroup` raíz del asistente. */
@@ -95,7 +104,6 @@ export class PasoNecesidadComponent implements OnInit {
   private readonly sicapital = inject(SicapitalService);
   private readonly dialog = inject(MatDialog);
   private readonly alerta = inject(AlertService);
-  private readonly catalogos = inject(RegistroPersonaJuridicaCatalogosService);
 
   readonly vista = signal<EstadoCruce>("inicial");
   readonly resultado = signal<ResultadoCruce | null>(null);
@@ -220,32 +228,6 @@ export class PasoNecesidadComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.catalogos
-      .obtenerCatalogoParametro("EST_SOL_COT", "COTIZACIONES")
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (opciones) => {
-          this.unidades = opciones.map((opcion) => {
-            const nombre = this.normalizarCatalogo(opcion.nombre);
-            const existente = UNIDADES_EJECUTORAS.find((unidad) =>
-              nombre.includes(
-                this.normalizarCatalogo(unidad.etiqueta.split("-").slice(1).join("-")),
-              ),
-            );
-            return {
-              valor: existente?.valor ?? opcion.codigo ?? String(opcion.id),
-              etiqueta: opcion.nombre,
-            };
-          });
-        },
-        error: () => {
-          this.alerta.showAlert(
-            "Catálogo no disponible",
-            "No fue posible cargar las unidades ejecutoras.",
-          );
-        },
-      });
-
     const unidad = this.control("unidadEjecutora");
     const vigencia = this.control("vigencia");
     const necesidad = this.control("numeroNecesidad");
@@ -336,14 +318,6 @@ export class PasoNecesidadComponent implements OnInit {
       this.unidades.find((unidad) => unidad.valor === valor)?.etiqueta ??
       etiquetaUnidadEjecutora(valor)
     );
-  }
-
-  private normalizarCatalogo(valor: string): string {
-    return valor
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, "");
   }
 
   get valorVigencia(): string {

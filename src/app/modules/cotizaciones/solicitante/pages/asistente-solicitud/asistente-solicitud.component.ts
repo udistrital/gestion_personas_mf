@@ -462,7 +462,19 @@ export class AsistenteSolicitudComponent implements OnInit {
 
     return {
       necesidad,
-      datosGenerales,
+      // Los selectores guardan el `Id` de Oikos, pero la fotografía editable
+      // (mock) persiste la etiqueta visible: es la que pintan el detalle, el
+      // listado y el comparador de diferencias. El `Id` real viajará al
+      // backend cuando exista la capa HTTP.
+      datosGenerales: {
+        ...datosGenerales,
+        dependenciaSolicitante: this.etiquetaDependencia(
+          datosGenerales.dependenciaSolicitante,
+        ),
+        dependenciaDestino: this.etiquetaDependencia(
+          datosGenerales.dependenciaDestino,
+        ),
+      },
       items,
       contratacion,
       proveedores,
@@ -1272,7 +1284,7 @@ export class AsistenteSolicitudComponent implements OnInit {
         ? formatoCop(cruce.presupuesto.valorCdp)
         : "",
       sede: cruce?.solicitud.sede ?? "",
-      dependenciaDestino: this.etiquetaDependenciaDestino(
+      dependenciaDestino: this.etiquetaDependencia(
         datosGenerales.dependenciaDestino,
       ),
       fechaAperturaLarga: datosGenerales.fechaApertura
@@ -1303,15 +1315,27 @@ export class AsistenteSolicitudComponent implements OnInit {
     };
   }
 
-  /** Etiqueta de la dependencia destino (guion cuando falta el dato). */
-  private etiquetaDependenciaDestino(valor: number | null | undefined): string {
-    if (valor === null || valor === undefined) {
+  /**
+   * Etiqueta visible de una dependencia a partir del valor del formulario.
+   *
+   * El selector guarda el `Id` de Oikos (número) y la fotografía editable del
+   * mock guarda la etiqueta; se aceptan ambos para rehidratar sin perder el
+   * dato cuando el catálogo todavía no ha llegado. Sin dependencia → "".
+   */
+  private etiquetaDependencia(
+    valor: number | string | null | undefined,
+  ): string {
+    if (valor === null || valor === undefined || valor === "") {
       return "";
     }
-    return (
-      this.dependencias().find((opcion) => opcion.valor === valor)?.etiqueta ??
-      String(valor)
-    );
+    const id = typeof valor === "number" ? valor : Number(valor);
+    if (Number.isInteger(id)) {
+      return (
+        this.dependencias().find((opcion) => opcion.valor === id)?.etiqueta ??
+        String(valor)
+      );
+    }
+    return String(valor);
   }
 
   private normalizarDependencias(
@@ -1329,12 +1353,19 @@ export class AsistenteSolicitudComponent implements OnInit {
         continue;
       }
 
-      const id =
-        typeof valor === "number"
-          ? valor
-          : typeof valor === "string" && valor.trim() !== ""
-            ? Number(valor)
-            : Number.NaN;
+      const texto = typeof valor === "string" ? valor.trim() : "";
+      let id = Number.NaN;
+      if (typeof valor === "number") {
+        id = valor;
+      } else if (/^\d+$/.test(texto)) {
+        id = Number(texto);
+      } else if (texto !== "") {
+        // La fotografía editable guarda la etiqueta: se resuelve contra el
+        // catálogo de Oikos para preseleccionar el selector.
+        id =
+          opciones.find((opcion) => opcion.etiqueta === texto)?.valor ??
+          Number.NaN;
+      }
       if (
         !Number.isInteger(id) ||
         !opciones.some((opcion) => opcion.valor === id)
