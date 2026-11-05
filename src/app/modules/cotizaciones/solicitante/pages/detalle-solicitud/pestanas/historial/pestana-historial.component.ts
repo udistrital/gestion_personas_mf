@@ -33,6 +33,7 @@ import { SolicitudDetalleStore } from "../../solicitud-detalle.store";
   templateUrl: "./pestana-historial.component.html",
   styleUrls: ["./pestana-historial.component.scss"],
   standalone: false,
+  host: { class: "formulario-material" },
 })
 export class PestanaHistorialComponent {
   private readonly store = inject(SolicitudDetalleStore);

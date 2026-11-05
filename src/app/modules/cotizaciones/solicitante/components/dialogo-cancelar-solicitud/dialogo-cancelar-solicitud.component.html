@@ -207,18 +207,15 @@
               }
             </section>
 
-            <label class="dialogo__check">
-              <input
-                type="checkbox"
-                [checked]="aceptado()"
-                [disabled]="enviando()"
-                (change)="alCambiarAceptacion($event)"
-              />
-              <span>
-                Entiendo que esta acción es irreversible y deja sin efecto los
-                plazos estipulados.
-              </span>
-            </label>
+            <mat-checkbox
+              class="dialogo__check"
+              [checked]="aceptado()"
+              [disabled]="enviando()"
+              (change)="alCambiarAceptacion($event)"
+            >
+              Entiendo que esta acción es irreversible y deja sin efecto los
+              plazos estipulados.
+            </mat-checkbox>
 
             @if (error()) {
               <p

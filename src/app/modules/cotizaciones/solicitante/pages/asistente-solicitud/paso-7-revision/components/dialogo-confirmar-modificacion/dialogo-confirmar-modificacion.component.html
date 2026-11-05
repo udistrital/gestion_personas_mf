@@ -105,19 +105,17 @@
       <p class="dialogo__justificacion-texto">{{ datos.justificacion }}</p>
     </section>
 
-    <label class="confirmacion">
-      <input
-        class="confirmacion__check"
-        type="checkbox"
-        [checked]="aceptado()"
-        (change)="alCambiarAceptacion($event)"
-      />
+    <mat-checkbox
+      class="confirmacion"
+      [checked]="aceptado()"
+      (change)="alCambiarAceptacion($event)"
+    >
       <span class="confirmacion__texto">
         Entiendo que la solicitud queda
         <strong>pendiente de aprobación</strong> y que la versión publicada no
         cambia hasta que se apruebe.
       </span>
-    </label>
+    </mat-checkbox>
   </div>
 
   <footer class="dialogo__pie">

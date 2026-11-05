@@ -1,8 +1,8 @@
 @use "src/app/shared/styles/tokens" as t;
-@use "src/app/shared/styles/registro-formulario" as registro-formulario;
+@use "src/app/shared/styles/campos-registro" as campos-registro;
 @use "src/app/shared/styles/paso-asistente" as paso-asistente;
 
-@include registro-formulario.styles;
+@include campos-registro.estilos;
 @include paso-asistente.styles;
 
 :host {
@@ -145,107 +145,16 @@
   color: var(--agora-text);
 }
 
-.area-icono {
-  position: relative;
-  display: block;
-}
-
-.area-icono mat-icon {
-  position: absolute;
-  top: 0.75rem;
-  left: 0.75rem;
-  width: 1.125rem;
-  height: 1.125rem;
-  color: var(--agora-texto-neutro);
-  font-size: 1.125rem;
-  pointer-events: none;
-}
-
-.area-icono .campo__area {
-  padding-left: 2.5rem;
-}
-
-.campo__area {
-  box-sizing: border-box;
-  width: 100%;
-  min-height: 5rem;
-  padding: 0.75rem;
-  border: 1px solid var(--agora-borde-control);
-  border-radius: var(--agora-radio-md);
-  background: var(--agora-surface);
-  color: var(--agora-text);
-  font: inherit;
-  font-size: 0.875rem;
-  font-weight: 500;
-  line-height: 1.55;
-  resize: vertical;
-}
-
-.campo__area:focus {
-  border-color: var(--agora-primary);
-  outline: 2px solid color-mix(in srgb, var(--agora-primary) 14%, transparent);
-}
-
-.campo__area:read-only {
-  background: var(--agora-superficie-neutra);
-  color: var(--agora-texto-deshabilitado);
-  cursor: not-allowed;
-}
-
-/* Campo numérico con sufijo (%) */
+/* Campo numérico con sufijo (%) dentro del mat-form-field. */
 .campo--porcentaje {
   max-width: 14rem;
 }
 
-.numero-unidad {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.numero-unidad__icono {
-  position: absolute;
-  left: 0.75rem;
-  width: 1.125rem;
-  height: 1.125rem;
-  color: var(--agora-texto-neutro);
-  font-size: 1.125rem;
-  pointer-events: none;
-}
-
-.numero-unidad input {
-  box-sizing: border-box;
-  width: 100%;
-  min-height: 2.5rem;
-  padding: 0.625rem 2rem 0.625rem 2.5rem;
-  border: 1px solid var(--agora-borde-control);
-  border-radius: var(--agora-radio-md);
-  background: var(--agora-surface);
-  color: var(--agora-text);
-  font: inherit;
-  font-size: 0.875rem;
-  font-weight: 700;
-  box-shadow: var(--agora-sombra-xs);
-}
-
-.numero-unidad input:focus {
-  border-color: var(--agora-primary);
-  outline: 2px solid color-mix(in srgb, var(--agora-primary) 14%, transparent);
-}
-
-.numero-unidad input:read-only {
-  background: var(--agora-superficie-neutra);
-  color: var(--agora-texto-deshabilitado);
-  cursor: not-allowed;
-}
-
 .numero-unidad__sufijo {
-  position: absolute;
-  right: 0.875rem;
+  padding-right: 0.25rem;
   color: var(--agora-texto-neutro);
   font-size: 0.8125rem;
   font-weight: 700;
-  pointer-events: none;
 }
 
 .panel-formulario__acciones {

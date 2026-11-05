@@ -91,6 +91,7 @@ export function minCaracteresTexto(minimo: number): ValidatorFn {
   templateUrl: "./paso-items.component.html",
   styleUrls: ["./paso-items.component.scss"],
   standalone: false,
+  host: { class: "formulario-material" },
 })
 export class PasoItemsComponent implements OnInit {
   readonly tipos = TIPOS_ITEM;
@@ -146,8 +147,8 @@ export class PasoItemsComponent implements OnInit {
   /** Catálogo asociado a la selección Bien/Servicio. */
   readonly tipoBusqueda = signal<TipoBusquedaCatalogo>("CIIU");
 
-  /** Texto que filtra las opciones del catálogo local. */
-  readonly filtroCatalogo = signal("");
+  /** Nombre actualmente seleccionado en el ítem (para conservar valores heredados). */
+  private readonly nombreActual = signal("");
 
   /** Subformulario del ítem individual (creado una sola vez). */
   readonly itemForm: FormGroup;
@@ -196,6 +197,11 @@ export class PasoItemsComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.itemForm
+      .get("nombre")
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((valor) => this.nombreActual.set(String(valor ?? "")));
+
     this.catalogos
       .obtenerCatalogoParametro("U_COMERCIO")
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -300,16 +306,24 @@ export class PasoItemsComponent implements OnInit {
     );
   });
 
-  /** Opciones locales del catálogo según clasificación y filtro. */
-  readonly opcionesCatalogoFiltradas = computed(() => {
-    const termino = this.filtroCatalogo().trim().toLowerCase();
-    return this.catalogoBusqueda().filter(
-      (opcion) =>
-        opcion.tipo === this.tipoBusqueda() &&
-        (!termino ||
-          opcion.codigo.toLowerCase().includes(termino) ||
-          opcion.etiqueta.toLowerCase().includes(termino)),
-    );
+  /** Opciones locales del catálogo según clasificación (bien/servicio). */
+  readonly opcionesCatalogoFiltradas = computed(() =>
+    this.catalogoBusqueda().filter(
+      (opcion) => opcion.tipo === this.tipoBusqueda(),
+    ),
+  );
+
+  /**
+   * Opciones del selector de nombre. Añade el valor actual cuando no existe en
+   * el catálogo (ítems heredados o diligenciados antes del catálogo local).
+   */
+  readonly opcionesNombre = computed(() => {
+    const opciones = this.opcionesCatalogoFiltradas();
+    const nombre = this.nombreActual().trim();
+    if (!nombre || opciones.some((opcion) => opcion.etiqueta === nombre)) {
+      return opciones;
+    }
+    return [{ etiqueta: nombre }, ...opciones];
   });
 
   /** Número total de páginas de la tabla de resultados. */
@@ -367,26 +381,9 @@ export class PasoItemsComponent implements OnInit {
       tipo === "bien" ? "CIIU" : "UNSPSC";
     if (this.tipoBusqueda() !== tipoBusqueda) {
       this.tipoBusqueda.set(tipoBusqueda);
-      this.filtroCatalogo.set("");
       this.itemForm.get("nombre")?.setValue("");
     }
     this.itemForm.patchValue({ tipo });
-  }
-
-  /** Refleja el texto que filtra las opciones del catálogo local. */
-  alFiltrarCatalogo(evento: Event): void {
-    this.filtroCatalogo.set((evento.target as HTMLInputElement).value);
-  }
-
-  /** Conserva nombres existentes al editar ítems fuera del catálogo de ejemplo. */
-  mostrarNombreActual(): boolean {
-    const nombre = String(this.itemForm.get("nombre")?.value ?? "");
-    return (
-      !!nombre &&
-      !this.opcionesCatalogoFiltradas().some(
-        (opcion) => opcion.etiqueta === nombre,
-      )
-    );
   }
 
   private opcionCiiu(opcion: OpcionCatalogo): {
@@ -496,7 +493,6 @@ export class PasoItemsComponent implements OnInit {
     this.controlOpcional("modo")?.setValue("individual");
     this.editandoId.set(item.id);
     this.tipoBusqueda.set(item.tipo === "bien" ? "CIIU" : "UNSPSC");
-    this.filtroCatalogo.set("");
     this.itemForm.reset({
       tipo: item.tipo,
       nombre: item.nombre,

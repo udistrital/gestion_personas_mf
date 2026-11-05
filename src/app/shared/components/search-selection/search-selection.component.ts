@@ -87,8 +87,8 @@ export class SearchSelectionComponent
   /** Mensaje cuando el catálogo no tiene opciones. */
   @Input() public noOptionsErrorMessage = "No hay opciones disponibles";
 
-  /** Lista de elementos para seleccionar. */
-  @Input() public items: any[] = [];
+  /** Lista de elementos para seleccionar (admite arreglos `readonly`). */
+  @Input() public items: readonly any[] = [];
 
   /** Propiedad que se muestra como etiqueta. */
   @Input() public labelKey: string | null = null;
@@ -246,7 +246,7 @@ export class SearchSelectionComponent
 
   /** Convierte los elementos de entrada al formato del componente. */
   protected aSelectables(
-    items: any[],
+    items: readonly any[],
     labelKey: string | null,
     valueKey: string | null,
   ): Selectable[] {

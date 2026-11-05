@@ -19,6 +19,7 @@ import { textoPlanoDesdeHtml } from "src/app/shared/utils/texto-plano";
   templateUrl: "./foro-observaciones.component.html",
   styleUrls: ["./foro-observaciones.component.scss"],
   standalone: false,
+  host: { class: "formulario-material" },
 })
 export class ForoObservacionesComponent {
   @Input({ required: true })

@@ -93,16 +93,18 @@
         <label class="campo__etiqueta" for="necesidad-unidad-error">
           Unidad ejecutora <b aria-hidden="true">*</b>
         </label>
-        <span class="solo-lectura">
-          <mat-icon class="solo-lectura__icono" aria-hidden="true">domain</mat-icon>
+        <mat-form-field appearance="outline">
+          <mat-icon matPrefix aria-hidden="true">domain</mat-icon>
           <input
+            matInput
             id="necesidad-unidad-error"
             type="text"
             readonly
             [value]="unidadSeleccionada"
+            aria-label="Unidad ejecutora"
           />
-          <mat-icon class="solo-lectura__candado" aria-hidden="true">lock</mat-icon>
-        </span>
+          <mat-icon matSuffix aria-hidden="true">lock</mat-icon>
+        </mat-form-field>
         <span class="campo__ayuda">Unidad administrativa responsable del gasto.</span>
       </div>
 
@@ -110,16 +112,18 @@
         <label class="campo__etiqueta" for="necesidad-vigencia-error">
           Vigencia <b aria-hidden="true">*</b>
         </label>
-        <span class="solo-lectura">
-          <mat-icon class="solo-lectura__icono" aria-hidden="true">event</mat-icon>
+        <mat-form-field appearance="outline">
+          <mat-icon matPrefix aria-hidden="true">event</mat-icon>
           <input
+            matInput
             id="necesidad-vigencia-error"
             type="text"
             readonly
             [value]="valorVigencia"
+            aria-label="Vigencia"
           />
-          <mat-icon class="solo-lectura__candado" aria-hidden="true">lock</mat-icon>
-        </span>
+          <mat-icon matSuffix aria-hidden="true">lock</mat-icon>
+        </mat-form-field>
         <span class="campo__ayuda">Año fiscal ordinario en curso.</span>
       </div>
 
@@ -131,23 +135,26 @@
             No validado
           </span>
         </label>
-        <span class="solo-lectura solo-lectura--fallo">
-          <mat-icon class="solo-lectura__icono" aria-hidden="true">warning</mat-icon>
+        <mat-form-field appearance="outline">
+          <mat-icon matPrefix aria-hidden="true">warning</mat-icon>
           <input
+            matInput
             id="necesidad-numero-error"
             type="text"
             readonly
             [value]="valorNecesidad"
+            aria-label="Número de la necesidad"
           />
           <button
-            class="boton-validar"
+            matSuffix
+            mat-icon-button
             type="button"
             aria-label="Reintentar la validación manualmente"
             (click)="reintentar()"
           >
             <mat-icon aria-hidden="true">refresh</mat-icon>
           </button>
-        </span>
+        </mat-form-field>
         <span class="campo__fallo">
           <mat-icon aria-hidden="true">warning</mat-icon>
           <span>
@@ -184,16 +191,19 @@
           Unidad ejecutora <b aria-hidden="true">*</b>
           <span class="campo__marca">Requerido</span>
         </label>
-        <span class="selector">
-          <mat-icon class="selector__icono" aria-hidden="true">domain</mat-icon>
-          <select id="necesidad-unidad" formControlName="unidadEjecutora">
-            <option value="">Seleccione la unidad ejecutora</option>
+        <mat-form-field appearance="outline">
+          <mat-icon matPrefix aria-hidden="true">domain</mat-icon>
+          <mat-select
+            id="necesidad-unidad"
+            formControlName="unidadEjecutora"
+            placeholder="Seleccione la unidad ejecutora"
+          >
+            <mat-option value="">Seleccione la unidad ejecutora</mat-option>
             @for (unidad of unidades; track unidad.valor) {
-              <option [value]="unidad.valor">{{ unidad.etiqueta }}</option>
+              <mat-option [value]="unidad.valor">{{ unidad.etiqueta }}</mat-option>
             }
-          </select>
-          <mat-icon class="selector__flecha" aria-hidden="true">arrow_drop_down</mat-icon>
-        </span>
+          </mat-select>
+        </mat-form-field>
         <span class="campo__ayuda">Unidad administrativa responsable del gasto.</span>
       </div>
 
@@ -201,21 +211,21 @@
         <label class="campo__etiqueta" for="necesidad-vigencia">
           Vigencia <b aria-hidden="true">*</b>
         </label>
-        <span class="selector">
-          <mat-icon class="selector__icono" aria-hidden="true">event</mat-icon>
-          <select
+        <mat-form-field appearance="outline">
+          <mat-icon matPrefix aria-hidden="true">event</mat-icon>
+          <mat-select
             id="necesidad-vigencia"
             formControlName="vigencia"
-            [attr.disabled]="vigenciaDeshabilitada() ? true : null"
+            placeholder="Seleccione la vigencia"
             aria-describedby="ayuda-vigencia"
+            [attr.aria-disabled]="vigenciaDeshabilitada() ? 'true' : null"
           >
-            <option value="">Seleccione la vigencia</option>
+            <mat-option value="">Seleccione la vigencia</mat-option>
             @for (vigencia of vigencias; track vigencia.valor) {
-              <option [value]="vigencia.valor">{{ vigencia.etiqueta }}</option>
+              <mat-option [value]="vigencia.valor">{{ vigencia.etiqueta }}</mat-option>
             }
-          </select>
-          <mat-icon class="selector__flecha" aria-hidden="true">arrow_drop_down</mat-icon>
-        </span>
+          </mat-select>
+        </mat-form-field>
         <span class="campo__ayuda" id="ayuda-vigencia">
           Solo se habilita la vigencia actual para nuevas radicaciones.
         </span>
@@ -225,22 +235,22 @@
         <label class="campo__etiqueta" for="necesidad-numero">
           Número de la necesidad <b aria-hidden="true">*</b>
         </label>
-        <span class="selector">
-          <mat-icon class="selector__icono" aria-hidden="true">description</mat-icon>
-          <select
-            id="necesidad-numero"
-            formControlName="numeroNecesidad"
-            [attr.disabled]="necesidadDeshabilitada() ? true : null"
-          >
-            <option value="">
-              {{ cargandoOpciones() ? 'Consultando SICAPITAL…' : 'Seleccione la necesidad' }}
-            </option>
-            @for (opcion of opciones(); track opcion.valor) {
-              <option [value]="opcion.valor">{{ opcion.etiqueta }}</option>
-            }
-          </select>
-          <mat-icon class="selector__flecha" aria-hidden="true">arrow_drop_down</mat-icon>
-        </span>
+        <app-search-selection
+          id="necesidad-numero"
+          formControlName="numeroNecesidad"
+          [items]="opciones()"
+          labelKey="etiqueta"
+          valueKey="valor"
+          icon="description"
+          [placeholder]="
+            cargandoOpciones()
+              ? 'Consultando SICAPITAL…'
+              : 'Seleccione la necesidad'
+          "
+          ariaLabel="Número de la necesidad"
+          noSelectionErrorMessage="Seleccione la necesidad aprobada."
+          noOptionsErrorMessage="No hay necesidades aprobadas para esa unidad y vigencia."
+        ></app-search-selection>
         <span class="campo__ayuda">
           @if (cargandoOpciones()) {
             Cargando necesidades aprobadas…

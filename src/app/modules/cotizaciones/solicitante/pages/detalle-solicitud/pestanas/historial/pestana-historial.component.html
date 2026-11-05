@@ -19,37 +19,40 @@
         <label class="auditoria__etiqueta" for="filtro-tipo-evento">
           Tipo de Evento
         </label>
-        <div class="auditoria__control">
-          <mat-icon aria-hidden="true">filter_alt</mat-icon>
-          <select
+        <mat-form-field appearance="outline">
+          <mat-icon matPrefix aria-hidden="true">filter_alt</mat-icon>
+          <mat-select
             id="filtro-tipo-evento"
-            [value]="tipoSeleccionado()"
-            (change)="filtrarPorTipo(selectTipo.value)"
-            #selectTipo
+            [ngModel]="tipoSeleccionado()"
+            (ngModelChange)="filtrarPorTipo($event)"
+            [ngModelOptions]="{ standalone: true }"
+            aria-label="Tipo de evento"
           >
-            <option value="todos">Todos los eventos</option>
+            <mat-option value="todos">Todos los eventos</mat-option>
             @for (tipo of tipos; track tipo.valor) {
-              <option [value]="tipo.valor">{{ tipo.etiqueta }}</option>
+              <mat-option [value]="tipo.valor">{{ tipo.etiqueta }}</mat-option>
             }
-          </select>
-        </div>
+          </mat-select>
+        </mat-form-field>
       </div>
 
       <div class="auditoria__campo auditoria__campo--buscar">
         <label class="auditoria__etiqueta" for="busqueda-bitacora">
           Buscar en la bitácora
         </label>
-        <div class="auditoria__control">
-          <mat-icon aria-hidden="true">search</mat-icon>
+        <mat-form-field appearance="outline">
+          <mat-icon matPrefix aria-hidden="true">search</mat-icon>
           <input
+            matInput
             id="busqueda-bitacora"
             type="search"
             placeholder="Buscar por usuario, radicado, detalle o palabra clave..."
             [value]="busqueda()"
             (input)="buscar(campoBusqueda.value)"
             #campoBusqueda
+            aria-label="Buscar en la bitácora"
           />
-        </div>
+        </mat-form-field>
       </div>
     </div>
 

@@ -97,6 +97,7 @@ export const MIN_JUSTIFICACION_EDICION = MIN_CARACTERES_JUSTIFICACION;
   templateUrl: "./paso-revision.component.html",
   styleUrls: ["./paso-revision.component.scss"],
   standalone: false,
+  host: { class: "formulario-material" },
 })
 export class PasoRevisionComponent {
   /** Resumen de solo lectura que arma el asistente con los pasos 1 a 6. */

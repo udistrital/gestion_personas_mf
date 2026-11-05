@@ -89,9 +89,13 @@ export function criteriosProveedores(): ValidatorFn {
   templateUrl: "./paso-proveedores.component.html",
   styleUrls: ["./paso-proveedores.component.scss"],
   standalone: false,
+  host: { class: "formulario-material" },
 })
 export class PasoProveedoresComponent implements OnInit {
   catalogoCiiu: readonly ActividadCiiu[] = [];
+
+  /** Opciones del selector CIIU (lista estable para `app-search-selection`). */
+  opcionesCiiuLista: readonly { codigo: string; etiqueta: string }[] = [];
   readonly areasSnies = signal<readonly OpcionSnies[]>([]);
   readonly nucleosSnies = signal<readonly OpcionSnies[]>([]);
   readonly formatoVinculadas = formatoVinculadas;
@@ -109,22 +113,8 @@ export class PasoProveedoresComponent implements OnInit {
   /** Actividades económicas vinculadas (tabla de la tarjeta 2). */
   readonly actividades = signal<readonly ActividadVinculada[]>([]);
 
-  /** Término del buscador de actividades. */
-  readonly busqueda = signal("");
-
   /** Código CIIU elegido para vincular a la solicitud. */
   readonly actividadSeleccionada = signal("");
-
-  /** Actividades del catálogo que coinciden con el filtro. */
-  readonly actividadesFiltradas = computed(() => {
-    const termino = this.busqueda().trim().toLowerCase();
-    return this.catalogoCiiu.filter(
-      (actividad) =>
-        !termino ||
-        actividad.codigo.toLowerCase().includes(termino) ||
-        actividad.descripcion.toLowerCase().includes(termino),
-    );
-  });
 
   /** true cuando la muestra de proveedores está desplegada. */
   readonly mostrarProveedores = signal(false);
@@ -158,6 +148,10 @@ export class PasoProveedoresComponent implements OnInit {
       .subscribe({
         next: (opciones) => {
           this.catalogoCiiu = opciones;
+          this.opcionesCiiuLista = opciones.map((actividad) => ({
+            codigo: actividad.codigo,
+            etiqueta: `${actividad.codigo} - ${actividad.descripcion}`,
+          }));
         },
         error: () => {
           this.alerta.showAlert(
@@ -376,28 +370,9 @@ export class PasoProveedoresComponent implements OnInit {
       : "—";
   }
 
-  /** true cuando un selector obligatorio del SNIES quedó vacío. */
-  mostrarErrorSnies(nombre: string): boolean {
-    const control = this.controlOpcional(nombre);
-    return (
-      this.sniesAplica &&
-      !!control &&
-      !control.value &&
-      (control.dirty || control.touched)
-    );
-  }
-
-  /** Refleja el texto del buscador CIIU en la señal local. */
-  alBuscar(evento: Event): void {
-    this.busqueda.set((evento.target as HTMLInputElement).value);
-    this.actividadSeleccionada.set("");
-  }
-
   /** Registra el código elegido en el selector de actividades. */
-  alSeleccionarActividad(evento: Event): void {
-    this.actividadSeleccionada.set(
-      (evento.target as HTMLSelectElement).value,
-    );
+  seleccionarActividad(codigo: string): void {
+    this.actividadSeleccionada.set(codigo);
   }
 
   // ── Acciones de la tarjeta 2 (CIIU) ──────────────────────────────────────
@@ -438,7 +413,6 @@ export class PasoProveedoresComponent implements OnInit {
       { ...objetivo, id: `${objetivo.codigo}-${Date.now()}` },
     ]);
     this.sincronizarLista();
-    this.busqueda.set("");
     this.actividadSeleccionada.set("");
   }
 
@@ -460,7 +434,6 @@ export class PasoProveedoresComponent implements OnInit {
   /** Devuelve los criterios de segmentación a su estado inicial. */
   restablecerFiltros(): void {
     this.actividades.set([]);
-    this.busqueda.set("");
     this.actividadSeleccionada.set("");
     this.controlOpcional("areaSnies")?.setValue("");
     this.controlOpcional("nucleoSnies")?.setValue("");

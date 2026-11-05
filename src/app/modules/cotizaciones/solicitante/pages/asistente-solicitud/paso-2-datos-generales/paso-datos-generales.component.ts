@@ -96,6 +96,7 @@ export function minCaracteres(minimo: number): ValidatorFn {
   templateUrl: "./paso-datos-generales.component.html",
   styleUrls: ["./paso-datos-generales.component.scss"],
   standalone: false,
+  host: { class: "formulario-material" },
 })
 export class PasoDatosGeneralesComponent implements OnInit {
   readonly hitos = HITOS_CRONOGRAMA;
