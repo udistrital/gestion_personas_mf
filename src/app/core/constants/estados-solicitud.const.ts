@@ -27,6 +27,22 @@ export type EstadoPostulacionProveedor =
   | "declinada"
   | "vencida";
 
+/**
+ * Estado de presentación de un oferente dentro del tablero S-07.
+ *
+ * No se guarda en la invitación: se deriva de la respuesta radicada, las
+ * observaciones y el cierre del proceso. `seleccionado` no es un estado, es un
+ * indicador aparte (RN-33).
+ */
+export type EstadoOferente =
+  | "cotizo"
+  | "modifico"
+  | "observo"
+  | "notificado"
+  | "sin-respuesta"
+  | "pendiente-ajuste";
+
+
 export type AccionSolicitud =
   | "ver-detalle"
   | "modificar"
@@ -41,6 +57,13 @@ export type AccionInvitacionProveedor =
   | "formular-observacion"
   | "responder"
   | "descargar-anexo";
+
+/** Acciones de una fila del tablero de oferentes (S-07). */
+export type AccionOferente =
+  | "ver-oferente"
+  | "ver-observaciones"
+  | "ver-cotizacion"
+  | "ver-respuesta";
 
 export type TonoChip =
   | "primario"
@@ -188,12 +211,64 @@ export const ESTADOS_POSTULACION_PROVEEDOR: Readonly<
   },
 };
 
+/**
+ * Estados de presentación del tablero de oferentes (S-07).
+ *
+ * Los tonos salen de los tokens institucionales: el mockup usa morado para
+ * "Modificó" y azul para "Notificado", pero aquí se mapean a los tonos del
+ * catálogo para no introducir colores sueltos.
+ */
+export const ESTADOS_OFERENTE: Readonly<
+  Record<EstadoOferente, EstadoSolicitudMeta>
+> = {
+  cotizo: {
+    etiqueta: "Cotizó",
+    tono: "exito",
+    icono: null,
+    pulso: false,
+  },
+  modifico: {
+    etiqueta: "Modificó",
+    tono: "primario",
+    icono: null,
+    pulso: false,
+  },
+  observo: {
+    etiqueta: "Observó",
+    tono: "advertencia",
+    icono: null,
+    pulso: false,
+  },
+  notificado: {
+    etiqueta: "Notificado",
+    tono: "info",
+    icono: null,
+    pulso: false,
+  },
+  "sin-respuesta": {
+    etiqueta: "Sin respuesta",
+    tono: "neutro",
+    icono: null,
+    pulso: false,
+  },
+  "pendiente-ajuste": {
+    etiqueta: "Pendiente de ajuste",
+    tono: "advertencia",
+    icono: "edit_note",
+    pulso: false,
+  },
+};
+
 /** Unificación de estados visibles para el chip compartido. */
 export const ESTADOS_CHIP: Readonly<
-  Record<EstadoSolicitud | EstadoPostulacionProveedor, EstadoSolicitudMeta>
+  Record<
+    EstadoSolicitud | EstadoPostulacionProveedor | EstadoOferente,
+    EstadoSolicitudMeta
+  >
 > = {
   ...ESTADOS_SOLICITUD,
   ...ESTADOS_POSTULACION_PROVEEDOR,
+  ...ESTADOS_OFERENTE,
 };
 
 export const ACCIONES_SOLICITUD: Readonly<
@@ -231,7 +306,7 @@ export const ACCIONES_SOLICITUD: Readonly<
   oferentes: {
     etiqueta: "Tablero de oferentes",
     icono: "group",
-    ruta: null, // S-07
+    ruta: "cotizaciones/solicitudes/:id/oferentes",
   },
   cancelar: {
     etiqueta: "Cancelar solicitud",
@@ -274,6 +349,39 @@ export const ACCIONES_INVITACION_PROVEEDOR: Readonly<
     etiqueta: "Descargar anexo",
     icono: "download",
     ruta: null,
+  },
+};
+
+/** Acciones de una fila del tablero de oferentes (S-07). */
+export interface AccionOferenteMeta {
+  readonly etiqueta: string;
+  readonly icono: string;
+  /** Ruta plantilla; `:id` es la solicitud y `:proveedorId` el proveedor. */
+  readonly ruta: string;
+}
+
+export const ACCIONES_OFERENTE: Readonly<
+  Record<AccionOferente, AccionOferenteMeta>
+> = {
+  "ver-oferente": {
+    etiqueta: "Detalle de persona",
+    icono: "visibility",
+    ruta: "cotizaciones/solicitudes/:id/evaluacion/proveedores/:proveedorId",
+  },
+  "ver-observaciones": {
+    etiqueta: "Observaciones",
+    icono: "chat",
+    ruta: "cotizaciones/solicitudes/:id/observaciones",
+  },
+  "ver-cotizacion": {
+    etiqueta: "Cotización radicada",
+    icono: "request_quote",
+    ruta: "cotizaciones/solicitudes/:id/evaluacion/proveedores/:proveedorId",
+  },
+  "ver-respuesta": {
+    etiqueta: "Respuesta solicitante",
+    icono: "fact_check",
+    ruta: "cotizaciones/solicitudes/:id/evaluacion/proveedores/:proveedorId",
   },
 };
 

@@ -198,6 +198,12 @@ export class DetalleSolicitudComponent implements OnInit {
     return solicitud ? this.permisos.puede("foro", solicitud) : false;
   });
 
+  /** true si el estado permite consultar el tablero de oferentes (S-07). */
+  readonly puedeVerOferentes = computed<boolean>(() => {
+    const solicitud = this.store.solicitud();
+    return solicitud ? this.permisos.puede("oferentes", solicitud) : false;
+  });
+
   /**
    * Ejecuta una acción del menú. Las pantallas aún no implementadas avisan por
    * `AlertService` (misma estrategia que S-01).

@@ -2,8 +2,10 @@ import { Injectable, inject } from "@angular/core";
 import { RolService } from "./rol.service";
 import {
   ACCIONES_INVITACION_PROVEEDOR,
+  ACCIONES_OFERENTE,
   ACCIONES_SOLICITUD,
   AccionInvitacionProveedor,
+  AccionOferente,
   AccionSolicitud,
   AccionSolicitudMeta,
   ESTADOS_SOLICITUD,
@@ -12,13 +14,19 @@ import {
 } from "../constants/estados-solicitud.const";
 import {
   ACCIONES_INVITACION_POR_ROL_Y_ESTADO,
+  accionesOferentePorRoles,
   accionesSolicitudPorRoles,
 } from "../constants/acciones-por-rol-y-estado.const";
 import type {
   InvitacionProveedor,
 } from "src/app/modules/cotizaciones/models/invitacion-proveedor.model";
+import type { OferenteTablero } from "src/app/modules/cotizaciones/models/oferente.model";
+import { cierreSolicitudVencido } from "src/app/modules/cotizaciones/models/solicitud.model";
 import type { Solicitud } from "src/app/modules/cotizaciones/models/solicitud.model";
-import { ROL_PROVEEDOR } from "../constants/roles.const";
+import {
+  ROLES_SOLICITANTE,
+  ROL_PROVEEDOR,
+} from "../constants/roles.const";
 
 /** Contrato mínimo que la capa de datos debe garantizar para evaluar permisos. */
 export interface SolicitudPermisable {
@@ -87,6 +95,90 @@ export class PermisosSolicitudService {
   ): string | null {
     const meta: AccionSolicitudMeta = ACCIONES_SOLICITUD[accion];
     return meta.rutaPorEstado?.[solicitud.estado] ?? meta.ruta;
+  }
+
+  /* ───────────────────── Tablero de oferentes (S-07) ───────────────────── */
+
+  /**
+   * true si el usuario puede abrir el tablero de oferentes.
+   *
+   * Combina el rol (JD/OG) con la matriz de estados de la solicitud; el estado
+   * de presentación de cada oferente se evalúa después.
+   */
+  puedeAccederTableroOferentes(solicitud: SolicitudPermisable): boolean {
+    return (
+      this.rol.estaCargado() &&
+      this.rol.tieneAlgunRol(ROLES_SOLICITANTE) &&
+      this.puede("oferentes", solicitud)
+    );
+  }
+
+  /**
+   * RN-29: las respuestas y cotizaciones solo se consultan cuando terminó el
+   * periodo de cotización.
+   */
+  puedeVerOfertas(solicitud: Pick<Solicitud, "cierre">): boolean {
+    return cierreSolicitudVencido(solicitud.cierre);
+  }
+
+  /**
+   * Acciones disponibles para una fila del tablero.
+   *
+   * La matriz rol+estado decide la base; aquí se aplican las reglas que
+   * dependen de los datos (observaciones, respuesta radicada) y del cierre.
+   */
+  accionesOferentePermitidas(
+    oferente: OferenteTablero,
+    solicitud: Pick<Solicitud, "estado" | "cierre">,
+  ): readonly AccionOferente[] {
+    if (
+      !this.rol.estaCargado() ||
+      !this.rol.tieneAlgunRol(ROLES_SOLICITANTE)
+    ) {
+      return [];
+    }
+
+    const verOfertas = this.puedeVerOfertas(solicitud);
+    return accionesOferentePorRoles(this.rol.roles(), oferente.estado).filter(
+      (accion) => {
+        if (accion === "ver-oferente") {
+          return true;
+        }
+        if (accion === "ver-observaciones") {
+          return oferente.observaciones > 0 && this.puede("foro", solicitud);
+        }
+        // ver-cotizacion / ver-respuesta
+        return !!oferente.respuesta && verOfertas;
+      },
+    );
+  }
+
+  /** Texto visible de una acción de oferente. */
+  etiquetaAccionOferente(accion: AccionOferente): string {
+    return ACCIONES_OFERENTE[accion].etiqueta;
+  }
+
+  /**
+   * Comandos de navegación de una acción de oferente.
+   *
+   * No resuelve los `queryParams` (por ejemplo el proveedor del foro): eso lo
+   * decide la pantalla que conoce el contexto de la fila.
+   */
+  rutaAccionOferente(
+    accion: AccionOferente,
+    oferente: OferenteTablero,
+  ): readonly string[] {
+    return ACCIONES_OFERENTE[accion].ruta
+      .split("/")
+      .map((segmento) => {
+        if (segmento === ":id") {
+          return oferente.invitacion.solicitudId;
+        }
+        if (segmento === ":proveedorId") {
+          return oferente.proveedor.id;
+        }
+        return segmento;
+      });
   }
 
   /**
@@ -180,8 +272,7 @@ export class PermisosSolicitudService {
   }
 
   solicitudCerradaPorFecha(solicitud: Pick<Solicitud, "cierre">): boolean {
-    const cierre = fechaCierreDeSolicitud(solicitud.cierre);
-    return cierre !== null && cierre <= Date.now();
+    return cierreSolicitudVencido(solicitud.cierre);
   }
 
   etiquetaAccionInvitacion(accion: AccionInvitacionProveedor): string {
@@ -194,27 +285,4 @@ export class PermisosSolicitudService {
     return ACCIONES_INVITACION_PROVEEDOR[accion].ruta;
   }
 
-}
-
-/** El cierre visible dd/MM/yyyy vence a las 23:59 de esa misma fecha. */
-function fechaCierreDeSolicitud(cierre: string | null): number | null {
-  if (!cierre) {
-    return null;
-  }
-
-  const [dia, mes, anio] = cierre.split("/").map(Number);
-  const fechaValidacion = new Date(Date.UTC(anio, mes - 1, dia));
-  if (
-    !dia ||
-    !mes ||
-    !anio ||
-    fechaValidacion.getUTCDate() !== dia ||
-    fechaValidacion.getUTCMonth() !== mes - 1 ||
-    fechaValidacion.getUTCFullYear() !== anio
-  ) {
-    return null;
-  }
-
-  const fechaIso = `${anio}-${String(mes).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
-  return Date.parse(`${fechaIso}T23:59:59.999-05:00`);
 }

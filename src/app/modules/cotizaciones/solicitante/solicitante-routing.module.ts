@@ -4,6 +4,9 @@ import { ListadoSolicitudesComponent } from "./pages/listado-solicitudes/listado
 import { AsistenteSolicitudComponent } from "./pages/asistente-solicitud/asistente-solicitud.component";
 import { EditarSolicitudComponent } from "./pages/editar-solicitud/editar-solicitud.component";
 import { ForoObservacionesPageComponent } from "./pages/foro-observaciones/foro-observaciones-page.component";
+import { TableroOferentesComponent } from "./pages/tablero-oferentes/tablero-oferentes.component";
+import { PantallaPorDefinirComponent } from "./pages/pantalla-por-definir/pantalla-por-definir.component";
+import { solicitudResolver } from "../resolvers/solicitud.resolver";
 
 /**
  * Rutas del área solicitante.
@@ -41,6 +44,32 @@ const routes: Routes = [
     component: ForoObservacionesPageComponent,
     title: "ÁGORA · Foro de observaciones",
     data: { titulo: "Foro de observaciones", pantalla: "S-06" },
+  },
+  {
+    path: ":id/oferentes",
+    component: TableroOferentesComponent,
+    resolve: { solicitud: solicitudResolver },
+    title: "ÁGORA · Tablero de oferentes",
+  },
+  {
+    path: ":id/evaluacion/proveedores/:proveedorId",
+    component: PantallaPorDefinirComponent,
+    title: "ÁGORA · Detalle del proveedor",
+    data: {
+      titulo: "Detalle del proveedor",
+      pantalla: "S-10",
+      volver: "oferentes",
+    },
+  },
+  {
+    path: ":id/evaluacion",
+    component: PantallaPorDefinirComponent,
+    title: "ÁGORA · Comparador de cotizaciones",
+    data: {
+      titulo: "Comparador de cotizaciones",
+      pantalla: "S-09",
+      volver: "oferentes",
+    },
   },
   {
     path: ":id",

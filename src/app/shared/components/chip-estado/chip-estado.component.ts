@@ -1,13 +1,14 @@
 import { Component, Input } from "@angular/core";
 import {
   ESTADOS_CHIP,
+  EstadoOferente,
   EstadoPostulacionProveedor,
   EstadoSolicitud,
   EstadoSolicitudMeta,
 } from "src/app/core/constants/estados-solicitud.const";
 
 /**
- * Chip de estado de solicitud/cotización.
+ * Chip de estado de solicitud/cotización/oferente.
  * El color sale de los tokens `--agora-*` según `tono` definido en
  * `estados-solicitud.const.ts`; no lleva colores sueltos.
  */
@@ -19,7 +20,7 @@ import {
 })
 export class ChipEstadoComponent {
   @Input({ required: true }) set estado(
-    estado: EstadoSolicitud | EstadoPostulacionProveedor,
+    estado: EstadoSolicitud | EstadoPostulacionProveedor | EstadoOferente,
   ) {
     this.meta = ESTADOS_CHIP[estado];
   }

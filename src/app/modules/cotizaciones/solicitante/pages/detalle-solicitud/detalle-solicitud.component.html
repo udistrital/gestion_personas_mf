@@ -71,6 +71,17 @@
                 </button>
               }
 
+              @if (puedeVerOferentes()) {
+                <button
+                  class="boton-recto"
+                  type="button"
+                  (click)="ejecutarAccion('oferentes')"
+                >
+                  <mat-icon aria-hidden="true">group</mat-icon>
+                  <span>Tablero de oferentes</span>
+                </button>
+              }
+
               <button
                 class="boton-recto"
                 type="button"

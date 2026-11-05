@@ -22,7 +22,9 @@
 import { environment } from "src/environments/environment";
 import {
   AccionInvitacionProveedor,
+  AccionOferente,
   AccionSolicitud,
+  EstadoOferente,
   EstadoPostulacionProveedor,
   EstadoSolicitud,
   ESTADOS_SOLICITUD_LISTA,
@@ -43,6 +45,11 @@ export type AccionesSolicitudPorRolYEstado = AccionesPorRolYEstado<
 export type AccionesInvitacionPorRolYEstado = AccionesPorRolYEstado<
   EstadoPostulacionProveedor,
   AccionInvitacionProveedor
+>;
+
+export type AccionesOferentePorRolYEstado = AccionesPorRolYEstado<
+  EstadoOferente,
+  AccionOferente
 >;
 
 /**
@@ -154,6 +161,45 @@ export const ACCIONES_INVITACION_POR_ROL_Y_ESTADO: AccionesInvitacionPorRolYEsta
     },
   };
 
+/* ───────────────────── Tablero de oferentes (S-07) ───────────────────── */
+
+/**
+ * Acciones base de una fila del tablero.
+ *
+ * La matriz solo expresa qué acciones corresponden al estado del oferente; las
+ * reglas adicionales (existencia de observaciones, respuesta radicada y cierre
+ * del periodo) las aplica `PermisosSolicitudService`, no las plantillas.
+ *
+ * El punto de extensión del OG son las acciones de selección/validación de
+ * S-11, que se agregarán aquí cuando exista esa pantalla.
+ */
+const ACCIONES_OFERENTE_BASE: Partial<
+  Record<EstadoOferente, readonly AccionOferente[]>
+> = {
+  cotizo: [
+    "ver-oferente",
+    "ver-observaciones",
+    "ver-cotizacion",
+    "ver-respuesta",
+  ],
+  modifico: [
+    "ver-oferente",
+    "ver-observaciones",
+    "ver-cotizacion",
+    "ver-respuesta",
+  ],
+  observo: ["ver-oferente", "ver-observaciones"],
+  notificado: ["ver-oferente"],
+  "sin-respuesta": ["ver-oferente"],
+  "pendiente-ajuste": ["ver-oferente", "ver-observaciones"],
+};
+
+export const ACCIONES_OFERENTE_POR_ROL_Y_ESTADO: AccionesOferentePorRolYEstado =
+  {
+    [environment.ROL.JEFE_DEPENDENCIA]: ACCIONES_OFERENTE_BASE,
+    [environment.ROL.ORDENADOR_DEL_GASTO]: ACCIONES_OFERENTE_BASE,
+  };
+
 /* ─────────────────────────────── Helpers ─────────────────────────────── */
 
 /**
@@ -167,6 +213,17 @@ export function accionesSolicitudPorRoles(
 ): readonly AccionSolicitud[] {
   const acciones = roles.flatMap(
     (rol) => ACCIONES_SOLICITUD_POR_ROL_Y_ESTADO[rol]?.[estado] ?? [],
+  );
+  return Array.from(new Set(acciones));
+}
+
+/** Acciones de un oferente en un estado, uniendo todos los roles del usuario. */
+export function accionesOferentePorRoles(
+  roles: readonly Rol[],
+  estado: EstadoOferente,
+): readonly AccionOferente[] {
+  const acciones = roles.flatMap(
+    (rol) => ACCIONES_OFERENTE_POR_ROL_Y_ESTADO[rol]?.[estado] ?? [],
   );
   return Array.from(new Set(acciones));
 }

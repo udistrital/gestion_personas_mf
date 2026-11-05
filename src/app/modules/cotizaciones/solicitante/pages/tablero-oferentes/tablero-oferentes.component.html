@@ -1,0 +1,651 @@
+<plantilla-pagina-contenedora [breadcrumb]="breadcrumb">
+  <section class="tablero" aria-labelledby="titulo-tablero">
+    @if (estadoResolucion() === "no-encontrada") {
+      <div class="tablero__estado" role="status">
+        <mat-icon aria-hidden="true">search_off</mat-icon>
+        <h1 id="titulo-tablero">Solicitud no encontrada</h1>
+        <p>No existe una solicitud con ese identificador o ya no está disponible.</p>
+        <button class="boton-recto" type="button" (click)="volverAlListado()">
+          <mat-icon aria-hidden="true">arrow_back</mat-icon>
+          Volver a mis solicitudes
+        </button>
+      </div>
+    } @else if (estadoResolucion() === "error") {
+      <div class="tablero__estado tablero__estado--error" role="alert">
+        <mat-icon aria-hidden="true">error_outline</mat-icon>
+        <h1 id="titulo-tablero">No pudimos cargar la solicitud</h1>
+        <p>
+          {{
+            mensajeError() ||
+              "Ocurrió un problema al consultar el expediente. Intente nuevamente."
+          }}
+        </p>
+        <button class="boton-recto" type="button" (click)="reintentarResolucion()">
+          <mat-icon aria-hidden="true">refresh</mat-icon>
+          Reintentar
+        </button>
+      </div>
+    } @else if (solicitud(); as s) {
+      <!-- ─────────────────────────── Cabecera ─────────────────────────── -->
+      <header class="tablero__cabecera">
+        <div class="tablero__cabecera-principal">
+          <div class="tablero__textos">
+            <div class="tablero__chips">
+              <h1 id="titulo-tablero" class="tablero__titulo">
+                Tablero de oferentes
+              </h1>
+              <chip-estado [estado]="s.estado"></chip-estado>
+              <span class="chip chip--recto">
+                <span class="tablero__chip-etiqueta">N.°</span>
+                <span>{{ s.id }}</span>
+              </span>
+              <span class="chip chip--recto">
+                <span class="tablero__chip-etiqueta">Vigencia</span>
+                <span>{{ s.vigencia }}</span>
+              </span>
+              @if (vista() !== "bloqueado" && vista() !== "no-disponible") {
+                <span class="chip chip--recto">
+                  <span class="tablero__chip-etiqueta">Cotizaciones</span>
+                  <span>{{ conteos().cotizaciones }}</span>
+                </span>
+              }
+            </div>
+            <p class="tablero__objeto">{{ s.titulo }}</p>
+            <p class="tablero__descripcion">
+              Seguimiento en tiempo real de invitaciones, postulaciones y
+              propuestas radicadas por contratistas y proveedores.
+            </p>
+          </div>
+
+          <div class="tablero__acciones-cabecera">
+            <button class="boton-recto" type="button" (click)="volverAlDetalle()">
+              <mat-icon aria-hidden="true">arrow_back</mat-icon>
+              <span>Volver al detalle</span>
+            </button>
+            @if (vista() === "listo" || vista() === "sin-resultados") {
+              <button
+                class="boton-recto"
+                type="button"
+                [matMenuTriggerFor]="menuExportar"
+                aria-haspopup="true"
+              >
+                <mat-icon aria-hidden="true">download</mat-icon>
+                <span>Exportar</span>
+                <mat-icon aria-hidden="true">expand_more</mat-icon>
+              </button>
+              <mat-menu #menuExportar="matMenu" xPosition="before">
+                <button mat-menu-item type="button" (click)="exportar('xlsx')">
+                  <mat-icon aria-hidden="true" color="primary">table_view</mat-icon>
+                  <span>Exportar a Excel (.xlsx)</span>
+                </button>
+                <button mat-menu-item type="button" (click)="exportar('pdf')">
+                  <mat-icon aria-hidden="true" color="primary">picture_as_pdf</mat-icon>
+                  <span>Exportar a PDF (.pdf)</span>
+                </button>
+              </mat-menu>
+            }
+          </div>
+        </div>
+
+        <div
+          class="tablero__plazo"
+          [class.tablero__plazo--cerrado]="periodoCerrado()"
+          role="status"
+          aria-label="Plazo de cierre"
+        >
+          <span class="tablero__plazo-icono" aria-hidden="true">
+            <mat-icon>timer</mat-icon>
+          </span>
+          <div class="tablero__plazo-textos">
+            <contador-regresivo [fechaCierre]="s.cierre"></contador-regresivo>
+            <span class="tablero__plazo-fecha">Fecha límite: {{ fechaLimite }}</span>
+          </div>
+        </div>
+      </header>
+
+      <p class="visually-oculto" aria-live="polite">
+        {{ resultadoAnunciable() }}
+      </p>
+
+      @if (vista() === "no-disponible") {
+        <div class="tablero__estado" role="status">
+          <mat-icon aria-hidden="true">lock</mat-icon>
+          <h2>Tablero no disponible en este estado</h2>
+          <p>
+            El tablero de oferentes se habilita cuando la solicitud está
+            publicada a proveedores o en una etapa posterior del proceso.
+          </p>
+          <button class="boton-recto" type="button" (click)="volverAlDetalle()">
+            <mat-icon aria-hidden="true">arrow_back</mat-icon>
+            Volver al detalle
+          </button>
+        </div>
+      } @else if (vista() === "bloqueado") {
+        <section class="tablero__bloqueo" aria-labelledby="bloqueo-titulo">
+          <span class="tablero__bloqueo-icono" aria-hidden="true">
+            <mat-icon>lock_clock</mat-icon>
+          </span>
+          <h2 id="bloqueo-titulo">
+            Los oferentes y las ofertas se habilitan al cierre
+          </h2>
+          <p>
+            Por la regla RN-29, la revisión de las respuestas de los proveedores
+            solo está permitida cuando termina el periodo de cotización. Mientras
+            el proceso siga vigente, esta sección no expone el contenido de las
+            ofertas.
+          </p>
+          <div class="tablero__bloqueo-plazo">
+            <contador-regresivo [fechaCierre]="s.cierre"></contador-regresivo>
+            <span>Fecha límite: {{ fechaLimite }}</span>
+          </div>
+          <etiqueta-por-definir
+            texto="Por definir"
+            detalle="Visibilidad de las cotizaciones antes del cierre (RN-29, marcada para revisión)."
+          ></etiqueta-por-definir>
+          <button class="boton-recto" type="button" (click)="volverAlDetalle()">
+            <mat-icon aria-hidden="true">arrow_back</mat-icon>
+            Volver al detalle
+          </button>
+        </section>
+      } @else if (vista() === "cargando") {
+        <div class="tablero__esqueleto" aria-busy="true" aria-live="polite">
+          <span class="visually-oculto">Cargando el tablero de oferentes…</span>
+          <div class="tablero__esqueleto-metricas" aria-hidden="true">
+            @for (bloque of [1, 2, 3, 4]; track bloque) {
+              <span class="esqueleto esqueleto--metrica"></span>
+            }
+          </div>
+          <span class="esqueleto esqueleto--criterios" aria-hidden="true"></span>
+          <div class="tablero__esqueleto-tabla" aria-hidden="true">
+            @for (fila of [1, 2, 3, 4, 5, 6, 7]; track fila) {
+              <span class="esqueleto esqueleto--fila"></span>
+            }
+          </div>
+        </div>
+      } @else if (vista() === "error") {
+        <div class="tablero__estado tablero__estado--error" role="alert">
+          <mat-icon aria-hidden="true">error_outline</mat-icon>
+          <h2>No pudimos cargar los oferentes</h2>
+          <p>
+            {{
+              mensajeError() ||
+                "Ocurrió un problema al consultar el tablero. Intente nuevamente."
+            }}
+          </p>
+          <button class="boton-recto" type="button" (click)="reintentarCarga()">
+            <mat-icon aria-hidden="true">refresh</mat-icon>
+            Reintentar
+          </button>
+        </div>
+      } @else {
+        <!-- ───────────────────── Indicadores resumen ───────────────────── -->
+        <div class="tablero__metricas">
+          @for (metrica of metricas(); track metrica.clave) {
+            <article
+              class="metrica"
+              [attr.aria-live]="metrica.anunciar ? 'polite' : null"
+            >
+              <div class="metrica__cabecera">
+                <span class="metrica__etiqueta">{{ metrica.etiqueta }}</span>
+                <span class="metrica__icono" aria-hidden="true">
+                  <mat-icon>{{ metrica.icono }}</mat-icon>
+                </span>
+              </div>
+              <p class="metrica__valor">{{ metrica.valor }}</p>
+              <p class="metrica__detalle">{{ metrica.detalle }}</p>
+              <div class="metrica__progreso">
+                <div class="metrica__progreso-textos">
+                  <span>{{ metrica.etiquetaBarra }}</span>
+                  <span>{{ metrica.progreso }}%</span>
+                </div>
+                <span class="metrica__barra">
+                  <span
+                    class="metrica__barra-relleno"
+                    [style.width.%]="metrica.progreso"
+                  ></span>
+                </span>
+              </div>
+            </article>
+          }
+        </div>
+
+        <!-- ──────────────── Criterios de elegibilidad ─────────────────── -->
+        <section class="tablero__criterios" aria-labelledby="criterios-titulo">
+          <header class="tablero__criterios-cabecera">
+            <span class="tablero__criterios-icono" aria-hidden="true">
+              <mat-icon>tune</mat-icon>
+            </span>
+            <h2 id="criterios-titulo">
+              Criterios de elegibilidad de proveedores para esta solicitud
+            </h2>
+            <div class="tablero__criterios-acciones">
+              <button
+                class="tablero__enlace"
+                type="button"
+                (click)="verCriterios()"
+              >
+                <span>Ver criterios completos</span>
+                <mat-icon aria-hidden="true">open_in_new</mat-icon>
+              </button>
+              <button
+                class="boton-recto"
+                type="button"
+                [disabled]="!puedeDescargarReporte()"
+                (click)="descargarReporte()"
+              >
+                <mat-icon aria-hidden="true">download</mat-icon>
+                <span>Descargar reporte</span>
+              </button>
+            </div>
+          </header>
+
+          <div class="tablero__criterios-chips">
+            @if (sinSegmentacion()) {
+              <etiqueta-por-definir
+                texto="Segmentación pendiente"
+                detalle="La solicitud aún no tiene actividades CIIU y clasificación SNIES registradas."
+              ></etiqueta-por-definir>
+            } @else {
+              @for (actividad of actividadesCriterio(); track actividad.codigo) {
+                <span class="tablero__criterio-chip">
+                  <b>CIIU {{ actividad.codigo }}:</b>
+                  {{ actividad.descripcion }}
+                </span>
+              }
+              @if (nucleoCriterio()) {
+                <span class="tablero__criterio-chip">
+                  <b>SNIES:</b> {{ nucleoCriterio() }}
+                </span>
+              }
+              <span class="tablero__criterio-chip">
+                <b>Necesidad:</b> {{ necesidadCriterio() }}
+              </span>
+            }
+            <etiqueta-por-definir
+              texto="Por definir"
+              detalle="Criterio exacto del contador de proveedores que cumplen (RN-19, marcada para revisión)."
+            ></etiqueta-por-definir>
+          </div>
+
+          <p class="tablero__reporte-estado" aria-live="polite">
+            {{ reporteEstado() }}
+          </p>
+        </section>
+
+        @if (vista() === "sin-oferentes") {
+          <div class="tablero__estado" role="status">
+            <mat-icon aria-hidden="true">group_off</mat-icon>
+            <h2>Aún no hay oferentes para esta solicitud</h2>
+            <p>
+              La solicitud tiene segmentación registrada, pero todavía no se han
+              enviado invitaciones a los proveedores que cumplen el perfil.
+            </p>
+            <button class="boton-recto" type="button" (click)="volverAlDetalle()">
+              <mat-icon aria-hidden="true">arrow_back</mat-icon>
+              Volver al detalle
+            </button>
+          </div>
+        } @else {
+          <listado-filtros
+            [campos]="camposFiltro"
+            nota="Vista posterior al cierre del periodo (RN-29). Primero se presentan las ofertas recibidas y, segregados, los invitados que no presentaron oferta (RF-12)."
+            (filtrar)="filtrar($event)"
+            (limpiar)="limpiar()"
+          ></listado-filtros>
+
+          @if (vista() === "sin-resultados") {
+            <div class="tablero__estado" role="status">
+              <mat-icon aria-hidden="true">filter_alt_off</mat-icon>
+              <h2>No hay oferentes que coincidan con los filtros</h2>
+              <p>Pruebe con otros criterios o limpie los filtros aplicados.</p>
+              <button class="boton-recto" type="button" (click)="limpiar()">
+                <mat-icon aria-hidden="true">restart_alt</mat-icon>
+                Limpiar filtros
+              </button>
+            </div>
+          } @else {
+            @if (conteos().cotizaciones === 0) {
+              <div class="tablero__aviso" role="status">
+                <mat-icon aria-hidden="true">info</mat-icon>
+                <p>
+                  Aún no se han recibido cotizaciones para esta solicitud. Se
+                  listan, de forma secundaria, los invitados que no presentaron
+                  oferta (RF-12).
+                </p>
+              </div>
+            }
+
+            <div class="tablero__tabla-bloque">
+              <div class="tablero__tarjeta">
+                <div
+                  class="tablero__scroll"
+                  tabindex="0"
+                  role="region"
+                  aria-label="Tabla de oferentes con desplazamiento horizontal"
+                >
+                  <table
+                    class="tablero__tabla"
+                    aria-label="Oferentes de la solicitud de cotización"
+                  >
+                    <caption class="visually-oculto">
+                      Ofertas recibidas y proveedores invitados que no
+                      presentaron oferta
+                    </caption>
+                    <thead>
+                      <tr>
+                        <th scope="col" class="tablero__th tablero__th--check">
+                          <mat-checkbox
+                            class="tablero__check"
+                            [checked]="paginaTodoSeleccionado"
+                            [indeterminate]="paginaParcialSeleccionado"
+                            [disabled]="oferentesConCotizacionPagina.length === 0"
+                            (change)="alternarPagina($event)"
+                            aria-label="Seleccionar los oferentes con cotización de la página"
+                          ></mat-checkbox>
+                        </th>
+                        <th scope="col" class="tablero__th">Documento</th>
+                        <th scope="col" class="tablero__th">Nombre o Razón Social</th>
+                        <th scope="col" class="tablero__th">Tipo Persona</th>
+                        <th scope="col" class="tablero__th">Dirección Fiscal</th>
+                        <th scope="col" class="tablero__th">Correo Electrónico</th>
+                        <th scope="col" class="tablero__th">Ubicación</th>
+                        <th scope="col" class="tablero__th">Fecha de Envío</th>
+                        <th scope="col" class="tablero__th tablero__th--numero">
+                          Total Ofertado
+                        </th>
+                        <th scope="col" class="tablero__th">Estado</th>
+                        <th scope="col" class="tablero__th">Última Acción</th>
+                        <th scope="col" class="tablero__th tablero__th--acciones">
+                          Acciones
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (
+                        oferente of oferentes();
+                        track oferente.id;
+                        let indice = $index
+                      ) {
+                        @let identidad = identidadDe(oferente);
+                        @if (mostrarSeparador(indice)) {
+                          <tr class="tablero__separador">
+                            <th scope="rowgroup" colspan="12">
+                              <span class="tablero__separador-titulo">
+                                <mat-icon aria-hidden="true">person_off</mat-icon>
+                                Invitados sin oferta ({{ conteos().sinOferta }})
+                              </span>
+                              <span class="tablero__separador-nota">
+                                No presentaron cotización dentro del plazo del
+                                proceso.
+                              </span>
+                            </th>
+                          </tr>
+                        }
+                        <tr
+                          class="tablero__fila"
+                          [class.tablero__fila--seleccionada]="oferente.seleccionado"
+                          [class.tablero__fila--secundaria]="
+                            oferente.grupo === 'sin-oferta'
+                          "
+                        >
+                          <td class="tablero__td tablero__td--check">
+                            <mat-checkbox
+                              class="tablero__check"
+                              [checked]="estaSeleccionado(oferente)"
+                              [disabled]="!oferente.respuesta"
+                              (change)="toggleSeleccion(oferente, $event)"
+                              [attr.aria-label]="
+                                'Seleccionar ' + oferente.proveedor.nombre
+                              "
+                            ></mat-checkbox>
+                          </td>
+                          <td class="tablero__td tablero__td--documento">
+                            {{ oferente.proveedor.nit }}
+                          </td>
+                          <td class="tablero__td">
+                            <div class="tablero__nombre-fila">
+                              <span class="tablero__nombre">
+                                {{ oferente.proveedor.nombre }}
+                              </span>
+                              @if (oferente.seleccionado) {
+                                <span
+                                  class="tablero__badge-seleccionado"
+                                  title="Proveedor seleccionado por el jefe de dependencia"
+                                >
+                                  <mat-icon aria-hidden="true">grade</mat-icon>
+                                  Seleccionado
+                                </span>
+                              }
+                            </div>
+                            <span class="tablero__subtexto">
+                              {{ identidad.representante }}
+                            </span>
+                          </td>
+                          <td class="tablero__td">
+                            <span class="tablero__tipo">
+                              {{ identidad.etiquetaTipoPersona }}
+                            </span>
+                          </td>
+                          <td class="tablero__td tablero__td--recortado">
+                            <span [title]="identidad.direccionFiscal">
+                              {{ identidad.direccionFiscal }}
+                            </span>
+                          </td>
+                          <td class="tablero__td tablero__td--recortado">
+                            <a
+                              class="tablero__correo"
+                              [href]="'mailto:' + identidad.correo"
+                              [title]="identidad.correo"
+                            >
+                              {{ identidad.correo }}
+                            </a>
+                          </td>
+                          <td class="tablero__td tablero__td--muted">
+                            {{ identidad.ubicacion }}
+                          </td>
+                          <td class="tablero__td tablero__td--muted">
+                            {{ oferente.respuesta?.fechaEnvio || "—" }}
+                          </td>
+                          <td class="tablero__td tablero__td--numero">
+                            {{
+                              oferente.respuesta
+                                ? formatoTotal(oferente.respuesta.total)
+                                : "—"
+                            }}
+                          </td>
+                          <td class="tablero__td">
+                            <chip-estado [estado]="oferente.estado"></chip-estado>
+                            @if (
+                              oferente.estado === "modifico" &&
+                              oferente.respuesta?.version
+                            ) {
+                              <span class="tablero__estado-nota">
+                                Adenda {{ oferente.respuesta?.version }} radicada
+                              </span>
+                            }
+                          </td>
+                          <td class="tablero__td tablero__td--muted">
+                            {{ oferente.ultimaAccion }}
+                          </td>
+                          <td class="tablero__td tablero__td--acciones">
+                            <button
+                              mat-icon-button
+                              type="button"
+                              class="tablero__boton-acciones"
+                              [class.tablero__boton-acciones--activo]="
+                                filaMenuAbierto === oferente.id
+                              "
+                              [matMenuTriggerFor]="menuAccionesOferente"
+                              aria-haspopup="true"
+                              [attr.aria-label]="
+                                'Acciones del oferente ' +
+                                oferente.proveedor.nombre
+                              "
+                              (menuOpened)="abrirMenuAcciones(oferente.id)"
+                              (menuClosed)="cerrarMenuAcciones()"
+                            >
+                              <mat-icon aria-hidden="true" color="primary">
+                                more_vert
+                              </mat-icon>
+                            </button>
+                            <mat-menu #menuAccionesOferente="matMenu" xPosition="before">
+                              @for (accion of accionesDe(oferente); track accion) {
+                                <button
+                                  mat-menu-item
+                                  type="button"
+                                  (click)="ejecutarAccion(accion, oferente)"
+                                >
+                                  <mat-icon aria-hidden="true" color="primary">
+                                    {{ ACCIONES[accion].icono }}
+                                  </mat-icon>
+                                  <span>
+                                    {{ etiquetaAccionFila(accion, oferente) }}
+                                  </span>
+                                </button>
+                              }
+                            </mat-menu>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+
+                <div class="tablero__paginador">
+                  <div class="tablero__paginador-info">
+                    <span>Mostrar:</span>
+                    <div class="tablero__paginador-select">
+                      <select
+                        [value]="porPagina"
+                        (change)="cambiarPorPagina($event)"
+                        aria-label="Número de oferentes por página"
+                      >
+                        @for (opcion of opcionesPorPagina; track opcion) {
+                          <option [value]="opcion">{{ opcion }}</option>
+                        }
+                      </select>
+                      <mat-icon aria-hidden="true">arrow_drop_down</mat-icon>
+                    </div>
+                    <span>por página</span>
+                  </div>
+
+                  <div class="tablero__paginador-rango">
+                    Mostrando
+                    <span class="tablero__paginador-valor">{{ rangoInicio }}</span>
+                    –
+                    <span class="tablero__paginador-valor">{{ rangoFin }}</span>
+                    de
+                    <span class="tablero__paginador-valor">{{ total() }}</span>
+                    oferentes
+                  </div>
+
+                  <nav
+                    class="tablero__paginador-navegacion"
+                    aria-label="Paginación de oferentes"
+                  >
+                    <button
+                      class="tablero__paginador-boton"
+                      type="button"
+                      title="Primera página"
+                      aria-label="Primera página"
+                      [disabled]="pagina === 0"
+                      (click)="primeraPagina()"
+                    >
+                      <mat-icon aria-hidden="true">first_page</mat-icon>
+                    </button>
+                    <button
+                      class="tablero__paginador-boton"
+                      type="button"
+                      title="Anterior"
+                      aria-label="Página anterior"
+                      [disabled]="pagina === 0"
+                      (click)="paginaAnterior()"
+                    >
+                      <mat-icon aria-hidden="true">chevron_left</mat-icon>
+                    </button>
+                    @for (p of paginasVisibles; track p) {
+                      <button
+                        class="tablero__paginador-boton tablero__paginador-boton--pagina"
+                        type="button"
+                        [class.tablero__paginador-boton--activo]="p === pagina + 1"
+                        (click)="irAPagina(p - 1)"
+                      >
+                        {{ p }}
+                      </button>
+                    }
+                    <button
+                      class="tablero__paginador-boton"
+                      type="button"
+                      title="Siguiente"
+                      aria-label="Página siguiente"
+                      [disabled]="pagina + 1 >= totalPaginas"
+                      (click)="paginaSiguiente()"
+                    >
+                      <mat-icon aria-hidden="true">chevron_right</mat-icon>
+                    </button>
+                    <button
+                      class="tablero__paginador-boton"
+                      type="button"
+                      title="Última página"
+                      aria-label="Última página"
+                      [disabled]="pagina + 1 >= totalPaginas"
+                      (click)="ultimaPagina()"
+                    >
+                      <mat-icon aria-hidden="true">last_page</mat-icon>
+                    </button>
+                  </nav>
+                </div>
+              </div>
+
+              @if (seleccionadosConCotizacion.length > 0) {
+                <aside class="tablero__barra" aria-live="polite">
+                  <div class="tablero__barra-textos">
+                    <span class="tablero__barra-icono" aria-hidden="true">
+                      <mat-icon>checklist</mat-icon>
+                    </span>
+                    <div>
+                      <strong>
+                        {{ seleccionadosConCotizacion.length }}
+                        {{
+                          seleccionadosConCotizacion.length === 1
+                            ? "proveedor seleccionado"
+                            : "proveedores seleccionados"
+                        }}
+                        con cotización
+                      </strong>
+                      <span>
+                        Cumplen con los requisitos formales para el cuadro
+                        comparativo institucional (S-09).
+                      </span>
+                    </div>
+                  </div>
+                  <div class="tablero__barra-acciones">
+                    <button
+                      class="boton-recto"
+                      type="button"
+                      (click)="deseleccionarTodos()"
+                    >
+                      Deseleccionar todos
+                    </button>
+                    <button
+                      class="boton-recto boton-recto--vino"
+                      type="button"
+                      [disabled]="seleccionadosConCotizacion.length < 2"
+                      (click)="comparar()"
+                    >
+                      <mat-icon aria-hidden="true">compare_arrows</mat-icon>
+                      <span>
+                        Comparar seleccionados
+                        ({{ seleccionadosConCotizacion.length }})
+                      </span>
+                    </button>
+                  </div>
+                </aside>
+              }
+            </div>
+          }
+        }
+      }
+    }
+  </section>
+</plantilla-pagina-contenedora>
