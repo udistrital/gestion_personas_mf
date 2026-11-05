@@ -21,6 +21,7 @@
 
 import { environment } from "src/environments/environment";
 import {
+  AccionComparador,
   AccionInvitacionProveedor,
   AccionOferente,
   AccionSolicitud,
@@ -50,6 +51,11 @@ export type AccionesInvitacionPorRolYEstado = AccionesPorRolYEstado<
 export type AccionesOferentePorRolYEstado = AccionesPorRolYEstado<
   EstadoOferente,
   AccionOferente
+>;
+
+export type AccionesComparadorPorRolYEstado = AccionesPorRolYEstado<
+  EstadoSolicitud,
+  AccionComparador
 >;
 
 /**
@@ -200,6 +206,58 @@ export const ACCIONES_OFERENTE_POR_ROL_Y_ESTADO: AccionesOferentePorRolYEstado =
     [environment.ROL.ORDENADOR_DEL_GASTO]: ACCIONES_OFERENTE_BASE,
   };
 
+/* ───────────────── Comparador de cotizaciones (S-09) ──────────────────── */
+
+/**
+ * Acciones del comparador.
+ *
+ * JD y OG comparten las mismas acciones: ambos pueden preseleccionar una oferta
+ * como recomendación y continuar a S-11. La decisión final sigue siendo del OG
+ * (RN-34) y se implementará en esa pantalla, no aquí.
+ *
+ * En `adjudicada` el comparador es de solo lectura: no se preselecciona ni se
+ * retira la preselección.
+ */
+const ACCIONES_COMPARADOR_BASE: Partial<
+  Record<EstadoSolicitud, readonly AccionComparador[]>
+> = {
+  "enviada-proveedores": [
+    "ver-oferta",
+    "preseleccionar",
+    "quitar-preseleccion",
+    "exportar",
+    "continuar-decision",
+  ],
+  "enviada-con-modificaciones": [
+    "ver-oferta",
+    "preseleccionar",
+    "quitar-preseleccion",
+    "exportar",
+    "continuar-decision",
+  ],
+  "en-evaluacion": [
+    "ver-oferta",
+    "preseleccionar",
+    "quitar-preseleccion",
+    "exportar",
+    "continuar-decision",
+  ],
+  "en-aprobacion": [
+    "ver-oferta",
+    "preseleccionar",
+    "quitar-preseleccion",
+    "exportar",
+    "continuar-decision",
+  ],
+  adjudicada: ["ver-oferta", "exportar"],
+};
+
+export const ACCIONES_COMPARADOR_POR_ROL_Y_ESTADO: AccionesComparadorPorRolYEstado =
+  {
+    [environment.ROL.JEFE_DEPENDENCIA]: ACCIONES_COMPARADOR_BASE,
+    [environment.ROL.ORDENADOR_DEL_GASTO]: ACCIONES_COMPARADOR_BASE,
+  };
+
 /* ─────────────────────────────── Helpers ─────────────────────────────── */
 
 /**
@@ -224,6 +282,17 @@ export function accionesOferentePorRoles(
 ): readonly AccionOferente[] {
   const acciones = roles.flatMap(
     (rol) => ACCIONES_OFERENTE_POR_ROL_Y_ESTADO[rol]?.[estado] ?? [],
+  );
+  return Array.from(new Set(acciones));
+}
+
+/** Acciones del comparador en un estado, uniendo todos los roles. */
+export function accionesComparadorPorRoles(
+  roles: readonly Rol[],
+  estado: EstadoSolicitud,
+): readonly AccionComparador[] {
+  const acciones = roles.flatMap(
+    (rol) => ACCIONES_COMPARADOR_POR_ROL_Y_ESTADO[rol]?.[estado] ?? [],
   );
   return Array.from(new Set(acciones));
 }

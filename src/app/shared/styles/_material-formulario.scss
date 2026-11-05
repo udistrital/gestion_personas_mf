@@ -93,6 +93,14 @@
     --mat-checkbox-selected-focus-state-layer-color: var(--agora-primary);
     --mat-checkbox-selected-hover-state-layer-color: var(--agora-primary);
     --mat-checkbox-unselected-hover-state-layer-color: var(--agora-primary);
+    /* Sin halo circular en hover/focus/pressed: el estado se comunica con el
+       propio cuadro del checkbox (ver reglas más abajo). */
+    --mat-checkbox-unselected-hover-state-layer-opacity: 0;
+    --mat-checkbox-unselected-focus-state-layer-opacity: 0;
+    --mat-checkbox-unselected-pressed-state-layer-opacity: 0;
+    --mat-checkbox-selected-hover-state-layer-opacity: 0;
+    --mat-checkbox-selected-focus-state-layer-opacity: 0;
+    --mat-checkbox-selected-pressed-state-layer-opacity: 0;
 
     /* Radio */
     --mat-radio-label-text-color: var(--agora-text);
@@ -253,9 +261,63 @@
     --mdc-form-field-label-text-color: var(--agora-text);
   }
 
-  .formulario-material .mat-mdc-checkbox .mdc-form-field,
+  /* Checkbox: etiqueta centrada verticalmente respecto al cuadro. */
+  .formulario-material .mat-mdc-checkbox .mdc-form-field {
+    align-items: center;
+  }
+
+  /* Radio con etiqueta larga: se conserva la alineación superior. */
   .formulario-material .mat-mdc-radio-button .mdc-form-field {
     align-items: flex-start;
+  }
+
+  /* Reconocimiento de texto largo: conserva la alineación superior. */
+  .formulario-material .confirmacion .mdc-form-field {
+    align-items: flex-start;
+  }
+
+  /*
+   * Checkbox sin halo circular. Al pasar el puntero, el cuadro se pinta como
+   * si estuviera marcado (fondo vino + check) pero el valor real no cambia.
+   * Se excluyen marcados, indeterminados y deshabilitados.
+   */
+  .formulario-material .mat-mdc-checkbox .mdc-checkbox__ripple,
+  .formulario-material .mat-mdc-checkbox .mat-mdc-checkbox-ripple {
+    display: none;
+  }
+
+  .formulario-material
+    .mat-mdc-checkbox:not(.mat-mdc-checkbox-disabled):hover
+    .mdc-checkbox__native-control:not(:checked):not(:indeterminate)
+    ~ .mdc-checkbox__background {
+    border-color: var(--agora-primary);
+    background-color: var(--agora-primary);
+  }
+
+  .formulario-material
+    .mat-mdc-checkbox:not(.mat-mdc-checkbox-disabled):hover
+    .mdc-checkbox__native-control:not(:checked):not(:indeterminate)
+    ~ .mdc-checkbox__background
+    > .mdc-checkbox__checkmark {
+    opacity: 1;
+  }
+
+  .formulario-material
+    .mat-mdc-checkbox:not(.mat-mdc-checkbox-disabled):hover
+    .mdc-checkbox__native-control:not(:checked):not(:indeterminate)
+    ~ .mdc-checkbox__background
+    > .mdc-checkbox__checkmark
+    > .mdc-checkbox__checkmark-path {
+    stroke-dashoffset: 0;
+  }
+
+  /* El foco de teclado se mantiene visible sin el halo de Material. */
+  .formulario-material
+    .mat-mdc-checkbox
+    .mdc-checkbox__native-control:focus-visible
+    ~ .mdc-checkbox__background {
+    outline: 2px solid var(--agora-primary);
+    outline-offset: 2px;
   }
 
   /* Radios compactos en línea: círculo y etiqueta centrados entre sí. */

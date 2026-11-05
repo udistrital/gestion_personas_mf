@@ -5,6 +5,7 @@ import { AsistenteSolicitudComponent } from "./pages/asistente-solicitud/asisten
 import { EditarSolicitudComponent } from "./pages/editar-solicitud/editar-solicitud.component";
 import { ForoObservacionesPageComponent } from "./pages/foro-observaciones/foro-observaciones-page.component";
 import { TableroOferentesComponent } from "./pages/tablero-oferentes/tablero-oferentes.component";
+import { ComparadorCotizacionesComponent } from "./pages/comparador-cotizaciones/comparador-cotizaciones.component";
 import { PantallaPorDefinirComponent } from "./pages/pantalla-por-definir/pantalla-por-definir.component";
 import { solicitudResolver } from "../resolvers/solicitud.resolver";
 
@@ -62,14 +63,20 @@ const routes: Routes = [
     },
   },
   {
-    path: ":id/evaluacion",
+    path: ":id/evaluacion/decision",
     component: PantallaPorDefinirComponent,
-    title: "ÁGORA · Comparador de cotizaciones",
+    title: "ÁGORA · Decisión de la cotización",
     data: {
-      titulo: "Comparador de cotizaciones",
-      pantalla: "S-09",
-      volver: "oferentes",
+      titulo: "Decisión de la cotización",
+      pantalla: "S-11",
+      volver: "comparador",
     },
+  },
+  {
+    path: ":id/evaluacion",
+    component: ComparadorCotizacionesComponent,
+    resolve: { solicitud: solicitudResolver },
+    title: "ÁGORA · Comparador de cotizaciones",
   },
   {
     path: ":id",

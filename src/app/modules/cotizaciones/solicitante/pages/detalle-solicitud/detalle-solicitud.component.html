@@ -82,6 +82,17 @@
                 </button>
               }
 
+              @if (puedeVerComparador()) {
+                <button
+                  class="boton-recto"
+                  type="button"
+                  (click)="abrirComparador()"
+                >
+                  <mat-icon aria-hidden="true">balance</mat-icon>
+                  <span>Comparador de cotizaciones</span>
+                </button>
+              }
+
               <button
                 class="boton-recto"
                 type="button"

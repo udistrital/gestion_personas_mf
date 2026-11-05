@@ -31,6 +31,7 @@ import { paginadorEnEspanol } from "./mat-paginator-intl-es";
 import { ForoObservacionesModule } from "../components/foro-observaciones/foro-observaciones.module";
 import { ForoObservacionesPageComponent } from "./pages/foro-observaciones/foro-observaciones-page.component";
 import { TableroOferentesComponent } from "./pages/tablero-oferentes/tablero-oferentes.component";
+import { ComparadorCotizacionesComponent } from "./pages/comparador-cotizaciones/comparador-cotizaciones.component";
 import { PantallaPorDefinirComponent } from "./pages/pantalla-por-definir/pantalla-por-definir.component";
 import {
   OferentesService,
@@ -59,6 +60,7 @@ import {
     EditarSolicitudComponent,
     ForoObservacionesPageComponent,
     TableroOferentesComponent,
+    ComparadorCotizacionesComponent,
     PantallaPorDefinirComponent,
   ],
   imports: [

@@ -65,6 +65,14 @@ export type AccionOferente =
   | "ver-cotizacion"
   | "ver-respuesta";
 
+/** Acciones del comparador de cotizaciones (S-09). */
+export type AccionComparador =
+  | "ver-oferta"
+  | "preseleccionar"
+  | "quitar-preseleccion"
+  | "exportar"
+  | "continuar-decision";
+
 export type TonoChip =
   | "primario"
   | "exito"
@@ -382,6 +390,44 @@ export const ACCIONES_OFERENTE: Readonly<
     etiqueta: "Respuesta solicitante",
     icono: "fact_check",
     ruta: "cotizaciones/solicitudes/:id/evaluacion/proveedores/:proveedorId",
+  },
+};
+
+/** Metadatos de una acción del comparador (S-09). */
+export interface AccionComparadorMeta {
+  readonly etiqueta: string;
+  readonly icono: string;
+  /** Ruta plantilla; `null` cuando la acción la ejecuta el servicio. */
+  readonly ruta: string | null;
+}
+
+export const ACCIONES_COMPARADOR: Readonly<
+  Record<AccionComparador, AccionComparadorMeta>
+> = {
+  "ver-oferta": {
+    etiqueta: "Ver detalle completo (S-10)",
+    icono: "visibility",
+    ruta: "cotizaciones/solicitudes/:id/evaluacion/proveedores/:proveedorId",
+  },
+  preseleccionar: {
+    etiqueta: "Preseleccionar esta oferta",
+    icono: "how_to_reg",
+    ruta: null,
+  },
+  "quitar-preseleccion": {
+    etiqueta: "Quitar preselección",
+    icono: "remove_done",
+    ruta: null,
+  },
+  exportar: {
+    etiqueta: "Exportar comparativo",
+    icono: "download",
+    ruta: null,
+  },
+  "continuar-decision": {
+    etiqueta: "Continuar a decisión (S-11)",
+    icono: "arrow_forward",
+    ruta: "cotizaciones/solicitudes/:id/evaluacion/decision",
   },
 };
 

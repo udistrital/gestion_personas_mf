@@ -11,6 +11,10 @@
  */
 
 import type { EstadoOferente } from "src/app/core/constants/estados-solicitud.const";
+import {
+  crearOfertaSimulada,
+  semillaOfertaComparada,
+} from "./comparativo.model";
 import type { InvitacionProveedor } from "./invitacion-proveedor.model";
 import {
   IdentidadProveedor,
@@ -109,6 +113,17 @@ export interface FiltroOferentes {
   ubicacion: string;
 }
 
+/** Datos que la preselección de S-09 deja en la bitácora del expediente. */
+export interface SeleccionOferenteEvento {
+  /** Proveedor elegido; `null` cuando se retira la preselección. */
+  readonly proveedorId: string | null;
+  readonly proveedorNombre: string;
+  /** Total de la oferta seleccionada; 0 al retirar. */
+  readonly valor: number;
+  /** Rol con el que se ejecutó la acción ("Jefe de dependencia", "Ordenador…"). */
+  readonly rol: string;
+}
+
 export interface ConteosOferentes {
   /** Proveedores del banco que cumplen la segmentación (RN-19). */
   readonly cumplen: number;
@@ -182,6 +197,10 @@ const CONFIG_OFERENTES: Readonly<
   "SOL-2026-0044": {
     sinRespuestas: true,
     observaciones: { "prov-28": 1, "prov-29": 1, "prov-25": 1 },
+  },
+  "SOL-2026-0042": {
+    // Proceso cerrado con una sola oferta: estado de comparador incompleto.
+    responderian: 1,
   },
   "SOL-2026-0041": {
     sinInvitaciones: true,
@@ -302,22 +321,33 @@ export function crearOferentes(
         : "";
 
     const respuesta: ResumenRespuestaOferente | null = responde
-      ? {
-          radicado: `COT-${solicitud.id.slice(-4)}-${dosDigitos(indice + 1)}`,
-          fechaEnvio: formatoFechaHoraOferente(fechaEnvioIso),
-          fechaEnvioIso,
-          total:
-            92_000_000 +
-            indice * 7_350_000 +
-            (solicitud.tipoCotizacion === "BIEN" ? 18_000_000 : 0),
-          itemsCotizados: solicitud.items.length,
-          documentos: requeridos,
-          version: modificado ? "v1.1" : "v1.0",
-          modificadaEl: modificado
-            ? formatoFechaHoraOferente(modificadaElIso)
-            : undefined,
-          modificadaElIso: modificado ? modificadaElIso : undefined,
-        }
+      ? (() => {
+          const version = modificado ? "v1.1" : "v1.0";
+          // El total sale de la misma oferta itemizada que usa S-09. Así el
+          // tablero y el comparador nunca muestran cifras distintas.
+          const oferta = crearOfertaSimulada(
+            solicitud,
+            semillaOfertaComparada(
+              solicitud.id,
+              proveedor,
+              indice,
+              version,
+            ),
+          );
+          return {
+            radicado: `COT-${solicitud.id.slice(-4)}-${dosDigitos(indice + 1)}`,
+            fechaEnvio: formatoFechaHoraOferente(fechaEnvioIso),
+            fechaEnvioIso,
+            total: oferta.totales.total,
+            itemsCotizados: oferta.items.length,
+            documentos: requeridos,
+            version,
+            modificadaEl: modificado
+              ? formatoFechaHoraOferente(modificadaElIso)
+              : undefined,
+            modificadaElIso: modificado ? modificadaElIso : undefined,
+          };
+        })()
       : null;
 
     const estado: EstadoOferente = respuesta

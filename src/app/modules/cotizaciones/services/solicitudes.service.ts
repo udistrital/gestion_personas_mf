@@ -79,7 +79,7 @@ import {
   versionSolicitud,
 } from "../models/edicion-solicitud.model";
 import type { ResultadoCruce } from "../models/necesidad.model";
-import { contarOfertasRecibidasDesde } from "../models/oferente.model";
+import { contarOfertasRecibidasDesde, SeleccionOferenteEvento } from "../models/oferente.model";
 import { DiferenciasSolicitudService } from "./diferencias-solicitud.service";
 import { textoPlanoDesdeHtml } from "src/app/shared/utils/texto-plano";
 import { MIN_CARACTERES_JUSTIFICACION } from "src/app/shared/validators/justificacion.validator";
@@ -130,6 +130,17 @@ export abstract class SolicitudesService {
   abstract registrarRespuestaProveedor(
     solicitudId: string,
     fechaRadicacion: string,
+  ): void;
+
+  /**
+   * Registra en la bitácora la preselección de una oferta desde S-09.
+   *
+   * No cambia el estado de la solicitud: la preselección es una recomendación
+   * y la decisión final corresponde al ordenador del gasto (RN-34).
+   */
+  abstract registrarSeleccionOferente(
+    solicitudId: string,
+    seleccion: SeleccionOferenteEvento,
   ): void;
 
   /**
@@ -1696,6 +1707,46 @@ function eventoHistorial(semilla: EventoHistorialSemilla): EventoHistorial {
   };
 }
 
+/**
+ * Evento de preselección de una oferta (S-09).
+ *
+ * Deja constancia del proveedor y del valor, sin cambiar el estado de la
+ * solicitud. El texto recuerda que la decisión final es del ordenador del gasto.
+ */
+function eventoSeleccionOferente(
+  solicitud: Solicitud,
+  seleccion: SeleccionOferenteEvento,
+  fecha: string,
+  hora: string,
+): EventoHistorial {
+  const retirada = !seleccion.proveedorId;
+  return eventoHistorial({
+    id: `evento-${solicitud.id}-seleccion-${Date.now()}`,
+    fecha,
+    hora,
+    tipo: "estado",
+    titulo: retirada
+      ? "Preselección de oferta retirada"
+      : "Oferta preseleccionada para recomendación",
+    detalle: retirada
+      ? "Se retiró la preselección de la oferta. La decisión final continúa en cabeza del Ordenador del Gasto (RN-34)."
+      : `Se preseleccionó la oferta de <strong>${seleccion.proveedorNombre}</strong> por <strong>${formatoCop(seleccion.valor)} COP</strong>. Esta preselección es una recomendación y no constituye adjudicación (RN-34).`,
+    usuario: "sesion",
+    nombreUsuario: "Usuario autenticado",
+    rol: seleccion.rol,
+    estadoAnterior: solicitud.estado,
+    estadoNuevo: solicitud.estado,
+    icono: retirada ? "remove_done" : "how_to_reg",
+    tono: "primario",
+    resultado: retirada ? "Preselección retirada" : "Preselección registrada",
+    tonoResultado: "primario",
+    evidencia: {
+      icono: "verified_user",
+      texto: "Sujeta a la decisión del Ordenador del Gasto",
+    },
+  });
+}
+
 /** Evento de creación del expediente. */
 function eventoCreacion(
   id: string,
@@ -2944,6 +2995,30 @@ export class SolicitudesServiceMock extends SolicitudesService {
       estado: "enviada",
       fechaRadicacion,
     });
+  }
+
+  registrarSeleccionOferente(
+    solicitudId: string,
+    seleccion: SeleccionOferenteEvento,
+  ): void {
+    const solicitud = this.fila(solicitudId);
+    if (!solicitud) {
+      return;
+    }
+
+    const ahora = new Date();
+    const fecha = `${String(ahora.getDate()).padStart(2, "0")}/${String(
+      ahora.getMonth() + 1,
+    ).padStart(2, "0")}/${ahora.getFullYear()}`;
+    const hora = `${String(ahora.getHours()).padStart(2, "0")}:${String(
+      ahora.getMinutes(),
+    ).padStart(2, "0")}`;
+    const evento = eventoSeleccionOferente(solicitud, seleccion, fecha, hora);
+
+    this.historialEdiciones.set(solicitudId, [
+      ...(this.historialEdiciones.get(solicitudId) ?? []),
+      evento,
+    ]);
   }
 
   /**

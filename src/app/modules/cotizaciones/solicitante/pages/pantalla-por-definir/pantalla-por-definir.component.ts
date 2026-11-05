@@ -20,7 +20,7 @@ export class PantallaPorDefinirComponent {
   readonly breadcrumb: string;
 
   private readonly solicitudId: string;
-  private readonly destino: "oferentes" | "detalle" | "listado";
+  private readonly destino: "oferentes" | "detalle" | "listado" | "comparador";
 
   constructor(
     private readonly ruta: ActivatedRoute,
@@ -29,12 +29,25 @@ export class PantallaPorDefinirComponent {
     const datos = this.ruta.snapshot.data;
     this.titulo = datos["titulo"] ?? "Pantalla por implementar";
     this.pantalla = datos["pantalla"] ?? "S-00";
-    this.destino = datos["volver"] ?? "listado";
+    const volver = this.ruta.snapshot.queryParamMap.get("volver");
+    this.destino =
+      volver === "comparador" || volver === "oferentes" || volver === "detalle"
+        ? volver
+        : (datos["volver"] ?? "listado");
     this.solicitudId = this.ruta.snapshot.paramMap.get("id") ?? "";
     this.breadcrumb = `<p>Gestión Proveedor › Cotizaciones › <b>${this.titulo}</b></p>`;
   }
 
   volver(): void {
+    if (this.destino === "comparador" && this.solicitudId) {
+      void this.router.navigate([
+        "/cotizaciones",
+        "solicitudes",
+        this.solicitudId,
+        "evaluacion",
+      ]);
+      return;
+    }
     if (this.destino === "oferentes" && this.solicitudId) {
       void this.router.navigate([
         "/cotizaciones",

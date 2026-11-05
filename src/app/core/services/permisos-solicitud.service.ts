@@ -1,9 +1,12 @@
 import { Injectable, inject } from "@angular/core";
 import { RolService } from "./rol.service";
 import {
+  ACCIONES_COMPARADOR,
   ACCIONES_INVITACION_PROVEEDOR,
   ACCIONES_OFERENTE,
   ACCIONES_SOLICITUD,
+  AccionComparador,
+  AccionComparadorMeta,
   AccionInvitacionProveedor,
   AccionOferente,
   AccionSolicitud,
@@ -14,6 +17,7 @@ import {
 } from "../constants/estados-solicitud.const";
 import {
   ACCIONES_INVITACION_POR_ROL_Y_ESTADO,
+  accionesComparadorPorRoles,
   accionesOferentePorRoles,
   accionesSolicitudPorRoles,
 } from "../constants/acciones-por-rol-y-estado.const";
@@ -176,6 +180,63 @@ export class PermisosSolicitudService {
         }
         if (segmento === ":proveedorId") {
           return oferente.proveedor.id;
+        }
+        return segmento;
+      });
+  }
+
+  /* ───────────────── Comparador de cotizaciones (S-09) ───────────────── */
+
+  /**
+   * true si el usuario puede abrir el comparador.
+   *
+   * Reutiliza la misma compuerta que S-07 (rol + estado) y deja que la pantalla
+   * aplique RN-29: antes del cierre se muestra el estado bloqueado, no la data.
+   */
+  puedeAccederComparador(solicitud: SolicitudPermisable): boolean {
+    return (
+      this.rol.estaCargado() &&
+      this.rol.tieneAlgunRol(ROLES_SOLICITANTE) &&
+      this.puede("oferentes", solicitud)
+    );
+  }
+
+  /** Acciones del comparador según los roles del usuario y el estado. */
+  accionesComparadorPermitidas(
+    solicitud: SolicitudPermisable,
+  ): readonly AccionComparador[] {
+    if (
+      !this.rol.estaCargado() ||
+      !this.rol.tieneAlgunRol(ROLES_SOLICITANTE)
+    ) {
+      return [];
+    }
+    return accionesComparadorPorRoles(this.rol.roles(), solicitud.estado);
+  }
+
+  /** Texto visible de una acción del comparador. */
+  etiquetaAccionComparador(accion: AccionComparador): string {
+    return ACCIONES_COMPARADOR[accion].etiqueta;
+  }
+
+  /** Comandos de navegación de una acción del comparador. */
+  rutaAccionComparador(
+    accion: AccionComparador,
+    solicitudId: string,
+    proveedorId?: string,
+  ): readonly string[] | null {
+    const meta: AccionComparadorMeta = ACCIONES_COMPARADOR[accion];
+    if (!meta.ruta) {
+      return null;
+    }
+    return meta.ruta
+      .split("/")
+      .map((segmento) => {
+        if (segmento === ":id") {
+          return solicitudId;
+        }
+        if (segmento === ":proveedorId") {
+          return proveedorId ?? segmento;
         }
         return segmento;
       });
