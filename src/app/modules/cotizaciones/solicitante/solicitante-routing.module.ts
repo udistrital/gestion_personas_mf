@@ -6,6 +6,7 @@ import { EditarSolicitudComponent } from "./pages/editar-solicitud/editar-solici
 import { ForoObservacionesPageComponent } from "./pages/foro-observaciones/foro-observaciones-page.component";
 import { TableroOferentesComponent } from "./pages/tablero-oferentes/tablero-oferentes.component";
 import { ComparadorCotizacionesComponent } from "./pages/comparador-cotizaciones/comparador-cotizaciones.component";
+import { DetalleProveedorOfertaComponent } from "./pages/detalle-proveedor-oferta/detalle-proveedor-oferta.component";
 import { PantallaPorDefinirComponent } from "./pages/pantalla-por-definir/pantalla-por-definir.component";
 import { solicitudResolver } from "../resolvers/solicitud.resolver";
 
@@ -54,13 +55,9 @@ const routes: Routes = [
   },
   {
     path: ":id/evaluacion/proveedores/:proveedorId",
-    component: PantallaPorDefinirComponent,
-    title: "ÁGORA · Detalle del proveedor",
-    data: {
-      titulo: "Detalle del proveedor",
-      pantalla: "S-10",
-      volver: "oferentes",
-    },
+    component: DetalleProveedorOfertaComponent,
+    resolve: { solicitud: solicitudResolver },
+    title: "ÁGORA · Detalle del proveedor y su oferta",
   },
   {
     path: ":id/evaluacion/decision",

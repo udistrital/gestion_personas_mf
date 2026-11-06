@@ -674,10 +674,7 @@ export class ComparadorCotizacionesComponent implements OnInit {
       return;
     }
     void this.router.navigate(comandos, {
-      queryParams: {
-        volver: "comparador",
-        proveedor: oferta.proveedor.nit,
-      },
+      queryParams: { volver: "comparador" },
     });
   }
 

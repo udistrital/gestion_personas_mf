@@ -48,6 +48,8 @@ export interface SemillaOfertaComparada {
   readonly plazoEntregaDias: number;
   /** Texto de descuentos o beneficios adicionales. */
   readonly condicionesComerciales: string;
+  /** Observaciones del proponente; puede traer HTML del editor (S-10). */
+  readonly observacionesProponenteHtml: string;
   /** Nombre del anexo técnico radicado por el proveedor. */
   readonly anexoTecnico: string;
   /** Versión visible de la cotización ("v1.0", "v1.1"). */
@@ -60,6 +62,7 @@ interface ConfigOfertaSimulada {
   readonly validezDias: number;
   readonly plazoEntregaDias: number;
   readonly condicionesComerciales: string;
+  readonly observacionesProponenteHtml: string;
   readonly anexoTecnico: string;
 }
 
@@ -108,6 +111,8 @@ const CONFIG_OFERTA: Readonly<
       plazoEntregaDias: 35,
       condicionesComerciales:
         "Pago contra entrega y acta de recibo. Incluye capacitación de 8 horas.",
+      observacionesProponenteHtml:
+        "<p>Los servidores se encuentran en tránsito aduanero por la Zona Franca de Bogotá. Plazo estimado de nacionalización: <strong>8 días hábiles</strong>.</p><p>Entrega directa en el Datacenter Aduanilla de Paiba de la Universidad Distrital.</p>",
       anexoTecnico: "Ficha_Tecnica_Blade_Sistemas.pdf",
     },
     "prov-02": {
@@ -117,6 +122,8 @@ const CONFIG_OFERTA: Readonly<
       plazoEntregaDias: 40,
       condicionesComerciales:
         "Pago en dos actas parciales. Sin descuentos adicionales.",
+      observacionesProponenteHtml:
+        "<p>La adenda ajusta las especificaciones de los switches de núcleo y mantiene el valor total ofertado.</p><p>Se incluye soporte remoto <em>24x7</em> durante la vigencia de la oferta.</p>",
       anexoTecnico: "Anexo_RedesBogota_Adenda.pdf",
     },
     "prov-03": {
@@ -126,6 +133,8 @@ const CONFIG_OFERTA: Readonly<
       plazoEntregaDias: 45,
       condicionesComerciales:
         "3% de descuento por pronto pago UD y capacitación de 8 horas incluida.",
+      observacionesProponenteHtml:
+        "<p>Se ofrece capacitación técnica certificada para <strong>4 ingenieros</strong> de la Dirección de Tecnología sin costo adicional.</p><p>Garantía de soporte <em>on-site</em> extendida a 36 meses.</p>",
       anexoTecnico: "Propuesta_Tecnica_Andina.pdf",
     },
     "prov-04": {
@@ -135,7 +144,9 @@ const CONFIG_OFERTA: Readonly<
       plazoEntregaDias: 30,
       condicionesComerciales:
         "Pago contra entrega. Incluye soporte local en sitio.",
-      anexoTecnico: "Oferta_Infraestructura_Andina.zip",
+      observacionesProponenteHtml:
+        "<p>Oferta con disponibilidad inmediata y soporte local en la sede Bogotá.</p>",
+      anexoTecnico: "Oferta_Infraestructura_Andina.pdf",
     },
   },
   "SOL-2026-0042": {
@@ -146,6 +157,8 @@ const CONFIG_OFERTA: Readonly<
       plazoEntregaDias: 40,
       condicionesComerciales:
         "Pago contra entrega. Sin descuentos adicionales.",
+      observacionesProponenteHtml:
+        "<p>Equipos nuevos con garantía de fábrica y disponibilidad inmediata.</p>",
       anexoTecnico: "Ficha_Tecnica_Equipos_Computo.pdf",
     },
   },
@@ -184,6 +197,9 @@ export function semillaOfertaComparada(
     condicionesComerciales:
       config?.condicionesComerciales ??
       "Condiciones comerciales por definir en la oferta radicada.",
+    observacionesProponenteHtml:
+      config?.observacionesProponenteHtml ??
+      "<p>Sin observaciones adicionales del proponente.</p>",
     anexoTecnico: anexo,
     version,
   };
@@ -197,6 +213,7 @@ export interface OfertaSimulada {
   readonly validezDias: number;
   readonly plazoEntregaDias: number;
   readonly condicionesComerciales: string;
+  readonly observacionesProponenteHtml: string;
   readonly anexoTecnico: string;
 }
 
@@ -228,6 +245,7 @@ export function crearOfertaSimulada(
     validezDias: semilla.validezDias,
     plazoEntregaDias: semilla.plazoEntregaDias,
     condicionesComerciales: semilla.condicionesComerciales,
+    observacionesProponenteHtml: semilla.observacionesProponenteHtml,
     anexoTecnico: semilla.anexoTecnico,
   };
 }

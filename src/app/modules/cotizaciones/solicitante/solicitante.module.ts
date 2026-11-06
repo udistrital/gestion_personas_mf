@@ -32,6 +32,8 @@ import { ForoObservacionesModule } from "../components/foro-observaciones/foro-o
 import { ForoObservacionesPageComponent } from "./pages/foro-observaciones/foro-observaciones-page.component";
 import { TableroOferentesComponent } from "./pages/tablero-oferentes/tablero-oferentes.component";
 import { ComparadorCotizacionesComponent } from "./pages/comparador-cotizaciones/comparador-cotizaciones.component";
+import { DetalleProveedorOfertaComponent } from "./pages/detalle-proveedor-oferta/detalle-proveedor-oferta.component";
+import { DetallePresentacionModule } from "./pages/detalle-solicitud/components/detalle-presentacion.module";
 import { PantallaPorDefinirComponent } from "./pages/pantalla-por-definir/pantalla-por-definir.component";
 import {
   OferentesService,
@@ -61,12 +63,14 @@ import {
     ForoObservacionesPageComponent,
     TableroOferentesComponent,
     ComparadorCotizacionesComponent,
+    DetalleProveedorOfertaComponent,
     PantallaPorDefinirComponent,
   ],
   imports: [
     CommonModule,
     SharedModule,
     SolicitanteComponentsModule,
+    DetallePresentacionModule,
     SolicitanteRoutingModule,
     ForoObservacionesModule,
     DialogoDescartarModule,

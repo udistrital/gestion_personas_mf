@@ -2,11 +2,14 @@ import { Injectable, inject } from "@angular/core";
 import { RolService } from "./rol.service";
 import {
   ACCIONES_COMPARADOR,
+  ACCIONES_DETALLE_PROVEEDOR,
   ACCIONES_INVITACION_PROVEEDOR,
   ACCIONES_OFERENTE,
   ACCIONES_SOLICITUD,
   AccionComparador,
   AccionComparadorMeta,
+  AccionDetalleProveedor,
+  AccionDetalleProveedorMeta,
   AccionInvitacionProveedor,
   AccionOferente,
   AccionSolicitud,
@@ -18,6 +21,7 @@ import {
 import {
   ACCIONES_INVITACION_POR_ROL_Y_ESTADO,
   accionesComparadorPorRoles,
+  accionesDetalleProveedorPorRoles,
   accionesOferentePorRoles,
   accionesSolicitudPorRoles,
 } from "../constants/acciones-por-rol-y-estado.const";
@@ -240,6 +244,58 @@ export class PermisosSolicitudService {
         }
         return segmento;
       });
+  }
+
+  /* ───────────── Detalle del proveedor y su oferta (S-10) ───────────── */
+
+  /**
+   * true si el usuario puede abrir el detalle del proveedor.
+   *
+   * Comparte la compuerta de S-07/S-09 (rol + estado). RN-29 se aplica en la
+   * pantalla: antes del cierre se muestra el estado bloqueado, no la oferta.
+   */
+  puedeAccederDetalleProveedor(solicitud: SolicitudPermisable): boolean {
+    return (
+      this.rol.estaCargado() &&
+      this.rol.tieneAlgunRol(ROLES_SOLICITANTE) &&
+      this.puede("oferentes", solicitud)
+    );
+  }
+
+  /** Acciones con efecto del detalle del proveedor según rol y estado. */
+  accionesDetalleProveedorPermitidas(
+    solicitud: SolicitudPermisable,
+  ): readonly AccionDetalleProveedor[] {
+    if (
+      !this.rol.estaCargado() ||
+      !this.rol.tieneAlgunRol(ROLES_SOLICITANTE)
+    ) {
+      return [];
+    }
+    return accionesDetalleProveedorPorRoles(
+      this.rol.roles(),
+      solicitud.estado,
+    );
+  }
+
+  /** Texto visible de una acción del detalle del proveedor. */
+  etiquetaAccionDetalleProveedor(accion: AccionDetalleProveedor): string {
+    return ACCIONES_DETALLE_PROVEEDOR[accion].etiqueta;
+  }
+
+  /** Comandos de navegación de una acción del detalle del proveedor. */
+  rutaAccionDetalleProveedor(
+    accion: AccionDetalleProveedor,
+    solicitudId: string,
+  ): readonly string[] | null {
+    const meta: AccionDetalleProveedorMeta =
+      ACCIONES_DETALLE_PROVEEDOR[accion];
+    if (!meta.ruta) {
+      return null;
+    }
+    return meta.ruta
+      .split("/")
+      .map((segmento) => (segmento === ":id" ? solicitudId : segmento));
   }
 
   /**

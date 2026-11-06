@@ -563,7 +563,15 @@ export class TableroOferentesComponent implements OnInit {
       });
       return;
     }
-    void this.router.navigate(comandos);
+
+    // S-10 abre la pestaña que corresponde a la acción del menú.
+    const tab =
+      accion === "ver-oferente"
+        ? "persona"
+        : accion === "ver-cotizacion"
+          ? "cotizacion"
+          : "respuesta";
+    void this.router.navigate(comandos, { queryParams: { tab } });
   }
 
   verCriterios(): void {

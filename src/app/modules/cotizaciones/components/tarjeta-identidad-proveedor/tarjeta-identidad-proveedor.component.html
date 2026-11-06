@@ -1,0 +1,80 @@
+<div class="identidad" [class.identidad--seleccionado]="seleccionado">
+  <span class="identidad__avatar" aria-hidden="true">{{ iniciales }}</span>
+
+  <div class="identidad__textos">
+    <div class="identidad__titulo">
+      @if (nivelTitulo === 1) {
+        <h1 class="identidad__nombre">{{ nombre }}</h1>
+      } @else {
+        <h2 class="identidad__nombre">{{ nombre }}</h2>
+      }
+
+      @if (seleccionado) {
+        <span class="identidad__badge">
+          <mat-icon aria-hidden="true">star</mat-icon>
+          Preseleccionado
+        </span>
+      }
+    </div>
+
+    <div class="identidad__chips">
+      <span class="chip chip--recto">
+        <span class="identidad__chip-etiqueta">{{ etiquetaDocumento }}</span>
+        <span>{{ nit }}</span>
+      </span>
+
+      @if (tipoPersona) {
+        <span class="chip chip--recto">{{ tipoPersona }}</span>
+      }
+
+      @if (estado) {
+        <chip-estado [estado]="estado"></chip-estado>
+      }
+
+      @if (modificadaEl) {
+        <span class="chip chip--info">
+          <mat-icon aria-hidden="true">update</mat-icon>
+          Adenda {{ version }}
+        </span>
+      } @else if (version) {
+        <span class="chip chip--recto">Versión {{ version }}</span>
+      }
+
+      <span class="chip chip--exito">
+        <mat-icon aria-hidden="true">verified</mat-icon>
+        Habilitado en banco UD
+      </span>
+    </div>
+
+    <div class="identidad__meta">
+      @if (representante) {
+        <span class="identidad__meta-item">
+          <mat-icon aria-hidden="true">badge</mat-icon>
+          {{ representante }}
+        </span>
+      }
+      @if (direccion) {
+        <span class="identidad__meta-item">
+          <mat-icon aria-hidden="true">location_on</mat-icon>
+          {{ direccion }}
+        </span>
+      }
+      @if (ciudad) {
+        <span class="identidad__meta-item">{{ ciudad }}</span>
+      }
+      @if (correo) {
+        <span class="identidad__meta-item">
+          <mat-icon aria-hidden="true">mail</mat-icon>
+          {{ correo }}
+        </span>
+      }
+    </div>
+
+    @if (modificadaEl) {
+      <p class="identidad__adenda">
+        <mat-icon aria-hidden="true">history_edu</mat-icon>
+        Versión vigente {{ version }} · actualizada el {{ modificadaEl }}
+      </p>
+    }
+  </div>
+</div>

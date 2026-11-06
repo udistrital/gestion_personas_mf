@@ -73,6 +73,12 @@ export type AccionComparador =
   | "exportar"
   | "continuar-decision";
 
+/** Acciones con efecto del detalle del proveedor (S-10). */
+export type AccionDetalleProveedor =
+  | "preseleccionar"
+  | "quitar-preseleccion"
+  | "continuar-decision";
+
 export type TonoChip =
   | "primario"
   | "exito"
@@ -405,7 +411,7 @@ export const ACCIONES_COMPARADOR: Readonly<
   Record<AccionComparador, AccionComparadorMeta>
 > = {
   "ver-oferta": {
-    etiqueta: "Ver detalle completo (S-10)",
+    etiqueta: "Ver detalle completo",
     icono: "visibility",
     ruta: "cotizaciones/solicitudes/:id/evaluacion/proveedores/:proveedorId",
   },
@@ -422,6 +428,34 @@ export const ACCIONES_COMPARADOR: Readonly<
   exportar: {
     etiqueta: "Exportar comparativo",
     icono: "download",
+    ruta: null,
+  },
+  "continuar-decision": {
+    etiqueta: "Continuar a decisión (S-11)",
+    icono: "arrow_forward",
+    ruta: "cotizaciones/solicitudes/:id/evaluacion/decision",
+  },
+};
+
+/** Metadatos de una acción del detalle del proveedor (S-10). */
+export interface AccionDetalleProveedorMeta {
+  readonly etiqueta: string;
+  readonly icono: string;
+  /** Ruta plantilla; `null` cuando la acción la ejecuta el servicio. */
+  readonly ruta: string | null;
+}
+
+export const ACCIONES_DETALLE_PROVEEDOR: Readonly<
+  Record<AccionDetalleProveedor, AccionDetalleProveedorMeta>
+> = {
+  preseleccionar: {
+    etiqueta: "Preseleccionar esta oferta",
+    icono: "how_to_reg",
+    ruta: null,
+  },
+  "quitar-preseleccion": {
+    etiqueta: "Quitar preselección",
+    icono: "remove_done",
     ruta: null,
   },
   "continuar-decision": {

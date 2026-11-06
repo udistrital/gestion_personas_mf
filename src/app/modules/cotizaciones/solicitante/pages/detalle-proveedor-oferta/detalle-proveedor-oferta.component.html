@@ -1,0 +1,1111 @@
+<plantilla-pagina-contenedora
+  [breadcrumb]="breadcrumb"
+  title="Detalle del proveedor y su oferta"
+>
+  <section class="detalle-oferta">
+    <!-- ───────────────────────── Solicitud no encontrada ───────────────────── -->
+    @if (estadoResolucion() === "no-encontrada") {
+      <div class="detalle-oferta__estado" role="status">
+        <mat-icon aria-hidden="true">search_off</mat-icon>
+        <h2 id="titulo-detalle-oferta">Solicitud no encontrada</h2>
+        <p>No existe una solicitud con ese identificador o ya no está disponible.</p>
+        <button class="boton-recto" type="button" (click)="volverAlListado()">
+          <mat-icon aria-hidden="true">arrow_back</mat-icon>
+          Volver a mis solicitudes
+        </button>
+      </div>
+    } @else if (estadoResolucion() === "error") {
+      <div class="detalle-oferta__estado detalle-oferta__estado--error" role="alert">
+        <mat-icon aria-hidden="true">error_outline</mat-icon>
+        <h2 id="titulo-detalle-oferta">No pudimos cargar la solicitud</h2>
+        <p>
+          {{
+            mensajeError() ||
+              "Ocurrió un problema al consultar el expediente. Intente nuevamente."
+          }}
+        </p>
+        <button class="boton-recto" type="button" (click)="reintentarResolucion()">
+          <mat-icon aria-hidden="true">refresh</mat-icon>
+          Reintentar
+        </button>
+      </div>
+    } @else if (solicitud(); as s) {
+      <!-- ─────────────────────────── Cabecera ─────────────────────────────── -->
+      <header class="detalle-oferta__cabecera">
+        <div class="detalle-oferta__cabecera-principal">
+          @if (detalle(); as d) {
+            <tarjeta-identidad-proveedor
+              [nombre]="d.oferente.proveedor.nombre"
+              [nit]="d.oferente.proveedor.nit"
+              [etiquetaDocumento]="etiquetaDocumento"
+              [tipoPersona]="identidad()?.etiquetaTipoPersona ?? ''"
+              [ciudad]="identidad()?.ubicacion ?? d.oferente.proveedor.ciudad"
+              [correo]="identidad()?.correo ?? ''"
+              [direccion]="identidad()?.direccionFiscal ?? ''"
+              [representante]="identidad()?.representante ?? ''"
+              [estado]="d.oferente.estado"
+              [seleccionado]="seleccionado()"
+              [version]="d.versionVigente"
+              [modificadaEl]="d.oferente.respuesta?.modificadaEl ?? ''"
+              [nivelTitulo]="2"
+            ></tarjeta-identidad-proveedor>
+          } @else if (vista() === "cargando") {
+            <div class="detalle-oferta__identidad-esqueleto" aria-hidden="true">
+              <span class="esqueleto esqueleto--avatar"></span>
+              <div class="detalle-oferta__identidad-esqueleto-textos">
+                <span class="esqueleto esqueleto--titulo"></span>
+                <span class="esqueleto esqueleto--linea"></span>
+              </div>
+            </div>
+          }
+
+          @if (detalle(); as d) {
+            <div class="detalle-oferta__navegacion" role="group" aria-label="Navegación entre oferentes">
+              <button
+                mat-icon-button
+                type="button"
+                class="detalle-oferta__navegacion-boton"
+                [disabled]="!navegacion()?.anterior"
+                [attr.aria-label]="ariaAnterior"
+                (click)="irAnterior()"
+              >
+                <mat-icon aria-hidden="true">chevron_left</mat-icon>
+              </button>
+              <div class="detalle-oferta__navegacion-textos">
+                <strong>Oferente {{ navegacion()?.indice }} de {{ navegacion()?.total }}</strong>
+                <span>
+                  {{ d.oferente.respuesta ? "Con cotización radicada" : "Sin cotización radicada" }}
+                </span>
+              </div>
+              <button
+                mat-icon-button
+                type="button"
+                class="detalle-oferta__navegacion-boton"
+                [disabled]="!navegacion()?.siguiente"
+                [attr.aria-label]="ariaSiguiente"
+                (click)="irSiguiente()"
+              >
+                <mat-icon aria-hidden="true">chevron_right</mat-icon>
+              </button>
+            </div>
+          }
+        </div>
+
+        <div class="detalle-oferta__acciones">
+          <button class="boton-recto" type="button" (click)="volver()">
+            <mat-icon aria-hidden="true">arrow_back</mat-icon>
+            <span>{{ etiquetaVolver }}</span>
+          </button>
+
+          @if (puedeDescargarCotizacion) {
+            <button class="boton-recto" type="button" (click)="descargarPrincipal()">
+              <mat-icon aria-hidden="true">file_download</mat-icon>
+              <span>Descargar cotización</span>
+            </button>
+          }
+
+          <button class="boton-recto" type="button" (click)="verSolicitud()">
+            <mat-icon aria-hidden="true">description</mat-icon>
+            <span>Ver pliego / Solicitud original</span>
+          </button>
+
+          <span class="detalle-oferta__acciones-espaciador" aria-hidden="true"></span>
+
+          @if (vista() === "listo") {
+            @if (!seleccionado() && puedePreseleccionar) {
+              <button
+                class="boton-recto boton-recto--vino"
+                type="button"
+                [disabled]="procesando()"
+                (click)="preseleccionar()"
+              >
+                <mat-icon aria-hidden="true">how_to_reg</mat-icon>
+                <span>Preseleccionar esta oferta</span>
+              </button>
+            }
+            @if (seleccionado()) {
+              @if (acciones().includes("continuar-decision")) {
+                <button
+                  class="boton-recto boton-recto--vino"
+                  type="button"
+                  [disabled]="!puedeContinuarDecision"
+                  (click)="continuarDecision()"
+                >
+                  <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+                  <span>Continuar a decisión (S-11)</span>
+                </button>
+              }
+              @if (acciones().includes("quitar-preseleccion")) {
+                <button
+                  class="detalle-oferta__enlace"
+                  type="button"
+                  [disabled]="!puedeQuitarPreseleccion"
+                  (click)="quitarPreseleccion()"
+                >
+                  Quitar preselección
+                </button>
+              }
+            }
+          }
+        </div>
+
+        @if (detalle(); as d) {
+          <div class="detalle-oferta__chips-contexto">
+            <span class="chip chip--recto">
+              <span class="detalle-oferta__chip-etiqueta">N.°</span>
+              <span>{{ s.id }}</span>
+            </span>
+            <chip-estado [estado]="s.estado"></chip-estado>
+            <span class="chip chip--recto">Vigencia {{ s.vigencia }}</span>
+            @if (d.preseleccionadoNombre) {
+              <span class="chip chip--info">
+                <mat-icon aria-hidden="true">grade</mat-icon>
+                Preselección vigente: {{ d.preseleccionadoNombre }}
+              </span>
+            }
+          </div>
+        }
+      </header>
+
+      <p class="visually-oculto" aria-live="polite">{{ anuncio() }}</p>
+
+      <!-- ─────────────────────── Estados de la vista ──────────────────────── -->
+      @if (vista() === "no-disponible") {
+        <div class="detalle-oferta__estado" role="status">
+          <mat-icon aria-hidden="true">lock</mat-icon>
+          <h2>Detalle del proveedor no disponible en este estado</h2>
+          <p>
+            La consulta del proveedor y su oferta se habilita cuando la solicitud
+            está publicada a proveedores o en una etapa posterior del proceso.
+          </p>
+          <button class="boton-recto" type="button" (click)="volver()">
+            <mat-icon aria-hidden="true">arrow_back</mat-icon>
+            {{ etiquetaVolver }}
+          </button>
+        </div>
+      } @else if (vista() === "bloqueado") {
+        <section class="detalle-oferta__estado detalle-oferta__estado--bloqueo" aria-labelledby="detalle-bloqueo-titulo">
+          <span class="detalle-oferta__estado-icono" aria-hidden="true">
+            <mat-icon>lock_clock</mat-icon>
+          </span>
+          <h2 id="detalle-bloqueo-titulo">
+            La revisión de la oferta se habilita al cierre del periodo
+          </h2>
+          <p>
+            Por la regla RN-29, las respuestas y cotizaciones de los proveedores
+            solo se consultan cuando termina el periodo de cotización. Antes de
+            esa fecha esta vista no expone la oferta.
+          </p>
+          <div class="detalle-oferta__bloqueo-plazo">
+            <contador-regresivo [fechaCierre]="s.cierre"></contador-regresivo>
+            <span>Fecha límite: {{ fechaLimite }}</span>
+          </div>
+          <etiqueta-por-definir
+            texto="Por definir"
+            detalle="Visibilidad de las cotizaciones antes del cierre (RN-29, marcada para revisión)."
+          ></etiqueta-por-definir>
+          <button class="boton-recto" type="button" (click)="volver()">
+            <mat-icon aria-hidden="true">arrow_back</mat-icon>
+            {{ etiquetaVolver }}
+          </button>
+        </section>
+      } @else if (vista() === "cargando") {
+        <div class="detalle-oferta__esqueleto" aria-busy="true" aria-live="polite">
+          <span class="visually-oculto">Cargando el detalle del proveedor y su oferta…</span>
+          <div class="detalle-oferta__esqueleto-metricas" aria-hidden="true">
+            @for (bloque of [1, 2, 3]; track bloque) {
+              <span class="esqueleto esqueleto--metrica"></span>
+            }
+          </div>
+          <span class="esqueleto esqueleto--barra" aria-hidden="true"></span>
+          <div class="detalle-oferta__esqueleto-tabla" aria-hidden="true">
+            @for (fila of [1, 2, 3, 4, 5, 6]; track fila) {
+              <span class="esqueleto esqueleto--fila"></span>
+            }
+          </div>
+        </div>
+      } @else if (vista() === "error") {
+        <div class="detalle-oferta__estado detalle-oferta__estado--error" role="alert">
+          <mat-icon aria-hidden="true">error_outline</mat-icon>
+          <h2>No pudimos cargar el proveedor</h2>
+          <p>
+            {{
+              mensajeError() ||
+                "Ocurrió un problema al consultar el detalle. Intente nuevamente."
+            }}
+          </p>
+          <button class="boton-recto" type="button" (click)="reintentarCarga()">
+            <mat-icon aria-hidden="true">refresh</mat-icon>
+            Reintentar
+          </button>
+        </div>
+      } @else if (vista() === "no-encontrado") {
+        <div class="detalle-oferta__estado" role="status">
+          <mat-icon aria-hidden="true">person_off</mat-icon>
+          <h2>Proveedor no encontrado en esta solicitud</h2>
+          <p>
+            El identificador del proveedor no corresponde a un invitado de esta
+            solicitud. Verifique el enlace o vuelva al tablero de oferentes.
+          </p>
+          <button class="boton-recto" type="button" (click)="volver()">
+            <mat-icon aria-hidden="true">arrow_back</mat-icon>
+            {{ etiquetaVolver }}
+          </button>
+        </div>
+      } @else if (detalle(); as d) {
+        @if (vista() === "sin-oferta") {
+          <div class="detalle-oferta__aviso detalle-oferta__aviso--info" role="status">
+            <mat-icon aria-hidden="true">person_off</mat-icon>
+            <p>
+              <strong>{{ d.oferente.proveedor.nombre }}</strong> fue invitado pero
+              no radicó cotización. Se muestra solo su identidad y su estado; no
+              hay información económica ni documental para revisar (RF-12).
+            </p>
+          </div>
+        }
+
+        <nav class="detalle-oferta__tabs" role="tablist" aria-label="Secciones del detalle del proveedor">
+          @for (tab of pestanasVisibles(); track tab.id) {
+            <button
+              class="detalle-oferta__tab"
+              type="button"
+              role="tab"
+              [id]="'tab-' + tab.id"
+              [attr.aria-controls]="'panel-' + tab.id"
+              [attr.aria-selected]="pestana() === tab.id"
+              [attr.tabindex]="pestana() === tab.id ? 0 : -1"
+              [class.detalle-oferta__tab--activa]="pestana() === tab.id"
+              (click)="cambiarPestana(tab.id)"
+              (keydown.arrowright)="moverPestana(1, $event)"
+              (keydown.arrowleft)="moverPestana(-1, $event)"
+            >
+              <mat-icon aria-hidden="true">{{ tab.icono }}</mat-icon>
+              <span>{{ tab.etiqueta }}</span>
+              <span class="chip chip--recto">{{ chipPestana(tab.id) }}</span>
+            </button>
+          }
+        </nav>
+
+        <!-- ─────────────────────── Pestaña Cotización ──────────────────────── -->
+        @if (vista() === "listo" && pestana() === "cotizacion") {
+          @if (oferta(); as ofertaActual) {
+            <section
+              id="panel-cotizacion"
+              class="detalle-oferta__panel"
+              role="tabpanel"
+              aria-labelledby="tab-cotizacion"
+              tabindex="0"
+            >
+              @if (ofertaActual.excedePresupuesto) {
+                <div class="detalle-oferta__aviso detalle-oferta__aviso--error" role="status">
+                  <mat-icon aria-hidden="true">warning</mat-icon>
+                  <div class="detalle-oferta__aviso-textos">
+                    <p>
+                      Esta oferta supera el techo presupuestal de
+                      <strong>{{ moneda(ofertaActual.valorPresupuesto) }}</strong> y
+                      no se tendrá en cuenta para la comparación ni para la
+                      preselección (RN-40).
+                    </p>
+                    <etiqueta-por-definir
+                      texto="Por definir"
+                      detalle="Límite de contratación por modalidad; hoy la advertencia usa el techo del CDP."
+                    ></etiqueta-por-definir>
+                  </div>
+                </div>
+              }
+
+              @if (seleccionado()) {
+                <div class="detalle-oferta__aviso detalle-oferta__aviso--seleccion" role="status">
+                  <mat-icon aria-hidden="true">grade</mat-icon>
+                  <p>
+                    Oferta preseleccionada por el Jefe de Dependencia. La decisión
+                    final corresponde al Ordenador del Gasto (RN-34).
+                  </p>
+                </div>
+              }
+
+              <section class="detalle-oferta__franja" aria-labelledby="detalle-version-titulo">
+                <span class="detalle-oferta__franja-icono" aria-hidden="true">
+                  <mat-icon>history_edu</mat-icon>
+                </span>
+                <div class="detalle-oferta__franja-textos">
+                  <h2 id="detalle-version-titulo">Control de versiones de la propuesta</h2>
+                  <p>
+                    Versión vigente <strong>{{ d.versionVigente }}</strong>.
+                    @if (d.versionAnterior) {
+                      La adenda reemplazó la versión {{ d.versionAnterior }}.
+                    } @else {
+                      La oferta no registra adendas posteriores a su radicación.
+                    }
+                  </p>
+                </div>
+                <div class="detalle-oferta__franja-chips">
+                  <span class="chip chip--recto">Vigente {{ d.versionVigente }}</span>
+                  @if (d.versionAnterior) {
+                    <span class="chip chip--info">Anterior {{ d.versionAnterior }}</span>
+                    <etiqueta-por-definir
+                      texto="Por definir"
+                      detalle="Comparación de valores entre la versión anterior y la vigente; no hay snapshots históricos en el modelo."
+                    ></etiqueta-por-definir>
+                  } @else {
+                    <span class="chip chip--recto">Sin adendas</span>
+                  }
+                </div>
+              </section>
+
+              <aside class="detalle-oferta__callout">
+                <mat-icon aria-hidden="true">policy</mat-icon>
+                <div class="detalle-oferta__callout-textos">
+                  <strong>Respuesta única e inmutable (RN-35/RN-42)</strong>
+                  <p>
+                    La cotización está en solo lectura. Cualquier ajuste posterior
+                    requiere el proceso de subsanación (S-12) y queda registrado en
+                    el historial de la oferta.
+                  </p>
+                  <etiqueta-por-definir
+                    texto="Por definir"
+                    detalle="Cita normativa exacta de la oferta formal e inmutable."
+                  ></etiqueta-por-definir>
+                </div>
+              </aside>
+
+              <div class="detalle-oferta__metricas">
+                <article class="detalle-oferta__metrica">
+                  <div class="detalle-oferta__metrica-cabecera">
+                    <span class="detalle-oferta__metrica-rotulo">Precio antes de IVA</span>
+                    <mat-icon aria-hidden="true">attach_money</mat-icon>
+                  </div>
+                  <strong class="detalle-oferta__metrica-valor">
+                    {{ moneda(ofertaActual.subtotal) }}
+                    <span>COP</span>
+                  </strong>
+                  <span class="detalle-oferta__metrica-nota">
+                    Base gravable: {{ moneda(ofertaActual.oferta.totales.baseGravable) }}
+                  </span>
+                </article>
+
+                <article class="detalle-oferta__metrica">
+                  <div class="detalle-oferta__metrica-cabecera">
+                    <span class="detalle-oferta__metrica-rotulo">Precio del IVA (19%)</span>
+                    <mat-icon aria-hidden="true">percent</mat-icon>
+                  </div>
+                  <strong class="detalle-oferta__metrica-valor">
+                    {{ moneda(ofertaActual.iva) }}
+                    <span>COP</span>
+                  </strong>
+                  <span class="detalle-oferta__metrica-nota">
+                    @if (ofertaActual.descuento > 0) {
+                      Descuento aplicado: {{ moneda(ofertaActual.descuento) }}
+                    } @else {
+                      Sin descuento comercial
+                    }
+                  </span>
+                </article>
+
+                <article
+                  class="detalle-oferta__metrica detalle-oferta__metrica--total"
+                  [class.detalle-oferta__metrica--error]="ofertaActual.excedePresupuesto"
+                >
+                  <div class="detalle-oferta__metrica-cabecera">
+                    <span class="detalle-oferta__metrica-rotulo">Precio total con IVA</span>
+                    @if (ofertaActual.esMenorTotal) {
+                      <span class="chip chip--exito">Menor precio (referencia)</span>
+                    }
+                  </div>
+                  <strong class="detalle-oferta__metrica-valor">
+                    {{ moneda(ofertaActual.total) }}
+                    <span>COP</span>
+                  </strong>
+                  <span class="detalle-oferta__metrica-nota">
+                    @if (ofertaActual.valorPresupuesto > 0) {
+                      CDP: {{ moneda(ofertaActual.valorPresupuesto) }} ·
+                    }
+                    {{ diferenciaPresupuesto(ofertaActual) }}
+                  </span>
+                  @if (ofertaActual.excedePresupuesto) {
+                    <span class="detalle-oferta__metrica-error">
+                      No se tendrá en cuenta (RN-40)
+                    </span>
+                  }
+                </article>
+              </div>
+
+              <section class="detalle-oferta__tarjeta" aria-labelledby="detalle-radicacion-titulo">
+                <div class="detalle-oferta__tarjeta-cabecera">
+                  <div>
+                    <h2 id="detalle-radicacion-titulo">Datos de la radicación</h2>
+                    <p>Información declarada por el proveedor al presentar la oferta.</p>
+                  </div>
+                  <span class="chip chip--recto">{{ ofertaActual.radicado }}</span>
+                </div>
+                <div class="datos-grid datos-grid--tres">
+                  <par-etiqueta-valor etiqueta="Radicado" [valor]="ofertaActual.radicado" icono="fingerprint" />
+                  <par-etiqueta-valor etiqueta="Fecha de envío" [valor]="ofertaActual.fechaEnvio" icono="schedule" />
+                  <par-etiqueta-valor etiqueta="Versión" [valor]="ofertaActual.version" icono="history_edu" />
+                  <par-etiqueta-valor
+                    etiqueta="Validez declarada"
+                    [valor]="ofertaActual.oferta.validezDias + ' días calendario'"
+                    icono="event_available"
+                  />
+                  <par-etiqueta-valor
+                    etiqueta="Vence"
+                    [valor]="d.fechaLimiteOferta ?? 'Por definir'"
+                    icono="event"
+                  />
+                  <par-etiqueta-valor
+                    etiqueta="Plazo de entrega"
+                    [valor]="ofertaActual.oferta.plazoEntregaDias + ' días calendario'"
+                    icono="local_shipping"
+                  />
+                </div>
+              </section>
+
+              <section class="detalle-oferta__tarjeta" aria-labelledby="detalle-items-titulo">
+                <div class="detalle-oferta__tarjeta-cabecera">
+                  <div>
+                    <h2 id="detalle-items-titulo">Ítems cotizados</h2>
+                    <p>
+                      Cotejo de las especificaciones y valores ofrecidos frente a
+                      los ítems solicitados.
+                    </p>
+                  </div>
+                  <span class="chip chip--recto">{{ filasItems().length }} ítems</span>
+                </div>
+
+                <div class="tabla-detalle__scroll">
+                  <table class="tabla-detalle" aria-label="Ítems cotizados frente a lo solicitado">
+                    <caption class="visually-oculto">
+                      Ítems solicitados con el valor unitario, IVA y subtotal
+                      ofrecidos por el proveedor
+                    </caption>
+                    <thead>
+                      <tr>
+                        <th scope="col" class="tabla-detalle__th">#</th>
+                        <th scope="col" class="tabla-detalle__th">Ítem y especificación</th>
+                        <th scope="col" class="tabla-detalle__th tabla-detalle__th--centro">Tipo</th>
+                        <th scope="col" class="tabla-detalle__th tabla-detalle__th--centro">Unidad</th>
+                        <th scope="col" class="tabla-detalle__th tabla-detalle__th--centro">Cant.</th>
+                        <th scope="col" class="tabla-detalle__th tabla-detalle__th--numero">Valor unitario</th>
+                        <th scope="col" class="tabla-detalle__th tabla-detalle__th--centro">IVA</th>
+                        <th scope="col" class="tabla-detalle__th tabla-detalle__th--numero">Subtotal c/ IVA</th>
+                        <th scope="col" class="tabla-detalle__th">Ficha / observación</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (fila of filasItems(); track fila.item.id; let i = $index) {
+                        <tr class="tabla-detalle__fila">
+                          <td class="tabla-detalle__td tabla-detalle__td--fuerte">
+                            {{ i + 1 | number: "2.0" }}
+                          </td>
+                          <td class="tabla-detalle__td">
+                            <span class="tabla-detalle__celda-titulo">{{ fila.item.nombre }}</span>
+                            <span class="tabla-detalle__celda-nota">{{ fila.item.descripcion }}</span>
+                            @if (fila.superaTecho) {
+                              <span class="detalle-oferta__metrica-error">
+                                Supera el techo unitario publicado
+                              </span>
+                            }
+                          </td>
+                          <td class="tabla-detalle__td tabla-detalle__td--centro">
+                            <span [class]="fila.item.tipo === 'bien' ? 'chip chip--bien' : 'chip chip--servicio'">
+                              {{ fila.item.tipo === "bien" ? "Bien" : "Servicio" }}
+                            </span>
+                          </td>
+                          <td class="tabla-detalle__td tabla-detalle__td--centro">{{ fila.item.unidad }}</td>
+                          <td class="tabla-detalle__td tabla-detalle__td--centro">{{ fila.item.cantidad }}</td>
+                          <td class="tabla-detalle__td tabla-detalle__td--numero">{{ moneda(fila.valorUnitario) }}</td>
+                          <td class="tabla-detalle__td tabla-detalle__td--centro">{{ fila.etiquetaIva }}</td>
+                          <td class="tabla-detalle__td tabla-detalle__td--numero">{{ moneda(fila.total) }}</td>
+                          <td class="tabla-detalle__td">
+                            {{ fila.nota || "Sin observación registrada" }}
+                          </td>
+                        </tr>
+                      } @empty {
+                        <tr>
+                          <td colspan="9" class="tabla-detalle__vacio">
+                            <mat-icon aria-hidden="true">inventory_2</mat-icon>
+                            <span>La solicitud no tiene ítems para cotizar.</span>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+
+                <div class="detalle-oferta__totales">
+                  <div class="detalle-oferta__total-fila">
+                    <span>Subtotal ofertado</span>
+                    <strong>{{ moneda(ofertaActual.subtotal) }}</strong>
+                  </div>
+                  @if (ofertaActual.descuento > 0) {
+                    <div class="detalle-oferta__total-fila">
+                      <span>Descuento comercial</span>
+                      <strong>-{{ moneda(ofertaActual.descuento) }}</strong>
+                    </div>
+                  }
+                  <div class="detalle-oferta__total-fila">
+                    <span>IVA</span>
+                    <strong>{{ moneda(ofertaActual.iva) }}</strong>
+                  </div>
+                  <div class="detalle-oferta__total-fila detalle-oferta__total-fila--total">
+                    <span>Total con IVA</span>
+                    <strong>{{ moneda(ofertaActual.total) }} COP</strong>
+                  </div>
+                </div>
+              </section>
+
+              <section class="detalle-oferta__tarjeta" aria-labelledby="detalle-condiciones-titulo">
+                <div class="detalle-oferta__tarjeta-cabecera">
+                  <div>
+                    <h2 id="detalle-condiciones-titulo">Descuentos y condiciones comerciales</h2>
+                    <p>Manifestaciones expresas del oferente en la radicación.</p>
+                  </div>
+                  <span class="chip chip--recto">
+                    {{ porcentaje(ofertaActual.oferta.descuentoPorcentaje) }}% descuento
+                  </span>
+                </div>
+                <div class="detalle-oferta__condiciones">
+                  <p
+                    class="bloque-lectura"
+                    [innerHTML]="(ofertaActual.oferta.condicionesComerciales || 'Sin condiciones adicionales reportadas.') | htmlSeguro"
+                  ></p>
+                  <div class="detalle-oferta__condiciones-datos">
+                    <span>Descuento: {{ moneda(ofertaActual.descuento) }}</span>
+                    <span>Plazo de entrega: {{ ofertaActual.oferta.plazoEntregaDias }} días</span>
+                    <span>Validez: {{ ofertaActual.oferta.validezDias }} días</span>
+                  </div>
+                </div>
+              </section>
+
+              <section class="detalle-oferta__tarjeta" aria-labelledby="detalle-documentos-titulo">
+                <div class="detalle-oferta__tarjeta-cabecera">
+                  <div>
+                    <h2 id="detalle-documentos-titulo">Documentos de la oferta</h2>
+                    <p>
+                      Soportes radicados por el proveedor. Clasificación de RF-09 y
+                      formatos admitidos por RN-41.
+                    </p>
+                  </div>
+                  <div class="detalle-oferta__documento-resumen">
+                    <span class="chip chip--recto">
+                      {{ resumenDocumentos().obligatorios }} obligatorios
+                    </span>
+                    <span class="chip chip--recto">
+                      {{ resumenDocumentos().complementarios }} complementarios
+                    </span>
+                    <span class="chip chip--exito">
+                      {{ resumenDocumentos().cargados }} de
+                      {{ resumenDocumentos().total }} completos
+                    </span>
+                  </div>
+                </div>
+
+                @if (errorDescarga(); as mensaje) {
+                  <div class="detalle-oferta__error-documento" role="alert" aria-live="assertive">
+                    <mat-icon aria-hidden="true">error_outline</mat-icon>
+                    <div class="detalle-oferta__error-documento-textos">
+                      <strong>No fue posible consultar el archivo</strong>
+                      <p>{{ mensaje }}</p>
+                    </div>
+                    <button
+                      class="boton-recto"
+                      type="button"
+                      aria-label="Cerrar aviso de error de descarga"
+                      (click)="cerrarErrorDescarga()"
+                    >
+                      <mat-icon aria-hidden="true">close</mat-icon>
+                    </button>
+                  </div>
+                }
+
+                @if (documentoPrincipal(); as principal) {
+                  <article class="detalle-oferta__documento-principal">
+                    <span class="detalle-oferta__documento-icono" aria-hidden="true">
+                      <mat-icon>{{ principal.icono }}</mat-icon>
+                    </span>
+                    <div class="detalle-oferta__documento-textos">
+                      <span class="detalle-oferta__documento-rotulo">
+                        Soporte detalle de la cotización (archivo principal)
+                      </span>
+                      <strong>{{ principal.nombreArchivo }}</strong>
+                      <span class="detalle-oferta__documento-meta">
+                        {{ principal.peso }} · Radicado el {{ principal.fechaRadicacion }}
+                        · Formato {{ principal.formato }} ·
+                        {{ principal.etiquetaClasificacion }}
+                      </span>
+                      @if (!principal.formatoValido) {
+                        <span class="detalle-oferta__metrica-error">
+                          Formato no permitido (RN-41)
+                        </span>
+                      }
+                    </div>
+                    <div class="detalle-oferta__documento-acciones">
+                      <button
+                        class="boton-recto"
+                        type="button"
+                        [disabled]="descargando() === principal.id || !principal.formatoValido"
+                        [attr.aria-label]="'Ver ' + principal.nombreArchivo"
+                        (click)="verDocumento(principal)"
+                      >
+                        @if (descargando() === principal.id) {
+                          <mat-spinner diameter="14"></mat-spinner>
+                        } @else {
+                          <mat-icon aria-hidden="true">visibility</mat-icon>
+                        }
+                        <span>Vista previa</span>
+                      </button>
+                      <button
+                        class="boton-recto boton-recto--vino"
+                        type="button"
+                        [disabled]="descargando() === principal.id || !principal.formatoValido"
+                        [attr.aria-label]="'Descargar ' + principal.nombreArchivo"
+                        (click)="descargarDocumento(principal)"
+                      >
+                        @if (descargando() === principal.id) {
+                          <mat-spinner diameter="14"></mat-spinner>
+                        } @else {
+                          <mat-icon aria-hidden="true">download</mat-icon>
+                        }
+                        <span>Descargar archivo</span>
+                      </button>
+                    </div>
+                  </article>
+                }
+
+                @if (documentosAdicionales().length > 0) {
+                  <div class="tabla-detalle__scroll">
+                    <table class="tabla-detalle" aria-label="Documentos adicionales de la oferta">
+                      <caption class="visually-oculto">
+                        Documentos adicionales radicados por el proveedor con su
+                        clasificación, formato, estado y radicación
+                      </caption>
+                      <thead>
+                        <tr>
+                          <th scope="col" class="tabla-detalle__th">Documento</th>
+                          <th scope="col" class="tabla-detalle__th">Naturaleza</th>
+                          <th scope="col" class="tabla-detalle__th">Formato</th>
+                          <th scope="col" class="tabla-detalle__th">Estado</th>
+                          <th scope="col" class="tabla-detalle__th">Radicación</th>
+                          <th scope="col" class="tabla-detalle__th tabla-detalle__th--numero">Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (documento of documentosAdicionales(); track documento.id) {
+                          <tr class="tabla-detalle__fila">
+                            <td class="tabla-detalle__td">
+                              <span class="detalle-oferta__documento-nombre">
+                                <mat-icon aria-hidden="true">{{ documento.icono }}</mat-icon>
+                                <span>
+                                  <span class="tabla-detalle__celda-titulo">{{ documento.nombre }}</span>
+                                  <span class="tabla-detalle__celda-nota">{{ documento.nombreArchivo }} · {{ documento.peso }}</span>
+                                  @if (!documento.formatoValido) {
+                                    <span class="detalle-oferta__metrica-error">
+                                      Formato no permitido (RN-41)
+                                    </span>
+                                  }
+                                </span>
+                              </span>
+                            </td>
+                            <td class="tabla-detalle__td">{{ documento.etiquetaClasificacion }}</td>
+                            <td class="tabla-detalle__td">
+                              <span class="chip chip--formato">
+                                <mat-icon aria-hidden="true">{{ documento.icono }}</mat-icon>
+                                <span>{{ documento.formato }}</span>
+                              </span>
+                            </td>
+                            <td class="tabla-detalle__td">
+                              <span
+                                class="chip"
+                                [class.chip--exito]="documento.estado === 'cargado'"
+                                [class.chip--info]="documento.estado === 'subsanado'"
+                              >
+                                {{ etiquetaEstadoDocumento(documento) }}
+                              </span>
+                            </td>
+                            <td class="tabla-detalle__td">{{ documento.fechaRadicacion }}</td>
+                            <td class="tabla-detalle__td tabla-detalle__td--numero">
+                              <div class="detalle-oferta__documento-acciones">
+                                <button
+                                  class="boton-recto"
+                                  type="button"
+                                  [disabled]="descargando() === documento.id || !documento.formatoValido"
+                                  [attr.aria-label]="'Ver ' + documento.nombreArchivo"
+                                  (click)="verDocumento(documento)"
+                                >
+                                  @if (descargando() === documento.id) {
+                                    <mat-spinner diameter="14"></mat-spinner>
+                                  } @else {
+                                    <mat-icon aria-hidden="true">visibility</mat-icon>
+                                  }
+                                  <span>Ver</span>
+                                </button>
+                                <button
+                                  class="boton-recto boton-recto--vino"
+                                  type="button"
+                                  [disabled]="descargando() === documento.id || !documento.formatoValido"
+                                  [attr.aria-label]="'Descargar ' + documento.nombreArchivo"
+                                  (click)="descargarDocumento(documento)"
+                                >
+                                  @if (descargando() === documento.id) {
+                                    <mat-spinner diameter="14"></mat-spinner>
+                                  } @else {
+                                    <mat-icon aria-hidden="true">download</mat-icon>
+                                  }
+                                  <span>Descargar</span>
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                }
+
+                @if (documentos().length === 0) {
+                  <div class="detalle-oferta__vacio">
+                    <mat-icon aria-hidden="true">folder_open</mat-icon>
+                    <p>No se registraron documentos para esta oferta.</p>
+                  </div>
+                }
+
+                <p class="detalle-oferta__nota">
+                  <mat-icon aria-hidden="true">info</mat-icon>
+                  Los estados de subsanación (RF-19/RN-08) se habilitarán cuando
+                  exista la pantalla S-12. Hoy todos los documentos se muestran
+                  como cargados.
+                </p>
+              </section>
+
+              <section class="detalle-oferta__tarjeta" aria-labelledby="detalle-observaciones-titulo">
+                <div class="detalle-oferta__tarjeta-cabecera">
+                  <div>
+                    <h2 id="detalle-observaciones-titulo">Observaciones del proponente</h2>
+                    <p>Texto radicado junto con la oferta, en solo lectura.</p>
+                  </div>
+                </div>
+                <div
+                  class="bloque-lectura"
+                  [innerHTML]="ofertaActual.oferta.observacionesProponenteHtml | htmlSeguro"
+                ></div>
+              </section>
+
+              <section class="detalle-oferta__tarjeta" aria-labelledby="detalle-historial-titulo">
+                <div class="detalle-oferta__tarjeta-cabecera">
+                  <div>
+                    <h2 id="detalle-historial-titulo">Trazabilidad de la oferta</h2>
+                    <p>Radicación, adendas y futuras subsanaciones del proveedor.</p>
+                  </div>
+                  <span class="chip chip--recto">{{ lineaTiempo().length }} eventos</span>
+                </div>
+                @if (lineaTiempo().length > 0) {
+                  <linea-tiempo
+                    [eventos]="lineaTiempo()"
+                    etiquetaLista="Historial de la oferta"
+                  ></linea-tiempo>
+                } @else {
+                  <div class="detalle-oferta__vacio">
+                    <mat-icon aria-hidden="true">history</mat-icon>
+                    <p>No hay eventos registrados para esta oferta.</p>
+                  </div>
+                }
+                <etiqueta-por-definir
+                  texto="Por definir"
+                  detalle="Eventos de subsanación (RF-19/RN-08); se mostrarán cuando exista la pantalla S-12."
+                ></etiqueta-por-definir>
+              </section>
+            </section>
+          }
+        }
+
+        <!-- ───────────────────────── Pestaña Persona ───────────────────────── -->
+        @if (vista() === "sin-oferta" || pestana() === "persona") {
+          <section
+            id="panel-persona"
+            class="detalle-oferta__panel"
+            role="tabpanel"
+            aria-labelledby="tab-persona"
+            tabindex="0"
+          >
+            <div class="detalle-oferta__aviso detalle-oferta__aviso--info" role="note">
+              <mat-icon aria-hidden="true">shield</mat-icon>
+              <p>
+                Los datos sensibles, de seguridad social y bancarios se presentan
+                enmascarados o por definir. El desenmascaramiento con traza de
+                auditoría no está implementado en esta versión (Ley 1581 de 2012).
+              </p>
+            </div>
+
+            <section class="detalle-oferta__tarjeta" aria-labelledby="detalle-persona-a">
+              <div class="detalle-oferta__tarjeta-cabecera">
+                <div>
+                  <h2 id="detalle-persona-a">A. Información básica y personería jurídica</h2>
+                  <p>Datos de identificación registrados en el banco de proveedores UD.</p>
+                </div>
+                <span class="chip chip--recto">Registro UD</span>
+              </div>
+              <div class="datos-grid datos-grid--tres">
+                <par-etiqueta-valor etiqueta="Nombre o razón social" [valor]="d.oferente.proveedor.nombre" />
+                <par-etiqueta-valor [etiqueta]="etiquetaDocumento" [valor]="d.oferente.proveedor.nit" icono="fingerprint" />
+                <par-etiqueta-valor etiqueta="Tipo de persona" [valor]="identidad()?.etiquetaTipoPersona ?? ''" />
+                <par-etiqueta-valor etiqueta="Representante legal" [valor]="identidad()?.representante ?? ''" icono="badge" />
+                <par-etiqueta-valor etiqueta="Dirección fiscal" [valor]="identidad()?.direccionFiscal ?? ''" icono="location_on" />
+                <par-etiqueta-valor etiqueta="Ubicación" [valor]="identidad()?.ubicacion ?? ''" icono="place" />
+                <div class="dato">
+                  <span class="dato__etiqueta">Matrícula mercantil</span>
+                  <etiqueta-por-definir
+                    texto="Por definir"
+                    detalle="Requiere integración con el registro de personas."
+                  ></etiqueta-por-definir>
+                </div>
+                <div class="dato">
+                  <span class="dato__etiqueta">Documento del representante</span>
+                  <etiqueta-por-definir
+                    texto="Por definir"
+                    detalle="Dato sensible; el registro de personas no está conectado."
+                  ></etiqueta-por-definir>
+                </div>
+                <div class="dato">
+                  <span class="dato__etiqueta">Vigencia de la sociedad</span>
+                  <etiqueta-por-definir
+                    texto="Por definir"
+                    detalle="Requiere integración con la Cámara de Comercio."
+                  ></etiqueta-por-definir>
+                </div>
+                <div class="dato">
+                  <span class="dato__etiqueta">Registro Único de Proponentes (RUP)</span>
+                  <etiqueta-por-definir
+                    texto="Por definir"
+                    detalle="El banco de proveedores confirma la habilitación, pero no expone el estado RUP."
+                  ></etiqueta-por-definir>
+                </div>
+              </div>
+            </section>
+
+            <section class="detalle-oferta__tarjeta" aria-labelledby="detalle-persona-b">
+              <div class="detalle-oferta__tarjeta-cabecera">
+                <div>
+                  <h2 id="detalle-persona-b">B. Información tributaria y calidad fiscal</h2>
+                  <p>Datos declarados ante la DIAN.</p>
+                </div>
+              </div>
+              <div class="datos-grid datos-grid--tres">
+                <div class="dato">
+                  <span class="dato__etiqueta">Régimen</span>
+                  <etiqueta-por-definir texto="Por definir" detalle="Requiere integración con el registro de personas."></etiqueta-por-definir>
+                </div>
+                <div class="dato">
+                  <span class="dato__etiqueta">Gran contribuyente</span>
+                  <etiqueta-por-definir texto="Por definir" detalle="Requiere integración con la DIAN."></etiqueta-por-definir>
+                </div>
+                <div class="dato">
+                  <span class="dato__etiqueta">Autorretenedor</span>
+                  <etiqueta-por-definir texto="Por definir" detalle="Requiere integración con la DIAN."></etiqueta-por-definir>
+                </div>
+                <div class="dato">
+                  <span class="dato__etiqueta">Responsable de IVA</span>
+                  <etiqueta-por-definir texto="Por definir" detalle="Requiere integración con la DIAN."></etiqueta-por-definir>
+                </div>
+                <div class="dato">
+                  <span class="dato__etiqueta">Exención parafiscales Ley 1607</span>
+                  <etiqueta-por-definir texto="Por definir" detalle="Requiere validación de la condición tributaria."></etiqueta-por-definir>
+                </div>
+              </div>
+            </section>
+
+            <section class="detalle-oferta__tarjeta" aria-labelledby="detalle-persona-c">
+              <div class="detalle-oferta__tarjeta-cabecera">
+                <div>
+                  <h2 id="detalle-persona-c">C. Ubicación y contacto corporativo</h2>
+                  <p>Canales registrados para notificaciones del proceso.</p>
+                </div>
+              </div>
+              <div class="datos-grid datos-grid--tres">
+                <par-etiqueta-valor etiqueta="Dirección de notificación" [valor]="identidad()?.direccionFiscal ?? ''" icono="location_on" />
+                <par-etiqueta-valor etiqueta="Correo institucional" [valor]="identidad()?.correo ?? ''" icono="mail" />
+                <par-etiqueta-valor etiqueta="Ubicación" [valor]="identidad()?.ubicacion ?? ''" icono="place" />
+                <div class="dato">
+                  <span class="dato__etiqueta">Teléfono fijo / PBX</span>
+                  <etiqueta-por-definir texto="Por definir" detalle="Requiere integración con el registro de personas."></etiqueta-por-definir>
+                </div>
+                <div class="dato">
+                  <span class="dato__etiqueta">Asesor comercial</span>
+                  <etiqueta-por-definir texto="Por definir" detalle="Requiere integración con el registro de personas."></etiqueta-por-definir>
+                </div>
+                <div class="dato">
+                  <span class="dato__etiqueta">Portal web corporativo</span>
+                  <etiqueta-por-definir texto="Por definir" detalle="Requiere integración con el registro de personas."></etiqueta-por-definir>
+                </div>
+              </div>
+            </section>
+
+            <section class="detalle-oferta__tarjeta" aria-labelledby="detalle-persona-d">
+              <div class="detalle-oferta__tarjeta-cabecera">
+                <div>
+                  <h2 id="detalle-persona-d">D. Datos sensibles: seguridad social y financieros</h2>
+                  <p>Información enmascarada; su consulta dejaría traza de auditoría.</p>
+                </div>
+                <mat-icon aria-hidden="true">lock</mat-icon>
+              </div>
+              <div class="datos-grid datos-grid--dos">
+                <div class="dato">
+                  <span class="dato__etiqueta">EPS principal</span>
+                  <etiqueta-por-definir texto="Por definir" detalle="Dato sensible no disponible en el banco simulado."></etiqueta-por-definir>
+                </div>
+                <div class="dato">
+                  <span class="dato__etiqueta">Fondo de pensiones (AFP)</span>
+                  <etiqueta-por-definir texto="Por definir" detalle="Dato sensible no disponible en el banco simulado."></etiqueta-por-definir>
+                </div>
+                <div class="dato">
+                  <span class="dato__etiqueta">ARL afiliada</span>
+                  <etiqueta-por-definir texto="Por definir" detalle="Dato sensible no disponible en el banco simulado."></etiqueta-por-definir>
+                </div>
+                <div class="dato">
+                  <span class="dato__etiqueta">Número de cuenta bancaria</span>
+                  <etiqueta-por-definir texto="Por definir" detalle="Dato sensible; se mostraría enmascarado con traza de auditoría."></etiqueta-por-definir>
+                </div>
+              </div>
+              <etiqueta-por-definir
+                texto="Por definir"
+                detalle="Visibilidad diferencial de los datos sensibles por rol (JD/OG)."
+              ></etiqueta-por-definir>
+            </section>
+
+            <section class="detalle-oferta__tarjeta" aria-labelledby="detalle-persona-f">
+              <div class="detalle-oferta__tarjeta-cabecera">
+                <div>
+                  <h2 id="detalle-persona-f">F. Actividades económicas CIIU y concordancia del objeto</h2>
+                  <p>Actividades habilitadas en el banco de proveedores UD.</p>
+                </div>
+                <span class="chip chip--recto">{{ actividades().length }} actividades</span>
+              </div>
+              <div class="datos-grid datos-grid--dos">
+                @for (actividad of actividades(); track actividad.codigo) {
+                  <article class="detalle-oferta__actividad">
+                    <div class="detalle-oferta__actividad-cabecera">
+                      <span class="detalle-oferta__actividad-codigo">CIIU {{ actividad.codigo }}</span>
+                      <span class="chip" [class.chip--exito]="actividad.coincide">
+                        {{ actividad.coincide ? "Coincide con el objeto" : "Habilitada en el banco" }}
+                      </span>
+                    </div>
+                    <p>{{ actividad.descripcion }}</p>
+                    <span class="detalle-oferta__actividad-clase">{{ actividad.clase }}</span>
+                  </article>
+                } @empty {
+                  <div class="detalle-oferta__vacio">
+                    <mat-icon aria-hidden="true">category</mat-icon>
+                    <p>El proveedor no tiene actividades CIIU registradas.</p>
+                  </div>
+                }
+              </div>
+              @if (d.requiereIdoneidad) {
+                <p class="detalle-oferta__nota">
+                  <mat-icon aria-hidden="true">school</mat-icon>
+                  Núcleo SNIES exigido: {{ d.nucleoSnies }}. La idoneidad técnica
+                  se valida contra el banco de proveedores.
+                </p>
+              }
+            </section>
+          </section>
+        }
+
+        <!-- ───────────────────── Pestaña Respuesta solicitante ─────────────── -->
+        @if (vista() === "listo" && pestana() === "respuesta") {
+          <section
+            id="panel-respuesta"
+            class="detalle-oferta__panel"
+            role="tabpanel"
+            aria-labelledby="tab-respuesta"
+            tabindex="0"
+          >
+            <section class="detalle-oferta__tarjeta" aria-labelledby="detalle-respuesta-titulo">
+              <div class="detalle-oferta__tarjeta-cabecera">
+                <div>
+                  <h2 id="detalle-respuesta-titulo">Respuesta del solicitante (S-11)</h2>
+                  <p>La decisión final se formaliza en la pantalla de decisión.</p>
+                </div>
+                <span class="chip chip--recto">S-11</span>
+              </div>
+
+              <div class="detalle-oferta__respuesta">
+                <p>
+                  Esta vista no registra aprobación ni rechazo. El Ordenador del
+                  Gasto es el único que puede emitir la decisión final en S-11
+                  (RN-34). Aquí solo se deja preparada la preselección.
+                </p>
+
+                @if (seleccionado()) {
+                  <div class="detalle-oferta__preseleccion">
+                    <mat-icon aria-hidden="true">grade</mat-icon>
+                    <div>
+                      <strong>Oferta preseleccionada</strong>
+                      <span>
+                        {{ d.oferente.proveedor.nombre }} ·
+                        {{ moneda(oferta()?.total ?? 0) }} COP
+                      </span>
+                    </div>
+                  </div>
+                } @else {
+                  <p class="detalle-oferta__nota">
+                    No hay una oferta preseleccionada para este proveedor. Use la
+                    acción de preselección en la cabecera o en el comparador (S-09).
+                  </p>
+                }
+
+                <div class="detalle-oferta__respuesta-acciones">
+                  @if (seleccionado()) {
+                    @if (acciones().includes("continuar-decision")) {
+                      <button
+                        class="boton-recto boton-recto--vino"
+                        type="button"
+                        [disabled]="!puedeContinuarDecision"
+                        (click)="continuarDecision()"
+                      >
+                        <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+                        Continuar a decisión (S-11)
+                      </button>
+                    } @else {
+                      <p class="detalle-oferta__nota">
+                        La solicitud ya no admite acciones de evaluación; consulte
+                        el resultado en el expediente.
+                      </p>
+                    }
+                  } @else if (puedePreseleccionar) {
+                    <button
+                      class="boton-recto boton-recto--vino"
+                      type="button"
+                      [disabled]="procesando()"
+                      (click)="preseleccionar()"
+                    >
+                      <mat-icon aria-hidden="true">how_to_reg</mat-icon>
+                      Preseleccionar esta oferta
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <div class="detalle-oferta__por-definir">
+                <etiqueta-por-definir
+                  texto="Por definir"
+                  detalle="Acta de evaluación, justificación y firmas de S-11."
+                ></etiqueta-por-definir>
+                <etiqueta-por-definir
+                  texto="Por definir"
+                  detalle="Notificación al proveedor y firma criptográfica de la decisión."
+                ></etiqueta-por-definir>
+                <etiqueta-por-definir
+                  texto="Por definir"
+                  detalle="Criterios de selección y desempate entre ofertas; S-11 los formaliza."
+                ></etiqueta-por-definir>
+                <etiqueta-por-definir
+                  texto="Por definir"
+                  detalle="Restricción de la decisión al rol Ordenador del Gasto (RN-34)."
+                ></etiqueta-por-definir>
+              </div>
+            </section>
+          </section>
+        }
+      }
+    }
+  </section>
+</plantilla-pagina-contenedora>
