@@ -122,7 +122,7 @@
             La evaluación se habilita al cierre del periodo
           </h2>
           <p>
-            Por la regla RN-29, la revisión de las respuestas de los proveedores
+            La revisión de las respuestas de los proveedores
             solo está permitida cuando termina el periodo de cotización. Antes
             de esa fecha el comparador no expone las ofertas.
           </p>
@@ -132,7 +132,7 @@
           </div>
           <etiqueta-por-definir
             texto="Por definir"
-            detalle="Visibilidad de las cotizaciones antes del cierre (RN-29, marcada para revisión)."
+            detalle="Visibilidad de las cotizaciones antes del cierre."
           ></etiqueta-por-definir>
           <button class="boton-recto" type="button" (click)="volverAlTablero()">
             <mat-icon aria-hidden="true">arrow_back</mat-icon>
@@ -360,7 +360,7 @@
             <p>
               La solicitud no tiene ofertas radicadas para comparar. Los
               proveedores invitados que no presentaron oferta no se incluyen en
-              el comparador (RF-12).
+              el comparador.
             </p>
             <div class="comparador__estado-acciones">
               <button class="boton-recto" type="button" (click)="volverAlTablero()">
@@ -395,7 +395,7 @@
                     ? "oferta supera el techo presupuestal y no se tendrá en cuenta"
                     : "ofertas superan el techo presupuestal y no se tendrán en cuenta"
                 }}
-                para el ranking ni para el mejor valor por ítem (RN-40).
+                para el ranking ni para el mejor valor por ítem.
               </p>
             </div>
           }
@@ -410,7 +410,7 @@
                   : "invitados no presentaron oferta"
               }}
               y no se incluye{{ invitadosSinOferta === 1 ? "" : "n" }} en el
-              comparador (RF-12).
+              comparador.
             </p>
           }
 
@@ -633,7 +633,7 @@
                               }
                               @if (oferta.excedePresupuesto) {
                                 <span class="comparador__nota-error">
-                                  No se tendrá en cuenta (RN-40)
+                                  No se tendrá en cuenta
                                 </span>
                               }
                               @if (puedeVerOferta) {
@@ -867,7 +867,7 @@
                   }
                   <p class="panel__preseleccion-nota">
                     Preselección para recomendación. La decisión final
-                    corresponde al Ordenador del Gasto (RN-34).
+                    corresponde al Ordenador del Gasto.
                   </p>
                 } @else {
                   <p class="panel__vacio">
@@ -882,7 +882,7 @@
                   [disabled]="!puedeContinuarDecision"
                   (click)="continuarDecision()"
                 >
-                  Continuar a decisión (S-11)
+                  Continuar a decisión
                   <mat-icon aria-hidden="true">arrow_forward</mat-icon>
                 </button>
                 @if (!puedeContinuarDecision) {

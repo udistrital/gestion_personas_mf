@@ -192,7 +192,7 @@
             La revisión de la oferta se habilita al cierre del periodo
           </h2>
           <p>
-            Por la regla RN-29, las respuestas y cotizaciones de los proveedores
+            Las respuestas y cotizaciones de los proveedores
             solo se consultan cuando termina el periodo de cotización. Antes de
             esa fecha esta vista no expone la oferta.
           </p>
@@ -202,7 +202,7 @@
           </div>
           <etiqueta-por-definir
             texto="Por definir"
-            detalle="Visibilidad de las cotizaciones antes del cierre (RN-29, marcada para revisión)."
+            detalle="Visibilidad de las cotizaciones antes del cierre."
           ></etiqueta-por-definir>
           <button class="boton-recto" type="button" (click)="volver()">
             <mat-icon aria-hidden="true">arrow_back</mat-icon>
@@ -259,7 +259,7 @@
             <p>
               <strong>{{ d.oferente.proveedor.nombre }}</strong> fue invitado pero
               no radicó cotización. Se muestra solo su identidad y su estado; no
-              hay información económica ni documental para revisar (RF-12).
+              hay información económica ni documental para revisar.
             </p>
           </div>
         }
@@ -304,7 +304,7 @@
                       Esta oferta supera el techo presupuestal de
                       <strong>{{ moneda(ofertaActual.valorPresupuesto) }}</strong> y
                       no se tendrá en cuenta para la comparación ni para la
-                      preselección (RN-40).
+                      preselección.
                     </p>
                     <etiqueta-por-definir
                       texto="Por definir"
@@ -319,7 +319,7 @@
                   <mat-icon aria-hidden="true">grade</mat-icon>
                   <p>
                     Oferta preseleccionada por el Jefe de Dependencia. La decisión
-                    final corresponde al Ordenador del Gasto (RN-34).
+                    final corresponde al Ordenador del Gasto.
                   </p>
                 </div>
               }
@@ -356,10 +356,10 @@
               <aside class="detalle-oferta__callout">
                 <mat-icon aria-hidden="true">policy</mat-icon>
                 <div class="detalle-oferta__callout-textos">
-                  <strong>Respuesta única e inmutable (RN-35/RN-42)</strong>
+                  <strong>Respuesta única e inmutable</strong>
                   <p>
                     La cotización está en solo lectura. Cualquier ajuste posterior
-                    requiere el proceso de subsanación (S-12) y queda registrado en
+                    requiere el proceso de subsanación y queda registrado en
                     el historial de la oferta.
                   </p>
                   <etiqueta-por-definir
@@ -424,7 +424,7 @@
                   </span>
                   @if (ofertaActual.excedePresupuesto) {
                     <span class="detalle-oferta__metrica-error">
-                      No se tendrá en cuenta (RN-40)
+                      No se tendrá en cuenta.
                     </span>
                   }
                 </article>
@@ -582,8 +582,7 @@
                   <div>
                     <h2 id="detalle-documentos-titulo">Documentos de la oferta</h2>
                     <p>
-                      Soportes radicados por el proveedor. Clasificación de RF-09 y
-                      formatos admitidos por RN-41.
+                      Soportes radicados por el proveedor.
                     </p>
                   </div>
                   <div class="detalle-oferta__documento-resumen">
@@ -635,7 +634,7 @@
                       </span>
                       @if (!principal.formatoValido) {
                         <span class="detalle-oferta__metrica-error">
-                          Formato no permitido (RN-41)
+                          Formato no permitido
                         </span>
                       }
                     </div>
@@ -700,7 +699,7 @@
                                   <span class="tabla-detalle__celda-nota">{{ documento.nombreArchivo }} · {{ documento.peso }}</span>
                                   @if (!documento.formatoValido) {
                                     <span class="detalle-oferta__metrica-error">
-                                      Formato no permitido (RN-41)
+                                      Formato no permitido
                                     </span>
                                   }
                                 </span>
@@ -771,8 +770,8 @@
 
                 <p class="detalle-oferta__nota">
                   <mat-icon aria-hidden="true">info</mat-icon>
-                  Los estados de subsanación (RF-19/RN-08) se habilitarán cuando
-                  exista la pantalla S-12. Hoy todos los documentos se muestran
+                  Los estados de subsanación se habilitarán cuando
+                  exista la pantalla. Hoy todos los documentos se muestran
                   como cargados.
                 </p>
               </section>
@@ -811,7 +810,7 @@
                 }
                 <etiqueta-por-definir
                   texto="Por definir"
-                  detalle="Eventos de subsanación (RF-19/RN-08); se mostrarán cuando exista la pantalla S-12."
+                  detalle="Eventos de subsanación; se mostrarán cuando exista la pantalla."
                 ></etiqueta-por-definir>
               </section>
             </section>
@@ -1030,8 +1029,7 @@
               <div class="detalle-oferta__respuesta">
                 <p>
                   Esta vista no registra aprobación ni rechazo. El Ordenador del
-                  Gasto es el único que puede emitir la decisión final en S-11
-                  (RN-34). Aquí solo se deja preparada la preselección.
+                  Gasto es el único que puede emitir la decisión final. Aquí solo se deja preparada la preselección.
                 </p>
 
                 @if (seleccionado()) {
@@ -1048,7 +1046,7 @@
                 } @else {
                   <p class="detalle-oferta__nota">
                     No hay una oferta preseleccionada para este proveedor. Use la
-                    acción de preselección en la cabecera o en el comparador (S-09).
+                    acción de preselección en la cabecera o en el comparador.
                   </p>
                 }
 
@@ -1099,7 +1097,7 @@
                 ></etiqueta-por-definir>
                 <etiqueta-por-definir
                   texto="Por definir"
-                  detalle="Restricción de la decisión al rol Ordenador del Gasto (RN-34)."
+                  detalle="Restricción de la decisión al rol Ordenador del Gasto."
                 ></etiqueta-por-definir>
               </div>
             </section>
