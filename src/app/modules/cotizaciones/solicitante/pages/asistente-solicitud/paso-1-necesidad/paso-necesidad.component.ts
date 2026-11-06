@@ -54,6 +54,7 @@ export type EstadoCruce =
   templateUrl: "./paso-necesidad.component.html",
   styleUrls: ["./paso-necesidad.component.scss"],
   standalone: false,
+  host: { class: "formulario-material" },
 })
 export class PasoNecesidadComponent implements OnInit {
   readonly formatoCop = formatoCop;

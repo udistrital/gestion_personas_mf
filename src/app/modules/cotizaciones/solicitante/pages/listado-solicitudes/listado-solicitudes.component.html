@@ -23,32 +23,7 @@
       }
     </header>
 
-    <!-- 2. Pestañas institucionales -->
-    <div class="listado__pestanas">
-      <div class="listado__pestanas-izquierda" role="tablist">
-        <button
-          class="listado__pestana listado__pestana--activa"
-          role="tab"
-          type="button"
-          aria-selected="true"
-        >
-          <span>Mis solicitudes</span>
-          <span class="listado__contador" aria-hidden="true">{{ total }}</span>
-        </button>
-        <button
-          class="listado__pestana"
-          role="tab"
-          type="button"
-          aria-selected="false"
-          (click)="pestanaPendientes()"
-        >
-          <span>Pendientes de validación</span>
-          <span class="listado__contador" aria-hidden="true">3</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- 3. Filtros -->
+    <!-- 2. Filtros -->
     <listado-filtros
       [campos]="camposFiltro"
       nota="Por defecto solo se muestra la vigencia actual (2026). Seleccione otra vigencia o el histórico consolidado para consultar solicitudes de años anteriores."
@@ -56,7 +31,7 @@
       (limpiar)="limpiar()"
     />
 
-    <!-- 4. Tabla -->
+    <!-- 3. Tabla -->
     <div class="listado__tabla-bloque">
       <div class="listado__tarjeta">
         @if (vista() === "cargando") {

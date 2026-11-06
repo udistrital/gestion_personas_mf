@@ -31,7 +31,9 @@
     --mat-form-field-container-height: 2.5rem;
     --mat-form-field-container-vertical-padding: 0.5rem;
     --mat-form-field-container-text-size: #{t.$fuente-lg};
-    --mat-form-field-container-text-line-height: 1.25rem;
+    /* La caja útil del control mide 1.5rem (2.5rem menos el padding vertical):
+       la línea de texto debe llenarla para que quede centrada. */
+    --mat-form-field-container-text-line-height: 1.5rem;
     --mat-form-field-container-text-weight: 500;
     --mat-form-field-outlined-container-shape: var(--agora-radio-md);
     --mat-form-field-outlined-outline-width: 1px;
@@ -91,6 +93,14 @@
     --mat-checkbox-selected-focus-state-layer-color: var(--agora-primary);
     --mat-checkbox-selected-hover-state-layer-color: var(--agora-primary);
     --mat-checkbox-unselected-hover-state-layer-color: var(--agora-primary);
+    /* Sin halo circular en hover/focus/pressed: el estado se comunica con el
+       propio cuadro del checkbox (ver reglas más abajo). */
+    --mat-checkbox-unselected-hover-state-layer-opacity: 0;
+    --mat-checkbox-unselected-focus-state-layer-opacity: 0;
+    --mat-checkbox-unselected-pressed-state-layer-opacity: 0;
+    --mat-checkbox-selected-hover-state-layer-opacity: 0;
+    --mat-checkbox-selected-focus-state-layer-opacity: 0;
+    --mat-checkbox-selected-pressed-state-layer-opacity: 0;
 
     /* Radio */
     --mat-radio-label-text-color: var(--agora-text);
@@ -165,6 +175,37 @@
     font-weight: 500;
   }
 
+  /* Fechas: el infix se comporta como fila centrada para que el texto del
+     datepicker (y su placeholder) quede a la misma altura que el resto de
+     controles, incluso cuando el toggle del calendario es más alto. */
+  .formulario-material campo-fecha .mat-mdc-form-field-infix {
+    display: flex;
+    align-items: center;
+  }
+
+  /* El datepicker debe medir lo mismo que un input/select del formulario.
+     El botón del calendario (mat-icon-button) crece a 48px en algunos temas y
+     estiraba el campo; se fija al alto del contenedor. */
+  .formulario-material campo-fecha .mat-mdc-text-field-wrapper {
+    height: var(--mat-form-field-container-height, 2.5rem);
+  }
+
+  .formulario-material campo-fecha .mat-datepicker-toggle .mat-mdc-icon-button {
+    --mat-icon-button-state-layer-size: var(--mat-form-field-container-height, 2.5rem);
+    --mat-icon-button-touch-target-display: none;
+    width: var(--mat-form-field-container-height, 2.5rem);
+    height: var(--mat-form-field-container-height, 2.5rem);
+  }
+
+  .formulario-material campo-fecha .mat-mdc-form-field-icon-suffix {
+    height: var(--mat-form-field-container-height, 2.5rem);
+  }
+
+  .formulario-material campo-fecha .mat-mdc-form-field-input-control.mat-datepicker-input,
+  .formulario-material campo-fecha input.mat-mdc-input-element {
+    height: 100%;
+  }
+
   .formulario-material .mat-mdc-form-field input::placeholder,
   .formulario-material .mat-mdc-form-field textarea::placeholder {
     color: var(--agora-texto-deshabilitado);
@@ -183,6 +224,18 @@
 
   .formulario-material .mat-mdc-form-field .mat-mdc-form-field-icon-suffix {
     color: var(--agora-texto-neutro);
+  }
+
+  /* Campo bloqueado por el flujo sin deshabilitar el FormControl.
+     Se usa cuando el valor debe seguir viajando en el formulario. */
+  .formulario-material .campo-bloqueado .mat-mdc-text-field-wrapper {
+    background-color: var(--agora-resalte-neutro);
+    pointer-events: none;
+  }
+
+  .formulario-material .campo-bloqueado .mat-mdc-form-field-icon-prefix,
+  .formulario-material .campo-bloqueado .mat-mdc-select-arrow {
+    color: var(--agora-texto-deshabilitado);
   }
 
   /* Los errores no deben empujar la composición de la grilla. */
@@ -208,9 +261,63 @@
     --mdc-form-field-label-text-color: var(--agora-text);
   }
 
-  .formulario-material .mat-mdc-checkbox .mdc-form-field,
+  /* Checkbox: etiqueta centrada verticalmente respecto al cuadro. */
+  .formulario-material .mat-mdc-checkbox .mdc-form-field {
+    align-items: center;
+  }
+
+  /* Radio con etiqueta larga: se conserva la alineación superior. */
   .formulario-material .mat-mdc-radio-button .mdc-form-field {
     align-items: flex-start;
+  }
+
+  /* Reconocimiento de texto largo: conserva la alineación superior. */
+  .formulario-material .confirmacion .mdc-form-field {
+    align-items: flex-start;
+  }
+
+  /*
+   * Checkbox sin halo circular. Al pasar el puntero, el cuadro se pinta como
+   * si estuviera marcado (fondo vino + check) pero el valor real no cambia.
+   * Se excluyen marcados, indeterminados y deshabilitados.
+   */
+  .formulario-material .mat-mdc-checkbox .mdc-checkbox__ripple,
+  .formulario-material .mat-mdc-checkbox .mat-mdc-checkbox-ripple {
+    display: none;
+  }
+
+  .formulario-material
+    .mat-mdc-checkbox:not(.mat-mdc-checkbox-disabled):hover
+    .mdc-checkbox__native-control:not(:checked):not(:indeterminate)
+    ~ .mdc-checkbox__background {
+    border-color: var(--agora-primary);
+    background-color: var(--agora-primary);
+  }
+
+  .formulario-material
+    .mat-mdc-checkbox:not(.mat-mdc-checkbox-disabled):hover
+    .mdc-checkbox__native-control:not(:checked):not(:indeterminate)
+    ~ .mdc-checkbox__background
+    > .mdc-checkbox__checkmark {
+    opacity: 1;
+  }
+
+  .formulario-material
+    .mat-mdc-checkbox:not(.mat-mdc-checkbox-disabled):hover
+    .mdc-checkbox__native-control:not(:checked):not(:indeterminate)
+    ~ .mdc-checkbox__background
+    > .mdc-checkbox__checkmark
+    > .mdc-checkbox__checkmark-path {
+    stroke-dashoffset: 0;
+  }
+
+  /* El foco de teclado se mantiene visible sin el halo de Material. */
+  .formulario-material
+    .mat-mdc-checkbox
+    .mdc-checkbox__native-control:focus-visible
+    ~ .mdc-checkbox__background {
+    outline: 2px solid var(--agora-primary);
+    outline-offset: 2px;
   }
 
   /* Radios compactos en línea: círculo y etiqueta centrados entre sí. */
@@ -442,7 +549,7 @@
     --mat-option-label-text-color: var(--agora-text);
     --mat-option-label-text-size: #{t.$fuente-lg};
     --mat-option-label-text-weight: 500;
-    --mat-option-selected-state-label-text-color: var(--agora-primary-dark);
+    --mat-option-selected-state-label-text-color: var(--agora-primary);
     --mat-option-selected-state-layer-color: var(--agora-primary-light);
     --mat-option-hover-state-layer-color: var(--agora-resalte-neutro);
     --mat-option-focus-state-layer-color: var(--agora-resalte-neutro);

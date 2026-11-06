@@ -79,6 +79,7 @@ import {
   versionSolicitud,
 } from "../models/edicion-solicitud.model";
 import type { ResultadoCruce } from "../models/necesidad.model";
+import { contarOfertasRecibidasDesde, SeleccionOferenteEvento } from "../models/oferente.model";
 import { DiferenciasSolicitudService } from "./diferencias-solicitud.service";
 import { textoPlanoDesdeHtml } from "src/app/shared/utils/texto-plano";
 import { MIN_CARACTERES_JUSTIFICACION } from "src/app/shared/validators/justificacion.validator";
@@ -129,6 +130,17 @@ export abstract class SolicitudesService {
   abstract registrarRespuestaProveedor(
     solicitudId: string,
     fechaRadicacion: string,
+  ): void;
+
+  /**
+   * Registra en la bitácora la preselección de una oferta desde S-09.
+   *
+   * No cambia el estado de la solicitud: la preselección es una recomendación
+   * y la decisión final corresponde al ordenador del gasto (RN-34).
+   */
+  abstract registrarSeleccionOferente(
+    solicitudId: string,
+    seleccion: SeleccionOferenteEvento,
   ): void;
 
   /**
@@ -214,6 +226,23 @@ function fechaLimiteRelativa(dias: number): string {
 }
 
 const DATOS_MOCK: readonly Solicitud[] = [
+  {
+    id: "SOL-2026-0151",
+    vigencia: 2026,
+    unidadEjecutora: "3",
+    titulo:
+      "Adquisición de equipos de conectividad para el laboratorio de redes",
+    // Proceso vigente: sirve para demostrar el bloqueo de RN-29 antes del cierre.
+    apertura: fechaCortaRelativa(-4),
+    cierre: fechaCortaRelativa(6),
+    dependencia: "Facultad de Ingeniería",
+    tipoCotizacion: "BIEN_Y_SERVICIO",
+    estado: "enviada-proveedores",
+    version: "v1.0",
+    revision: 1,
+    ultimaModificacion: `${fechaCortaRelativa(0)} 08:30 COT`,
+    fechaLimiteObservaciones: fechaLimiteRelativa(4),
+  },
   {
     id: "SOL-2026-0047",
     vigencia: 2026,
@@ -764,8 +793,8 @@ const CONTADORES_MOCK: ContadoresPestanas = {
   documentos: 5,
 };
 
-/** Cotizaciones recibidas por defecto (tarjeta métrica de la cabecera). */
-const COTIZACIONES_RECIBIDAS_MOCK = 4;
+/** Cotizaciones que menciona el evento histórico de evaluación (demo). */
+const COTIZACIONES_EVALUADAS_MOCK = 4;
 
 /* ── Presupuesto SICAPITAL (pestaña "Presupuesto") ────────────────────────── */
 
@@ -1199,6 +1228,9 @@ const CODIGOS_SERVICIOS: readonly string[] = ["6201", "6202", "6209"];
 /** Solicitudes cuya segmentación de proveedores aún no se ha registrado. */
 const SIN_SEGMENTACION: readonly string[] = ["SOL-2026-0008"];
 
+/** Solicitudes con segmentación registrada pero sin notificación enviada. */
+const SIN_NOTIFICACION: readonly string[] = ["SOL-2026-0041"];
+
 /** Nota institucional sobre el requisito de idoneidad técnica (SNIES). */
 const NOTA_IDONEIDAD =
   "Para la componente de servicios técnicos especializados y consultoría en virtualización, se requirió idoneidad amparada en el núcleo SNIES convalidado ante el Ministerio de Educación y el banco de proveedores UD.";
@@ -1210,13 +1242,13 @@ const ACUERDO_SNIES = "Acuerdo CSU 002/2021";
 const HASH_AUDITORIA = "SHA-256: 8F4C...3E1A";
 
 /**
- * Cifras de la notificación a los proveedores objetivo.
+ * Cifras de interacción de la notificación a los proveedores objetivo.
  *
- * Son coherentes con el cruce de cada caso: 9/7/4 de 12 proveedores notificados
- * (segmentación de servicios) y 18/14/8 de 24 (segmentación de bienes).
+ * Los vistos/descargaron son engagement simulado; el número de cotizaciones
+ * sale de la semilla del tablero (`contarOfertasRecibidasDesde`), no de aquí.
  */
-const NOTIFICACION_SERVICIOS = { vistos: 9, descargaron: 7, cotizaron: 4 };
-const NOTIFICACION_BIENES = { vistos: 18, descargaron: 14, cotizaron: 8 };
+const NOTIFICACION_SERVICIOS = { vistos: 9, descargaron: 7 };
+const NOTIFICACION_BIENES = { vistos: 18, descargaron: 14 };
 
 /**
  * Actividades CIIU de una solicitud, tomadas del catálogo DANE.
@@ -1275,17 +1307,34 @@ function proveedoresDetalle(
 
   const tipo = tipoNecesidad(solicitud.tipoCotizacion);
   const conIdoneidad = exigeSnies(tipo);
+  const segmentacion = segmentacionProveedores(tipo, conIdoneidad);
+  const elegibles = buscarProveedores(
+    segmentacion.actividades.map((actividad) => actividad.codigo),
+    segmentacion.nucleoSnies,
+    conIdoneidad,
+  ).length;
+  const sinNotificacion =
+    solicitud.estado === "borrador" || SIN_NOTIFICACION.includes(solicitud.id);
+  const notificacionBase = conIdoneidad
+    ? NOTIFICACION_SERVICIOS
+    : NOTIFICACION_BIENES;
 
   return {
-    segmentacion: segmentacionProveedores(tipo, conIdoneidad),
+    segmentacion,
     requiereIdoneidad: conIdoneidad,
     notaIdoneidad: NOTA_IDONEIDAD,
     acuerdo: ACUERDO_SNIES,
     notificacion: {
-      enviada: solicitud.apertura
-        ? `${solicitud.apertura} 08:00 COT`
-        : "Pendiente de envío",
-      ...(conIdoneidad ? NOTIFICACION_SERVICIOS : NOTIFICACION_BIENES),
+      enviada:
+        !sinNotificacion && solicitud.apertura
+          ? `${solicitud.apertura} 08:00 COT`
+          : "Pendiente de envío",
+      vistos: sinNotificacion ? 0 : notificacionBase.vistos,
+      descargaron: sinNotificacion ? 0 : notificacionBase.descargaron,
+      // La cifra es la misma del tablero de oferentes (S-07, RF-17).
+      cotizaron: sinNotificacion
+        ? 0
+        : contarOfertasRecibidasDesde(solicitud.id, elegibles),
       hash: HASH_AUDITORIA,
     },
   };
@@ -1658,6 +1707,46 @@ function eventoHistorial(semilla: EventoHistorialSemilla): EventoHistorial {
   };
 }
 
+/**
+ * Evento de preselección de una oferta (S-09).
+ *
+ * Deja constancia del proveedor y del valor, sin cambiar el estado de la
+ * solicitud. El texto recuerda que la decisión final es del ordenador del gasto.
+ */
+function eventoSeleccionOferente(
+  solicitud: Solicitud,
+  seleccion: SeleccionOferenteEvento,
+  fecha: string,
+  hora: string,
+): EventoHistorial {
+  const retirada = !seleccion.proveedorId;
+  return eventoHistorial({
+    id: `evento-${solicitud.id}-seleccion-${Date.now()}`,
+    fecha,
+    hora,
+    tipo: "estado",
+    titulo: retirada
+      ? "Preselección de oferta retirada"
+      : "Oferta preseleccionada para recomendación",
+    detalle: retirada
+      ? "Se retiró la preselección de la oferta. La decisión final continúa en cabeza del Ordenador del Gasto (RN-34)."
+      : `Se preseleccionó la oferta de <strong>${seleccion.proveedorNombre}</strong> por <strong>${formatoCop(seleccion.valor)} COP</strong>. Esta preselección es una recomendación y no constituye adjudicación (RN-34).`,
+    usuario: "sesion",
+    nombreUsuario: "Usuario autenticado",
+    rol: seleccion.rol,
+    estadoAnterior: solicitud.estado,
+    estadoNuevo: solicitud.estado,
+    icono: retirada ? "remove_done" : "how_to_reg",
+    tono: "primario",
+    resultado: retirada ? "Preselección retirada" : "Preselección registrada",
+    tonoResultado: "primario",
+    evidencia: {
+      icono: "verified_user",
+      texto: "Sujeta a la decisión del Ordenador del Gasto",
+    },
+  });
+}
+
 /** Evento de creación del expediente. */
 function eventoCreacion(
   id: string,
@@ -1813,7 +1902,7 @@ function eventoEvaluacion(
     hora,
     tipo: "estado",
     titulo: "Evaluación técnica de las propuestas recibidas",
-    detalle: `Se abrió el cuadro comparativo de las <strong>${COTIZACIONES_RECIBIDAS_MOCK} cotizaciones</strong> recibidas para evaluación técnica y económica.`,
+    detalle: `Se abrió el cuadro comparativo de las <strong>${COTIZACIONES_EVALUADAS_MOCK} cotizaciones</strong> recibidas para evaluación técnica y económica.`,
     usuario: "rgomez",
     nombreUsuario: "Dr. Ricardo Gómez Morales",
     rol: "Vicerrector Administrativo (Ordenador del Gasto)",
@@ -1825,7 +1914,7 @@ function eventoEvaluacion(
     tonoResultado: "primario",
     evidencia: {
       icono: "assessment",
-      texto: `Cotizaciones evaluadas: ${COTIZACIONES_RECIBIDAS_MOCK}`,
+      texto: `Cotizaciones evaluadas: ${COTIZACIONES_EVALUADAS_MOCK}`,
     },
   });
 }
@@ -2414,22 +2503,36 @@ function proveedoresDesdeEdicion(
   }
 
   const requiereIdoneidad = Boolean(nucleoSnies);
+  const segmentacion = {
+    actividades: actividades.length
+      ? actividades
+      : (base?.segmentacion.actividades ?? []),
+    areaSnies: areaSnies || base?.segmentacion.areaSnies || "",
+    nucleoSnies: nucleoSnies || base?.segmentacion.nucleoSnies || "",
+  };
+  const aplicaIdoneidad = base?.requiereIdoneidad ?? requiereIdoneidad;
+  const elegibles = buscarProveedores(
+    segmentacion.actividades.map((actividad) => actividad.codigo),
+    segmentacion.nucleoSnies,
+    aplicaIdoneidad,
+  ).length;
+
   return {
-    segmentacion: {
-      actividades: actividades.length
-        ? actividades
-        : (base?.segmentacion.actividades ?? []),
-      areaSnies: areaSnies || base?.segmentacion.areaSnies || "",
-      nucleoSnies: nucleoSnies || base?.segmentacion.nucleoSnies || "",
-    },
-    requiereIdoneidad: base?.requiereIdoneidad ?? requiereIdoneidad,
+    segmentacion,
+    requiereIdoneidad: aplicaIdoneidad,
     notaIdoneidad: base?.notaIdoneidad ?? NOTA_IDONEIDAD,
     acuerdo: base?.acuerdo ?? ACUERDO_SNIES,
     notificacion: base?.notificacion ?? {
       enviada: solicitud.apertura
         ? `${solicitud.apertura} 08:00 COT`
         : "Pendiente de envío",
-      ...(requiereIdoneidad ? NOTIFICACION_SERVICIOS : NOTIFICACION_BIENES),
+      vistos: requiereIdoneidad
+        ? NOTIFICACION_SERVICIOS.vistos
+        : NOTIFICACION_BIENES.vistos,
+      descargaron: requiereIdoneidad
+        ? NOTIFICACION_SERVICIOS.descargaron
+        : NOTIFICACION_BIENES.descargaron,
+      cotizaron: contarOfertasRecibidasDesde(solicitud.id, elegibles),
       hash: HASH_AUDITORIA,
     },
   };
@@ -2487,13 +2590,18 @@ function comoDetalle(
     ? documentosDesdeEdicion(solicitud, edicion)
     : documentosDetalle(solicitud);
   const historial = historialDetalle(solicitud, extrasHistorial);
+  const elegibles = proveedores ? contarProveedores(proveedores) : 0;
 
   return {
     ...solicitud,
     edicion,
-    // Un borrador aún no se envía a proveedores: no puede tener cotizaciones.
+    // La cifra sale de la misma semilla del tablero de oferentes (S-07), para
+    // que el detalle, la pestaña de proveedores y el tablero coincidan. Un
+    // borrador no tiene segmentación ni ofertas.
     cotizacionesRecibidas:
-      solicitud.estado === "borrador" ? 0 : COTIZACIONES_RECIBIDAS_MOCK,
+      solicitud.estado === "borrador" || !proveedores
+        ? 0
+        : contarOfertasRecibidasDesde(solicitud.id, elegibles),
     general,
     presupuesto: presupuestoDetalle(solicitud),
     itemsDetalle: ITEMS_DETALLE_MOCK,
@@ -2887,6 +2995,30 @@ export class SolicitudesServiceMock extends SolicitudesService {
       estado: "enviada",
       fechaRadicacion,
     });
+  }
+
+  registrarSeleccionOferente(
+    solicitudId: string,
+    seleccion: SeleccionOferenteEvento,
+  ): void {
+    const solicitud = this.fila(solicitudId);
+    if (!solicitud) {
+      return;
+    }
+
+    const ahora = new Date();
+    const fecha = `${String(ahora.getDate()).padStart(2, "0")}/${String(
+      ahora.getMonth() + 1,
+    ).padStart(2, "0")}/${ahora.getFullYear()}`;
+    const hora = `${String(ahora.getHours()).padStart(2, "0")}:${String(
+      ahora.getMinutes(),
+    ).padStart(2, "0")}`;
+    const evento = eventoSeleccionOferente(solicitud, seleccion, fecha, hora);
+
+    this.historialEdiciones.set(solicitudId, [
+      ...(this.historialEdiciones.get(solicitudId) ?? []),
+      evento,
+    ]);
   }
 
   /**

@@ -1,8 +1,8 @@
 @use 'src/app/shared/styles/tokens' as t;
-@use 'src/app/shared/styles/registro-formulario' as registro-formulario;
+@use "src/app/shared/styles/campos-registro" as campos-registro;
 @use 'src/app/shared/styles/paso-asistente' as paso-asistente;
 
-@include registro-formulario.styles;
+@include campos-registro.estilos;
 @include paso-asistente.styles;
 
 :host {

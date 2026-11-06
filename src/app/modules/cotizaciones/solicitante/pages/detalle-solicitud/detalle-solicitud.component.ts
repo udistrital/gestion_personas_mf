@@ -198,6 +198,18 @@ export class DetalleSolicitudComponent implements OnInit {
     return solicitud ? this.permisos.puede("foro", solicitud) : false;
   });
 
+  /** true si el estado permite consultar el tablero de oferentes (S-07). */
+  readonly puedeVerOferentes = computed<boolean>(() => {
+    const solicitud = this.store.solicitud();
+    return solicitud ? this.permisos.puede("oferentes", solicitud) : false;
+  });
+
+  /** true si el usuario puede abrir el comparador de cotizaciones (S-09). */
+  readonly puedeVerComparador = computed<boolean>(() => {
+    const solicitud = this.store.solicitud();
+    return solicitud ? this.permisos.puedeAccederComparador(solicitud) : false;
+  });
+
   /**
    * Ejecuta una acción del menú. Las pantallas aún no implementadas avisan por
    * `AlertService` (misma estrategia que S-01).
@@ -296,6 +308,19 @@ export class DetalleSolicitudComponent implements OnInit {
       "Descargar solicitud (PDF)",
       "La generación del PDF institucional aún no está implementada. Corresponde a una fase posterior del módulo.",
     );
+  }
+
+  /** Abre el comparador de cotizaciones (S-09). */
+  abrirComparador(): void {
+    const solicitud = this.store.solicitud();
+    if (solicitud) {
+      void this.router.navigate([
+        "/cotizaciones",
+        "solicitudes",
+        solicitud.id,
+        "evaluacion",
+      ]);
+    }
   }
 
   /** Vuelve al listado de solicitudes de cotización. */

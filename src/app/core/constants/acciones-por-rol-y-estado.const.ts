@@ -21,8 +21,12 @@
 
 import { environment } from "src/environments/environment";
 import {
+  AccionComparador,
+  AccionDetalleProveedor,
   AccionInvitacionProveedor,
+  AccionOferente,
   AccionSolicitud,
+  EstadoOferente,
   EstadoPostulacionProveedor,
   EstadoSolicitud,
   ESTADOS_SOLICITUD_LISTA,
@@ -43,6 +47,21 @@ export type AccionesSolicitudPorRolYEstado = AccionesPorRolYEstado<
 export type AccionesInvitacionPorRolYEstado = AccionesPorRolYEstado<
   EstadoPostulacionProveedor,
   AccionInvitacionProveedor
+>;
+
+export type AccionesOferentePorRolYEstado = AccionesPorRolYEstado<
+  EstadoOferente,
+  AccionOferente
+>;
+
+export type AccionesComparadorPorRolYEstado = AccionesPorRolYEstado<
+  EstadoSolicitud,
+  AccionComparador
+>;
+
+export type AccionesDetalleProveedorPorRolYEstado = AccionesPorRolYEstado<
+  EstadoSolicitud,
+  AccionDetalleProveedor
 >;
 
 /**
@@ -154,6 +173,138 @@ export const ACCIONES_INVITACION_POR_ROL_Y_ESTADO: AccionesInvitacionPorRolYEsta
     },
   };
 
+/* ───────────────────── Tablero de oferentes (S-07) ───────────────────── */
+
+/**
+ * Acciones base de una fila del tablero.
+ *
+ * La matriz solo expresa qué acciones corresponden al estado del oferente; las
+ * reglas adicionales (existencia de observaciones, respuesta radicada y cierre
+ * del periodo) las aplica `PermisosSolicitudService`, no las plantillas.
+ *
+ * El punto de extensión del OG son las acciones de selección/validación de
+ * S-11, que se agregarán aquí cuando exista esa pantalla.
+ */
+const ACCIONES_OFERENTE_BASE: Partial<
+  Record<EstadoOferente, readonly AccionOferente[]>
+> = {
+  cotizo: [
+    "ver-oferente",
+    "ver-observaciones",
+    "ver-cotizacion",
+    "ver-respuesta",
+  ],
+  modifico: [
+    "ver-oferente",
+    "ver-observaciones",
+    "ver-cotizacion",
+    "ver-respuesta",
+  ],
+  observo: ["ver-oferente", "ver-observaciones"],
+  notificado: ["ver-oferente"],
+  "sin-respuesta": ["ver-oferente"],
+  "pendiente-ajuste": ["ver-oferente", "ver-observaciones"],
+};
+
+export const ACCIONES_OFERENTE_POR_ROL_Y_ESTADO: AccionesOferentePorRolYEstado =
+  {
+    [environment.ROL.JEFE_DEPENDENCIA]: ACCIONES_OFERENTE_BASE,
+    [environment.ROL.ORDENADOR_DEL_GASTO]: ACCIONES_OFERENTE_BASE,
+  };
+
+/* ───────────────── Comparador de cotizaciones (S-09) ──────────────────── */
+
+/**
+ * Acciones del comparador.
+ *
+ * JD y OG comparten las mismas acciones: ambos pueden preseleccionar una oferta
+ * como recomendación y continuar a S-11. La decisión final sigue siendo del OG
+ * (RN-34) y se implementará en esa pantalla, no aquí.
+ *
+ * En `adjudicada` el comparador es de solo lectura: no se preselecciona ni se
+ * retira la preselección.
+ */
+const ACCIONES_COMPARADOR_BASE: Partial<
+  Record<EstadoSolicitud, readonly AccionComparador[]>
+> = {
+  "enviada-proveedores": [
+    "ver-oferta",
+    "preseleccionar",
+    "quitar-preseleccion",
+    "exportar",
+    "continuar-decision",
+  ],
+  "enviada-con-modificaciones": [
+    "ver-oferta",
+    "preseleccionar",
+    "quitar-preseleccion",
+    "exportar",
+    "continuar-decision",
+  ],
+  "en-evaluacion": [
+    "ver-oferta",
+    "preseleccionar",
+    "quitar-preseleccion",
+    "exportar",
+    "continuar-decision",
+  ],
+  "en-aprobacion": [
+    "ver-oferta",
+    "preseleccionar",
+    "quitar-preseleccion",
+    "exportar",
+    "continuar-decision",
+  ],
+  adjudicada: ["ver-oferta", "exportar"],
+};
+
+export const ACCIONES_COMPARADOR_POR_ROL_Y_ESTADO: AccionesComparadorPorRolYEstado =
+  {
+    [environment.ROL.JEFE_DEPENDENCIA]: ACCIONES_COMPARADOR_BASE,
+    [environment.ROL.ORDENADOR_DEL_GASTO]: ACCIONES_COMPARADOR_BASE,
+  };
+
+/* ────────────────── Detalle del proveedor y su oferta (S-10) ──────────── */
+
+/**
+ * Acciones con efecto del detalle del proveedor.
+ *
+ * La pantalla es de solo consulta; las únicas acciones que cambian algo son la
+ * preselección y el paso a S-11. Ambas siguen la misma matriz que S-09 para no
+ * abrir dos caminos distintos al mismo estado.
+ */
+const ACCIONES_DETALLE_PROVEEDOR_BASE: Partial<
+  Record<EstadoSolicitud, readonly AccionDetalleProveedor[]>
+> = {
+  "enviada-proveedores": [
+    "preseleccionar",
+    "quitar-preseleccion",
+    "continuar-decision",
+  ],
+  "enviada-con-modificaciones": [
+    "preseleccionar",
+    "quitar-preseleccion",
+    "continuar-decision",
+  ],
+  "en-evaluacion": [
+    "preseleccionar",
+    "quitar-preseleccion",
+    "continuar-decision",
+  ],
+  "en-aprobacion": [
+    "preseleccionar",
+    "quitar-preseleccion",
+    "continuar-decision",
+  ],
+  adjudicada: [],
+};
+
+export const ACCIONES_DETALLE_PROVEEDOR_POR_ROL_Y_ESTADO: AccionesDetalleProveedorPorRolYEstado =
+  {
+    [environment.ROL.JEFE_DEPENDENCIA]: ACCIONES_DETALLE_PROVEEDOR_BASE,
+    [environment.ROL.ORDENADOR_DEL_GASTO]: ACCIONES_DETALLE_PROVEEDOR_BASE,
+  };
+
 /* ─────────────────────────────── Helpers ─────────────────────────────── */
 
 /**
@@ -167,6 +318,39 @@ export function accionesSolicitudPorRoles(
 ): readonly AccionSolicitud[] {
   const acciones = roles.flatMap(
     (rol) => ACCIONES_SOLICITUD_POR_ROL_Y_ESTADO[rol]?.[estado] ?? [],
+  );
+  return Array.from(new Set(acciones));
+}
+
+/** Acciones de un oferente en un estado, uniendo todos los roles del usuario. */
+export function accionesOferentePorRoles(
+  roles: readonly Rol[],
+  estado: EstadoOferente,
+): readonly AccionOferente[] {
+  const acciones = roles.flatMap(
+    (rol) => ACCIONES_OFERENTE_POR_ROL_Y_ESTADO[rol]?.[estado] ?? [],
+  );
+  return Array.from(new Set(acciones));
+}
+
+/** Acciones del comparador en un estado, uniendo todos los roles. */
+export function accionesComparadorPorRoles(
+  roles: readonly Rol[],
+  estado: EstadoSolicitud,
+): readonly AccionComparador[] {
+  const acciones = roles.flatMap(
+    (rol) => ACCIONES_COMPARADOR_POR_ROL_Y_ESTADO[rol]?.[estado] ?? [],
+  );
+  return Array.from(new Set(acciones));
+}
+
+/** Acciones del detalle del proveedor en un estado, uniendo todos los roles. */
+export function accionesDetalleProveedorPorRoles(
+  roles: readonly Rol[],
+  estado: EstadoSolicitud,
+): readonly AccionDetalleProveedor[] {
+  const acciones = roles.flatMap(
+    (rol) => ACCIONES_DETALLE_PROVEEDOR_POR_ROL_Y_ESTADO[rol]?.[estado] ?? [],
   );
   return Array.from(new Set(acciones));
 }

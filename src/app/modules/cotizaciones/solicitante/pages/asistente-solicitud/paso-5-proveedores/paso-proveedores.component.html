@@ -130,42 +130,21 @@
     </ng-container>
 
     <div class="campo caja-buscador">
-      <label class="campo__etiqueta" for="ciiu-filtro">
-        Código o palabra clave CIIU <b aria-hidden="true">*</b>
-      </label>
-      <div class="buscador">
-        <span class="selector buscador__entrada">
-          <mat-icon class="selector__icono" aria-hidden="true">search</mat-icon>
-          <input
-            id="ciiu-filtro"
-            type="text"
-            [value]="busqueda()"
-            (input)="alBuscar($event)"
-            placeholder="Filtrar por código o palabra clave…"
-          />
-        </span>
-      </div>
       <label class="campo__etiqueta" for="ciiu-select">
-        Seleccionar actividad CIIU
+        Seleccionar actividad CIIU <b aria-hidden="true">*</b>
       </label>
-      <span class="selector">
-        <mat-icon class="selector__icono" aria-hidden="true">category</mat-icon>
-        <select
-          id="ciiu-select"
-          [value]="actividadSeleccionada()"
-          (change)="alSeleccionarActividad($event)"
-        >
-          <option value="" disabled>Seleccione una actividad</option>
-          @for (actividad of actividadesFiltradas(); track actividad.codigo) {
-            <option [value]="actividad.codigo">
-              {{ actividad.codigo }} - {{ actividad.descripcion }}
-            </option>
-          }
-        </select>
-        <mat-icon class="selector__flecha" aria-hidden="true">
-          arrow_drop_down
-        </mat-icon>
-      </span>
+      <app-search-selection
+        id="ciiu-select"
+        [ngModel]="actividadSeleccionada()"
+        (ngModelChange)="seleccionarActividad($event)"
+        [ngModelOptions]="{ standalone: true }"
+        [items]="opcionesCiiuLista"
+        labelKey="etiqueta"
+        valueKey="codigo"
+        icon="category"
+        placeholder="Seleccione una actividad"
+        ariaLabel="Seleccionar actividad CIIU"
+      ></app-search-selection>
       <div class="buscador">
         <button
           class="boton-recto boton-recto--vino"
@@ -264,48 +243,37 @@
         <label class="campo__etiqueta" for="snies-area">
           Área de conocimiento (SNIES) <b aria-hidden="true">*</b>
         </label>
-        <span class="selector">
-          <mat-icon class="selector__icono" aria-hidden="true">
-            account_balance
-          </mat-icon>
-          <select id="snies-area" formControlName="areaSnies">
-            <option value="">Seleccione el área de conocimiento</option>
+        <mat-form-field appearance="outline">
+          <mat-icon matPrefix aria-hidden="true">account_balance</mat-icon>
+          <mat-select
+            id="snies-area"
+            formControlName="areaSnies"
+            placeholder="Seleccione el área de conocimiento"
+          >
+            <mat-option value="">Seleccione el área de conocimiento</mat-option>
             @for (opcion of areasSnies(); track opcion.valor) {
-              <option [value]="opcion.valor">{{ opcion.etiqueta }}</option>
+              <mat-option [value]="opcion.valor">{{ opcion.etiqueta }}</mat-option>
             }
-          </select>
-          <mat-icon class="selector__flecha" aria-hidden="true">
-            arrow_drop_down
-          </mat-icon>
-        </span>
-        @if (mostrarErrorSnies("areaSnies")) {
-          <span class="mensaje-error-formulario">
-            Seleccione el área de conocimiento del SNIES.
-          </span>
-        }
+          </mat-select>
+          <mat-error>Seleccione el área de conocimiento del SNIES.</mat-error>
+        </mat-form-field>
       </div>
 
       <div class="campo" [formGroup]="form">
         <label class="campo__etiqueta" for="snies-nbc">
           Núcleo básico de conocimiento NBC <b aria-hidden="true">*</b>
         </label>
-        <span class="selector">
-          <mat-icon class="selector__icono" aria-hidden="true">school</mat-icon>
-          <select id="snies-nbc" formControlName="nucleoSnies">
-            <option value="">Seleccione el núcleo básico (NBC)</option>
-            @for (opcion of nucleosSnies(); track opcion.valor) {
-              <option [value]="opcion.valor">{{ opcion.etiqueta }}</option>
-            }
-          </select>
-          <mat-icon class="selector__flecha" aria-hidden="true">
-            arrow_drop_down
-          </mat-icon>
-        </span>
-        @if (mostrarErrorSnies("nucleoSnies")) {
-          <span class="mensaje-error-formulario">
-            Seleccione el núcleo básico de conocimiento (NBC).
-          </span>
-        }
+        <app-search-selection
+          id="snies-nbc"
+          formControlName="nucleoSnies"
+          [items]="nucleosSnies()"
+          labelKey="etiqueta"
+          valueKey="valor"
+          icon="school"
+          placeholder="Seleccione el núcleo básico (NBC)"
+          ariaLabel="Núcleo básico de conocimiento NBC"
+          noSelectionErrorMessage="Seleccione el núcleo básico de conocimiento (NBC)."
+        ></app-search-selection>
       </div>
 
       <div class="perfil">

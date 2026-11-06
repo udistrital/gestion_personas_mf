@@ -107,6 +107,7 @@ function minCaracteresTexto(minimo: number): ValidatorFn {
   templateUrl: "./paso-contratacion.component.html",
   styleUrls: ["./paso-contratacion.component.scss"],
   standalone: false,
+  host: { class: "formulario-material" },
 })
 export class PasoContratacionComponent implements OnInit {
   tiposContrato: readonly OpcionContratacion[] = [];

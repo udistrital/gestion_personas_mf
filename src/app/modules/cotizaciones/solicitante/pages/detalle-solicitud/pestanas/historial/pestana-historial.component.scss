@@ -40,58 +40,12 @@
 }
 
 .auditoria__etiqueta {
-  color: var(--agora-texto-neutro);
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  line-height: 1.3;
-  text-transform: uppercase;
-}
-
-.auditoria__control {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--agora-borde-control);
-  border-radius: var(--agora-radio-md);
-  background: var(--agora-superficie-neutra);
-}
-
-.auditoria__control:focus-within {
-  border-color: var(--agora-primary);
-  outline: 2px solid var(--agora-primary);
-  outline-offset: 2px;
-}
-
-.auditoria__control mat-icon {
-  flex: 0 0 auto;
-  width: 1.125rem;
-  height: 1.125rem;
-  color: var(--agora-texto-neutro);
-  font-size: 1.125rem;
-}
-
-.auditoria__control select,
-.auditoria__control input {
-  flex: 1 1 auto;
-  min-width: 0;
-  padding: 0;
-  border: none;
-  outline: none;
-  background: transparent;
   color: var(--agora-text);
-  font-family: inherit;
-  font-size: 0.875rem;
-  line-height: 1.4;
-}
-
-.auditoria__control select {
-  cursor: pointer;
-}
-
-.auditoria__control input::placeholder {
-  color: var(--agora-texto-deshabilitado);
+  font-size: var(--agora-font-xs);
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
 /* ── Filtro sin coincidencias ──────────────────────────────────────────────── */

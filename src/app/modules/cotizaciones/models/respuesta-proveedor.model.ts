@@ -1,5 +1,26 @@
-import type { DocumentoOferente } from "./documentos.model";
+import { extensionDe, type DocumentoOferente } from "./documentos.model";
 import type { ItemSolicitud } from "./items.model";
+
+/**
+ * Formatos admitidos en el soporte detallado de la cotización (RN-41).
+ *
+ * Es la misma lista que valida P-04 al adjuntar archivos; S-10 la usa para
+ * verificar los documentos radicados sin redefinir la regla.
+ */
+export const FORMATOS_SOPORTE_OFERTA = [
+  "pdf",
+  "xls",
+  "xlsx",
+  "doc",
+  "docx",
+] as const;
+
+/** true cuando el archivo usa un formato admitido por RN-41. */
+export function esFormatoSoporteOferta(nombre: string): boolean {
+  return (FORMATOS_SOPORTE_OFERTA as readonly string[]).includes(
+    extensionDe(nombre),
+  );
+}
 
 export type EstadoRespuestaProveedor = "borrador" | "enviada";
 export type TipoIvaOferta = "19" | "5" | "0" | "excluido" | "exento";

@@ -179,3 +179,38 @@ export function etiquetaUnidadEjecutora(valor: string): string {
     valor
   );
 }
+
+/**
+ * Marca temporal del cierre visible `dd/MM/yyyy` (23:59:59 -05:00).
+ *
+ * Es la fuente única de la regla temporal del módulo: la usan los permisos del
+ * foro, la respuesta del proveedor y el bloqueo del tablero de oferentes
+ * (RN-29). Devuelve `null` si la fecha no existe o está mal formada.
+ */
+export function fechaCierreSolicitud(cierre: string | null): number | null {
+  if (!cierre) {
+    return null;
+  }
+
+  const [dia, mes, anio] = cierre.split("/").map(Number);
+  const fechaValidacion = new Date(Date.UTC(anio, mes - 1, dia));
+  if (
+    !dia ||
+    !mes ||
+    !anio ||
+    fechaValidacion.getUTCDate() !== dia ||
+    fechaValidacion.getUTCMonth() !== mes - 1 ||
+    fechaValidacion.getUTCFullYear() !== anio
+  ) {
+    return null;
+  }
+
+  const fechaIso = `${anio}-${String(mes).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
+  return Date.parse(`${fechaIso}T23:59:59.999-05:00`);
+}
+
+/** true cuando el periodo de cotización terminó (RN-29). */
+export function cierreSolicitudVencido(cierre: string | null): boolean {
+  const marca = fechaCierreSolicitud(cierre);
+  return marca !== null && marca <= Date.now();
+}

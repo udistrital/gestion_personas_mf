@@ -1,5 +1,6 @@
 import { Component, Inject, signal } from "@angular/core";
 import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
+import { MatCheckboxChange } from "@angular/material/checkbox";
 import type { ResumenDiferencias } from "../../../../../../models/edicion-solicitud.model";
 
 /** Datos que el paso 7 entrega al diálogo de confirmación (S-04). */
@@ -32,6 +33,7 @@ export interface DialogoConfirmarModificacionDatos {
   templateUrl: "./dialogo-confirmar-modificacion.component.html",
   styleUrls: ["./dialogo-confirmar-modificacion.component.scss"],
   standalone: false,
+  host: { class: "formulario-material" },
 })
 export class DialogoConfirmarModificacionComponent {
   /** true cuando el solicitante reconoce que la propuesta queda en aprobación. */
@@ -50,8 +52,8 @@ export class DialogoConfirmarModificacionComponent {
   }
 
   /** Refleja el estado del reconocimiento obligatorio. */
-  alCambiarAceptacion(evento: Event): void {
-    this.aceptado.set((evento.target as HTMLInputElement).checked);
+  alCambiarAceptacion(evento: MatCheckboxChange): void {
+    this.aceptado.set(evento.checked);
   }
 
   /** Cierra sin solicitar nada; el formulario queda intacto. */

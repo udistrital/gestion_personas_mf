@@ -305,6 +305,20 @@ export function perfilNbc(nucleo: string): PerfilNbc {
 
 /* ── Proveedores objetivo ─────────────────────────────────────────────────── */
 
+/** Tipo de persona del proveedor en el banco. */
+export type TipoPersonaProveedor = "juridica" | "natural" | "consorcio";
+
+/** Identidad básica que comparten el tablero S-07 y su reporte (RN-19). */
+export interface IdentidadProveedor {
+  readonly tipoPersona: TipoPersonaProveedor;
+  readonly etiquetaTipoPersona: string;
+  readonly direccionFiscal: string;
+  readonly correo: string;
+  readonly representante: string;
+  readonly departamento: string;
+  readonly ubicacion: string;
+}
+
 /** Proveedor habilitado en el Banco de Proveedores de la Universidad. */
 export interface ProveedorObjetivo {
   /** Identificador interno. */
@@ -318,15 +332,130 @@ export interface ProveedorObjetivo {
   readonly actividades: readonly string[];
   /** NBC en los que acredita idoneidad. */
   readonly nucleos: readonly string[];
+  /**
+   * Identidad ampliada del tablero de oferentes (S-07).
+   *
+   * Son opcionales: cuando no se registran se derivan de forma determinista
+   * con `identidadProveedor`, para no duplicar 30 fichas de datos.
+   */
+  readonly tipoPersona?: TipoPersonaProveedor;
+  readonly direccionFiscal?: string;
+  readonly correo?: string;
+  readonly representante?: string;
+  readonly departamento?: string;
+}
+
+const ETIQUETAS_TIPO_PERSONA: Readonly<Record<TipoPersonaProveedor, string>> = {
+  juridica: "Jurídica",
+  natural: "Natural",
+  consorcio: "Consorcio / UT",
+};
+
+/** Departamentos variados del mockup, asignados por índice del proveedor. */
+const DEPARTAMENTOS_MOCK: readonly string[] = [
+  "Bogotá D.C.",
+  "Bogotá D.C.",
+  "Bogotá D.C.",
+  "Cundinamarca",
+  "Bogotá D.C.",
+  "Antioquia",
+  "Valle del Cauca",
+];
+
+/** Ciudad visible por departamento (formato del mockup de S-07). */
+const CIUDADES_POR_DEPARTAMENTO: Readonly<Record<string, string>> = {
+  "Bogotá D.C.": "Bogotá D.C.",
+  Cundinamarca: "Chía / CUN",
+  Antioquia: "Medellín / ANT",
+  "Valle del Cauca": "Cali / Valle",
+};
+
+/** Direcciones fiscales de ejemplo, asignadas por índice. */
+const DIRECCIONES_MOCK: readonly string[] = [
+  "Cra 7 # 40-53 Of. 602",
+  "Calle 26 # 69-76 Torre 2",
+  "Av. Caracas # 34-12",
+  "Cra 15 # 88-21",
+  "Calle 72 # 10-34",
+  "Cra 68 # 45-12",
+];
+
+/** Representantes legales de ejemplo, asignados por índice. */
+const REPRESENTANTES_MOCK: readonly string[] = [
+  "Carlos Eduardo Mora Gómez",
+  "Martha Lucía Beltrán",
+  "Juan Camilo Restrepo",
+  "Diana Marcela Cárdenas",
+  "Andrés Felipe Tobón",
+  "Paula Andrea Rincón",
+  "Jorge Iván Castellanos",
+  "Sandra Milena Ortiz",
+  "Luis Fernando Cárdenas",
+  "Claudia Patricia Salazar",
+  "Óscar Javier Ramírez",
+  "Natalia Andrea Pardo",
+];
+
+/** Índice numérico estable del proveedor (`prov-07` → 7). */
+export function indiceProveedor(proveedor: ProveedorObjetivo): number {
+  const coincidencia = /prov-(\d+)/.exec(proveedor.id);
+  return coincidencia ? Number(coincidencia[1]) : 1;
+}
+
+/** Correo institucional de contacto derivado del nombre. */
+function correoProveedor(nombre: string): string {
+  const slug = nombre
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\b(s\.a\.s\.?|sas|ltda\.?|s\.a\.?|sa|e\.s\.p\.?)\b/g, "")
+    .replace(/[^a-z0-9]+/g, "")
+    .slice(0, 42);
+  return `contacto@${slug || "proveedor"}.com.co`;
+}
+
+/**
+ * Identidad visible de un proveedor.
+ *
+ * Si la ficha trae los datos ampliados se respetan; si no, se derivan del
+ * índice para que el banco completo tenga una identidad coherente sin repetir
+ * los mismos valores en las 24 fichas existentes.
+ */
+export function identidadProveedor(
+  proveedor: ProveedorObjetivo,
+): IdentidadProveedor {
+  const indice = Math.max(1, indiceProveedor(proveedor));
+  const tipoPersona = proveedor.tipoPersona ?? "juridica";
+  const departamento =
+    proveedor.departamento ??
+    DEPARTAMENTOS_MOCK[(indice - 1) % DEPARTAMENTOS_MOCK.length];
+  return {
+    tipoPersona,
+    etiquetaTipoPersona: ETIQUETAS_TIPO_PERSONA[tipoPersona],
+    direccionFiscal:
+      proveedor.direccionFiscal ??
+      DIRECCIONES_MOCK[(indice - 1) % DIRECCIONES_MOCK.length],
+    correo: proveedor.correo ?? correoProveedor(proveedor.nombre),
+    representante:
+      proveedor.representante ??
+      (tipoPersona === "natural"
+        ? "Persona natural"
+        : REPRESENTANTES_MOCK[(indice - 1) % REPRESENTANTES_MOCK.length]),
+    departamento,
+    ubicacion:
+      CIUDADES_POR_DEPARTAMENTO[departamento] ?? proveedor.ciudad,
+  };
 }
 
 /**
  * Banco de proveedores simulado (mockup: Banco de Proveedores UD).
  *
  * Los primeros doce acreditan idoneidad en Sistemas y actividades TIC; los
- * doce restantes son comercializadores y fabricantes de hardware. Todos
- * registran actividad de comercio (4651) o fabricación (2620), de modo que la
- * segmentación de bienes cubre la totalidad del banco.
+ * doce siguientes son comercializadores y fabricantes de hardware. Al final se
+ * agregan fichas con identidad explícita para el tablero de oferentes (S-07):
+ * dos personas naturales, un consorcio y dos proveedores del mockup. Todos
+ * registran actividad de comercio (4651) o fabricación (2620) cuando aplica,
+ * de modo que la segmentación de bienes cubre el banco completo.
  */
 export const PROVEEDORES_MOCK: readonly ProveedorObjetivo[] = [
   {
@@ -544,6 +673,74 @@ export const PROVEEDORES_MOCK: readonly ProveedorObjetivo[] = [
     icono: "settings_input_antenna",
     actividades: ["4651", "2620"],
     nucleos: ["ELECTRONICA"],
+  },
+  {
+    id: "prov-25",
+    nombre: "Ing. Álvaro Peña Salamanca",
+    nit: "C.C. 80.234.567",
+    ciudad: "Bogotá D.C. - Barrios Unidos",
+    icono: "person",
+    actividades: ["6201", "6202", "6209", "4651"],
+    nucleos: ["SISTEMAS"],
+    tipoPersona: "natural",
+    representante: "Consultor Senior TI",
+    direccionFiscal: "Av. Caracas # 34-12",
+    correo: "alvaro.pena@consultoriasti.com",
+    departamento: "Bogotá D.C.",
+  },
+  {
+    id: "prov-26",
+    nombre: "María Fernanda Gómez Pinzón",
+    nit: "C.C. 19.876.543",
+    ciudad: "Bogotá D.C. - Teusaquillo",
+    icono: "person",
+    actividades: ["6202", "6209"],
+    nucleos: ["SISTEMAS"],
+    tipoPersona: "natural",
+    representante: "Consultora de Redes y Conectividad",
+    direccionFiscal: "Cra 13 # 38-45",
+    correo: "mfgomez@telecomconsultores.com",
+    departamento: "Bogotá D.C.",
+  },
+  {
+    id: "prov-27",
+    nombre: "Consorcio Infraestructura Digital UD",
+    nit: "NIT 901.777.888-1",
+    ciudad: "Bogotá D.C. - Puente Aranda",
+    icono: "handshake",
+    actividades: ["4651", "2620", "6201"],
+    nucleos: ["ELECTRONICA"],
+    tipoPersona: "consorcio",
+    representante: "Diana Pirachican (representante del consorcio)",
+    direccionFiscal: "Calle 13 # 31-75",
+    correo: "consorcio.ud@infraestructuradigital.com.co",
+    departamento: "Bogotá D.C.",
+  },
+  {
+    id: "prov-28",
+    nombre: "Sistemas & Soluciones Tecnológicas de Colombia S.A.S.",
+    nit: "901.482.304-8",
+    ciudad: "Bogotá D.C. - Chapinero",
+    icono: "terminal",
+    actividades: ["4651", "2620"],
+    nucleos: ["ELECTRONICA"],
+    representante: "Carlos Eduardo Mora Gómez",
+    direccionFiscal: "Cra 7 # 40-53 Of. 602",
+    correo: "licitaciones@sistemasytecnologia.com.co",
+    departamento: "Bogotá D.C.",
+  },
+  {
+    id: "prov-29",
+    nombre: "Redes y Comunicaciones Bogotá Ltda.",
+    nit: "830.112.980-1",
+    ciudad: "Bogotá D.C. - Salitre",
+    icono: "router",
+    actividades: ["4651", "2620"],
+    nucleos: ["ELECTRONICA"],
+    representante: "Martha Lucía Beltrán",
+    direccionFiscal: "Calle 26 # 69-76 Torre 2",
+    correo: "contratacion@redesbogota.com.co",
+    departamento: "Bogotá D.C.",
   },
 ];
 

@@ -17,17 +17,18 @@
               <span class="campo-filtro__requerido" aria-hidden="true">*</span>
             }
           </label>
-          <select
-            class="campo-filtro__control"
-            [id]="idCampo(campo.clave)"
-            [name]="campo.clave"
-            [attr.required]="campo.requerido ? true : null"
-            [(ngModel)]="valores[campo.clave]"
-          >
-            @for (opcion of campo.opciones; track opcion.valor) {
-              <option [value]="opcion.valor">{{ opcion.etiqueta }}</option>
-            }
-          </select>
+          <mat-form-field appearance="outline">
+            <mat-select
+              [id]="idCampo(campo.clave)"
+              [name]="campo.clave"
+              [attr.required]="campo.requerido ? true : null"
+              [(ngModel)]="valores[campo.clave]"
+            >
+              @for (opcion of campo.opciones; track opcion.valor) {
+                <mat-option [value]="opcion.valor">{{ opcion.etiqueta }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
         </div>
       }
     }
@@ -40,17 +41,18 @@
           <label class="campo-filtro__etiqueta" [for]="idCampo(campo.clave)">
             {{ campo.etiqueta }}
           </label>
-          <div class="campo-filtro__busqueda">
-            <mat-icon aria-hidden="true">search</mat-icon>
+          <mat-form-field appearance="outline">
+            <mat-icon matPrefix aria-hidden="true">search</mat-icon>
             <input
-              class="campo-filtro__control"
+              matInput
               type="search"
               [id]="idCampo(campo.clave)"
               [name]="campo.clave"
               [placeholder]="campo.placeholder ?? ''"
               [(ngModel)]="valores[campo.clave]"
+              [attr.aria-label]="campo.etiqueta"
             />
-          </div>
+          </mat-form-field>
         </div>
       }
     }

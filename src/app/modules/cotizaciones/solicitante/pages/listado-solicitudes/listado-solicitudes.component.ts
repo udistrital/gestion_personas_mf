@@ -443,14 +443,6 @@ export class ListadoSolicitudesComponent implements OnInit {
     void this.router.navigate(["cotizaciones", "solicitudes", "nueva"]);
   }
 
-  pestanaPendientes(): void {
-    // TODO issue #34: segunda vista del tablero, aún no definida.
-    void this.alerta.showAlert(
-      "Pendientes de validación",
-      "Esta vista aún no está implementada. Corresponde a una fase posterior del módulo.",
-    );
-  }
-
   etiquetaUnidad(valor: string): string {
     return etiquetaUnidadEjecutora(valor);
   }

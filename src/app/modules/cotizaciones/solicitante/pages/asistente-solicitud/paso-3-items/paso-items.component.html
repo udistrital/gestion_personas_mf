@@ -84,46 +84,26 @@
       </div>
 
       <div class="campo">
-        <span class="campo__etiqueta" id="item-nombre-etiqueta">
+        <label class="campo__etiqueta" for="item-nombre">
           Nombre del bien o servicio <b aria-hidden="true">*</b>
-        </span>
-        <label class="campo__etiqueta" for="item-filtro-catalogo">
-          Filtrar opciones {{ tipoBusqueda() }}
         </label>
-        <span class="selector">
-          <mat-icon class="selector__icono" aria-hidden="true">search</mat-icon>
-          <input
-            id="item-filtro-catalogo"
-            type="text"
-            [value]="filtroCatalogo()"
-            (input)="alFiltrarCatalogo($event)"
-            placeholder="Filtrar por código o descripción…"
-          />
-        </span>
-        <span class="selector">
-          <mat-icon class="selector__icono" aria-hidden="true">list_alt</mat-icon>
-          <select
-            id="item-nombre"
-            formControlName="nombre"
-            aria-labelledby="item-nombre-etiqueta"
-          >
-            <option value="" disabled>Seleccione una opción</option>
-            @if (mostrarNombreActual()) {
-              <option [value]="itemForm.get('nombre')?.value">
-                {{ itemForm.get("nombre")?.value }}
-              </option>
-            }
-            @for (opcion of opcionesCatalogoFiltradas(); track opcion.codigo) {
-              <option [value]="opcion.etiqueta">{{ opcion.etiqueta }}</option>
-            }
-          </select>
-          <mat-icon class="selector__flecha" aria-hidden="true">
-            arrow_drop_down
-          </mat-icon>
-        </span>
-        @if (mostrarError("nombre", itemForm)) {
-          <span class="mensaje-error-formulario">
-            Indique el nombre del elemento (mínimo {{ minNombre }} caracteres).
+        <app-search-selection
+          id="item-nombre"
+          formControlName="nombre"
+          [items]="opcionesNombre()"
+          labelKey="etiqueta"
+          valueKey="etiqueta"
+          icon="list_alt"
+          placeholder="Seleccione una opción"
+          ariaLabel="Nombre del bien o servicio"
+          noSelectionErrorMessage="Indique el nombre del elemento."
+        ></app-search-selection>
+        @if (mostrarError("nombre", itemForm) && itemForm.get("nombre")?.hasError("minCaracteres")) {
+          <span class="campo__fallo" role="alert">
+            <mat-icon aria-hidden="true">error</mat-icon>
+            <span>
+              Indique el nombre del elemento (mínimo {{ minNombre }} caracteres).
+            </span>
           </span>
         }
       </div>
@@ -132,16 +112,22 @@
         <label class="campo__etiqueta" for="item-descripcion">
           Descripción y ficha técnica <b aria-hidden="true">*</b>
         </label>
-        <textarea
-          id="item-descripcion"
-          class="campo__area"
-          rows="4"
-          formControlName="descripcion"
-          placeholder="Detalle especificaciones técnicas, certificaciones requeridas…"
-        ></textarea>
+        <mat-form-field appearance="outline">
+          <textarea
+            matInput
+            id="item-descripcion"
+            rows="4"
+            formControlName="descripcion"
+            placeholder="Detalle especificaciones técnicas, certificaciones requeridas…"
+            aria-label="Descripción y ficha técnica"
+          ></textarea>
+        </mat-form-field>
         @if (mostrarError("descripcion", itemForm)) {
-          <span class="mensaje-error-formulario">
-            Describa la ficha técnica (mínimo {{ minDescripcion }} caracteres).
+          <span class="campo__fallo" role="alert">
+            <mat-icon aria-hidden="true">error</mat-icon>
+            <span>
+              Describa la ficha técnica (mínimo {{ minDescripcion }} caracteres).
+            </span>
           </span>
         }
         <span class="campo__ayuda">
@@ -155,34 +141,37 @@
           <label class="campo__etiqueta" for="item-unidad">
             Unidad de medida <b aria-hidden="true">*</b>
           </label>
-          <span class="selector">
-            <mat-icon class="selector__icono" aria-hidden="true">straighten</mat-icon>
-            <select id="item-unidad" formControlName="unidad">
-              <option [ngValue]="null" disabled>Seleccione una unidad de medida</option>
+          <mat-form-field appearance="outline">
+            <mat-icon matPrefix aria-hidden="true">straighten</mat-icon>
+            <mat-select
+              id="item-unidad"
+              formControlName="unidad"
+              placeholder="Seleccione una unidad de medida"
+            >
               @for (unidad of unidades; track unidad.valor) {
-                <option [ngValue]="unidad.valor">{{ unidad.etiqueta }}</option>
+                <mat-option [value]="unidad.valor">{{ unidad.etiqueta }}</mat-option>
               }
-            </select>
-            <mat-icon class="selector__flecha" aria-hidden="true">
-              arrow_drop_down
-            </mat-icon>
-          </span>
+            </mat-select>
+            <mat-error>Seleccione una unidad de medida.</mat-error>
+          </mat-form-field>
         </div>
 
         <div class="campo">
           <label class="campo__etiqueta" for="item-cantidad">
             Cantidad <b aria-hidden="true">*</b>
           </label>
-          <span class="selector">
-            <mat-icon class="selector__icono" aria-hidden="true">pin</mat-icon>
+          <mat-form-field appearance="outline">
+            <mat-icon matPrefix aria-hidden="true">pin</mat-icon>
             <input
+              matInput
               id="item-cantidad"
               type="number"
               min="1"
               step="1"
               formControlName="cantidad"
+              aria-label="Cantidad"
             />
-          </span>
+          </mat-form-field>
           <span class="campo__ayuda">Ingrese solo números enteros.</span>
         </div>
       </div>
