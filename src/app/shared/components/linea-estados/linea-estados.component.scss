@@ -1,0 +1,92 @@
+:host {
+  display: block;
+}
+
+.linea-estados {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.linea-estados__lista {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: max-content;
+  margin: 0;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-surface);
+  box-shadow: var(--agora-sombra-xs);
+  list-style: none;
+}
+
+.linea-estados__paso {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--agora-radio-md);
+  color: var(--agora-texto-neutro);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.linea-estados__marca {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.linea-estados__marca mat-icon {
+  width: 0.9375rem;
+  height: 0.9375rem;
+  font-size: 0.9375rem;
+}
+
+.linea-estados__conector {
+  width: 1rem;
+  height: 1px;
+  margin-left: 0.125rem;
+  background: var(--agora-border-strong);
+}
+
+.linea-estados__paso--completado {
+  color: var(--agora-success);
+}
+
+.linea-estados__paso--completado .linea-estados__texto {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.linea-estados__paso--actual {
+  background: var(--agora-primary);
+  color: var(--agora-on-primary);
+  font-weight: 700;
+  box-shadow: var(--agora-sombra-xs);
+}
+
+.linea-estados__paso--actual .linea-estados__marca mat-icon {
+  color: var(--agora-on-primary);
+}
+
+.linea-estados__paso--pendiente {
+  color: var(--agora-texto-deshabilitado);
+}
+
+/* La utilidad global no existe en la app; se replica localmente. */
+.visually-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}

@@ -44,6 +44,10 @@ export class ForoObservacionesPageComponent implements OnInit {
   readonly breadcrumb =
     "<p>Gestión Proveedor › Cotizaciones › <b>Foro de observaciones</b></p>";
 
+  /** Proveedor preseleccionado desde el tablero de oferentes (S-07). */
+  readonly proveedorInicial =
+    this.ruta.snapshot.queryParamMap.get("proveedor") ?? "";
+
   get puedeUsarForo(): boolean {
     const solicitud = this.solicitud();
     return solicitud ? this.permisos.puede("foro", solicitud) : false;

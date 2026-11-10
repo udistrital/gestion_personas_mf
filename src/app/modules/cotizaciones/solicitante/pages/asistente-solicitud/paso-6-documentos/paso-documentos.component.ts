@@ -82,6 +82,7 @@ function clasificacionDeCatalogo(
   templateUrl: "./paso-documentos.component.html",
   styleUrls: ["./paso-documentos.component.scss"],
   standalone: false,
+  host: { class: "formulario-material" },
 })
 export class PasoDocumentosComponent implements OnInit {
   readonly etiquetaFormatos = ETIQUETA_FORMATOS;

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from "@angular/core";
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from "@angular/core";
 import {
   AutorObservacion,
   EstadoObservacion,
@@ -19,8 +19,9 @@ import { textoPlanoDesdeHtml } from "src/app/shared/utils/texto-plano";
   templateUrl: "./foro-observaciones.component.html",
   styleUrls: ["./foro-observaciones.component.scss"],
   standalone: false,
+  host: { class: "formulario-material" },
 })
-export class ForoObservacionesComponent {
+export class ForoObservacionesComponent implements OnChanges {
   @Input({ required: true })
   solicitud!: Pick<
     Solicitud,
@@ -48,6 +49,8 @@ export class ForoObservacionesComponent {
   @Input() errorNuevaObservacion = "";
   @Input() mensajeExito = "";
   @Input() enfocarId: string | null = null;
+  /** Identificación del proveedor a preseleccionar en el filtro (S-07). */
+  @Input() autorInicial = "";
 
   @Output() reintentar = new EventEmitter<void>();
   @Output() observacionCreada = new EventEmitter<NuevaObservacion>();
@@ -58,6 +61,33 @@ export class ForoObservacionesComponent {
   autorFiltro = "";
   fechaDesde = "";
   fechaHasta = "";
+
+  /** Evita reaplicar el filtro inicial cuando el usuario ya lo cambió. */
+  private autorInicialAplicado = false;
+
+  ngOnChanges(cambios: SimpleChanges): void {
+    if (cambios["autorInicial"]) {
+      this.autorInicialAplicado = false;
+    }
+    if (!this.autorInicial || this.autorInicialAplicado) {
+      return;
+    }
+    if (!cambios["observaciones"] && !cambios["autorInicial"]) {
+      return;
+    }
+
+    const objetivo = soloDigitos(this.autorInicial);
+    if (!objetivo) {
+      return;
+    }
+    const autor = this.autores.find(
+      (candidato) => soloDigitos(candidato.identificacion) === objetivo,
+    );
+    if (autor) {
+      this.autorFiltro = autor.identificacion;
+      this.autorInicialAplicado = true;
+    }
+  }
 
   get autores(): readonly AutorObservacion[] {
     const vistos = new Set<string>();
@@ -132,4 +162,9 @@ export class ForoObservacionesComponent {
     this.fechaDesde = "";
     this.fechaHasta = "";
   }
+}
+
+/** Sólo los dígitos de una identificación (tolera "NIT: ", "C.C. " y sufijos). */
+function soloDigitos(valor: string): string {
+  return valor.replace(/\D/g, "");
 }

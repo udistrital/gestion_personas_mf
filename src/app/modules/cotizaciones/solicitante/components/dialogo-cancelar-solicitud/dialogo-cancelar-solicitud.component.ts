@@ -2,6 +2,7 @@ import { Component, DestroyRef, OnInit, inject, signal } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { FormControl, FormGroup, Validators } from "@angular/forms";
 import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
+import { MatCheckboxChange } from "@angular/material/checkbox";
 import { PermisosSolicitudService } from "src/app/core/services/permisos-solicitud.service";
 import {
   justificacionMinima,
@@ -24,6 +25,7 @@ export interface DialogoCancelarSolicitudDatos {
   templateUrl: "./dialogo-cancelar-solicitud.component.html",
   styleUrls: ["./dialogo-cancelar-solicitud.component.scss"],
   standalone: false,
+  host: { class: "formulario-material" },
 })
 export class DialogoCancelarSolicitudComponent implements OnInit {
   private readonly servicio = inject(SolicitudesService);
@@ -117,8 +119,8 @@ export class DialogoCancelarSolicitudComponent implements OnInit {
       });
   }
 
-  alCambiarAceptacion(evento: Event): void {
-    this.aceptado.set((evento.target as HTMLInputElement).checked);
+  alCambiarAceptacion(evento: MatCheckboxChange): void {
+    this.aceptado.set(evento.checked);
   }
 
   alSalirJustificacion(): void {

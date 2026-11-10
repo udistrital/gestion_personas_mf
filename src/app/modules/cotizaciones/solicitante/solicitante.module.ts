@@ -30,6 +30,15 @@ import { EditarSolicitudComponent } from "./pages/editar-solicitud/editar-solici
 import { paginadorEnEspanol } from "./mat-paginator-intl-es";
 import { ForoObservacionesModule } from "../components/foro-observaciones/foro-observaciones.module";
 import { ForoObservacionesPageComponent } from "./pages/foro-observaciones/foro-observaciones-page.component";
+import { TableroOferentesComponent } from "./pages/tablero-oferentes/tablero-oferentes.component";
+import { ComparadorCotizacionesComponent } from "./pages/comparador-cotizaciones/comparador-cotizaciones.component";
+import { DetalleProveedorOfertaComponent } from "./pages/detalle-proveedor-oferta/detalle-proveedor-oferta.component";
+import { DetallePresentacionModule } from "./pages/detalle-solicitud/components/detalle-presentacion.module";
+import { PantallaPorDefinirComponent } from "./pages/pantalla-por-definir/pantalla-por-definir.component";
+import {
+  OferentesService,
+  OferentesServiceMock,
+} from "../services/oferentes.service";
 
 @NgModule({
   declarations: [
@@ -52,11 +61,16 @@ import { ForoObservacionesPageComponent } from "./pages/foro-observaciones/foro-
     ResumenDiferenciasComponent,
     EditarSolicitudComponent,
     ForoObservacionesPageComponent,
+    TableroOferentesComponent,
+    ComparadorCotizacionesComponent,
+    DetalleProveedorOfertaComponent,
+    PantallaPorDefinirComponent,
   ],
   imports: [
     CommonModule,
     SharedModule,
     SolicitanteComponentsModule,
+    DetallePresentacionModule,
     SolicitanteRoutingModule,
     ForoObservacionesModule,
     DialogoDescartarModule,
@@ -64,6 +78,8 @@ import { ForoObservacionesPageComponent } from "./pages/foro-observaciones/foro-
   providers: [
     // Único punto de enlace de SICAPITAL (cruce del paso 1 del asistente).
     { provide: SicapitalService, useClass: SicapitalServiceMock },
+    // Único punto de enlace del tablero de oferentes (S-07).
+    { provide: OferentesService, useClass: OferentesServiceMock },
     { provide: MatPaginatorIntl, useFactory: paginadorEnEspanol },
   ],
 })

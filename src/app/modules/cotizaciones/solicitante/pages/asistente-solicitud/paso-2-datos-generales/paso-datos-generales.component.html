@@ -51,67 +51,65 @@
   <!-- Fila 1: datos de solo lectura de SICAPITAL -->
   <div class="campo-grid grid-cuatro">
     <div class="campo">
-      <label class="campo__etiqueta" for="resp-nombres">
-        Nombres
-        <mat-icon class="campo__candado" aria-hidden="true">lock</mat-icon>
-      </label>
-      <span class="solo-lectura">
+      <label class="campo__etiqueta" for="resp-nombres">Nombres</label>
+      <mat-form-field appearance="outline">
         <input
+          matInput
           id="resp-nombres"
           type="text"
-          class="px-3"
           readonly
           [value]="responsable?.nombres || '—'"
+          aria-label="Nombres del responsable"
         />
-      </span>
+        <mat-icon matSuffix aria-hidden="true">lock</mat-icon>
+      </mat-form-field>
     </div>
 
     <div class="campo">
-      <label class="campo__etiqueta" for="resp-apellidos">
-        Apellidos
-        <mat-icon class="campo__candado" aria-hidden="true">lock</mat-icon>
-      </label>
-      <span class="solo-lectura">
+      <label class="campo__etiqueta" for="resp-apellidos">Apellidos</label>
+      <mat-form-field appearance="outline">
         <input
+          matInput
           id="resp-apellidos"
           type="text"
-          class="px-3"
           readonly
           [value]="responsable?.apellidos || '—'"
+          aria-label="Apellidos del responsable"
         />
-      </span>
+        <mat-icon matSuffix aria-hidden="true">lock</mat-icon>
+      </mat-form-field>
     </div>
 
     <div class="campo">
       <label class="campo__etiqueta" for="resp-identificacion">
         Identificación
-        <mat-icon class="campo__candado" aria-hidden="true">lock</mat-icon>
       </label>
-      <span class="solo-lectura">
+      <mat-form-field appearance="outline">
         <input
+          matInput
           id="resp-identificacion"
           type="text"
-          class="px-3"
           readonly
           [value]="responsable?.identificacion || '—'"
+          aria-label="Identificación del responsable"
         />
-      </span>
+        <mat-icon matSuffix aria-hidden="true">lock</mat-icon>
+      </mat-form-field>
     </div>
 
     <div class="campo">
-      <label class="campo__etiqueta" for="resp-unidad">
-        Unidad Ejecutora
-        <mat-icon class="campo__candado" aria-hidden="true">lock</mat-icon>
-      </label>
-      <span class="solo-lectura">
+      <label class="campo__etiqueta" for="resp-unidad">Unidad Ejecutora</label>
+      <mat-form-field appearance="outline">
         <input
+          matInput
           id="resp-unidad"
           type="text"
-          class="px-3"
           readonly
           [value]="responsable?.unidadEjecutora || '—'"
+          aria-label="Unidad ejecutora"
         />
-      </span>
+        <mat-icon matSuffix aria-hidden="true">lock</mat-icon>
+      </mat-form-field>
     </div>
   </div>
 
@@ -120,19 +118,19 @@
     <div class="campo">
       <label class="campo__etiqueta" for="resp-ordenador">
         Ordenador del Gasto (Código y Nombre)
-        <mat-icon class="campo__candado" aria-hidden="true">lock</mat-icon>
       </label>
-      <span class="solo-lectura">
-        <mat-icon class="solo-lectura__icono" aria-hidden="true">
-          account_circle
-        </mat-icon>
+      <mat-form-field appearance="outline">
+        <mat-icon matPrefix aria-hidden="true">account_circle</mat-icon>
         <input
+          matInput
           id="resp-ordenador"
           type="text"
           readonly
           [value]="responsable?.ordenadorGasto || '—'"
+          aria-label="Ordenador del gasto"
         />
-      </span>
+        <mat-icon matSuffix aria-hidden="true">lock</mat-icon>
+      </mat-form-field>
     </div>
 
     <div class="nota-por-definir" role="note">
@@ -150,23 +148,17 @@
       <label class="campo__etiqueta" for="dep-solicitante">
         Dependencia Solicitante <b aria-hidden="true">*</b>
       </label>
-      <span class="selector">
-        <mat-icon class="selector__icono" aria-hidden="true">domain</mat-icon>
-        <select
-          id="dep-solicitante"
-          formControlName="dependenciaSolicitante"
-        >
-          <option [ngValue]="null">Seleccione la dependencia solicitante</option>
-          @for (dependencia of dependencias; track dependencia.valor) {
-            <option [ngValue]="dependencia.valor">
-              {{ dependencia.etiqueta }}
-            </option>
-          }
-        </select>
-        <mat-icon class="selector__flecha" aria-hidden="true">
-          arrow_drop_down
-        </mat-icon>
-      </span>
+      <app-search-selection
+        id="dep-solicitante"
+        formControlName="dependenciaSolicitante"
+        [items]="dependencias"
+        labelKey="etiqueta"
+        valueKey="valor"
+        icon="domain"
+        placeholder="Seleccione la dependencia solicitante"
+        ariaLabel="Dependencia solicitante"
+        noSelectionErrorMessage="Seleccione la dependencia solicitante."
+      ></app-search-selection>
       <span class="campo__ayuda">Dependencia que formula la solicitud.</span>
       @if (!campoEditable("dependenciaSolicitante")) {
         <span class="campo__ayuda campo__ayuda--bloqueo">
@@ -180,22 +172,17 @@
       <label class="campo__etiqueta" for="dep-destino">
         Dependencia Destino <b aria-hidden="true">*</b>
       </label>
-      <span class="selector">
-        <mat-icon class="selector__icono" aria-hidden="true">
-          location_city
-        </mat-icon>
-        <select id="dep-destino" formControlName="dependenciaDestino">
-          <option [ngValue]="null">Seleccione la dependencia destino</option>
-          @for (dependencia of dependencias; track dependencia.valor) {
-            <option [ngValue]="dependencia.valor">
-              {{ dependencia.etiqueta }}
-            </option>
-          }
-        </select>
-        <mat-icon class="selector__flecha" aria-hidden="true">
-          arrow_drop_down
-        </mat-icon>
-      </span>
+      <app-search-selection
+        id="dep-destino"
+        formControlName="dependenciaDestino"
+        [items]="dependencias"
+        labelKey="etiqueta"
+        valueKey="valor"
+        icon="location_city"
+        placeholder="Seleccione la dependencia destino"
+        ariaLabel="Dependencia destino"
+        noSelectionErrorMessage="Seleccione la dependencia destino."
+      ></app-search-selection>
       <span class="campo__ayuda">Dependencia que recibe la cotización.</span>
       @if (!campoEditable("dependenciaDestino")) {
         <span class="campo__ayuda campo__ayuda--bloqueo">
@@ -216,19 +203,11 @@
   <!-- Fechas de apertura y cierre -->
   <div class="campo-grid campo-grid--two" [formGroup]="form">
     <div class="campo">
-      <label class="campo__etiqueta" for="fecha-apertura">
-        Fecha de Apertura <b aria-hidden="true">*</b>
-      </label>
-      <span class="selector">
-        <mat-icon class="selector__icono" aria-hidden="true">
-          calendar_today
-        </mat-icon>
-        <input
-          id="fecha-apertura"
-          type="date"
-          formControlName="fechaApertura"
-        />
-      </span>
+      <campo-fecha
+        formControlName="fechaApertura"
+        etiqueta="Fecha de Apertura"
+        [requerido]="true"
+      ></campo-fecha>
       @if (cronograma().aperturaLarga) {
         <span class="campo__ayuda">{{ cronograma().aperturaLarga }}</span>
       } @else {
@@ -243,15 +222,11 @@
     </div>
 
     <div class="campo">
-      <label class="campo__etiqueta" for="fecha-cierre">
-        Fecha de Cierre <b aria-hidden="true">*</b>
-      </label>
-      <span class="selector">
-        <mat-icon class="selector__icono" aria-hidden="true">
-          calendar_today
-        </mat-icon>
-        <input id="fecha-cierre" type="date" formControlName="fechaCierre" />
-      </span>
+      <campo-fecha
+        formControlName="fechaCierre"
+        etiqueta="Fecha de Cierre"
+        [requerido]="true"
+      ></campo-fecha>
 
       @if (cronograma().completo) {
         <span
@@ -442,8 +417,11 @@
       nota="Parámetro de calificación jurídica y económica"
     ></editor-enriquecido>
     @if (mostrarErrorCriterio()) {
-      <span class="mensaje-error-formulario">
-        El criterio de selección debe tener al menos {{ minCriterio }} caracteres.
+      <span class="campo__fallo" role="alert">
+        <mat-icon aria-hidden="true">error</mat-icon>
+        <span>
+          El criterio de selección debe tener al menos {{ minCriterio }} caracteres.
+        </span>
       </span>
     }
 
@@ -487,8 +465,11 @@
       nota="Articulación con metas OAP (Oficina Asesora de Planeación)"
     ></editor-enriquecido>
     @if (mostrarErrorPlan()) {
-      <span class="mensaje-error-formulario">
-        El plan de acción debe tener al menos {{ minPlan }} caracteres.
+      <span class="campo__fallo" role="alert">
+        <mat-icon aria-hidden="true">error</mat-icon>
+        <span>
+          El plan de acción debe tener al menos {{ minPlan }} caracteres.
+        </span>
       </span>
     }
 

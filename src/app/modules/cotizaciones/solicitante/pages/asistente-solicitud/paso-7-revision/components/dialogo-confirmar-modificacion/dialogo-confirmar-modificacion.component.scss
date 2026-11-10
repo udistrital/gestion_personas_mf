@@ -329,9 +329,7 @@
 
 /* ── Reconocimiento obligatorio ──────────────────────────────────────────── */
 .confirmacion {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
+  display: block;
   padding: 0.875rem 1rem;
   border: 1px solid var(--agora-borde-tarjeta);
   border-left: 3px solid var(--agora-primary);
@@ -340,18 +338,9 @@
   cursor: pointer;
 }
 
-.confirmacion__check {
-  flex: 0 0 auto;
-  width: 1.125rem;
-  height: 1.125rem;
-  margin: 0.125rem 0 0;
-  accent-color: var(--agora-primary);
-  cursor: pointer;
-}
-
-.confirmacion__check:focus-visible {
-  outline: 2px solid var(--agora-primary);
-  outline-offset: 2px;
+.confirmacion.mat-mdc-checkbox {
+  --mat-checkbox-label-text-size: 0.8125rem;
+  --mat-checkbox-label-text-line-height: 1.5;
 }
 
 .confirmacion__texto {

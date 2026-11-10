@@ -1,0 +1,38 @@
+<nav class="linea-estados" [attr.aria-label]="label">
+  <ol class="linea-estados__lista">
+    @for (paso of pasos; track paso.etiqueta; let ultimo = $last) {
+      <li
+        class="linea-estados__paso"
+        [class.linea-estados__paso--completado]="paso.estado === 'completado'"
+        [class.linea-estados__paso--actual]="paso.estado === 'actual'"
+        [class.linea-estados__paso--pendiente]="paso.estado === 'pendiente'"
+        [attr.aria-current]="paso.estado === 'actual' ? 'step' : null"
+      >
+        <span class="linea-estados__marca" aria-hidden="true">
+          <mat-icon>
+            {{
+              paso.estado === "completado"
+                ? "check"
+                : paso.estado === "actual"
+                  ? "radio_button_checked"
+                  : "circle"
+            }}
+          </mat-icon>
+        </span>
+        <span class="linea-estados__texto">{{ paso.etiqueta }}</span>
+        <span class="linea-estados__estado visually-oculto">
+          {{
+            paso.estado === "completado"
+              ? "completado"
+              : paso.estado === "actual"
+                ? "en curso"
+                : "pendiente"
+          }}
+        </span>
+        @if (!ultimo) {
+          <span class="linea-estados__conector" aria-hidden="true"></span>
+        }
+      </li>
+    }
+  </ol>
+</nav>

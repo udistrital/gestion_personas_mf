@@ -1,0 +1,900 @@
+<plantilla-pagina-contenedora [breadcrumb]="breadcrumb">
+  <section class="comparador" aria-labelledby="titulo-comparador">
+    @if (estadoResolucion() === "no-encontrada") {
+      <div class="comparador__estado" role="status">
+        <mat-icon aria-hidden="true">search_off</mat-icon>
+        <h2 id="titulo-comparador">Solicitud no encontrada</h2>
+        <p>No existe una solicitud con ese identificador o ya no está disponible.</p>
+        <button class="boton-recto" type="button" (click)="volverAlListado()">
+          <mat-icon aria-hidden="true">arrow_back</mat-icon>
+          Volver a mis solicitudes
+        </button>
+      </div>
+    } @else if (estadoResolucion() === "error") {
+      <div class="comparador__estado comparador__estado--error" role="alert">
+        <mat-icon aria-hidden="true">error_outline</mat-icon>
+        <h2 id="titulo-comparador">No pudimos cargar la solicitud</h2>
+        <p>
+          {{
+            mensajeError() ||
+              "Ocurrió un problema al consultar el expediente. Intente nuevamente."
+          }}
+        </p>
+        <button class="boton-recto" type="button" (click)="reintentarResolucion()">
+          <mat-icon aria-hidden="true">refresh</mat-icon>
+          Reintentar
+        </button>
+      </div>
+    } @else if (solicitud(); as s) {
+      <!-- ─────────────────────────── Cabecera ─────────────────────────── -->
+      <header class="comparador__cabecera">
+        <div class="comparador__cabecera-principal">
+          <div class="comparador__textos">
+            <div class="comparador__chips">
+              <h1 id="titulo-comparador" class="comparador__titulo">
+                Comparador de cotizaciones
+              </h1>
+              <chip-estado [estado]="s.estado"></chip-estado>
+              <span class="chip chip--recto">
+                <span class="comparador__chip-etiqueta">N.°</span>
+                <span>{{ s.id }}</span>
+              </span>
+              <span class="chip chip--recto">
+                <span class="comparador__chip-etiqueta">Vigencia</span>
+                <span>{{ s.vigencia }}</span>
+              </span>
+              @if (resultado(); as r) {
+                <span class="chip chip--recto">
+                  <span class="comparador__chip-etiqueta">Ofertas</span>
+                  <span>{{ r.ofertas.length }}</span>
+                </span>
+              }
+            </div>
+            <p class="comparador__objeto">{{ s.titulo }}</p>
+            <p class="comparador__descripcion">
+              Evaluación comparativa de las propuestas radicadas. La menor
+              oferta es una referencia económica y no equivale a una decisión de
+              adjudicación.
+            </p>
+          </div>
+
+          <div class="comparador__acciones-cabecera">
+            <button class="boton-recto" type="button" (click)="volverAlTablero()">
+              <mat-icon aria-hidden="true">arrow_back</mat-icon>
+              <span>Volver al tablero</span>
+            </button>
+            @if (puedeExportar) {
+              <button
+                class="boton-recto"
+                type="button"
+                [matMenuTriggerFor]="menuExportar"
+                aria-haspopup="true"
+              >
+                <mat-icon aria-hidden="true">download</mat-icon>
+                <span>Exportar comparativo</span>
+                <mat-icon aria-hidden="true">expand_more</mat-icon>
+              </button>
+              <mat-menu #menuExportar="matMenu" xPosition="before">
+                <button mat-menu-item type="button" (click)="exportar('xlsx')">
+                  <mat-icon aria-hidden="true" color="primary">table_view</mat-icon>
+                  <span>Matriz Excel (.xlsx)</span>
+                </button>
+                <button mat-menu-item type="button" (click)="exportar('pdf')">
+                  <mat-icon aria-hidden="true" color="primary">picture_as_pdf</mat-icon>
+                  <span>Informe institucional (.pdf)</span>
+                </button>
+              </mat-menu>
+            }
+            <button class="boton-recto" type="button" (click)="verSolicitud()">
+              <mat-icon aria-hidden="true">open_in_new</mat-icon>
+              <span>Ver solicitud</span>
+            </button>
+          </div>
+        </div>
+
+        <linea-estados
+          [pasos]="pasosProceso()"
+          label="Etapa del proceso de evaluación"
+        ></linea-estados>
+      </header>
+
+      <p class="visually-oculto" aria-live="polite">{{ anuncio() }}</p>
+
+      @if (vista() === "no-disponible") {
+        <div class="comparador__estado" role="status">
+          <mat-icon aria-hidden="true">lock</mat-icon>
+          <h2>Comparador no disponible en este estado</h2>
+          <p>
+            El comparador se habilita cuando la solicitud está publicada a
+            proveedores o en una etapa posterior del proceso.
+          </p>
+          <button class="boton-recto" type="button" (click)="volverAlTablero()">
+            <mat-icon aria-hidden="true">arrow_back</mat-icon>
+            Volver al tablero
+          </button>
+        </div>
+      } @else if (vista() === "bloqueado") {
+        <section class="comparador__bloqueo" aria-labelledby="bloqueo-titulo">
+          <span class="comparador__bloqueo-icono" aria-hidden="true">
+            <mat-icon>lock_clock</mat-icon>
+          </span>
+          <h2 id="bloqueo-titulo">
+            La evaluación se habilita al cierre del periodo
+          </h2>
+          <p>
+            La revisión de las respuestas de los proveedores
+            solo está permitida cuando termina el periodo de cotización. Antes
+            de esa fecha el comparador no expone las ofertas.
+          </p>
+          <div class="comparador__bloqueo-plazo">
+            <contador-regresivo [fechaCierre]="s.cierre"></contador-regresivo>
+            <span>Fecha límite: {{ fechaLimite }}</span>
+          </div>
+          <etiqueta-por-definir
+            texto="Por definir"
+            detalle="Visibilidad de las cotizaciones antes del cierre."
+          ></etiqueta-por-definir>
+          <button class="boton-recto" type="button" (click)="volverAlTablero()">
+            <mat-icon aria-hidden="true">arrow_back</mat-icon>
+            Volver al tablero
+          </button>
+        </section>
+      } @else if (vista() === "cargando") {
+        <div class="comparador__esqueleto" aria-busy="true" aria-live="polite">
+          <span class="visually-oculto">Cargando el comparador de ofertas…</span>
+          <div class="comparador__esqueleto-ficha" aria-hidden="true">
+            @for (bloque of [1, 2, 3, 4]; track bloque) {
+              <span class="esqueleto esqueleto--ficha"></span>
+            }
+          </div>
+          <span class="esqueleto esqueleto--barra" aria-hidden="true"></span>
+          <div class="comparador__esqueleto-tabla" aria-hidden="true">
+            @for (fila of [1, 2, 3, 4, 5, 6, 7]; track fila) {
+              <span class="esqueleto esqueleto--fila"></span>
+            }
+          </div>
+        </div>
+      } @else if (vista() === "error") {
+        <div class="comparador__estado comparador__estado--error" role="alert">
+          <mat-icon aria-hidden="true">error_outline</mat-icon>
+          <h2>No pudimos cargar el comparativo</h2>
+          <p>
+            {{
+              mensajeError() ||
+                "Ocurrió un problema al consultar las ofertas. Intente nuevamente."
+            }}
+          </p>
+          <button class="boton-recto" type="button" (click)="reintentarCarga()">
+            <mat-icon aria-hidden="true">refresh</mat-icon>
+            Reintentar
+          </button>
+        </div>
+      } @else {
+        <!-- ─────────────────── Ficha técnica y presupuesto ──────────────── -->
+        @if (ficha(); as f) {
+          <section class="ficha" aria-labelledby="ficha-titulo">
+            <header class="ficha__cabecera">
+              <div class="ficha__titulo-bloque">
+                <mat-icon aria-hidden="true">assignment</mat-icon>
+                <h2 id="ficha-titulo">Ficha técnica de la solicitud</h2>
+                <span class="ficha__vigencia">Vigencia fiscal {{ f.vigencia }}</span>
+              </div>
+              <div class="ficha__chips">
+                <span class="chip chip--recto">{{ f.numeroCdp }}</span>
+                <span class="chip chip--recto">Modalidad: {{ f.modalidad }}</span>
+              </div>
+            </header>
+
+            <div class="ficha__grid">
+              <article class="ficha__bloque">
+                <span class="ficha__etiqueta">Objeto contractual</span>
+                <p class="ficha__valor">{{ f.objeto }}</p>
+              </article>
+              <article class="ficha__bloque">
+                <span class="ficha__etiqueta">Gobernanza institucional</span>
+                <p class="ficha__valor">
+                  <strong>Dependencia:</strong> {{ f.dependencia }}
+                </p>
+                <p class="ficha__nota">
+                  <strong>Ordenador:</strong> {{ f.ordenador }}
+                </p>
+              </article>
+              <article class="ficha__bloque">
+                <span class="ficha__etiqueta">Criterio y tiempos</span>
+                <p class="ficha__valor">
+                  <strong>Criterio:</strong>
+                  @if (hayCriterio) {
+                    {{ f.criterio }}
+                  } @else {
+                    <etiqueta-por-definir
+                      texto="Por definir"
+                      detalle="La solicitud no tiene criterio de selección registrado."
+                    ></etiqueta-por-definir>
+                  }
+                </p>
+                <p class="ficha__nota">
+                  <strong>Plazo de ejecución:</strong> {{ f.plazo }}
+                </p>
+              </article>
+              <article class="ficha__bloque ficha__bloque--presupuesto">
+                <span class="ficha__etiqueta">Techo presupuestal oficial (CDP)</span>
+                <p class="ficha__cifra">
+                  {{ moneda(f.valorCdp) }}
+                  <span class="ficha__unidad">COP</span>
+                </p>
+                <p class="ficha__nota">
+                  Unidad ejecutora: {{ f.unidad }}
+                </p>
+              </article>
+            </div>
+
+            <div class="ficha__distribucion">
+              <div class="ficha__distribucion-titulo">
+                <mat-icon aria-hidden="true">stacked_bar_chart</mat-icon>
+                <span>
+                  Distribución de propuestas frente al techo CDP
+                  ({{ moneda(f.valorCdp) }} COP)
+                </span>
+              </div>
+              <div
+                class="ficha__barra"
+                role="img"
+                [attr.aria-label]="
+                  'Distribución de ' +
+                  barrasPresupuesto().length +
+                  ' ofertas frente al techo presupuestal de ' +
+                  moneda(f.valorCdp) +
+                  ' pesos'
+                "
+              >
+                <span class="ficha__barra-track"></span>
+                @for (barra of barrasPresupuesto(); track barra.id) {
+                  <span
+                    class="ficha__marcador"
+                    [class.ficha__marcador--error]="barra.excede"
+                    [class.ficha__marcador--seleccionado]="barra.seleccionado"
+                    [style.left.%]="barra.ancho"
+                    [attr.title]="
+                      barra.nombre +
+                      ': ' +
+                      moneda(barra.total) +
+                      ' (' +
+                      porcentaje(barra.porcentaje) +
+                      '% del techo)'
+                    "
+                  ></span>
+                }
+              </div>
+              <ul class="ficha__leyenda">
+                @for (barra of barrasPresupuesto(); track barra.id) {
+                  <li [class.ficha__leyenda--error]="barra.excede">
+                    <span class="ficha__leyenda-punto"></span>
+                    {{ barra.nombre }} ({{ moneda(barra.total) }})
+                    @if (barra.excede) {
+                      <strong>· Fuera del presupuesto</strong>
+                    }
+                  </li>
+                }
+                <li class="ficha__leyenda--techo">
+                  Techo: {{ moneda(f.valorCdp) }} COP
+                </li>
+              </ul>
+            </div>
+          </section>
+        }
+
+        <!-- ───────────────────────── Herramientas ───────────────────────── -->
+        @if (vista() !== "sin-ofertas") {
+        <section class="comparador__herramientas" aria-label="Filtros del comparador">
+          <nav class="comparador__pestanas" aria-label="Vistas del comparador">
+            @for (tab of pestanas; track tab.id) {
+              <button
+                class="comparador__pestana"
+                type="button"
+                [class.comparador__pestana--activa]="pestana() === tab.id"
+                [attr.aria-pressed]="pestana() === tab.id"
+                (click)="pestana.set(tab.id)"
+              >
+                <mat-icon aria-hidden="true">{{ tab.icono }}</mat-icon>
+                <span>{{ tab.etiqueta }}</span>
+              </button>
+            }
+          </nav>
+
+          <div class="comparador__filtros">
+            <mat-form-field class="comparador__buscador" subscriptSizing="dynamic">
+              <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+              <input
+                matInput
+                type="search"
+                [value]="busqueda"
+                placeholder="Buscar oferente o NIT…"
+                aria-label="Buscar oferente o NIT"
+                (input)="cambiarBusqueda($any($event.target).value)"
+              />
+            </mat-form-field>
+
+            <mat-form-field class="comparador__select" subscriptSizing="dynamic">
+              <mat-label>Ordenar</mat-label>
+              <mat-select
+                [value]="orden"
+                aria-label="Ordenar ofertas"
+                (selectionChange)="cambiarOrden($event.value)"
+              >
+                @for (opcion of ordenes; track opcion.valor) {
+                  <mat-option [value]="opcion.valor">{{ opcion.etiqueta }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <mat-checkbox
+              class="comparador__check"
+              [checked]="resaltarMenor"
+              (change)="cambiarResaltado($event.checked)"
+            >
+              Resaltar menor precio
+            </mat-checkbox>
+            <mat-checkbox
+              class="comparador__check"
+              [checked]="soloDiferencias"
+              (change)="cambiarDiferencias($event.checked)"
+            >
+              Mostrar solo diferencias
+            </mat-checkbox>
+            <button
+              class="boton-recto comparador__limpiar"
+              type="button"
+              (click)="limpiarFiltros()"
+            >
+              <mat-icon aria-hidden="true">restart_alt</mat-icon>
+              Limpiar
+            </button>
+          </div>
+        </section>
+        }
+
+        @if (vista() === "sin-ofertas") {
+          <div class="comparador__estado" role="status">
+            <mat-icon aria-hidden="true">inbox</mat-icon>
+            <h2>Convocatoria sin cotizaciones registradas</h2>
+            <p>
+              La solicitud no tiene ofertas radicadas para comparar. Los
+              proveedores invitados que no presentaron oferta no se incluyen en
+              el comparador.
+            </p>
+            <div class="comparador__estado-acciones">
+              <button class="boton-recto" type="button" (click)="volverAlTablero()">
+                <mat-icon aria-hidden="true">group</mat-icon>
+                Ver tablero de oferentes
+              </button>
+              <button class="boton-recto" type="button" (click)="verSolicitud()">
+                <mat-icon aria-hidden="true">arrow_back</mat-icon>
+                Volver a la solicitud
+              </button>
+            </div>
+          </div>
+        } @else {
+          @if (vista() === "una-oferta") {
+            <div class="comparador__aviso" role="status">
+              <mat-icon aria-hidden="true">info</mat-icon>
+              <p>
+                Se requiere al menos dos ofertas para comparar. Se muestra la
+                única oferta radicada; la preselección sigue siendo una
+                recomendación y no una adjudicación.
+              </p>
+            </div>
+          }
+
+          @if (ofertasExcluidas > 0) {
+            <div class="comparador__aviso comparador__aviso--error" role="status">
+              <mat-icon aria-hidden="true">warning</mat-icon>
+              <p>
+                {{ ofertasExcluidas }}
+                {{
+                  ofertasExcluidas === 1
+                    ? "oferta supera el techo presupuestal y no se tendrá en cuenta"
+                    : "ofertas superan el techo presupuestal y no se tendrán en cuenta"
+                }}
+                para el ranking ni para el mejor valor por ítem.
+              </p>
+            </div>
+          }
+
+          @if (invitadosSinOferta > 0) {
+            <p class="comparador__nota-exclusion">
+              <mat-icon aria-hidden="true">person_off</mat-icon>
+              {{ invitadosSinOferta }}
+              {{
+                invitadosSinOferta === 1
+                  ? "invitado no presentó oferta"
+                  : "invitados no presentaron oferta"
+              }}
+              y no se incluye{{ invitadosSinOferta === 1 ? "" : "n" }} en el
+              comparador.
+            </p>
+          }
+
+          <div class="comparador__cuerpo">
+            <main class="comparador__principal">
+              @if (sinResultados) {
+                <div class="comparador__estado" role="status">
+                  <mat-icon aria-hidden="true">filter_alt_off</mat-icon>
+                  <h2>No hay ofertas que coincidan con los filtros</h2>
+                  <p>Pruebe con otros criterios o restablezca los filtros.</p>
+                  <button class="boton-recto" type="button" (click)="limpiarFiltros()">
+                    <mat-icon aria-hidden="true">restart_alt</mat-icon>
+                    Limpiar filtros
+                  </button>
+                </div>
+              } @else if (pestana() === "general") {
+                <div
+                  class="comparador__scroll"
+                  tabindex="0"
+                  role="region"
+                  aria-label="Matriz comparativa de ofertas"
+                >
+                  <table class="comparador__tabla">
+                    <caption class="visually-oculto">
+                      Comparación de criterios económicos, comerciales,
+                      documentales y de perfil entre las ofertas radicadas
+                    </caption>
+                    <thead>
+                      <tr>
+                        <th scope="col" class="comparador__th comparador__th--criterio">
+                          <span class="comparador__th-etiqueta">Criterios de cotejo</span>
+                          <span class="comparador__th-titulo">
+                            {{ ofertasVisibles.length }}
+                            {{
+                              ofertasVisibles.length === 1
+                                ? "proveedor concursante"
+                                : "proveedores concursantes"
+                            }}
+                          </span>
+                          <span class="comparador__th-nota">
+                            Comparación cruzada con el CDP
+                          </span>
+                        </th>
+                        @for (oferta of ofertasVisibles; track oferta.id) {
+                          <th
+                            scope="col"
+                            class="comparador__th comparador__th--proveedor"
+                            [class.comparador__th--seleccionado]="oferta.seleccionado"
+                          >
+                            <div class="proveedor-col">
+                              <div class="proveedor-col__chips">
+                                <chip-estado [estado]="oferta.oferente.estado"></chip-estado>
+                                @if (oferta.modificadaEl) {
+                                  <span class="comparador__badge">
+                                    Adenda {{ oferta.version }}
+                                  </span>
+                                }
+                                @if (oferta.excedePresupuesto) {
+                                  <span class="comparador__badge comparador__badge--error">
+                                    Fuera de presupuesto
+                                  </span>
+                                }
+                                @if (oferta.seleccionado) {
+                                  <span class="comparador__badge comparador__badge--seleccionado">
+                                    <mat-icon aria-hidden="true">grade</mat-icon>
+                                    Preseleccionado
+                                  </span>
+                                }
+                              </div>
+                              <span class="proveedor-col__nombre">
+                                {{ oferta.proveedor.nombre }}
+                              </span>
+                              <span class="proveedor-col__meta">
+                                {{ oferta.proveedor.nit }} · {{ oferta.identidad.ubicacion }}
+                              </span>
+                              <span class="proveedor-col__tipo">
+                                {{ oferta.identidad.etiquetaTipoPersona }}
+                              </span>
+                              @if (puedeVerOferta) {
+                                <div class="proveedor-col__acciones">
+                                  <button
+                                    class="comparador__enlace"
+                                    type="button"
+                                    [attr.aria-label]="'Ver detalle de ' + oferta.proveedor.nombre"
+                                    (click)="verOferta(oferta)"
+                                  >
+                                    Detalle de persona
+                                  </button>
+                                  <button
+                                    class="comparador__enlace"
+                                    type="button"
+                                    [attr.aria-label]="'Ver cotización de ' + oferta.proveedor.nombre"
+                                    (click)="verOferta(oferta)"
+                                  >
+                                    Ver cotización
+                                  </button>
+                                </div>
+                              }
+                            </div>
+                          </th>
+                        }
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (fila of filasVisibles; track fila.id; let indice = $index) {
+                        @if (
+                          indice === 0 ||
+                          fila.seccion !== filasVisibles[indice - 1].seccion
+                        ) {
+                          <tr class="comparador__seccion">
+                            <th
+                              scope="rowgroup"
+                              [attr.colspan]="ofertasVisibles.length + 1"
+                            >
+                              @for (seccion of secciones; track seccion.id) {
+                                @if (seccion.id === fila.seccion) {
+                                  <mat-icon aria-hidden="true">{{ seccion.icono }}</mat-icon>
+                                  <span>{{ seccion.etiqueta }}</span>
+                                }
+                              }
+                            </th>
+                          </tr>
+                        }
+                        <tr class="comparador__fila">
+                          <th scope="row" class="comparador__fila-etiqueta">
+                            <span>{{ fila.etiqueta }}</span>
+                            @if (fila.ayuda) {
+                              <span class="comparador__ayuda">{{ fila.ayuda }}</span>
+                            }
+                          </th>
+                          @for (oferta of ofertasVisibles; track oferta.id) {
+                            @let celda = celdaDe(fila, oferta);
+                            <td
+                              class="comparador__td"
+                              [class.comparador__td--numero]="fila.seccion === 'economica'"
+                              [class.comparador__td--exito]="celda.tono === 'exito'"
+                              [class.comparador__td--error]="celda.tono === 'error'"
+                              [class.comparador__td--advertencia]="celda.tono === 'advertencia'"
+                            >
+                              @if (celda.lista) {
+                                <ul class="comparador__lista-documentos">
+                                  @for (documento of celda.lista; track $index) {
+                                    <li [class.comparador__documento--falta]="!documento.ok">
+                                      <mat-icon aria-hidden="true">
+                                        {{ documento.ok ? "check_circle" : "cancel" }}
+                                      </mat-icon>
+                                      <span>{{ documento.texto }}</span>
+                                    </li>
+                                  }
+                                </ul>
+                              } @else {
+                                <span class="comparador__valor">
+                                  @if (celda.icono) {
+                                    <mat-icon aria-hidden="true">{{ celda.icono }}</mat-icon>
+                                  }
+                                  {{ celda.texto }}
+                                </span>
+                              }
+                              @if (celda.secundario) {
+                                <span class="comparador__secundario">{{ celda.secundario }}</span>
+                              }
+                              @if (resaltarMenor && celda.esMejor) {
+                                <span class="comparador__marca">
+                                  <mat-icon aria-hidden="true">verified</mat-icon>
+                                  {{ celda.etiquetaMejor }}
+                                </span>
+                              }
+                              @if (celda.ariaTexto) {
+                                <span class="visually-oculto">{{ celda.ariaTexto }}</span>
+                              }
+                            </td>
+                          }
+                        </tr>
+                      }
+
+                      <tr class="comparador__fila comparador__fila--accion">
+                        <th scope="row" class="comparador__fila-etiqueta">
+                          <span>Acción evaluadora del proceso</span>
+                          <span class="comparador__ayuda">
+                            Preselección para recomendación; no adjudica.
+                          </span>
+                        </th>
+                        @for (oferta of ofertasVisibles; track oferta.id) {
+                          <td class="comparador__td comparador__td--accion">
+                            <div class="comparador__acciones-celda">
+                              @if (oferta.seleccionado) {
+                                <span class="comparador__preseleccionada">
+                                  <mat-icon aria-hidden="true">check_circle</mat-icon>
+                                  Preseleccionada
+                                </span>
+                              } @else if (puedePreseleccionar(oferta)) {
+                                <button
+                                  class="boton-recto boton-recto--vino"
+                                  type="button"
+                                  [disabled]="preseleccionando()"
+                                  [attr.aria-label]="
+                                    'Preseleccionar la oferta de ' + oferta.proveedor.nombre
+                                  "
+                                  (click)="preseleccionar(oferta)"
+                                >
+                                  <mat-icon aria-hidden="true">how_to_reg</mat-icon>
+                                  Preseleccionar esta oferta
+                                </button>
+                              }
+                              @if (
+                                oferta.seleccionado &&
+                                puedeQuitarPreseleccion()
+                              ) {
+                                <button
+                                  class="comparador__enlace"
+                                  type="button"
+                                  [disabled]="preseleccionando()"
+                                  [attr.aria-label]="
+                                    'Quitar la preselección de ' + oferta.proveedor.nombre
+                                  "
+                                  (click)="quitarPreseleccion()"
+                                >
+                                  Quitar preselección
+                                </button>
+                              }
+                              @if (oferta.excedePresupuesto) {
+                                <span class="comparador__nota-error">
+                                  No se tendrá en cuenta
+                                </span>
+                              }
+                              @if (puedeVerOferta) {
+                                <button
+                                  class="comparador__enlace"
+                                  type="button"
+                                  [attr.aria-label]="
+                                    'Ver detalle completo de ' + oferta.proveedor.nombre
+                                  "
+                                  (click)="verOferta(oferta)"
+                                >
+                                  Ver detalle completo
+                                  <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+                                </button>
+                              }
+                            </div>
+                          </td>
+                        }
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              } @else {
+                <div
+                  class="comparador__scroll"
+                  tabindex="0"
+                  role="region"
+                  aria-label="Comparación por ítem de las ofertas"
+                >
+                  <table class="comparador__tabla comparador__tabla--items">
+                    <caption class="visually-oculto">
+                      Cotejo técnico y económico por ítem requerido
+                    </caption>
+                    <thead>
+                      <tr>
+                        <th scope="col" class="comparador__th comparador__th--item">
+                          <span class="comparador__th-etiqueta">Ítem y especificación</span>
+                          <span class="comparador__th-titulo">
+                            {{ itemsVisibles.length }} ítems requeridos
+                          </span>
+                        </th>
+                        <th scope="col" class="comparador__th comparador__th--cantidad">
+                          Cant.
+                        </th>
+                        @for (oferta of ofertasVisibles; track oferta.id) {
+                          <th
+                            scope="col"
+                            class="comparador__th comparador__th--proveedor"
+                            [class.comparador__th--seleccionado]="oferta.seleccionado"
+                          >
+                            <div class="proveedor-col proveedor-col--compacto">
+                              <span class="proveedor-col__nombre">
+                                {{ oferta.proveedor.nombre }}
+                              </span>
+                              <span class="proveedor-col__meta">
+                                {{ oferta.proveedor.nit }}
+                              </span>
+                              @if (oferta.seleccionado) {
+                                <span class="comparador__badge comparador__badge--seleccionado">
+                                  Preseleccionado
+                                </span>
+                              }
+                            </div>
+                          </th>
+                        }
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (fila of itemsVisibles; track fila.item.id) {
+                        <tr class="comparador__fila">
+                          <th scope="row" class="comparador__fila-etiqueta">
+                            <span class="comparador__item-nombre">{{ fila.item.nombre }}</span>
+                            <span class="comparador__ayuda">{{ fila.item.descripcion }}</span>
+                          </th>
+                          <td class="comparador__td comparador__td--cantidad">
+                            {{ fila.item.cantidad }} {{ fila.item.unidad }}
+                          </td>
+                          @for (oferta of ofertasVisibles; track oferta.id) {
+                            @let celda = celdaDeItem(fila, oferta);
+                            <td
+                              class="comparador__td comparador__td--numero"
+                              [class.comparador__td--exito]="celda.tono === 'exito'"
+                            >
+                              <span class="comparador__valor">{{ celda.texto }}</span>
+                              @if (celda.secundario) {
+                                <span class="comparador__secundario">{{ celda.secundario }}</span>
+                              }
+                              @if (resaltarMenor && celda.esMejor) {
+                                <span class="comparador__marca">
+                                  <mat-icon aria-hidden="true">verified</mat-icon>
+                                  {{ celda.etiquetaMejor }}
+                                </span>
+                              }
+                            </td>
+                          }
+                        </tr>
+                      }
+                      <tr class="comparador__fila comparador__fila--total">
+                        <th scope="row" colspan="2" class="comparador__fila-etiqueta">
+                          Total general calculado
+                        </th>
+                        @for (oferta of ofertasVisibles; track oferta.id) {
+                          <td class="comparador__td comparador__td--numero">
+                            <span class="comparador__valor comparador__valor--total">
+                              {{ moneda(oferta.total) }}
+                            </span>
+                            <span class="comparador__secundario">COP con IVA</span>
+                          </td>
+                        }
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              }
+            </main>
+
+            <!-- ───────────────────── Panel lateral ───────────────────── -->
+            <aside class="comparador__lateral" aria-label="Panel de evaluación">
+              <section class="panel" aria-labelledby="panel-oferentes">
+                <header class="panel__cabecera">
+                  <span class="panel__icono" aria-hidden="true">
+                    <mat-icon>fact_check</mat-icon>
+                  </span>
+                  <div>
+                    <h2 id="panel-oferentes">Evaluación del proceso</h2>
+                    <p>Fase de cotejo institucional</p>
+                  </div>
+                </header>
+
+                <span class="panel__etiqueta">
+                  Oferentes en cotejo ({{ resultado()?.ofertas?.length ?? 0 }})
+                </span>
+                <div class="panel__oferentes">
+                  @for (oferta of resultado()?.ofertas ?? []; track oferta.id) {
+                    <div
+                      class="panel__oferente"
+                      [class.panel__oferente--oculto]="estaOculto(oferta)"
+                      [class.panel__oferente--seleccionado]="oferta.seleccionado"
+                    >
+                      <div class="panel__oferente-textos">
+                        <span class="panel__punto" aria-hidden="true"></span>
+                        <span class="panel__oferente-nombre">
+                          {{ oferta.proveedor.nombre }}
+                        </span>
+                      </div>
+                      <button
+                        mat-icon-button
+                        class="panel__ojo"
+                        type="button"
+                        [attr.aria-label]="
+                          (estaOculto(oferta) ? 'Mostrar ' : 'Ocultar ') +
+                          oferta.proveedor.nombre +
+                          ' de la comparativa'
+                        "
+                        [matTooltip]="
+                          estaOculto(oferta)
+                            ? 'Mostrar en la comparativa'
+                            : 'Ocultar de la comparativa'
+                        "
+                        (click)="alternarVisibilidad(oferta)"
+                      >
+                        <mat-icon aria-hidden="true">
+                          {{ estaOculto(oferta) ? "visibility_off" : "visibility" }}
+                        </mat-icon>
+                      </button>
+                    </div>
+                  }
+                </div>
+              </section>
+
+              <section class="panel" aria-labelledby="panel-presupuesto">
+                <header class="panel__cabecera panel__cabecera--simple">
+                  <h2 id="panel-presupuesto">Comparativo presupuestal</h2>
+                  <span class="panel__techo">
+                    Techo: {{ moneda(presupuesto) }}
+                  </span>
+                </header>
+                @if (presupuesto > 0) {
+                  <div class="panel__barras">
+                    @for (barra of barrasPresupuesto(); track barra.id) {
+                      <div class="panel__barra">
+                        <div class="panel__barra-textos">
+                          <span [class.panel__barra-nombre--error]="barra.excede">
+                            {{ barra.nombre }}
+                          </span>
+                          <span>
+                            {{ moneda(barra.total) }}
+                            ({{ porcentaje(barra.porcentaje) }}%)
+                          </span>
+                        </div>
+                        <span class="panel__barra-track">
+                          <span
+                            class="panel__barra-relleno"
+                            [class.panel__barra-relleno--error]="barra.excede"
+                            [class.panel__barra-relleno--seleccionado]="barra.seleccionado"
+                            [style.width.%]="barra.ancho"
+                          ></span>
+                        </span>
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <p class="panel__vacio">Sin CDP registrado para esta solicitud.</p>
+                }
+              </section>
+
+              <section
+                class="panel panel--preseleccion"
+                aria-labelledby="panel-preseleccion"
+              >
+                <header class="panel__cabecera panel__cabecera--simple">
+                  <h2 id="panel-preseleccion">
+                    <mat-icon aria-hidden="true">verified</mat-icon>
+                    Oferta preseleccionada
+                  </h2>
+                </header>
+                @if (ofertaPreseleccionada; as preseleccionada) {
+                  <p class="panel__preseleccion-nombre">
+                    {{ preseleccionada.proveedor.nombre }}
+                  </p>
+                  <p class="panel__preseleccion-valor">
+                    {{ moneda(preseleccionada.total) }}
+                    <span>COP</span>
+                  </p>
+                  @if (ahorroPreseleccionado > 0) {
+                    <p class="panel__preseleccion-ahorro">
+                      <mat-icon aria-hidden="true">savings</mat-icon>
+                      Ahorro efectivo: {{ moneda(ahorroPreseleccionado) }} COP
+                      frente al CDP
+                    </p>
+                  }
+                  <p class="panel__preseleccion-nota">
+                    Preselección para recomendación. La decisión final
+                    corresponde al Ordenador del Gasto.
+                  </p>
+                } @else {
+                  <p class="panel__vacio">
+                    Sin oferta preseleccionada. Elija una oferta en la matriz
+                    para preparar la recomendación.
+                  </p>
+                }
+
+                <button
+                  class="boton-recto boton-recto--vino panel__continuar"
+                  type="button"
+                  [disabled]="!puedeContinuarDecision"
+                  (click)="continuarDecision()"
+                >
+                  Continuar a decisión
+                  <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+                </button>
+                @if (!puedeContinuarDecision) {
+                  <p class="panel__nota">
+                    Preseleccione una oferta para habilitar el paso a decisión.
+                  </p>
+                }
+              </section>
+            </aside>
+          </div>
+        }
+      }
+    }
+  </section>
+</plantilla-pagina-contenedora>

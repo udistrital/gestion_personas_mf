@@ -1,0 +1,46 @@
+@use "src/app/shared/styles/tokens" as t;
+@use "src/app/shared/styles/detalle-solicitud" as detalle;
+
+@include detalle.styles;
+
+:host {
+  display: block;
+}
+
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  box-sizing: border-box;
+  padding: 1.5rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-surface);
+  box-shadow: var(--agora-sombra-xs);
+}
+
+.placeholder__icono {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-primary);
+}
+
+.placeholder h2 {
+  margin: 0;
+  color: var(--agora-text);
+  font-size: 1.125rem;
+  line-height: 1.35;
+}
+
+.placeholder p {
+  max-width: 46rem;
+  margin: 0;
+  color: var(--agora-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+}

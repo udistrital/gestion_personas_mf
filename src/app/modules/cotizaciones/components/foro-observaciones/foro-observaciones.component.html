@@ -136,40 +136,59 @@
   <section class="filtros" aria-label="Filtros de observaciones">
     <div class="filtros__campo filtros__busqueda">
       <label for="foro-busqueda">Buscar observación</label>
-      <input
-        id="foro-busqueda"
-        type="search"
-        [(ngModel)]="busqueda"
-        placeholder="Palabra clave, radicado o identificación..."
-      />
+      <mat-form-field appearance="outline">
+        <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+        <input
+          matInput
+          id="foro-busqueda"
+          type="search"
+          [(ngModel)]="busqueda"
+          placeholder="Palabra clave, radicado o identificación..."
+          aria-label="Buscar observación"
+        />
+      </mat-form-field>
     </div>
     <div class="filtros__campo">
       <label for="foro-estado">Estado</label>
-      <select id="foro-estado" [(ngModel)]="estadoFiltro">
-        <option value="">Todos los estados</option>
-        <option value="pendiente">Pendientes</option>
-        <option value="respondida">Respondidas</option>
-      </select>
+      <mat-form-field appearance="outline">
+        <mat-select
+          id="foro-estado"
+          [(ngModel)]="estadoFiltro"
+          aria-label="Estado de la observación"
+        >
+          <mat-option value="">Todos los estados</mat-option>
+          <mat-option value="pendiente">Pendientes</mat-option>
+          <mat-option value="respondida">Respondidas</mat-option>
+        </mat-select>
+      </mat-form-field>
     </div>
     @if (modo === "solicitante" && autores.length > 0) {
       <div class="filtros__campo">
         <label for="foro-autor">Proveedor</label>
-        <select id="foro-autor" [(ngModel)]="autorFiltro">
-          <option value="">Todos los proveedores</option>
-          @for (autor of autores; track autor.identificacion) {
-            <option [value]="autor.identificacion">{{ autor.nombre }}</option>
-          }
-        </select>
+        <mat-form-field appearance="outline">
+          <mat-select
+            id="foro-autor"
+            [(ngModel)]="autorFiltro"
+            aria-label="Proveedor autor de la observación"
+          >
+            <mat-option value="">Todos los proveedores</mat-option>
+            @for (autor of autores; track autor.identificacion) {
+              <mat-option [value]="autor.identificacion">{{ autor.nombre }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
       </div>
     }
-    <div class="filtros__campo">
-      <label for="foro-fecha-desde">Desde</label>
-      <input id="foro-fecha-desde" type="date" [(ngModel)]="fechaDesde" />
-    </div>
-    <div class="filtros__campo">
-      <label for="foro-fecha-hasta">Hasta</label>
-      <input id="foro-fecha-hasta" type="date" [(ngModel)]="fechaHasta" />
-    </div>
+    <campo-fecha
+      etiqueta="Desde"
+      [(ngModel)]="fechaDesde"
+      [ngModelOptions]="{ standalone: true }"
+    ></campo-fecha>
+    <campo-fecha
+      etiqueta="Hasta"
+      [(ngModel)]="fechaHasta"
+      [ngModelOptions]="{ standalone: true }"
+    ></campo-fecha>
     <button
       class="filtros__limpiar"
       type="button"

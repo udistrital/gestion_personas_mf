@@ -35,21 +35,25 @@
       <label class="campo__etiqueta" for="tipo-contrato">
         Tipo de contrato <b aria-hidden="true">*</b>
       </label>
-      <span class="selector">
-        <mat-icon class="selector__icono" aria-hidden="true">description</mat-icon>
-        <select id="tipo-contrato" formControlName="tipoContrato">
-          <option value="">Seleccione el tipo de contrato</option>
+      <mat-form-field appearance="outline">
+        <mat-icon matPrefix aria-hidden="true">description</mat-icon>
+        <mat-select
+          id="tipo-contrato"
+          formControlName="tipoContrato"
+          placeholder="Seleccione el tipo de contrato"
+        >
+          <mat-option value="">Seleccione el tipo de contrato</mat-option>
           @for (opcion of tiposContrato; track opcion.valor) {
-            <option [value]="opcion.valor">{{ opcion.etiqueta }}</option>
+            <mat-option [value]="opcion.valor">{{ opcion.etiqueta }}</mat-option>
           }
-        </select>
-        <mat-icon class="selector__flecha" aria-hidden="true">
-          arrow_drop_down
-        </mat-icon>
-      </span>
+        </mat-select>
+      </mat-form-field>
       @if (mostrarError("tipoContrato", form)) {
-        <span class="mensaje-error-formulario">
-          Seleccione el tipo de contrato que ampara la presente solicitud.
+        <span class="campo__fallo" role="alert">
+          <mat-icon aria-hidden="true">error</mat-icon>
+          <span>
+            Seleccione el tipo de contrato que ampara la presente solicitud.
+          </span>
         </span>
       }
       <span class="campo__ayuda">
@@ -77,21 +81,25 @@
       <label class="campo__etiqueta" for="medio-pago">
         Medio de pago <b aria-hidden="true">*</b>
       </label>
-      <span class="selector">
-        <mat-icon class="selector__icono" aria-hidden="true">credit_card</mat-icon>
-        <select id="medio-pago" formControlName="medioPago">
-          <option value="">Seleccione el medio de pago</option>
+      <mat-form-field appearance="outline">
+        <mat-icon matPrefix aria-hidden="true">credit_card</mat-icon>
+        <mat-select
+          id="medio-pago"
+          formControlName="medioPago"
+          placeholder="Seleccione el medio de pago"
+        >
+          <mat-option value="">Seleccione el medio de pago</mat-option>
           @for (opcion of mediosPago; track opcion.valor) {
-            <option [value]="opcion.valor">{{ opcion.etiqueta }}</option>
+            <mat-option [value]="opcion.valor">{{ opcion.etiqueta }}</mat-option>
           }
-        </select>
-        <mat-icon class="selector__flecha" aria-hidden="true">
-          arrow_drop_down
-        </mat-icon>
-      </span>
+        </mat-select>
+      </mat-form-field>
       @if (mostrarError("medioPago", form)) {
-        <span class="mensaje-error-formulario">
-          Seleccione el medio de pago autorizado por la Tesorería.
+        <span class="campo__fallo" role="alert">
+          <mat-icon aria-hidden="true">error</mat-icon>
+          <span>
+            Seleccione el medio de pago autorizado por la Tesorería.
+          </span>
         </span>
       }
     </div>
@@ -116,21 +124,23 @@
       <label class="campo__etiqueta" for="forma-pago">
         Tipo de forma de pago <b aria-hidden="true">*</b>
       </label>
-      <span class="selector">
-        <mat-icon class="selector__icono" aria-hidden="true">tune</mat-icon>
-        <select id="forma-pago" formControlName="formaPago">
-          <option value="">Seleccione la forma de pago</option>
+      <mat-form-field appearance="outline">
+        <mat-icon matPrefix aria-hidden="true">tune</mat-icon>
+        <mat-select
+          id="forma-pago"
+          formControlName="formaPago"
+          placeholder="Seleccione la forma de pago"
+        >
+          <mat-option value="">Seleccione la forma de pago</mat-option>
           @for (opcion of formasPago; track opcion.valor) {
-            <option [value]="opcion.valor">{{ opcion.etiqueta }}</option>
+            <mat-option [value]="opcion.valor">{{ opcion.etiqueta }}</mat-option>
           }
-        </select>
-        <mat-icon class="selector__flecha" aria-hidden="true">
-          arrow_drop_down
-        </mat-icon>
-      </span>
+        </mat-select>
+      </mat-form-field>
       @if (mostrarError("formaPago", form)) {
-        <span class="mensaje-error-formulario">
-          Seleccione la forma de pago del contrato.
+        <span class="campo__fallo" role="alert">
+          <mat-icon aria-hidden="true">error</mat-icon>
+          <span>Seleccione la forma de pago del contrato.</span>
         </span>
       }
       <span class="campo__ayuda">
@@ -220,22 +230,26 @@
       <label class="campo__etiqueta" for="condicion-pago">
         Condición del pago <b aria-hidden="true">*</b>
       </label>
-      <div class="area-icono">
-        <mat-icon aria-hidden="true">
+      <mat-form-field appearance="outline">
+        <mat-icon matPrefix aria-hidden="true">
           {{ completo() ? "block" : "description" }}
         </mat-icon>
         <textarea
+          matInput
           id="condicion-pago"
-          class="campo__area"
           rows="3"
           formControlName="condicion"
           [readonly]="completo()"
           [placeholder]="placeholderCondicion()"
+          aria-label="Condición del pago"
         ></textarea>
-      </div>
+      </mat-form-field>
       @if (mostrarError("condicion", parametroForm)) {
-        <span class="mensaje-error-formulario">
-          Describa la condición del pago (mínimo {{ minCondicion }} caracteres).
+        <span class="campo__fallo" role="alert">
+          <mat-icon aria-hidden="true">error</mat-icon>
+          <span>
+            Describa la condición del pago (mínimo {{ minCondicion }} caracteres).
+          </span>
         </span>
       }
     </div>
@@ -244,11 +258,12 @@
       <label class="campo__etiqueta" for="porcentaje-pago">
         Porcentaje de pago <b aria-hidden="true">*</b>
       </label>
-      <span class="numero-unidad">
-        <mat-icon class="numero-unidad__icono" aria-hidden="true">
+      <mat-form-field appearance="outline">
+        <mat-icon matPrefix aria-hidden="true">
           {{ completo() || esContraentrega() ? "lock" : "percent" }}
         </mat-icon>
         <input
+          matInput
           id="porcentaje-pago"
           type="number"
           min="1"
@@ -256,19 +271,23 @@
           [attr.max]="maximoPorcentaje()"
           formControlName="porcentaje"
           [readonly]="completo() || esContraentrega()"
-          [placeholder]="maximoPorcentaje()"
+          [placeholder]="maximoPorcentaje().toString()"
+          aria-label="Porcentaje de pago"
         />
-        <span class="numero-unidad__sufijo">%</span>
-      </span>
+        <span matSuffix class="numero-unidad__sufijo">%</span>
+      </mat-form-field>
       @if (mostrarError("porcentaje", parametroForm)) {
-        <span class="mensaje-error-formulario">
-          @if (parametroForm.get("porcentaje")?.hasError("maximo")) {
-            El porcentaje no puede superar el disponible
-            ({{ maximoPorcentaje() }} %).
-          } @else {
-            Indique el porcentaje de pago (entre 1 y
-            {{ maximoPorcentaje() }} %).
-          }
+        <span class="campo__fallo" role="alert">
+          <mat-icon aria-hidden="true">error</mat-icon>
+          <span>
+            @if (parametroForm.get("porcentaje")?.hasError("maximo")) {
+              El porcentaje no puede superar el disponible
+              ({{ maximoPorcentaje() }} %).
+            } @else {
+              Indique el porcentaje de pago (entre 1 y
+              {{ maximoPorcentaje() }} %).
+            }
+          </span>
         </span>
       }
       @if (!completo()) {

@@ -1,0 +1,800 @@
+import {
+  Component,
+  DestroyRef,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { ActivatedRoute, Router } from "@angular/router";
+import { Subscription, interval } from "rxjs";
+import type { AccionDetalleProveedor } from "src/app/core/constants/estados-solicitud.const";
+import { PermisosSolicitudService } from "src/app/core/services/permisos-solicitud.service";
+import type {
+  EtiquetaLineaTiempo,
+  EventoLineaTiempo,
+} from "src/app/shared/components/linea-tiempo/linea-tiempo.component";
+import { AlertService } from "src/app/shared/services/alert.service";
+import { ResultadoResolverSolicitud } from "../../../resolvers/solicitud.resolver";
+import {
+  formatoPorcentaje,
+  type OfertaComparada,
+} from "../../../models/comparativo.model";
+import type {
+  DetalleProveedorOferta,
+  DocumentoOfertaRadicado,
+  EventoOferta,
+} from "../../../models/detalle-proveedor-oferta.model";
+import { formatoCop } from "../../../models/necesidad.model";
+import { identidadProveedor } from "../../../models/proveedores.model";
+import type { SolicitudDetalle } from "../../../models/solicitud.model";
+import type { ItemSolicitud } from "../../../models/items.model";
+import type { ItemRespuestaProveedor } from "../../../models/respuesta-proveedor.model";
+import { OferentesService } from "../../../services/oferentes.service";
+
+type EstadoVista =
+  | "cargando"
+  | "listo"
+  | "sin-oferta"
+  | "error"
+  | "bloqueado"
+  | "no-disponible"
+  | "no-encontrado";
+
+type EstadoResolucion = "ok" | "no-encontrada" | "error";
+type PestanaDetalle = "cotizacion" | "persona" | "respuesta";
+type OrigenDetalle = "comparador" | "oferentes";
+
+/** Fila de la tabla de ítems, calculada para la plantilla. */
+interface FilaItemOferta {
+  readonly item: ItemSolicitud;
+  readonly respuesta: ItemRespuestaProveedor | undefined;
+  readonly valorUnitario: number;
+  readonly subtotal: number;
+  readonly iva: number;
+  readonly total: number;
+  readonly baseGravable: number;
+  readonly etiquetaIva: string;
+  readonly nota: string;
+  readonly superaTecho: boolean;
+}
+
+/**
+ * Detalle del proveedor y su oferta (S-10).
+ *
+ * Vista de solo lectura para JD y OG. La oferta llega de `OferentesService`,
+ * que compone el tablero de S-07 y el comparativo de S-09. La decisión final no
+ * se registra aquí: el botón hacia S-11 solo navega (RN-34).
+ *
+ * RN-29 se aplica antes de consultar: antes del cierre no se exponen ofertas.
+ * La preselección reutiliza el servicio de S-09 y mantiene una sola selección
+ * por solicitud.
+ *
+ * Provisional: los datos sensibles del proveedor se muestran como "Por definir"
+ * para JD y OG; la visibilidad diferencial por rol y el desenmascaramiento con
+ * auditoría no están definidos. La subsanación (S-12) tampoco existe todavía.
+ */
+@Component({
+  selector: "app-detalle-proveedor-oferta",
+  templateUrl: "./detalle-proveedor-oferta.component.html",
+  styleUrls: ["./detalle-proveedor-oferta.component.scss"],
+  standalone: false,
+})
+export class DetalleProveedorOfertaComponent implements OnInit {
+  private readonly ruta = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly servicio = inject(OferentesService);
+  private readonly permisos = inject(PermisosSolicitudService);
+  private readonly alerta = inject(AlertService);
+  private readonly destroyRef = inject(DestroyRef);
+
+  readonly moneda = formatoCop;
+  readonly porcentaje = formatoPorcentaje;
+
+  readonly pestanas: readonly {
+    readonly id: PestanaDetalle;
+    readonly etiqueta: string;
+    readonly icono: string;
+  }[] = [
+    {
+      id: "cotizacion",
+      etiqueta: "1. Cotización",
+      icono: "request_quote",
+    },
+    {
+      id: "persona",
+      etiqueta: "2. Persona (detalle del proveedor)",
+      icono: "badge",
+    },
+    {
+      id: "respuesta",
+      etiqueta: "3. Respuesta del solicitante",
+      icono: "gavel",
+    },
+  ];
+
+  breadcrumb =
+    "<p>Gestión Proveedor › Cotizaciones › <b>Detalle del proveedor</b></p>";
+
+  readonly estadoResolucion = signal<EstadoResolucion>("ok");
+  readonly vista = signal<EstadoVista>("cargando");
+  readonly mensajeError = signal("");
+  readonly solicitud = signal<SolicitudDetalle | null>(null);
+  readonly detalle = signal<DetalleProveedorOferta | null>(null);
+  readonly pestana = signal<PestanaDetalle>("cotizacion");
+  readonly anuncio = signal("");
+  readonly procesando = signal(false);
+  readonly descargando = signal<string | null>(null);
+  readonly errorDescarga = signal("");
+
+  private proveedorId = "";
+  private origen: OrigenDetalle = "oferentes";
+  private vigiaCierre?: Subscription;
+  private cargaActual?: Subscription;
+
+  readonly oferta = computed<OfertaComparada | null>(
+    () => this.detalle()?.oferta ?? null,
+  );
+
+  readonly identidad = computed(() => {
+    const detalle = this.detalle();
+    if (!detalle) {
+      return null;
+    }
+    return (
+      detalle.oferta?.identidad ??
+      identidadProveedor(detalle.oferente.proveedor)
+    );
+  });
+
+  readonly documentos = computed<readonly DocumentoOfertaRadicado[]>(
+    () => this.detalle()?.documentos ?? [],
+  );
+
+  readonly documentoPrincipal = computed<DocumentoOfertaRadicado | null>(
+    () => this.documentos().find((documento) => documento.principal) ?? null,
+  );
+
+  readonly documentosAdicionales = computed<readonly DocumentoOfertaRadicado[]>(
+    () => this.documentos().filter((documento) => !documento.principal),
+  );
+
+  readonly resumenDocumentos = computed(() => {
+    const documentos = this.documentos();
+    return {
+      total: documentos.length,
+      cargados: documentos.filter(
+        (documento) =>
+          documento.estado === "cargado" || documento.estado === "subsanado",
+      ).length,
+      obligatorios: documentos.filter(
+        (documento) => documento.clasificacion === "obligatorio",
+      ).length,
+      complementarios: documentos.filter(
+        (documento) => documento.clasificacion === "complementario",
+      ).length,
+    };
+  });
+
+  readonly historial = computed<readonly EventoOferta[]>(
+    () => this.detalle()?.historial ?? [],
+  );
+
+  readonly lineaTiempo = computed<readonly EventoLineaTiempo[]>(() =>
+    this.historial().map((evento) => this.mapearEvento(evento)),
+  );
+
+  readonly actividades = computed(
+    () => this.detalle()?.actividades ?? [],
+  );
+
+  readonly navegacion = computed(() => this.detalle()?.navegacion ?? null);
+
+  readonly seleccionado = computed(() => this.detalle()?.seleccionado ?? false);
+
+  readonly acciones = computed<readonly AccionDetalleProveedor[]>(() => {
+    const solicitud = this.solicitud();
+    return solicitud
+      ? this.permisos.accionesDetalleProveedorPermitidas(solicitud)
+      : [];
+  });
+
+  readonly filasItems = computed<readonly FilaItemOferta[]>(() => {
+    const solicitud = this.solicitud();
+    const oferta = this.oferta();
+    if (!solicitud || !oferta) {
+      return [];
+    }
+
+    const factorDescuento =
+      oferta.subtotal > 0
+        ? oferta.oferta.totales.baseGravable / oferta.subtotal
+        : 1;
+
+    return solicitud.items.map((item) => {
+      const respuesta = oferta.oferta.items.find(
+        (fila) => fila.itemId === item.id,
+      );
+      const valorUnitario = respuesta?.valorUnitario ?? 0;
+      const subtotal = item.cantidad * valorUnitario;
+      const baseGravable = subtotal * factorDescuento;
+      const tasa = this.tasaIva(respuesta?.iva);
+      const iva = baseGravable * (tasa / 100);
+
+      return {
+        item,
+        respuesta,
+        valorUnitario,
+        subtotal,
+        iva,
+        total: baseGravable + iva,
+        baseGravable,
+        etiquetaIva: this.etiquetaIva(respuesta?.iva),
+        nota: respuesta?.nota?.trim() || "",
+        superaTecho:
+          item.valorUnitarioTecho != null &&
+          valorUnitario > item.valorUnitarioTecho,
+      };
+    });
+  });
+
+  readonly pestanasVisibles = computed(() =>
+    this.vista() === "sin-oferta"
+      ? this.pestanas.filter((pestana) => pestana.id === "persona")
+      : this.pestanas,
+  );
+
+  ngOnInit(): void {
+    const resolucion = this.ruta.snapshot.data[
+      "solicitud"
+    ] as ResultadoResolverSolicitud;
+    this.proveedorId = this.ruta.snapshot.paramMap.get("proveedorId") ?? "";
+    this.leerQueryParams();
+
+    if (resolucion.estado !== "ok") {
+      this.estadoResolucion.set(resolucion.estado);
+      if (resolucion.estado === "error") {
+        this.mensajeError.set(resolucion.mensaje);
+      }
+      return;
+    }
+
+    this.solicitud.set(resolucion.solicitud);
+    this.breadcrumb = `<p>Gestión Proveedor › Cotizaciones › Solicitud ${resolucion.solicitud.id} › Evaluación › <b>Detalle del proveedor</b></p>`;
+
+    if (!this.permisos.puedeAccederDetalleProveedor(resolucion.solicitud)) {
+      this.vista.set("no-disponible");
+      return;
+    }
+
+    if (!this.permisos.puedeVerOfertas(resolucion.solicitud)) {
+      this.vista.set("bloqueado");
+      this.vigilarCierre(resolucion.solicitud);
+      return;
+    }
+
+    this.cargar();
+    this.ruta.paramMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
+        const id = params.get("proveedorId") ?? "";
+        if (id && id !== this.proveedorId) {
+          this.proveedorId = id;
+          this.cargar();
+        }
+      });
+
+    this.ruta.queryParamMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
+        this.origen =
+          params.get("volver") === "comparador" ? "comparador" : "oferentes";
+        const tab = params.get("tab");
+        if (
+          tab &&
+          this.esPestana(tab) &&
+          this.vista() !== "sin-oferta" &&
+          this.vista() !== "cargando"
+        ) {
+          this.pestana.set(tab);
+        }
+      });
+  }
+
+  /* ── Carga ─────────────────────────────────────────────────────────────── */
+
+  cargar(): void {
+    const solicitud = this.solicitud();
+    if (!solicitud || !this.proveedorId) {
+      this.vista.set("no-encontrado");
+      return;
+    }
+
+    this.vista.set("cargando");
+    this.mensajeError.set("");
+    this.detalle.set(null);
+    this.errorDescarga.set("");
+    this.cargaActual?.unsubscribe();
+
+    this.cargaActual = this.servicio
+      .obtenerDetalleProveedor(solicitud, this.proveedorId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (detalle) => {
+          if (!detalle) {
+            this.vista.set("no-encontrado");
+            return;
+          }
+
+          this.detalle.set(detalle);
+          this.vista.set(detalle.oferta ? "listo" : "sin-oferta");
+          if (!detalle.oferta) {
+            this.pestana.set("persona");
+            this.anuncio.set(
+              `${detalle.oferente.proveedor.nombre} no presentó cotización.`,
+            );
+          } else {
+            this.anuncio.set(
+              `Detalle de ${detalle.oferente.proveedor.nombre} y su oferta cargado.`,
+            );
+          }
+        },
+        error: (error: Error) => {
+          this.mensajeError.set(
+            error.message ||
+              "No fue posible consultar el detalle del proveedor. Intente nuevamente.",
+          );
+          this.vista.set("error");
+        },
+      });
+  }
+
+  /**
+   * RN-29: si la vista queda abierta antes del cierre, al llegar la fecha se
+   * consulta la oferta sin obligar a recargar.
+   */
+  private vigilarCierre(solicitud: SolicitudDetalle): void {
+    this.vigiaCierre = interval(30_000)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        if (this.permisos.puedeVerOfertas(solicitud)) {
+          this.vigiaCierre?.unsubscribe();
+          this.solicitud.set({ ...solicitud });
+          this.cargar();
+        }
+      });
+  }
+
+  /* ── Pestañas ──────────────────────────────────────────────────────────── */
+
+  cambiarPestana(pestana: PestanaDetalle): void {
+    if (!this.pestanasVisibles().some((item) => item.id === pestana)) {
+      return;
+    }
+    this.pestana.set(pestana);
+    void this.router.navigate([], {
+      relativeTo: this.ruta,
+      queryParams: { tab: pestana },
+      queryParamsHandling: "merge",
+      replaceUrl: true,
+    });
+  }
+
+  moverPestana(direccion: 1 | -1, evento: Event): void {
+    evento.preventDefault();
+    const visibles = this.pestanasVisibles();
+    if (visibles.length < 2) {
+      return;
+    }
+    const indice = visibles.findIndex(
+      (pestana) => pestana.id === this.pestana(),
+    );
+    const siguiente =
+      visibles[(indice + direccion + visibles.length) % visibles.length];
+    this.cambiarPestana(siguiente.id);
+  }
+
+  chipPestana(pestana: PestanaDetalle): string {
+    switch (pestana) {
+      case "cotizacion":
+        return this.oferta()?.version ?? "Sin oferta";
+      case "persona":
+        return "Registro UD";
+      case "respuesta":
+        return "S-11";
+    }
+  }
+
+  private esPestana(valor: string): valor is PestanaDetalle {
+    return valor === "cotizacion" || valor === "persona" || valor === "respuesta";
+  }
+
+  private leerQueryParams(): void {
+    const params = this.ruta.snapshot.queryParamMap;
+    this.origen =
+      params.get("volver") === "comparador" ? "comparador" : "oferentes";
+    const tab = params.get("tab");
+    if (tab && this.esPestana(tab)) {
+      this.pestana.set(tab);
+    }
+  }
+
+  /* ── Permisos y acciones ───────────────────────────────────────────────── */
+
+  get puedePreseleccionar(): boolean {
+    const oferta = this.oferta();
+    return (
+      !!oferta &&
+      !oferta.excedePresupuesto &&
+      !this.seleccionado() &&
+      !this.procesando() &&
+      this.acciones().includes("preseleccionar")
+    );
+  }
+
+  get puedeQuitarPreseleccion(): boolean {
+    return (
+      this.seleccionado() &&
+      !this.procesando() &&
+      this.acciones().includes("quitar-preseleccion")
+    );
+  }
+
+  get puedeContinuarDecision(): boolean {
+    return (
+      this.seleccionado() &&
+      !this.procesando() &&
+      this.acciones().includes("continuar-decision")
+    );
+  }
+
+  get puedeDescargarCotizacion(): boolean {
+    const principal = this.documentoPrincipal();
+    return !!principal && principal.formatoValido;
+  }
+
+  get etiquetaVolver(): string {
+    return this.origen === "comparador"
+      ? "Volver al comparador"
+      : "Volver al tablero de oferentes";
+  }
+
+  get etiquetaDocumento(): string {
+    return this.identidad()?.tipoPersona === "natural"
+      ? "Documento"
+      : "NIT";
+  }
+
+  get ariaAnterior(): string {
+    const anterior = this.navegacion()?.anterior;
+    return anterior
+      ? `Oferente anterior: ${anterior.nombre}`
+      : "No hay oferente anterior";
+  }
+
+  get ariaSiguiente(): string {
+    const siguiente = this.navegacion()?.siguiente;
+    return siguiente
+      ? `Oferente siguiente: ${siguiente.nombre}`
+      : "No hay oferente siguiente";
+  }
+
+  get fechaLimite(): string {
+    const cierre = this.solicitud()?.cierre;
+    return cierre ? `${cierre} 23:59:59 COT` : "Sin fecha de cierre";
+  }
+
+  etiquetaEstadoDocumento(documento: DocumentoOfertaRadicado): string {
+    switch (documento.estado) {
+      case "cargado":
+        return "Cargado";
+      case "subsanado":
+        return "Subsanado";
+      case "pendiente":
+        return "Pendiente";
+    }
+  }
+
+  diferenciaPresupuesto(oferta: OfertaComparada): string {
+    if (oferta.valorPresupuesto <= 0) {
+      return "Sin CDP registrado";
+    }
+    if (oferta.excedePresupuesto) {
+      return `+${this.moneda(oferta.diferencia)} (${this.porcentaje(
+        oferta.porcentajePresupuesto,
+      )}% del techo)`;
+    }
+    const ahorro = Math.abs(oferta.diferencia);
+    return `-${this.moneda(ahorro)} (ahorro ${this.porcentaje(
+      (ahorro / oferta.valorPresupuesto) * 100,
+    )}%)`;
+  }
+
+  async preseleccionar(): Promise<void> {
+    const solicitud = this.solicitud();
+    const oferta = this.oferta();
+    if (!solicitud || !oferta || !this.puedePreseleccionar) {
+      return;
+    }
+
+    const reemplaza = this.detalle()?.preseleccionadoNombre ?? null;
+    const confirmacion = await this.alerta.showConfirmAlert(
+      reemplaza
+        ? `Se reemplazará la preselección de ${reemplaza} por ${oferta.proveedor.nombre}. Esta acción es una recomendación y no constituye adjudicación (RN-34).`
+        : `Se preseleccionará la oferta de ${oferta.proveedor.nombre} por ${this.moneda(oferta.total)}. Esta acción es una recomendación y no constituye adjudicación (RN-34).`,
+      reemplaza ? "Reemplazar preselección" : "Preseleccionar oferta",
+    );
+    if (!confirmacion.isConfirmed) {
+      return;
+    }
+
+    this.procesando.set(true);
+    this.servicio
+      .seleccionarOferente(solicitud, oferta.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.procesando.set(false);
+          void this.alerta.showSuccessAlert(
+            `${oferta.proveedor.nombre} quedó preseleccionada. La decisión final corresponde al Ordenador del Gasto.`,
+            "Preselección registrada",
+          );
+          this.cargar();
+        },
+        error: (error: Error) => {
+          this.procesando.set(false);
+          void this.alerta.showErrorAlert(
+            error.message ||
+              "No fue posible registrar la preselección. Intente nuevamente.",
+          );
+        },
+      });
+  }
+
+  async quitarPreseleccion(): Promise<void> {
+    const solicitud = this.solicitud();
+    const oferta = this.oferta();
+    if (!solicitud || !oferta || !this.puedeQuitarPreseleccion) {
+      return;
+    }
+
+    const confirmacion = await this.alerta.showConfirmAlert(
+      `Se retirará la preselección de ${oferta.proveedor.nombre}. La decisión final sigue en cabeza del Ordenador del Gasto.`,
+      "Quitar preselección",
+    );
+    if (!confirmacion.isConfirmed) {
+      return;
+    }
+
+    this.procesando.set(true);
+    this.servicio
+      .seleccionarOferente(solicitud, null)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.procesando.set(false);
+          void this.alerta.showSuccessAlert(
+            "La preselección fue retirada del expediente.",
+            "Preselección retirada",
+          );
+          this.cargar();
+        },
+        error: (error: Error) => {
+          this.procesando.set(false);
+          void this.alerta.showErrorAlert(
+            error.message ||
+              "No fue posible retirar la preselección. Intente nuevamente.",
+          );
+        },
+      });
+  }
+
+  continuarDecision(): void {
+    const solicitud = this.solicitud();
+    if (!solicitud || !this.puedeContinuarDecision) {
+      return;
+    }
+    const comandos = this.permisos.rutaAccionDetalleProveedor(
+      "continuar-decision",
+      solicitud.id,
+    );
+    if (comandos) {
+      void this.router.navigate(comandos);
+    }
+  }
+
+  /* ── Documentos ────────────────────────────────────────────────────────── */
+
+  verDocumento(documento: DocumentoOfertaRadicado): void {
+    this.resolverDocumento(documento, "ver");
+  }
+
+  descargarDocumento(documento: DocumentoOfertaRadicado): void {
+    this.resolverDocumento(documento, "descargar");
+  }
+
+  descargarPrincipal(): void {
+    const principal = this.documentoPrincipal();
+    if (principal) {
+      this.descargarDocumento(principal);
+    }
+  }
+
+  cerrarErrorDescarga(): void {
+    this.errorDescarga.set("");
+  }
+
+  private resolverDocumento(
+    documento: DocumentoOfertaRadicado,
+    accion: "ver" | "descargar",
+  ): void {
+    const solicitud = this.solicitud();
+    const detalle = this.detalle();
+    if (!solicitud || !detalle) {
+      return;
+    }
+
+    this.errorDescarga.set("");
+    this.descargando.set(documento.id);
+
+    this.servicio
+      .obtenerDocumentoOferta(
+        solicitud,
+        detalle.oferente.proveedor.id,
+        documento.id,
+        accion,
+      )
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (resuelto) => {
+          this.descargando.set(null);
+          if (!resuelto.disponible) {
+            this.errorDescarga.set(resuelto.mensaje);
+            return;
+          }
+          void this.alerta.showAlert(
+            accion === "ver"
+              ? "Vista previa del documento"
+              : "Descarga simulada",
+            resuelto.mensaje,
+          );
+        },
+        error: (error: Error) => {
+          this.descargando.set(null);
+          this.errorDescarga.set(
+            error.message ||
+              "No fue posible consultar el archivo en el repositorio institucional.",
+          );
+        },
+      });
+  }
+
+  /* ── Navegación ────────────────────────────────────────────────────────── */
+
+  volver(): void {
+    const solicitud = this.solicitud();
+    if (!solicitud) {
+      this.volverAlListado();
+      return;
+    }
+
+    const destino =
+      this.origen === "comparador"
+        ? ["/cotizaciones", "solicitudes", solicitud.id, "evaluacion"]
+        : ["/cotizaciones", "solicitudes", solicitud.id, "oferentes"];
+    void this.router.navigate(destino);
+  }
+
+  verSolicitud(): void {
+    const solicitud = this.solicitud();
+    if (solicitud) {
+      void this.router.navigate(["/cotizaciones", "solicitudes", solicitud.id]);
+    }
+  }
+
+  irAnterior(): void {
+    const anterior = this.navegacion()?.anterior;
+    if (anterior) {
+      this.irAProveedor(anterior.id);
+    }
+  }
+
+  irSiguiente(): void {
+    const siguiente = this.navegacion()?.siguiente;
+    if (siguiente) {
+      this.irAProveedor(siguiente.id);
+    }
+  }
+
+  private irAProveedor(proveedorId: string): void {
+    const solicitud = this.solicitud();
+    if (!solicitud) {
+      return;
+    }
+    void this.router.navigate(
+      [
+        "/cotizaciones",
+        "solicitudes",
+        solicitud.id,
+        "evaluacion",
+        "proveedores",
+        proveedorId,
+      ],
+      { queryParamsHandling: "preserve" },
+    );
+  }
+
+  volverAlListado(): void {
+    void this.router.navigate(["/cotizaciones", "solicitudes"]);
+  }
+
+  reintentarResolucion(): void {
+    void this.router.navigate([], {
+      relativeTo: this.ruta,
+      queryParams: { reintento: Date.now() },
+      queryParamsHandling: "merge",
+    });
+  }
+
+  reintentarCarga(): void {
+    this.cargar();
+  }
+
+  /* ── Utilidades de la oferta ───────────────────────────────────────────── */
+
+  private tasaIva(tipo: string | undefined): number {
+    switch (tipo) {
+      case "19":
+        return 19;
+      case "5":
+        return 5;
+      default:
+        return 0;
+    }
+  }
+
+  private etiquetaIva(tipo: string | undefined): string {
+    switch (tipo) {
+      case "19":
+        return "19%";
+      case "5":
+        return "5%";
+      case "0":
+        return "0%";
+      case "excluido":
+        return "Excluido";
+      case "exento":
+        return "Exento";
+      default:
+        return "—";
+    }
+  }
+
+  private mapearEvento(evento: EventoOferta): EventoLineaTiempo {
+    const etiquetas: EtiquetaLineaTiempo[] = [
+      {
+        texto: evento.etiqueta,
+        tono: evento.tono === "neutro" ? "neutro" : "primario",
+      },
+    ];
+
+    return {
+      id: evento.id,
+      titulo: evento.titulo,
+      icono: evento.icono,
+      tono: evento.tono,
+      fecha: evento.fecha,
+      fechaIso: evento.fechaIso,
+      etiquetas,
+      resultado: { texto: evento.resultado, tono: "primario" },
+      detalle: evento.detalleHtml,
+      autor: {
+        usuario: evento.autor,
+        nombre: evento.autor,
+        rol: evento.rol,
+      },
+      evidencia: evento.evidencia,
+    };
+  }
+}

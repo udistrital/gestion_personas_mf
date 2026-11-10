@@ -132,12 +132,77 @@ const OBSERVACIONES_INICIALES: readonly Observacion[] = [
     },
   },
   {
+    id: "OBS-0039-01",
+    solicitudId: "SOL-2026-0039",
+    radicado: "OBS-2026-0039-01",
+    autor: {
+      nombre: "Redes y Servidores de Colombia S.A.S.",
+      tipo: "persona-juridica",
+      identificacion: "NIT: 900.842.119-4",
+    },
+    fechaIso: "2026-02-10T09:20:00-05:00",
+    fecha: "10/02/2026 09:20 COT",
+    contenidoHtml:
+      "<p>Solicitamos confirmar si el mantenimiento preventivo incluye el reemplazo de componentes con desgaste y cuál es el tiempo de respuesta para incidentes críticos.</p>",
+    respuesta: {
+      contenidoHtml:
+        "<p>El mantenimiento incluye repuestos de desgaste y el tiempo de respuesta para incidentes críticos es de cuatro horas en sitio.</p>",
+      autor: "División de TI",
+      rol: "Solicitante",
+      fechaIso: "2026-02-10T15:05:00-05:00",
+      fecha: "10/02/2026 15:05 COT",
+      visibilidad: "privada",
+    },
+  },
+  {
+    id: "OBS-0039-02",
+    solicitudId: "SOL-2026-0039",
+    radicado: "OBS-2026-0039-02",
+    autor: {
+      nombre: "Sistemas Integrados Andinos LTDA",
+      tipo: "persona-juridica",
+      identificacion: "NIT: 860.015.442-9",
+    },
+    fechaIso: "2026-02-11T11:10:00-05:00",
+    fecha: "11/02/2026 11:10 COT",
+    contenidoHtml:
+      "<p>¿La supervisión del contrato exige dedicación exclusiva o puede ser compartida con otros procesos de la dependencia?</p>",
+  },
+  {
+    id: "OBS-0039-03",
+    solicitudId: "SOL-2026-0039",
+    radicado: "OBS-2026-0039-03",
+    autor: {
+      nombre: "Cibernética Aplicada S.A.S.",
+      tipo: "persona-juridica",
+      identificacion: "NIT: 900.557.301-8",
+    },
+    fechaIso: "2026-02-12T08:45:00-05:00",
+    fecha: "12/02/2026 08:45 COT",
+    contenidoHtml:
+      "<p>Solicitamos aclarar el alcance de las licencias de virtualización incluidas y si el soporte debe ser directo del fabricante.</p>",
+  },
+  {
+    id: "OBS-0039-04",
+    solicitudId: "SOL-2026-0039",
+    radicado: "OBS-2026-0039-04",
+    autor: {
+      nombre: "Consultoría Informática Bogotá S.A.S.",
+      tipo: "persona-juridica",
+      identificacion: "NIT: 830.114.908-1",
+    },
+    fechaIso: "2026-02-13T16:30:00-05:00",
+    fecha: "13/02/2026 16:30 COT",
+    contenidoHtml:
+      "<p>¿Se permite presentar alternativas técnicas equivalentes para los servidores, siempre que cumplan las especificaciones mínimas del pliego?</p>",
+  },
+  {
     id: "OBS-084",
     solicitudId: "SOL-2026-0044",
     radicado: "OBS-084",
     autor: AUTOR_EMPRESA,
-    fechaIso: "2026-10-09T11:24:00-05:00",
-    fecha: "09/10/2026 11:24 COT",
+    fechaIso: "2026-02-06T11:24:00-05:00",
+    fecha: "06/02/2026 11:24 COT",
     contenidoHtml:
       "<p>Respecto al <strong>ítem 04 (Cableado Estructurado)</strong>, solicitamos aclarar si los 40 puntos deben incluir certificación categoría 6A blindada F/UTP o si se admite cableado U/UTP.</p><p>También sugerimos ampliar el plazo de entrega a 45 días hábiles.</p>",
     respuesta: {
@@ -145,8 +210,8 @@ const OBSERVACIONES_INICIALES: readonly Observacion[] = [
         "<p>La dependencia técnica aclara que se mantiene la exigencia de categoría 6A F/UTP blindada. El plazo de entrega será de 40 días hábiles.</p>",
       autor: "Raúl Quimbaya",
       rol: "Ordenador del Gasto",
-      fechaIso: "2026-10-09T16:15:00-05:00",
-      fecha: "09/10/2026 16:15 COT",
+      fechaIso: "2026-02-06T16:15:00-05:00",
+      fecha: "06/02/2026 16:15 COT",
       visibilidad: "privada",
     },
   },
@@ -155,8 +220,8 @@ const OBSERVACIONES_INICIALES: readonly Observacion[] = [
     solicitudId: "SOL-2026-0044",
     radicado: "OBS-079",
     autor: AUTOR_EMPRESA_RED,
-    fechaIso: "2026-10-08T15:40:00-05:00",
-    fecha: "08/10/2026 15:40 COT",
+    fechaIso: "2026-02-05T15:40:00-05:00",
+    fecha: "05/02/2026 15:40 COT",
     contenidoHtml:
       "<p>Solicitamos confirmar si la póliza de seriedad debe constituirse por el 10% del presupuesto oficial o del valor cotizado por cada proponente.</p>",
     respuesta: {
@@ -164,8 +229,8 @@ const OBSERVACIONES_INICIALES: readonly Observacion[] = [
         "<p>La garantía de seriedad debe amparar el 10% del valor total de la oferta radicada con IVA incluido por cada proponente.</p>",
       autor: "Ricardo Gómez Morales",
       rol: "Ordenador del Gasto",
-      fechaIso: "2026-10-08T17:15:00-05:00",
-      fecha: "08/10/2026 17:15 COT",
+      fechaIso: "2026-02-05T17:15:00-05:00",
+      fecha: "05/02/2026 17:15 COT",
       visibilidad: "privada",
     },
   },
@@ -174,8 +239,8 @@ const OBSERVACIONES_INICIALES: readonly Observacion[] = [
     solicitudId: "SOL-2026-0044",
     radicado: "OBS-089",
     autor: AUTOR_PERSONA,
-    fechaIso: "2026-10-10T09:12:00-05:00",
-    fecha: "10/10/2026 09:12 COT",
+    fechaIso: "2026-02-07T09:12:00-05:00",
+    fecha: "07/02/2026 09:12 COT",
     contenidoHtml:
       "<p>Consulta técnica sobre el soporte 24x7 del ítem 02. ¿Se requiere partner con certificación nivel Titanium o se admite nivel Gold?</p>",
   },

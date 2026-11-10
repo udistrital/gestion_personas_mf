@@ -1,0 +1,20 @@
+<plantilla-pagina-contenedora [breadcrumb]="breadcrumb" [title]="titulo">
+  <section class="placeholder" aria-labelledby="placeholder-titulo">
+    <span class="placeholder__icono" aria-hidden="true">
+      <mat-icon>construction</mat-icon>
+    </span>
+    <h2 id="placeholder-titulo">{{ titulo }}</h2>
+    <etiqueta-por-definir
+      texto="Por definir"
+      [detalle]="'La pantalla ' + pantalla + ' aún no está implementada en esta entrega.'"
+    ></etiqueta-por-definir>
+    <p>
+      Esta funcionalidad corresponde a una fase posterior del módulo de
+      cotizaciones y se habilitará cuando se implemente su pantalla.
+    </p>
+    <button class="boton-recto" type="button" (click)="volver()">
+      <mat-icon aria-hidden="true">arrow_back</mat-icon>
+      <span>Volver</span>
+    </button>
+  </section>
+</plantilla-pagina-contenedora>

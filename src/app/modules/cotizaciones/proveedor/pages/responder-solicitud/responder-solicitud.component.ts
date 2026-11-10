@@ -27,6 +27,7 @@ import type {
   SolicitudDetalleProveedor,
 } from "../../../models/invitacion-proveedor.model";
 import {
+  FORMATOS_SOPORTE_OFERTA,
   calcularTotalesRespuesta,
   ItemRespuestaProveedor,
   ModalidadCotizacion,
@@ -67,7 +68,6 @@ type EstadoVista =
 
 const PASO_INICIAL = 1;
 const PASO_FINAL = 4;
-const FORMATOS_RESPUESTA = ["pdf", "xls", "xlsx", "doc", "docx"] as const;
 
 function maximoTextoEnriquecido(maximo: number) {
   return (control: AbstractControl): ValidationErrors | null => {
@@ -120,7 +120,7 @@ export class ResponderSolicitudComponent implements OnInit {
   paginaRevision = 0;
   porPaginaRevision = 5;
   readonly opcionesPorPagina = [5, 10, 25];
-  readonly formatos = FORMATOS_RESPUESTA;
+  readonly formatos = FORMATOS_SOPORTE_OFERTA;
   readonly pasos = [
     { numero: 1, nombre: "Elementos y servicios", subtitulo: "Oferta económica" },
     { numero: 2, nombre: "Vigencia y descuentos", subtitulo: "Condiciones comerciales" },

@@ -36,6 +36,7 @@ export interface FiltroRapido {
   templateUrl: "./listado-filtros.component.html",
   styleUrls: ["./listado-filtros.component.scss"],
   standalone: false,
+  host: { class: "formulario-material" },
 })
 export class ListadoFiltrosComponent implements OnChanges {
   @Input({ required: true }) campos: readonly CampoFiltro[] = [];

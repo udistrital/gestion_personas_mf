@@ -71,6 +71,28 @@
                 </button>
               }
 
+              @if (puedeVerOferentes()) {
+                <button
+                  class="boton-recto"
+                  type="button"
+                  (click)="ejecutarAccion('oferentes')"
+                >
+                  <mat-icon aria-hidden="true">group</mat-icon>
+                  <span>Tablero de oferentes</span>
+                </button>
+              }
+
+              @if (puedeVerComparador()) {
+                <button
+                  class="boton-recto"
+                  type="button"
+                  (click)="abrirComparador()"
+                >
+                  <mat-icon aria-hidden="true">balance</mat-icon>
+                  <span>Comparador de cotizaciones</span>
+                </button>
+              }
+
               <button
                 class="boton-recto"
                 type="button"
