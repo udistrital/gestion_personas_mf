@@ -1,0 +1,363 @@
+<plantilla-pagina-contenedora
+  [breadcrumb]="breadcrumb"
+  title="Invitar proveedores al estudio de mercado"
+  [mostrarBotonRegresar]="true"
+  (regresar)="volver()"
+>
+  <section class="crear-estudio" aria-labelledby="crear-estudio-titulo">
+    @if (vistaEstudio() === "sin-permiso") {
+      <div class="crear-estudio__estado" role="status">
+        <mat-icon aria-hidden="true">shield_person</mat-icon>
+        <h2 id="crear-estudio-titulo">Acceso restringido</h2>
+        <p>
+          La búsqueda e invitación de proveedores está disponible para el Jefe
+          de Dependencia y el Ordenador del Gasto.
+        </p>
+        <button mat-stroked-button class="boton-secundario-estudio" type="button" (click)="volver()">
+          <mat-icon aria-hidden="true">arrow_back</mat-icon>
+          Volver al listado
+        </button>
+      </div>
+    } @else if (vistaEstudio() === "no-encontrado") {
+      <div class="crear-estudio__estado" role="status">
+        <mat-icon aria-hidden="true">search_off</mat-icon>
+        <h2 id="crear-estudio-titulo">Estudio no encontrado</h2>
+        <p>No existe un estudio de mercado con ese identificador.</p>
+        <button mat-stroked-button class="boton-secundario-estudio" type="button" (click)="volver()">
+          <mat-icon aria-hidden="true">arrow_back</mat-icon>
+          Volver al listado
+        </button>
+      </div>
+    } @else if (vistaEstudio() === "error") {
+      <div class="crear-estudio__estado crear-estudio__estado--error" role="alert">
+        <mat-icon aria-hidden="true">error_outline</mat-icon>
+        <h2 id="crear-estudio-titulo">No pudimos cargar el estudio</h2>
+        <p>
+          {{
+            mensajeError() ||
+              "Ocurrió un problema al consultar el estudio. Intente nuevamente."
+          }}
+        </p>
+        <div class="crear-estudio__estado-acciones">
+          <button mat-stroked-button class="boton-secundario-estudio" type="button" (click)="volver()">
+            <mat-icon aria-hidden="true">arrow_back</mat-icon>
+            Volver al listado
+          </button>
+          <button mat-stroked-button class="boton-secundario-estudio" type="button" (click)="reintentarCarga()">
+            <mat-icon aria-hidden="true">refresh</mat-icon>
+            Reintentar
+          </button>
+        </div>
+      </div>
+    } @else if (vistaEstudio() === "cargando") {
+      <div class="crear-estudio__esqueleto" aria-busy="true" aria-live="polite">
+        <span class="visually-oculto">Cargando el estudio de mercado…</span>
+        <span class="crear-estudio__esqueleto-bloque" aria-hidden="true"></span>
+        <span class="crear-estudio__esqueleto-bloque" aria-hidden="true"></span>
+      </div>
+    } @else if (estudio(); as actual) {
+      <header class="crear-estudio__cabecera">
+        <div class="crear-estudio__textos">
+          <div class="crear-estudio__chips">
+            <h1 id="crear-estudio-titulo" class="crear-estudio__titulo">
+              Buscar e invitar proveedores
+            </h1>
+            @if (estado(); as estadoActual) {
+              <chip-estado [estado]="estadoActual"></chip-estado>
+            }
+            <span class="crear-estudio__chip">{{ actual.id }}</span>
+            <span class="crear-estudio__chip">Vigencia {{ actual.vigencia }}</span>
+          </div>
+          <p class="crear-estudio__objeto">{{ actual.objeto }}</p>
+          <p class="crear-estudio__descripcion">
+            {{ actual.dependencia }} · {{ actual.solicitudId }} ·
+            Fecha límite: {{ formatoFecha(actual.fechaLimite) }}
+          </p>
+        </div>
+        <button mat-stroked-button class="boton-secundario-estudio" type="button" (click)="volver()">
+          <mat-icon aria-hidden="true">arrow_back</mat-icon>
+          Volver al listado
+        </button>
+      </header>
+
+      @if (!puedeInvitar()) {
+        <div class="crear-estudio__aviso" role="note">
+          <mat-icon aria-hidden="true">lock_clock</mat-icon>
+          <p>
+            El estudio está {{ etiquetaEstado().toLowerCase() }} y no admite
+            nuevas invitaciones. Puede consultar los proveedores, pero no
+            enviar invitaciones.
+          </p>
+        </div>
+      }
+
+      <p class="visually-oculto" aria-live="polite">{{ anuncio() }}</p>
+
+      <div class="crear-estudio__workspace" [formGroup]="formulario">
+        <aside class="crear-estudio__panel" aria-label="Criterios de búsqueda">
+          <selector-actividades-estudio
+            [form]="formulario"
+            [tipoNecesidad]="tipoNecesidad()"
+            [deshabilitado]="!puedeInvitar()"
+          ></selector-actividades-estudio>
+
+          <div class="crear-estudio__filtros">
+            <div class="crear-estudio__filtros-cabecera">
+              <mat-icon aria-hidden="true">filter_alt</mat-icon>
+              <h2>Filtros de búsqueda</h2>
+            </div>
+
+            <div class="campo">
+              <label class="campo__etiqueta" for="filtro-tipo-persona">
+                Tipo de persona
+              </label>
+              <mat-form-field appearance="outline">
+                <mat-select id="filtro-tipo-persona" formControlName="tipoPersona">
+                  @for (tipo of tiposPersona; track tipo[0]) {
+                    <mat-option [value]="tipo[0]">{{ tipo[1] }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <div class="campo">
+              <label class="campo__etiqueta" for="filtro-departamento">
+                Departamento
+              </label>
+              <mat-form-field appearance="outline">
+                <mat-select
+                  id="filtro-departamento"
+                  formControlName="departamento"
+                >
+                  <mat-option value="">Todos los departamentos</mat-option>
+                  @for (departamento of departamentos; track departamento) {
+                    <mat-option [value]="departamento">{{ departamento }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <div class="campo">
+              <label class="campo__etiqueta" for="filtro-ciudad">Ciudad</label>
+              <mat-form-field appearance="outline">
+                <mat-select id="filtro-ciudad" formControlName="ciudad">
+                  <mat-option value="">Todas las ciudades</mat-option>
+                  @for (ciudad of ciudades(); track ciudad) {
+                    <mat-option [value]="ciudad">{{ ciudad }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <div class="campo">
+              <label class="campo__etiqueta" for="filtro-inscripcion">
+                Estado de inscripción
+              </label>
+              <mat-form-field appearance="outline">
+                <mat-select
+                  id="filtro-inscripcion"
+                  formControlName="estadoInscripcion"
+                >
+                  <mat-option value="">Todos los estados</mat-option>
+                  @for (estado of estadosInscripcion; track estado[0]) {
+                    <mat-option [value]="estado[0]">{{ estado[1] }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <div class="campo">
+              <label class="campo__etiqueta" for="filtro-palabra">
+                Palabra clave
+              </label>
+              <mat-form-field appearance="outline">
+                <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+                <input
+                  matInput
+                  id="filtro-palabra"
+                  type="search"
+                  formControlName="palabraClave"
+                  placeholder="Razón social, NIT o CIIU…"
+                  aria-label="Palabra clave de búsqueda"
+                />
+              </mat-form-field>
+            </div>
+
+            <div class="crear-estudio__filtros-acciones">
+              <button mat-stroked-button class="boton-secundario-estudio" type="button" (click)="limpiarFiltros()">
+                <mat-icon aria-hidden="true">restart_alt</mat-icon>
+                Limpiar
+              </button>
+              <button
+                mat-flat-button
+                class="boton-primario"
+                type="button"
+                (click)="buscarExplicito()"
+              >
+                <mat-icon aria-hidden="true">search</mat-icon>
+                Buscar proveedores
+              </button>
+            </div>
+
+            <div class="crear-estudio__nota" role="note">
+              <mat-icon aria-hidden="true">verified</mat-icon>
+              <p>
+                La consulta considera únicamente información registrada y con
+                validación vigente en el Banco Oficial de Proveedores de la
+                Universidad Distrital.
+              </p>
+            </div>
+          </div>
+        </aside>
+
+        <section class="crear-estudio__resultados" aria-label="Resultados de proveedores">
+          <div class="crear-estudio__resultados-cabecera">
+            <div>
+              <h2 class="crear-estudio__resultados-titulo">
+                {{ total() }}
+                {{ total() === 1 ? "proveedor encontrado" : "proveedores encontrados" }}
+              </h2>
+              <p class="crear-estudio__resultados-texto">
+                Empresas y profesionales validados con coincidencia en las
+                actividades CIIU seleccionadas.
+              </p>
+            </div>
+            <div class="crear-estudio__orden">
+              <label class="campo__etiqueta" for="filtro-orden">Ordenar por</label>
+              <mat-form-field appearance="outline">
+                <mat-select id="filtro-orden" formControlName="orden">
+                  @for (orden of ordenes; track orden.valor) {
+                    <mat-option [value]="orden.valor">{{ orden.etiqueta }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </div>
+
+          @if (vistaProveedores() === "inicial") {
+            <div class="crear-estudio__estado crear-estudio__estado--resultados">
+              <mat-icon aria-hidden="true">manage_search</mat-icon>
+              <h3>Comience definiendo las actividades económicas</h3>
+              <p>
+                Para consultar el Banco Oficial de Proveedores, seleccione al
+                menos una actividad económica CIIU en el panel de la izquierda.
+              </p>
+            </div>
+          } @else if (vistaProveedores() === "error") {
+            <div class="crear-estudio__estado crear-estudio__estado--error crear-estudio__estado--resultados" role="alert">
+              <mat-icon aria-hidden="true">cloud_off</mat-icon>
+              <h3>Error de comunicación con el servicio de proveedores</h3>
+              <p>
+                {{
+                  mensajeError() ||
+                    "No fue posible validar la base de datos centralizada. Intente nuevamente."
+                }}
+              </p>
+              <button mat-stroked-button class="boton-secundario-estudio" type="button" (click)="buscarExplicito()">
+                <mat-icon aria-hidden="true">refresh</mat-icon>
+                Reintentar consulta
+              </button>
+            </div>
+          } @else if (vistaProveedores() === "cargando") {
+            <tabla-proveedores-estudio
+              [proveedores]="proveedores()"
+              [seleccionados]="seleccionados()"
+              [seleccionParcial]="seleccionParcial()"
+              [seleccionTotal]="seleccionTotal()"
+              [cargando]="true"
+              [total]="total()"
+              [pagina]="pagina()"
+              [porPagina]="porPagina()"
+            ></tabla-proveedores-estudio>
+          } @else if (total() === 0) {
+            <div class="crear-estudio__estado crear-estudio__estado--resultados">
+              <mat-icon aria-hidden="true">search_off</mat-icon>
+              <h3>No se hallaron proveedores con los criterios indicados</h3>
+              <p>
+                Ninguna entidad registrada coincide con la combinación de
+                actividades y filtros seleccionados. Amplíe las actividades o
+                retire filtros de ubicación.
+              </p>
+              <button mat-stroked-button class="boton-secundario-estudio" type="button" (click)="limpiarFiltros()">
+                <mat-icon aria-hidden="true">restart_alt</mat-icon>
+                Restablecer filtros
+              </button>
+            </div>
+          } @else {
+            <tabla-proveedores-estudio
+              [proveedores]="proveedores()"
+              [seleccionados]="seleccionados()"
+              [seleccionParcial]="seleccionParcial()"
+              [seleccionTotal]="seleccionTotal()"
+              [cargando]="false"
+              [seleccionable]="puedeInvitar()"
+              [total]="total()"
+              [pagina]="pagina()"
+              [porPagina]="porPagina()"
+              (toggleProveedor)="toggleProveedor($event)"
+              (toggleTodos)="toggleTodos($event)"
+              (verDetalle)="abrirDetalleProveedor($event)"
+              (invitarProveedor)="invitarProveedor($event)"
+              (cambiarPagina)="cambiarPagina($event)"
+              (cambiarPorPagina)="cambiarPorPagina($event)"
+            ></tabla-proveedores-estudio>
+          }
+        </section>
+      </div>
+
+      <section class="crear-estudio__pendientes" aria-label="Definiciones pendientes de gobernanza">
+        <h2>Definiciones pendientes de gobernanza</h2>
+        <div class="crear-estudio__pendientes-lista">
+          <etiqueta-por-definir
+            texto="SNIES no restrictivo"
+            detalle="RN-03 y RN-15 están en conflicto; por ahora el SNIES se registra pero no filtra la búsqueda."
+          ></etiqueta-por-definir>
+          <etiqueta-por-definir
+            texto="Reporte RN-19"
+            detalle="El mockup no muestra la acción de descarga; el servicio ya expone generarReporteProveedores para una fase posterior."
+          ></etiqueta-por-definir>
+          <etiqueta-por-definir
+            texto="Contacto CA-028"
+            detalle="El correo y el teléfono se muestran enmascarados; los permisos finos de consulta están por definir."
+          ></etiqueta-por-definir>
+        </div>
+      </section>
+
+      @if (puedeInvitar() && seleccionadosProveedores().length > 0) {
+        <div class="crear-estudio__dock" role="status" aria-live="polite">
+          <div class="crear-estudio__dock-info">
+            <span class="crear-estudio__dock-contador">
+              {{ seleccionadosProveedores().length }}
+            </span>
+            <div>
+              <strong>
+                {{ seleccionadosProveedores().length }}
+                {{
+                  seleccionadosProveedores().length === 1
+                    ? "proveedor seleccionado"
+                    : "proveedores seleccionados"
+                }}
+                para invitar
+              </strong>
+              <span>Cumplen con las actividades CIIU del estudio.</span>
+            </div>
+          </div>
+          <div class="crear-estudio__dock-acciones">
+            <button mat-stroked-button class="boton-secundario-estudio" type="button" (click)="limpiarSeleccion()">
+              Limpiar selección
+            </button>
+            <button
+              mat-flat-button
+              class="boton-primario"
+              type="button"
+              (click)="abrirInvitacion()"
+            >
+              <mat-icon aria-hidden="true">forward_to_inbox</mat-icon>
+              Invitar al estudio de mercado
+            </button>
+          </div>
+        </div>
+      }
+    }
+  </section>
+</plantilla-pagina-contenedora>

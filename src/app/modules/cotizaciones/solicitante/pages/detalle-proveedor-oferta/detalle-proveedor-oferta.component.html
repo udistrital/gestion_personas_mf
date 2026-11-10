@@ -1,6 +1,8 @@
 <plantilla-pagina-contenedora
   [breadcrumb]="breadcrumb"
   title="Detalle del proveedor y su oferta"
+  [mostrarBotonRegresar]="true"
+  (regresar)="volverListaSolicitudes()"
 >
   <section class="detalle-oferta">
     <!-- ───────────────────────── Solicitud no encontrada ───────────────────── -->
@@ -44,7 +46,8 @@
               [direccion]="identidad()?.direccionFiscal ?? ''"
               [representante]="identidad()?.representante ?? ''"
               [estado]="d.oferente.estado"
-              [seleccionado]="seleccionado()"
+              [seleccionado]="!!estadoDecision()"
+              [etiquetaSeleccion]="etiquetaDecision()"
               [version]="d.versionVigente"
               [modificadaEl]="d.oferente.respuesta?.modificadaEl ?? ''"
               [nivelTitulo]="2"
@@ -109,43 +112,24 @@
             <span>Ver pliego / Solicitud original</span>
           </button>
 
+          @if (puedeAbrirSubsanacion) {
+            <button class="boton-recto" type="button" (click)="abrirSubsanacion()">
+              <mat-icon aria-hidden="true">fact_check</mat-icon>
+              <span>{{ etiquetaSubsanacion }}</span>
+            </button>
+          }
+
           <span class="detalle-oferta__acciones-espaciador" aria-hidden="true"></span>
 
-          @if (vista() === "listo") {
-            @if (!seleccionado() && puedePreseleccionar) {
-              <button
-                class="boton-recto boton-recto--vino"
-                type="button"
-                [disabled]="procesando()"
-                (click)="preseleccionar()"
-              >
-                <mat-icon aria-hidden="true">how_to_reg</mat-icon>
-                <span>Preseleccionar esta oferta</span>
-              </button>
-            }
-            @if (seleccionado()) {
-              @if (acciones().includes("continuar-decision")) {
-                <button
-                  class="boton-recto boton-recto--vino"
-                  type="button"
-                  [disabled]="!puedeContinuarDecision"
-                  (click)="continuarDecision()"
-                >
-                  <mat-icon aria-hidden="true">arrow_forward</mat-icon>
-                  <span>Continuar a decisión (S-11)</span>
-                </button>
-              }
-              @if (acciones().includes("quitar-preseleccion")) {
-                <button
-                  class="detalle-oferta__enlace"
-                  type="button"
-                  [disabled]="!puedeQuitarPreseleccion"
-                  (click)="quitarPreseleccion()"
-                >
-                  Quitar preselección
-                </button>
-              }
-            }
+          @if (vista() === "listo" && puedeEnviarAValidacion) {
+            <button
+              class="boton-recto boton-recto--vino"
+              type="button"
+              (click)="continuarDecision()"
+            >
+              <mat-icon aria-hidden="true">send</mat-icon>
+              <span>Enviar a validación</span>
+            </button>
           }
         </div>
 
@@ -157,10 +141,23 @@
             </span>
             <chip-estado [estado]="s.estado"></chip-estado>
             <span class="chip chip--recto">Vigencia {{ s.vigencia }}</span>
-            @if (d.preseleccionadoNombre) {
-              <span class="chip chip--info">
-                <mat-icon aria-hidden="true">grade</mat-icon>
-                Preselección vigente: {{ d.preseleccionadoNombre }}
+            @if (estadoDecision(); as estado) {
+              <span
+                class="chip"
+                [class.chip--info]="estado === 'pendiente'"
+                [class.chip--exito]="estado === 'aprobada'"
+                [class.detalle-oferta__chip--rechazo]="estado === 'rechazada'"
+              >
+                <mat-icon aria-hidden="true">
+                  {{
+                    estado === "pendiente"
+                      ? "pending_actions"
+                      : estado === "aprobada"
+                        ? "verified"
+                        : "cancel"
+                  }}
+                </mat-icon>
+                {{ etiquetaDecision() }}
               </span>
             }
           </div>
@@ -200,10 +197,6 @@
             <contador-regresivo [fechaCierre]="s.cierre"></contador-regresivo>
             <span>Fecha límite: {{ fechaLimite }}</span>
           </div>
-          <etiqueta-por-definir
-            texto="Por definir"
-            detalle="Visibilidad de las cotizaciones antes del cierre."
-          ></etiqueta-por-definir>
           <button class="boton-recto" type="button" (click)="volver()">
             <mat-icon aria-hidden="true">arrow_back</mat-icon>
             {{ etiquetaVolver }}
@@ -314,12 +307,32 @@
                 </div>
               }
 
-              @if (seleccionado()) {
-                <div class="detalle-oferta__aviso detalle-oferta__aviso--seleccion" role="status">
-                  <mat-icon aria-hidden="true">grade</mat-icon>
+              @if (estadoDecision(); as estado) {
+                <div
+                  class="detalle-oferta__aviso"
+                  [class.detalle-oferta__aviso--seleccion]="estado === 'pendiente'"
+                  [class.detalle-oferta__aviso--exito]="estado === 'aprobada'"
+                  [class.detalle-oferta__aviso--error]="estado === 'rechazada'"
+                  role="status"
+                >
+                  <mat-icon aria-hidden="true">
+                    {{
+                      estado === "pendiente"
+                        ? "pending_actions"
+                        : estado === "aprobada"
+                          ? "verified"
+                          : "cancel"
+                    }}
+                  </mat-icon>
                   <p>
-                    Oferta preseleccionada por el Jefe de Dependencia. La decisión
-                    final corresponde al Ordenador del Gasto.
+                    @if (estado === "pendiente") {
+                      Proveedor enviado a validación del Ordenador del Gasto.
+                      La decisión final está pendiente.
+                    } @else if (estado === "aprobada") {
+                      Proveedor aprobado por el Ordenador del Gasto.
+                    } @else {
+                      Proveedor rechazado por el Ordenador del Gasto.
+                    }
                   </p>
                 </div>
               }
@@ -717,6 +730,8 @@
                                 class="chip"
                                 [class.chip--exito]="documento.estado === 'cargado'"
                                 [class.chip--info]="documento.estado === 'subsanado'"
+                                [class.chip--advertencia]="documento.estado === 'pendiente'"
+                                [class.chip--error]="documento.estado === 'no-subsanado'"
                               >
                                 {{ etiquetaEstadoDocumento(documento) }}
                               </span>
@@ -770,9 +785,9 @@
 
                 <p class="detalle-oferta__nota">
                   <mat-icon aria-hidden="true">info</mat-icon>
-                  Los estados de subsanación se habilitarán cuando
-                  exista la pantalla. Hoy todos los documentos se muestran
-                  como cargados.
+                  Los estados de subsanación reflejan el periodo configurado en
+                  S-12. Si el proveedor no tiene un periodo asociado, los
+                  documentos se muestran como cargados.
                 </p>
               </section>
 
@@ -809,8 +824,8 @@
                   </div>
                 }
                 <etiqueta-por-definir
-                  texto="Por definir"
-                  detalle="Eventos de subsanación; se mostrarán cuando exista la pantalla."
+                  texto="Subsanación"
+                  detalle="Los eventos del periodo se consultan en el historial de S-12."
                 ></etiqueta-por-definir>
               </section>
             </section>
@@ -1008,7 +1023,7 @@
           </section>
         }
 
-        <!-- ───────────────────── Pestaña Respuesta solicitante ─────────────── -->
+        <!-- ───────────── Pestaña Respuesta del ordenador del gasto ───────────── -->
         @if (vista() === "listo" && pestana() === "respuesta") {
           <section
             id="panel-respuesta"
@@ -1017,90 +1032,139 @@
             aria-labelledby="tab-respuesta"
             tabindex="0"
           >
-            <section class="detalle-oferta__tarjeta" aria-labelledby="detalle-respuesta-titulo">
-              <div class="detalle-oferta__tarjeta-cabecera">
-                <div>
-                  <h2 id="detalle-respuesta-titulo">Respuesta del solicitante (S-11)</h2>
-                  <p>La decisión final se formaliza en la pantalla de decisión.</p>
-                </div>
-                <span class="chip chip--recto">S-11</span>
-              </div>
-
-              <div class="detalle-oferta__respuesta">
-                <p>
-                  Esta vista no registra aprobación ni rechazo. El Ordenador del
-                  Gasto es el único que puede emitir la decisión final. Aquí solo se deja preparada la preselección.
-                </p>
-
-                @if (seleccionado()) {
-                  <div class="detalle-oferta__preseleccion">
-                    <mat-icon aria-hidden="true">grade</mat-icon>
-                    <div>
-                      <strong>Oferta preseleccionada</strong>
-                      <span>
-                        {{ d.oferente.proveedor.nombre }} ·
-                        {{ moneda(oferta()?.total ?? 0) }} COP
-                      </span>
-                    </div>
+            @if (decisionProveedor(); as decision) {
+              <section class="detalle-oferta__tarjeta" aria-labelledby="detalle-respuesta-titulo">
+                <div class="detalle-oferta__tarjeta-cabecera">
+                  <div>
+                    <h2 id="detalle-respuesta-titulo">Respuesta del ordenador del gasto</h2>
+                    <p>
+                      Resultado de la validación de la oferta enviada por el
+                      solicitante.
+                    </p>
                   </div>
-                } @else {
-                  <p class="detalle-oferta__nota">
-                    No hay una oferta preseleccionada para este proveedor. Use la
-                    acción de preselección en la cabecera o en el comparador.
-                  </p>
-                }
+                  <span
+                    class="chip"
+                    [class.chip--info]="estadoDecision() === 'pendiente'"
+                    [class.chip--exito]="estadoDecision() === 'aprobada'"
+                    [class.detalle-oferta__chip--rechazo]="
+                      estadoDecision() === 'rechazada'
+                    "
+                  >
+                    {{ etiquetaDecision() }}
+                  </span>
+                </div>
 
-                <div class="detalle-oferta__respuesta-acciones">
-                  @if (seleccionado()) {
-                    @if (acciones().includes("continuar-decision")) {
-                      <button
-                        class="boton-recto boton-recto--vino"
-                        type="button"
-                        [disabled]="!puedeContinuarDecision"
-                        (click)="continuarDecision()"
-                      >
-                        <mat-icon aria-hidden="true">arrow_forward</mat-icon>
-                        Continuar a decisión (S-11)
-                      </button>
-                    } @else {
-                      <p class="detalle-oferta__nota">
-                        La solicitud ya no admite acciones de evaluación; consulte
-                        el resultado en el expediente.
-                      </p>
+                <div class="detalle-oferta__respuesta">
+                  <div
+                    class="detalle-oferta__aviso"
+                    [class.detalle-oferta__aviso--seleccion]="
+                      estadoDecision() === 'pendiente'
+                    "
+                    [class.detalle-oferta__aviso--exito]="
+                      estadoDecision() === 'aprobada'
+                    "
+                    [class.detalle-oferta__aviso--error]="
+                      estadoDecision() === 'rechazada'
+                    "
+                    role="status"
+                  >
+                    <mat-icon aria-hidden="true">
+                      {{
+                        estadoDecision() === "pendiente"
+                          ? "pending_actions"
+                          : estadoDecision() === "aprobada"
+                            ? "verified"
+                            : "cancel"
+                      }}
+                    </mat-icon>
+                    <p>
+                      @if (estadoDecision() === "pendiente") {
+                        La oferta está pendiente de la decisión del Ordenador del
+                        Gasto. La respuesta definitiva aparecerá en este tab.
+                      } @else if (estadoDecision() === "aprobada") {
+                        El Ordenador del Gasto aprobó la oferta.
+                      } @else {
+                        El Ordenador del Gasto rechazó la oferta.
+                      }
+                    </p>
+                  </div>
+
+                  <div class="datos-grid datos-grid--tres">
+                    <par-etiqueta-valor
+                      etiqueta="Enviada por"
+                      [valor]="decision.envio.autor"
+                      [nota]="decision.envio.rol"
+                    />
+                    <par-etiqueta-valor
+                      etiqueta="Fecha de envío"
+                      [valor]="decision.envio.fecha"
+                    />
+                    <par-etiqueta-valor
+                      etiqueta="Código de verificación"
+                      [valor]="decision.codigoVerificacion"
+                    />
+                    @if (decision.validacion; as validacion) {
+                      <par-etiqueta-valor
+                        etiqueta="Validada por"
+                        [valor]="validacion.autor"
+                        [nota]="validacion.rol"
+                      />
+                      <par-etiqueta-valor
+                        etiqueta="Fecha de validación"
+                        [valor]="validacion.fecha"
+                      />
                     }
-                  } @else if (puedePreseleccionar) {
-                    <button
-                      class="boton-recto boton-recto--vino"
-                      type="button"
-                      [disabled]="procesando()"
-                      (click)="preseleccionar()"
-                    >
-                      <mat-icon aria-hidden="true">how_to_reg</mat-icon>
-                      Preseleccionar esta oferta
-                    </button>
+                  </div>
+
+                  <div>
+                    <strong>Justificación y respuesta al proveedor</strong>
+                    <div
+                      class="bloque-lectura"
+                      [innerHTML]="justificacionDecision() | htmlSeguro"
+                    ></div>
+                  </div>
+
+                  @if (notificacionesDecision().length) {
+                    <div>
+                      <strong>Notificación registrada</strong>
+                      <ul class="detalle-oferta__notificaciones">
+                        @for (
+                          notificacion of notificacionesDecision();
+                          track notificacion.tipo + notificacion.fecha
+                        ) {
+                          <li>
+                            <strong>{{ notificacion.destinatario }}</strong>
+                            · {{ notificacion.fecha }} ·
+                            {{ notificacion.tipo }} ·
+                            {{ notificacion.estadoEntrega }}
+                          </li>
+                        }
+                      </ul>
+                    </div>
+                  }
+
+                  @if (estadoDecision() === "pendiente") {
+                    <!-- <etiqueta-por-definir
+                      texto="Por definir"
+                      detalle="Plazo y mecanismo de respuesta del Ordenador del Gasto."
+                    ></etiqueta-por-definir> -->
                   }
                 </div>
-              </div>
-
-              <div class="detalle-oferta__por-definir">
-                <etiqueta-por-definir
-                  texto="Por definir"
-                  detalle="Acta de evaluación, justificación y firmas de S-11."
-                ></etiqueta-por-definir>
-                <etiqueta-por-definir
-                  texto="Por definir"
-                  detalle="Notificación al proveedor y firma criptográfica de la decisión."
-                ></etiqueta-por-definir>
-                <etiqueta-por-definir
-                  texto="Por definir"
-                  detalle="Criterios de selección y desempate entre ofertas; S-11 los formaliza."
-                ></etiqueta-por-definir>
-                <etiqueta-por-definir
-                  texto="Por definir"
-                  detalle="Restricción de la decisión al rol Ordenador del Gasto."
-                ></etiqueta-por-definir>
-              </div>
-            </section>
+              </section>
+            } @else {
+              <section class="detalle-oferta__tarjeta" aria-labelledby="detalle-respuesta-titulo">
+                <div class="detalle-oferta__tarjeta-cabecera">
+                  <div>
+                    <h2 id="detalle-respuesta-titulo">Respuesta del ordenador del gasto</h2>
+                    <p>Este proveedor no fue enviado a validación.</p>
+                  </div>
+                </div>
+                <p class="detalle-oferta__nota">
+                  La respuesta del Ordenador del Gasto solo está disponible para
+                  el proveedor que el solicitante envió a validación.
+                </p>
+              </section>
+            }
           </section>
         }
       }

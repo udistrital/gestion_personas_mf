@@ -1,4 +1,9 @@
-<plantilla-pagina-contenedora [breadcrumb]="breadcrumb">
+<plantilla-pagina-contenedora
+  [breadcrumb]="breadcrumb"
+  title="Tablero de Oferentes"
+  [mostrarBotonRegresar]="true"
+  (regresar)="volver()"
+>
   <section class="tablero" aria-labelledby="titulo-tablero">
     @if (estadoResolucion() === "no-encontrada") {
       <div class="tablero__estado" role="status">
@@ -62,6 +67,12 @@
               <mat-icon aria-hidden="true">arrow_back</mat-icon>
               <span>Volver al detalle</span>
             </button>
+            @if (puedeAbrirSubsanacion) {
+              <button class="boton-recto" type="button" (click)="abrirSubsanacion()">
+                <mat-icon aria-hidden="true">fact_check</mat-icon>
+                <span>{{ etiquetaSubsanacion }}</span>
+              </button>
+            }
             @if (vista() === "listo" || vista() === "sin-resultados") {
               <button
                 class="boton-recto"
@@ -379,7 +390,15 @@
                         }
                         <tr
                           class="tablero__fila"
-                          [class.tablero__fila--seleccionada]="oferente.seleccionado"
+                          [class.tablero__fila--seleccionada]="
+                            estadoFila(oferente) === 'pendiente'
+                          "
+                          [class.tablero__fila--aprobada]="
+                            estadoFila(oferente) === 'aprobada'
+                          "
+                          [class.tablero__fila--rechazada]="
+                            estadoFila(oferente) === 'rechazada'
+                          "
                           [class.tablero__fila--secundaria]="
                             oferente.grupo === 'sin-oferta'
                           "
@@ -403,13 +422,39 @@
                               <span class="tablero__nombre">
                                 {{ oferente.proveedor.nombre }}
                               </span>
-                              @if (oferente.seleccionado) {
+                              @if (estadoFila(oferente); as estado) {
                                 <span
                                   class="tablero__badge-seleccionado"
-                                  title="Proveedor seleccionado por el jefe de dependencia"
+                                  [class.tablero__badge-seleccionado--aprobado]="
+                                    estado === 'aprobada'
+                                  "
+                                  [class.tablero__badge-seleccionado--rechazado]="
+                                    estado === 'rechazada'
+                                  "
+                                  [title]="
+                                    estado === 'pendiente'
+                                      ? 'Proveedor enviado a validación del Ordenador del Gasto'
+                                      : estado === 'aprobada'
+                                        ? 'Proveedor aprobado por el Ordenador del Gasto'
+                                        : 'Proveedor rechazado por el Ordenador del Gasto'
+                                  "
                                 >
-                                  <mat-icon aria-hidden="true">grade</mat-icon>
-                                  Seleccionado
+                                  <mat-icon aria-hidden="true">
+                                    {{
+                                      estado === "pendiente"
+                                        ? "grade"
+                                        : estado === "aprobada"
+                                          ? "verified"
+                                          : "cancel"
+                                    }}
+                                  </mat-icon>
+                                  {{
+                                    estado === "pendiente"
+                                      ? "Seleccionado"
+                                      : estado === "aprobada"
+                                        ? "Aprobado"
+                                        : "Rechazado"
+                                  }}
                                 </span>
                               }
                             </div>

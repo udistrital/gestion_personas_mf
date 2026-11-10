@@ -136,6 +136,9 @@ export class PestanaHistorialComponent {
     const etiquetas: EtiquetaLineaTiempo[] = [
       { texto: etiquetaTipoEvento(evento.tipo), tono: "neutro" },
     ];
+    // La subsanación no cambia el estado de la solicitud: mostrar el mismo chip
+    // en cada evento sería ruido. El tipo de evento ya identifica la actuación.
+    const esSubsanacion = evento.tipo === "subsanacion";
 
     return {
       id: evento.id,
@@ -145,8 +148,8 @@ export class PestanaHistorialComponent {
       fecha: evento.fecha,
       fechaIso: evento.fechaIso,
       etiquetas,
-      estado: evento.estadoNuevo,
-      estadoAnterior: evento.estadoAnterior,
+      estado: esSubsanacion ? undefined : evento.estadoNuevo,
+      estadoAnterior: esSubsanacion ? undefined : evento.estadoAnterior,
       resultado: evento.resultado
         ? { texto: evento.resultado, tono: evento.tonoResultado ?? "neutro" }
         : undefined,

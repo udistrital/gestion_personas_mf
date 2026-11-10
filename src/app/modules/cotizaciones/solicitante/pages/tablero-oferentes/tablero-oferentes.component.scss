@@ -430,6 +430,24 @@
   background: color-mix(in srgb, var(--agora-warning) 14%, var(--agora-surface));
 }
 
+.tablero__fila--aprobada {
+  background: var(--agora-success-surface);
+  box-shadow: inset 3px 0 0 var(--agora-success-border);
+}
+
+.tablero__fila--aprobada:hover {
+  background: color-mix(in srgb, var(--agora-success) 10%, var(--agora-surface));
+}
+
+.tablero__fila--rechazada {
+  background: var(--agora-error-surface);
+  box-shadow: inset 3px 0 0 var(--agora-error-border);
+}
+
+.tablero__fila--rechazada:hover {
+  background: color-mix(in srgb, var(--agora-error) 10%, var(--agora-surface));
+}
+
 .tablero__fila--secundaria .tablero__td {
   color: var(--agora-text-muted);
 }
@@ -511,6 +529,18 @@
   width: 0.75rem;
   height: 0.75rem;
   font-size: 0.75rem;
+}
+
+.tablero__badge-seleccionado--aprobado {
+  border-color: var(--agora-success-border);
+  background: var(--agora-success-surface);
+  color: var(--agora-success);
+}
+
+.tablero__badge-seleccionado--rechazado {
+  border-color: var(--agora-error-border);
+  background: var(--agora-error-surface);
+  color: var(--agora-error);
 }
 
 .tablero__tipo {

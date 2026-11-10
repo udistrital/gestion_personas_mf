@@ -1,0 +1,315 @@
+<div class="dialogo-estudio">
+  <header class="dialogo-estudio__cabecera">
+    <div class="dialogo-estudio__titulo-bloque">
+      <span class="dialogo-estudio__icono" aria-hidden="true">
+        <mat-icon>post_add</mat-icon>
+      </span>
+      <div>
+        <h2 id="dialogo-estudio-titulo" class="dialogo-estudio__titulo">
+          {{ datos.estudio ? "Editar estudio de mercado" : "Nuevo estudio de mercado" }}
+        </h2>
+        <p id="dialogo-estudio-descripcion" class="dialogo-estudio__subtitulo">
+          Datos económicos, metodología y ofertas vinculadas
+        </p>
+      </div>
+    </div>
+    <button
+      class="dialogo-estudio__cerrar"
+      type="button"
+      aria-label="Cerrar el modal"
+      (click)="cerrar()"
+    >
+      <mat-icon aria-hidden="true">close</mat-icon>
+    </button>
+  </header>
+
+  <mat-dialog-content class="dialogo-estudio__contenido">
+    @if (cargandoSolicitudes()) {
+      <div class="dialogo-estudio__cargando" aria-busy="true" aria-live="polite">
+        <mat-spinner diameter="36"></mat-spinner>
+        <span>Cargando solicitudes y ofertas…</span>
+      </div>
+    } @else if (errorSolicitudes()) {
+      <div class="dialogo-estudio__error" role="alert">
+        <mat-icon aria-hidden="true">error_outline</mat-icon>
+        <p>{{ errorSolicitudes() }}</p>
+      </div>
+    } @else {
+      <form class="dialogo-estudio__formulario" [formGroup]="formulario">
+        <div class="campo-grid campo-grid--two">
+          <div class="campo">
+            <label class="campo__etiqueta" for="estudio-codigo">
+              Código de identificación
+            </label>
+            <mat-form-field appearance="outline">
+              <mat-icon matPrefix aria-hidden="true">tag</mat-icon>
+              <input
+                matInput
+                id="estudio-codigo"
+                [value]="codigo"
+                readonly
+                aria-label="Código de identificación del estudio"
+              />
+            </mat-form-field>
+            <span class="campo__ayuda">
+              Consecutivo institucional generado por ÁGORA.
+            </span>
+          </div>
+
+          <div class="campo">
+            <label class="campo__etiqueta" for="estudio-solicitud">
+              Solicitud asociada <b aria-hidden="true">*</b>
+            </label>
+            <mat-form-field appearance="outline">
+              <mat-icon matPrefix aria-hidden="true">description</mat-icon>
+              <mat-select
+                id="estudio-solicitud"
+                formControlName="solicitudId"
+                placeholder="Seleccione la solicitud"
+              >
+                @for (solicitud of solicitudes(); track solicitud.id) {
+                  <mat-option [value]="solicitud.id">
+                    {{ solicitud.id }} · {{ solicitud.titulo }}
+                  </mat-option>
+                }
+              </mat-select>
+              <mat-error>Seleccione la solicitud asociada.</mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+
+        @if (solicitud(); as actual) {
+          <div class="dialogo-estudio__resumen" role="note">
+            <div>
+              <span class="dialogo-estudio__resumen-etiqueta">Objeto</span>
+              <p>{{ actual.titulo }}</p>
+            </div>
+            <div class="dialogo-estudio__resumen-datos">
+              <span>
+                <strong>Dependencia:</strong> {{ actual.dependencia }}
+              </span>
+              <span>
+                <strong>Presupuesto base:</strong> {{ moneda(actual.presupuesto) }}
+              </span>
+              <span>
+                <strong>Tipo:</strong> {{ actual.tipoNecesidad }}
+              </span>
+            </div>
+          </div>
+        }
+
+        <div class="campo">
+          <span id="estudio-objeto-etiqueta" class="campo__etiqueta">
+            Objeto del estudio <b aria-hidden="true">*</b>
+          </span>
+          <editor-enriquecido
+            formControlName="objeto"
+            idEtiqueta="estudio-objeto-etiqueta"
+            [idError]="mostrarErrorObjeto ? 'estudio-objeto-error' : ''"
+            [minCaracteres]="10"
+            [rows]="3"
+            pista="Describa el objeto del estudio de mercado…"
+            ayuda="El objeto se guarda como texto plano para el listado y los reportes."
+          ></editor-enriquecido>
+          @if (mostrarErrorObjeto) {
+            <p id="estudio-objeto-error" class="campo__fallo" role="alert">
+              <mat-icon aria-hidden="true">error_outline</mat-icon>
+              El objeto debe tener al menos 10 caracteres.
+            </p>
+          }
+        </div>
+
+        <div class="campo-grid campo-grid--two">
+          <div class="campo">
+            <label class="campo__etiqueta" for="estudio-fuente">
+              Fuente de información <b aria-hidden="true">*</b>
+            </label>
+            <mat-form-field appearance="outline">
+              <mat-icon matPrefix aria-hidden="true">dataset</mat-icon>
+              <mat-select
+                id="estudio-fuente"
+                formControlName="fuenteInformacion"
+              >
+                @for (fuente of fuentes; track fuente[0]) {
+                  <mat-option [value]="fuente[0]">{{ fuente[1] }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <div class="campo">
+            <span class="campo__etiqueta">Valor de referencia calculado</span>
+            <div class="dialogo-estudio__valor">
+              {{ moneda(valorReferencia()) }}
+            </div>
+            <span class="campo__ayuda">
+              Se recalcula al cambiar la metodología o las ofertas vinculadas.
+            </span>
+          </div>
+        </div>
+
+        <div
+          class="dialogo-estudio__metodo"
+          role="group"
+          aria-labelledby="estudio-metodo-titulo"
+        >
+          <h3 id="estudio-metodo-titulo" class="dialogo-estudio__leyenda">
+            Método de determinación de precio referencial
+            <b aria-hidden="true">*</b>
+          </h3>
+          <mat-radio-group
+            formControlName="metodoPrecio"
+            class="dialogo-estudio__metodos"
+            aria-label="Método de determinación de precio referencial"
+          >
+            @for (metodo of metodos; track metodo[0]) {
+              <mat-radio-button [value]="metodo[0]" class="dialogo-estudio__metodo-opcion">
+                <span class="dialogo-estudio__metodo-titulo">{{ metodo[1] }}</span>
+                <span class="dialogo-estudio__metodo-texto">
+                  @switch (metodo[0]) {
+                    @case ("menor-homologado") {
+                      Oferta idónea que cumple las especificaciones técnicas.
+                    }
+                    @case ("media-aritmetica") {
+                      Promedio simple de las cotizaciones válidas.
+                    }
+                    @default {
+                      Valor medio para neutralizar datos dispersos.
+                    }
+                  }
+                </span>
+              </mat-radio-button>
+            }
+          </mat-radio-group>
+        </div>
+
+        <div class="campo">
+          <span id="estudio-analisis-etiqueta" class="campo__etiqueta">
+            Análisis del sector y justificación técnica
+            <b aria-hidden="true">*</b>
+          </span>
+          <editor-enriquecido
+            formControlName="analisisTecnico"
+            idEtiqueta="estudio-analisis-etiqueta"
+            [idError]="mostrarErrorAnalisis ? 'estudio-analisis-error' : ''"
+            [minCaracteres]="50"
+            [rows]="4"
+            pista="Escriba el contexto técnico del mercado, el comportamiento del sector y la justificación de la metodología…"
+            ayuda="El contador ignora las etiquetas de formato del editor."
+          ></editor-enriquecido>
+          @if (mostrarErrorAnalisis) {
+            <p id="estudio-analisis-error" class="campo__fallo" role="alert">
+              <mat-icon aria-hidden="true">error_outline</mat-icon>
+              El análisis debe tener al menos 50 caracteres.
+            </p>
+          }
+        </div>
+
+        <div
+          class="dialogo-estudio__variables"
+          role="group"
+          aria-labelledby="estudio-variables-titulo"
+        >
+          <h3 id="estudio-variables-titulo" class="dialogo-estudio__leyenda">
+            Inclusión de variables tributarias y estampillas distritales
+          </h3>
+          <div class="dialogo-estudio__variables-grid">
+            @for (variable of variables; track variable[0]) {
+              <mat-checkbox
+                class="dialogo-estudio__variable"
+                [checked]="estaVariable(variable[0])"
+                (change)="alternarVariable(variable[0], $event.checked)"
+              >
+                {{ variable[1] }}
+              </mat-checkbox>
+            }
+          </div>
+        </div>
+
+        <div
+          class="dialogo-estudio__ofertas"
+          role="group"
+          aria-labelledby="estudio-ofertas-titulo"
+        >
+          <h3 id="estudio-ofertas-titulo" class="dialogo-estudio__leyenda">
+            Ofertas vinculadas en el cálculo
+            ({{ ofertas().length }} disponibles)
+          </h3>
+          <div class="dialogo-estudio__ofertas-lista">
+            @for (oferta of ofertas(); track oferta.id) {
+              <div class="dialogo-estudio__oferta">
+                <mat-checkbox
+                  [checked]="estaOfertaSeleccionada(oferta.id)"
+                  (change)="alternarOferta(oferta.id, $event.checked)"
+                >
+                  <span class="dialogo-estudio__oferta-textos">
+                    <span class="dialogo-estudio__oferta-nombre">
+                      {{ oferta.proveedor }}
+                    </span>
+                    <span class="dialogo-estudio__oferta-nit">{{ oferta.nit }}</span>
+                  </span>
+                </mat-checkbox>
+                <span class="dialogo-estudio__oferta-valor">
+                  {{ moneda(oferta.valor) }}
+                </span>
+              </div>
+            } @empty {
+              <p class="dialogo-estudio__vacio">
+                La solicitud seleccionada no tiene ofertas registradas.
+              </p>
+            }
+          </div>
+          @if (errorOfertas()) {
+            <p class="campo__fallo" role="alert">
+              <mat-icon aria-hidden="true">error_outline</mat-icon>
+              {{ errorOfertas() }}
+            </p>
+          }
+        </div>
+
+        @if (errorGuardado()) {
+          <div class="dialogo-estudio__error" role="alert">
+            <mat-icon aria-hidden="true">error_outline</mat-icon>
+            <p>{{ errorGuardado() }}</p>
+          </div>
+        }
+      </form>
+    }
+  </mat-dialog-content>
+
+  <footer class="dialogo-estudio__pie">
+    <button
+      mat-stroked-button
+      class="boton-secundario-estudio"
+      type="button"
+      [disabled]="guardando()"
+      (click)="cerrar()"
+    >
+      Cancelar
+    </button>
+    <button
+      mat-stroked-button
+      class="boton-secundario-estudio"
+      type="button"
+      [disabled]="guardando() || cargandoSolicitudes() || !!errorSolicitudes()"
+      (click)="guardar(false)"
+    >
+      <mat-icon aria-hidden="true">save</mat-icon>
+      Guardar borrador
+    </button>
+    <button
+      mat-flat-button
+      class="boton-primario"
+      type="button"
+      [disabled]="guardando() || cargandoSolicitudes() || !!errorSolicitudes()"
+      (click)="guardar(true)"
+    >
+      @if (guardando()) {
+        <mat-spinner diameter="18"></mat-spinner>
+      } @else {
+        <mat-icon aria-hidden="true">check_circle</mat-icon>
+      }
+      <span>{{ guardando() ? "Guardando…" : "Generar y fijar presupuesto" }}</span>
+    </button>
+  </footer>
+</div>

@@ -1,0 +1,205 @@
+<div class="tabla-proveedores">
+  @if (cargando) {
+    <div class="tabla-proveedores__cargando" aria-busy="true" aria-live="polite">
+      <span class="visually-oculto">Cargando proveedores…</span>
+      @for (fila of [1, 2, 3, 4, 5]; track fila) {
+        <span class="tabla-proveedores__esqueleto" aria-hidden="true"></span>
+      }
+    </div>
+  } @else {
+    <div class="tabla-proveedores__scroll">
+      <table class="tabla-detalle" aria-label="Proveedores que cumplen el perfil del estudio">
+        <caption class="visually-oculto">
+          Proveedores del banco oficial con coincidencia en las actividades CIIU
+          seleccionadas
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col" class="tabla-detalle__th tabla-detalle__th--centro">
+              <mat-checkbox
+                [checked]="seleccionTotal"
+                [indeterminate]="seleccionParcial"
+                [disabled]="!seleccionable"
+                aria-label="Seleccionar todos los proveedores filtrados"
+                (change)="alToggleTodos($event.checked)"
+              ></mat-checkbox>
+            </th>
+            <th scope="col" class="tabla-detalle__th">Documento / NIT</th>
+            <th scope="col" class="tabla-detalle__th">Nombre o razón social</th>
+            <th scope="col" class="tabla-detalle__th">Tipo</th>
+            <th scope="col" class="tabla-detalle__th">Ubicación y contacto</th>
+            <th scope="col" class="tabla-detalle__th">CIIU coincidentes</th>
+            <th scope="col" class="tabla-detalle__th tabla-detalle__th--centro">
+              Estado invitación
+            </th>
+            <th scope="col" class="tabla-detalle__th tabla-detalle__th--centro">
+              Acciones
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (fila of proveedores; track fila.proveedor.id) {
+            <tr class="tabla-detalle__fila">
+              <td class="tabla-detalle__td tabla-detalle__td--centro">
+                <mat-checkbox
+                  [checked]="estaSeleccionado(fila.proveedor.id)"
+                  [disabled]="!seleccionable || fila.estadoInvitacion !== 'sin-invitar'"
+                  [attr.aria-label]="'Seleccionar a ' + fila.proveedor.nombre"
+                  (change)="alToggleProveedor(fila.proveedor.id, $event.checked)"
+                ></mat-checkbox>
+              </td>
+              <td class="tabla-detalle__td">
+                <span class="tabla-proveedores__documento">
+                  {{ fila.documento }}
+                </span>
+                <span class="tabla-proveedores__nota">{{ fila.rup }}</span>
+              </td>
+              <td class="tabla-detalle__td">
+                <span class="tabla-proveedores__nombre">
+                  {{ fila.proveedor.nombre }}
+                </span>
+                <span class="tabla-proveedores__nota">
+                  Representante: {{ fila.identidad.representante }}
+                </span>
+              </td>
+              <td class="tabla-detalle__td">
+                <span class="tabla-proveedores__tipo">
+                  {{ fila.identidad.etiquetaTipoPersona }}
+                </span>
+                <span class="tabla-proveedores__nota">
+                  Inscripción: {{ etiquetaInscripcion(fila) }}
+                </span>
+              </td>
+              <td class="tabla-detalle__td">
+                <span class="tabla-proveedores__contacto">
+                  <mat-icon aria-hidden="true">location_on</mat-icon>
+                  {{ fila.identidad.direccionFiscal }}, {{ fila.identidad.ubicacion }}
+                </span>
+                <span class="tabla-proveedores__nota">
+                  <mat-icon aria-hidden="true">mail</mat-icon>
+                  {{ fila.correoEnmascarado }}
+                </span>
+              </td>
+              <td class="tabla-detalle__td">
+                <div class="tabla-proveedores__chips">
+                  @for (codigo of fila.coincidencias; track codigo) {
+                    <span class="tabla-proveedores__ciiu">{{ codigo }}</span>
+                  }
+                </div>
+              </td>
+              <td class="tabla-detalle__td tabla-detalle__td--centro">
+                <chip-estado [estado]="fila.estadoInvitacion"></chip-estado>
+              </td>
+              <td class="tabla-detalle__td tabla-detalle__td--centro">
+                <button
+                  mat-icon-button
+                  type="button"
+                  class="tabla-proveedores__boton-acciones"
+                  [class.tabla-proveedores__boton-acciones--activo]="
+                    filaMenuAbierto === fila.proveedor.id
+                  "
+                  [matMenuTriggerFor]="menuAcciones"
+                  [attr.aria-label]="
+                    'Acciones del proveedor ' + fila.proveedor.nombre
+                  "
+                  (menuOpened)="abrirMenuAcciones(fila.proveedor.id)"
+                  (menuClosed)="cerrarMenuAcciones()"
+                >
+                  <mat-icon aria-hidden="true" color="primary">more_vert</mat-icon>
+                </button>
+                <mat-menu
+                  #menuAcciones="matMenu"
+                  panelClass="tabla-proveedores__menu-acciones"
+                  xPosition="before"
+                >
+                  <button
+                    mat-menu-item
+                    type="button"
+                    (click)="verDetalle.emit(fila)"
+                  >
+                    <mat-icon aria-hidden="true" color="primary">visibility</mat-icon>
+                    <span>Ver detalle</span>
+                  </button>
+                  @if (seleccionable && fila.estadoInvitacion === "sin-invitar") {
+                    <button
+                      mat-menu-item
+                      type="button"
+                      (click)="invitarProveedor.emit(fila)"
+                    >
+                      <mat-icon aria-hidden="true" color="primary">
+                        forward_to_inbox
+                      </mat-icon>
+                      <span>Invitar a este proveedor</span>
+                    </button>
+                  }
+                </mat-menu>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8" class="tabla-detalle__vacio">
+                <mat-icon aria-hidden="true">search_off</mat-icon>
+                <span>
+                  No se encontraron proveedores con los criterios seleccionados.
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (total > 0) {
+      <div class="tabla-proveedores__paginador">
+        <div class="tabla-proveedores__rango">
+          Mostrando
+          <strong>{{ rangoInicio }}</strong>–<strong>{{ rangoFin }}</strong>
+          de <strong>{{ total }}</strong> proveedores
+          <label class="tabla-proveedores__por-pagina">
+            <span>Filas:</span>
+            <select
+              [value]="porPagina"
+              aria-label="Proveedores por página"
+              (change)="alCambiarPorPagina($event)"
+            >
+              @for (opcion of opcionesPorPagina; track opcion) {
+                <option [value]="opcion">{{ opcion }}</option>
+              }
+            </select>
+          </label>
+        </div>
+
+        <nav class="tabla-proveedores__paginas" aria-label="Paginación de proveedores">
+          <button
+            class="tabla-proveedores__pagina"
+            type="button"
+            title="Anterior"
+            [disabled]="pagina === 0"
+            (click)="irAPagina(pagina - 1)"
+          >
+            <mat-icon aria-hidden="true">chevron_left</mat-icon>
+          </button>
+          @for (numero of paginasVisibles; track numero) {
+            <button
+              class="tabla-proveedores__pagina"
+              type="button"
+              [class.tabla-proveedores__pagina--activa]="numero === pagina + 1"
+              (click)="irAPagina(numero - 1)"
+            >
+              {{ numero }}
+            </button>
+          }
+          <button
+            class="tabla-proveedores__pagina"
+            type="button"
+            title="Siguiente"
+            [disabled]="pagina + 1 >= totalPaginas"
+            (click)="irAPagina(pagina + 1)"
+          >
+            <mat-icon aria-hidden="true">chevron_right</mat-icon>
+          </button>
+        </nav>
+      </div>
+    }
+  }
+</div>

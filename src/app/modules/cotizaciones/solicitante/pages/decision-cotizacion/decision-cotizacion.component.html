@@ -1,0 +1,723 @@
+<plantilla-pagina-contenedora
+  [breadcrumb]="breadcrumb"
+  title="Decisión y justificación"
+  [mostrarBotonRegresar]="true"
+  (regresar)="volverListaSolicitudes()"
+>
+  <section class="decision" aria-labelledby="decision-titulo">
+    <!-- ───────────────────────── Solicitud no encontrada ───────────────────── -->
+    @if (vista() === "no-encontrado") {
+      <div class="decision__estado" role="status">
+        <mat-icon aria-hidden="true">search_off</mat-icon>
+        <h2 id="decision-titulo">Solicitud no encontrada</h2>
+        <p>No existe una solicitud con ese identificador o ya no está disponible.</p>
+        <button class="boton-recto" type="button" (click)="volverAlListado()">
+          <mat-icon aria-hidden="true">arrow_back</mat-icon>
+          Volver a mis solicitudes
+        </button>
+      </div>
+    } @else if (vista() === "error") {
+      <div class="decision__estado decision__estado--error" role="alert">
+        <mat-icon aria-hidden="true">error_outline</mat-icon>
+        <h2 id="decision-titulo">No pudimos cargar la decisión</h2>
+        <p>
+          {{
+            mensajeError() ||
+              "Ocurrió un problema al consultar el expediente. Intente nuevamente."
+          }}
+        </p>
+        <button class="boton-recto" type="button" (click)="reintentarCarga()">
+          <mat-icon aria-hidden="true">refresh</mat-icon>
+          Reintentar
+        </button>
+      </div>
+    } @else if (solicitud(); as s) {
+      <!-- ─────────────────────────── Cabecera ─────────────────────────────── -->
+      <header class="decision__cabecera">
+        <div class="decision__cabecera-principal">
+          <div class="decision__textos">
+            <div class="decision__chips">
+              <h2 id="decision-titulo" class="decision__titulo-solicitud">
+                Solicitud {{ s.id }}
+              </h2>
+              <chip-estado [estado]="s.estado"></chip-estado>
+              <span class="chip chip--recto">
+                <span class="decision__chip-etiqueta">Vigencia</span>
+                <span>{{ s.vigencia }}</span>
+              </span>
+              <span class="chip chip--info">
+                <mat-icon aria-hidden="true">badge</mat-icon>
+                {{ rolEtiqueta() }}
+              </span>
+            </div>
+            <p class="decision__objeto">{{ s.titulo }}</p>
+            <p class="decision__descripcion">
+              Remisión de la oferta seleccionada al Ordenador del Gasto para
+              su validación definitiva. La decisión final no se registra en esta
+              vista.
+            </p>
+          </div>
+
+          <div class="decision__acciones-cabecera">
+            <button class="boton-recto" type="button" (click)="volver()">
+              <mat-icon aria-hidden="true">arrow_back</mat-icon>
+              <span>{{ etiquetaVolver }}</span>
+            </button>
+            <button class="boton-recto" type="button" (click)="verSolicitud()">
+              <mat-icon aria-hidden="true">description</mat-icon>
+              <span>Ver solicitud</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="decision__cierre">
+          <mat-icon aria-hidden="true">schedule</mat-icon>
+          <span>
+            Cierre de recepción:
+            <strong>{{ fechaLimite }}</strong>
+          </span>
+        </div>
+
+        <linea-estados
+          [pasos]="pasosProceso()"
+          label="Etapa del proceso de decisión"
+        ></linea-estados>
+      </header>
+
+      <p class="visually-oculto" aria-live="polite">{{ anuncio() }}</p>
+
+      <!-- ─────────────────────── Estados de la vista ──────────────────────── -->
+      @if (vista() === "sin-permiso") {
+        <section class="decision__estado" aria-labelledby="decision-permiso-titulo">
+          <mat-icon aria-hidden="true">lock</mat-icon>
+          <h2 id="decision-permiso-titulo">Acceso restringido a los roles solicitantes</h2>
+          <p>
+            La decisión y su envío a validación están disponibles para el Jefe de
+            Dependencia y el Ordenador del Gasto.
+          </p>
+          <button class="boton-recto" type="button" (click)="volverAlListado()">
+            <mat-icon aria-hidden="true">arrow_back</mat-icon>
+            Volver a mis solicitudes
+          </button>
+        </section>
+      } @else if (vista() === "no-disponible") {
+        <section class="decision__estado" aria-labelledby="decision-no-disponible-titulo">
+          <mat-icon aria-hidden="true">lock</mat-icon>
+          <h2 id="decision-no-disponible-titulo">
+            La decisión no está disponible en este estado
+          </h2>
+          <p>
+            La solicitud debe estar cerrada y con una oferta seleccionada para
+            enviarla a validación. Si la solicitud está en aprobación de una
+            modificación, la decisión de cotización no aplica.
+          </p>
+          <button class="boton-recto" type="button" (click)="volver()">
+            <mat-icon aria-hidden="true">arrow_back</mat-icon>
+            {{ etiquetaVolver }}
+          </button>
+        </section>
+      } @else if (vista() === "bloqueado") {
+        <section class="decision__estado decision__estado--bloqueo" aria-labelledby="decision-bloqueo-titulo">
+          <span class="decision__estado-icono" aria-hidden="true">
+            <mat-icon>lock_clock</mat-icon>
+          </span>
+          <h2 id="decision-bloqueo-titulo">
+            El envío a validación se habilita al cierre del periodo
+          </h2>
+          <p>
+            Las respuestas y cotizaciones de los proveedores solo se consultan
+            cuando termina el periodo de cotización. Antes de esa fecha esta
+            vista no expone la oferta ni permite enviar la decisión.
+          </p>
+          <div class="decision__bloqueo-plazo">
+            <contador-regresivo [fechaCierre]="s.cierre"></contador-regresivo>
+            <span>Fecha límite: {{ fechaLimite }}</span>
+          </div>
+          <etiqueta-por-definir
+            texto="Por definir"
+            detalle="Visibilidad de las cotizaciones antes del cierre."
+          ></etiqueta-por-definir>
+          <button class="boton-recto" type="button" (click)="volver()">
+            <mat-icon aria-hidden="true">arrow_back</mat-icon>
+            {{ etiquetaVolver }}
+          </button>
+        </section>
+      } @else if (vista() === "cargando") {
+        <div class="decision__esqueleto" aria-busy="true" aria-live="polite">
+          <span class="visually-oculto">Cargando la decisión y la oferta seleccionada…</span>
+          <div class="decision__esqueleto-metricas" aria-hidden="true">
+            @for (bloque of [1, 2, 3]; track bloque) {
+              <span class="esqueleto esqueleto--metrica"></span>
+            }
+          </div>
+          <span class="esqueleto esqueleto--barra" aria-hidden="true"></span>
+          <div class="decision__esqueleto-filas" aria-hidden="true">
+            @for (fila of [1, 2, 3, 4]; track fila) {
+              <span class="esqueleto esqueleto--fila"></span>
+            }
+          </div>
+        </div>
+      } @else if (vista() === "sin-oferta") {
+        <section class="decision__estado" aria-labelledby="decision-sin-oferta-titulo">
+          <mat-icon aria-hidden="true">person_search</mat-icon>
+          <h2 id="decision-sin-oferta-titulo">No hay una oferta seleccionada</h2>
+          <p>
+            La decisión se envía sobre el proveedor seleccionado en el tablero
+            de oferentes. Usa la acción “Enviar a validación (S-11)” en la fila
+            del proveedor que tenga cotización.
+          </p>
+          <div class="decision__estado-acciones">
+            <button class="boton-recto" type="button" (click)="irAlComparador()">
+              <mat-icon aria-hidden="true">compare_arrows</mat-icon>
+              Ir al comparador (S-09)
+            </button>
+            <button class="boton-recto" type="button" (click)="volver()">
+              <mat-icon aria-hidden="true">arrow_back</mat-icon>
+              {{ etiquetaVolver }}
+            </button>
+          </div>
+        </section>
+      } @else {
+        <!-- ─────────────── Resumen de la solicitud (solo lectura) ─────────── -->
+        <section class="decision__tarjeta" aria-labelledby="decision-solicitud-titulo">
+          <div class="decision__tarjeta-cabecera">
+            <div class="decision__tarjeta-titulos">
+              <span class="decision__tarjeta-icono" aria-hidden="true">
+                <mat-icon>feed</mat-icon>
+              </span>
+              <div>
+                <h2 id="decision-solicitud-titulo">Resumen de la solicitud</h2>
+                <p>Datos de contratación directa y presupuesto.</p>
+              </div>
+            </div>
+            @if (s.presupuesto?.saldo?.numeroCdp; as cdp) {
+              <span class="chip chip--exito">
+                <mat-icon aria-hidden="true">account_balance_wallet</mat-icon>
+                {{ cdp }}
+              </span>
+            }
+          </div>
+
+          <div class="datos-grid datos-grid--tres">
+            <par-etiqueta-valor
+              etiqueta="Número de solicitud"
+              [valor]="s.id"
+              icono="tag"
+              [nota]="'Vigencia ' + s.vigencia"
+            />
+            <par-etiqueta-valor
+              etiqueta="Objeto / Título"
+              [valor]="s.titulo"
+              clase="dato--ancho"
+            />
+            <par-etiqueta-valor
+              etiqueta="Vigencia fiscal"
+              [valor]="'' + s.vigencia"
+              [nota]="'Tipo: ' + etiquetaTipo(s.tipoCotizacion)"
+            />
+            <par-etiqueta-valor
+              etiqueta="Unidad ejecutora"
+              [valor]="etiquetaUnidad(s.unidadEjecutora)"
+            />
+            <par-etiqueta-valor
+              etiqueta="Dependencia solicitante"
+              [valor]="s.general.responsable.dependenciaSolicitante"
+            />
+            <par-etiqueta-valor
+              etiqueta="Ordenador del gasto"
+              [valor]="s.general.responsable.ordenadorGasto"
+              [nota]="s.general.responsable.ordenadorCargo"
+              clase="dato--destacado"
+            />
+            <par-etiqueta-valor
+              etiqueta="Fechas de apertura y cierre"
+              [valor]="(s.apertura || 'Sin programar') + ' → ' + (s.cierre || 'Sin programar')"
+              [nota]="'Período de recepción concluido'"
+            />
+          </div>
+
+          <div class="decision__criterio">
+            <div class="decision__criterio-textos">
+              <span class="decision__criterio-rotulo">
+                <mat-icon aria-hidden="true">balance</mat-icon>
+                Criterio institucional rector
+              </span>
+              <div
+                class="decision__criterio-valor"
+                [innerHTML]="s.general.caracteristicas.criterioSeleccion | htmlSeguro"
+              ></div>
+            </div>
+            <div class="decision__techo">
+              <span>Techo presupuestal</span>
+              <strong>{{ moneda(s.presupuesto?.valorCdp ?? 0) }} COP</strong>
+            </div>
+          </div>
+        </section>
+
+        <!-- ─────────────── Resumen del proveedor y su oferta ─────────────── -->
+        @if (oferta(); as detalle) {
+          <section class="decision__tarjeta" aria-labelledby="decision-oferta-titulo">
+            <div class="decision__tarjeta-cabecera">
+              <div class="decision__tarjeta-titulos">
+                <span class="decision__tarjeta-icono" aria-hidden="true">
+                  <mat-icon>groups</mat-icon>
+                </span>
+                <div>
+                  <h2 id="decision-oferta-titulo">Proveedor y oferta seleccionada</h2>
+                  <p>
+                    Resumen de la oferta seleccionada para enviar a validación.
+                  </p>
+                </div>
+              </div>
+              <button class="boton-recto" type="button" (click)="verOferta()">
+                <mat-icon aria-hidden="true">open_in_new</mat-icon>
+                <span>Ver detalle completo</span>
+              </button>
+            </div>
+
+            <tarjeta-identidad-proveedor
+              [nombre]="detalle.oferente.proveedor.nombre"
+              [nit]="detalle.oferente.proveedor.nit"
+              [etiquetaDocumento]="etiquetaDocumento"
+              [tipoPersona]="identidad()?.etiquetaTipoPersona ?? ''"
+              [ciudad]="identidad()?.ubicacion ?? detalle.oferente.proveedor.ciudad"
+              [correo]="identidad()?.correo ?? ''"
+              [direccion]="identidad()?.direccionFiscal ?? ''"
+              [representante]="identidad()?.representante ?? ''"
+              [estado]="detalle.oferente.estado"
+              [seleccionado]="true"
+              [version]="detalle.versionVigente"
+              [modificadaEl]="detalle.oferente.respuesta?.modificadaEl ?? ''"
+              [nivelTitulo]="2"
+            ></tarjeta-identidad-proveedor>
+
+            @if (ofertaComparada(); as oferta) {
+              <div class="decision__metricas">
+                <article class="decision__metrica">
+                  <div class="decision__metrica-cabecera">
+                    <span class="decision__metrica-rotulo">Precio total con IVA</span>
+                    <mat-icon aria-hidden="true">payments</mat-icon>
+                  </div>
+                  <strong class="decision__metrica-valor">
+                    {{ moneda(oferta.total) }}
+                    <span>COP</span>
+                  </strong>
+                  <span class="decision__metrica-nota">
+                    @if (oferta.valorPresupuesto > 0) {
+                      CDP: {{ moneda(oferta.valorPresupuesto) }} COP
+                    } @else {
+                      Sin CDP registrado
+                    }
+                  </span>
+                  @if (oferta.excedePresupuesto) {
+                    <span class="decision__metrica-error">
+                      Supera el techo presupuestal: no puede aprobarse (RN-40).
+                    </span>
+                  } @else if (oferta.ahorro > 0) {
+                    <span class="decision__metrica-ahorro">
+                      Ahorro frente al CDP: {{ moneda(oferta.ahorro) }} COP
+                    </span>
+                  }
+                </article>
+
+                <article class="decision__metrica">
+                  <div class="decision__metrica-cabecera">
+                    <span class="decision__metrica-rotulo">Vigencia de la oferta</span>
+                    <mat-icon aria-hidden="true">event_available</mat-icon>
+                  </div>
+                  <strong class="decision__metrica-valor">
+                    {{ oferta.oferta.validezDias }}
+                    <span>días</span>
+                  </strong>
+                  <span class="decision__metrica-nota">
+                    Vence: {{ detalle.fechaLimiteOferta ?? "Por definir" }}
+                  </span>
+                </article>
+
+                <article class="decision__metrica">
+                  <div class="decision__metrica-cabecera">
+                    <span class="decision__metrica-rotulo">Plazo de entrega</span>
+                    <mat-icon aria-hidden="true">local_shipping</mat-icon>
+                  </div>
+                  <strong class="decision__metrica-valor">
+                    {{ oferta.oferta.plazoEntregaDias }}
+                    <span>días</span>
+                  </strong>
+                  <span class="decision__metrica-nota">
+                    Radicado: {{ oferta.radicado }}
+                  </span>
+                </article>
+              </div>
+            }
+
+            <div class="decision__documentos">
+              <div class="decision__documentos-cabecera">
+                <h3>Documentos principales</h3>
+                <span class="chip chip--recto">
+                  {{ resumenDocumentos().cargados }} de
+                  {{ resumenDocumentos().total }} cargados
+                </span>
+              </div>
+              @if (documentoPrincipal(); as documento) {
+                <div class="decision__documento">
+                  <mat-icon aria-hidden="true">{{ documento.icono }}</mat-icon>
+                  <div class="decision__documento-textos">
+                    <strong>{{ documento.nombre }}</strong>
+                    <span>
+                      {{ documento.nombreArchivo }} · {{ documento.peso }} ·
+                      {{ etiquetaEstadoDocumento(documento) }}
+                    </span>
+                  </div>
+                </div>
+              } @else {
+                <p class="decision__nota">
+                  La oferta no registra un documento principal.
+                </p>
+              }
+            </div>
+          </section>
+        }
+
+        <!-- ───────────────────── Etapa de envío ─────────────────────────── -->
+        @if (vista() === "listo") {
+          <form class="decision__formulario" [formGroup]="formulario" (ngSubmit)="enviar()">
+            @if (resultado() === "rechazada") {
+              <div class="decision__error" role="status">
+                <mat-icon aria-hidden="true">cancel</mat-icon>
+                <p>
+                  La decisión anterior fue rechazada. Puedes enviar otro
+                  proveedor a validación; el proveedor rechazado no puede
+                  reenviarse.
+                </p>
+              </div>
+            }
+            <section class="decision__tarjeta" aria-labelledby="decision-justificacion-titulo">
+              <div class="decision__tarjeta-cabecera">
+                <div class="decision__tarjeta-titulos">
+                  <span class="decision__tarjeta-icono" aria-hidden="true">
+                    <mat-icon>description</mat-icon>
+                  </span>
+                  <div>
+                    <h2 id="decision-justificacion-titulo">
+                      Justificación de la decisión y respuesta al proveedor
+                      <b aria-hidden="true">*</b>
+                    </h2>
+                    <p>
+                      Sustento técnico-económico que verá el Ordenador del Gasto y
+                      el proveedor.
+                    </p>
+                  </div>
+                </div>
+                <span class="chip chip--recto">
+                  Obligatorio · mínimo {{ minimoJustificacion }}
+                </span>
+              </div>
+
+              <div class="decision__aviso decision__aviso--info">
+                <mat-icon aria-hidden="true">warning</mat-icon>
+                <p>
+                  <strong>Solo se permite enviar la decisión una vez.</strong>
+                  Verifica la información detalladamente: no se podrán realizar
+                  cambios después de confirmar y remitir al Ordenador del Gasto
+                  (RN-35).
+                </p>
+              </div>
+
+              <div class="campo decision__campo">
+                <label
+                  id="decision-justificacion-etiqueta"
+                  class="campo__etiqueta"
+                >
+                  Justificación de la decisión y respuesta al proveedor
+                  <b aria-hidden="true">*</b>
+                </label>
+                <editor-enriquecido
+                  formControlName="justificacion"
+                  [idEtiqueta]="'decision-justificacion-etiqueta'"
+                  [idError]="
+                    mostrarErrorJustificacion
+                      ? 'decision-justificacion-error'
+                      : ''
+                  "
+                  [minCaracteres]="minimoJustificacion"
+                  [rows]="6"
+                  pista="Explique el sustento técnico-económico de la selección y la respuesta al proveedor."
+                  [ayuda]="
+                    'Obligatorio · mínimo ' +
+                    minimoJustificacion +
+                    ' caracteres de texto'
+                  "
+                  (blur)="marcarJustificacionTocada()"
+                ></editor-enriquecido>
+                @if (mostrarErrorJustificacion) {
+                  <p
+                    id="decision-justificacion-error"
+                    class="campo__fallo"
+                    role="alert"
+                    aria-live="assertive"
+                  >
+                    La justificación es obligatoria y debe tener al menos
+                    {{ minimoJustificacion }} caracteres.
+                  </p>
+                }
+              </div>
+
+              <mat-checkbox
+                formControlName="notificar"
+                [disabled]="enviando()"
+              >
+                Registrar notificación simulada al proveedor
+              </mat-checkbox>
+              <p class="decision__nota">
+                La notificación se registrará cuando el Ordenador del Gasto
+                registre la decisión final. Por ahora queda programada y marcada
+                como simulada (RF-13).
+              </p>
+            </section>
+
+            <div class="decision__acciones">
+              <button
+                class="boton-recto"
+                type="button"
+                [disabled]="enviando()"
+                (click)="volver()"
+              >
+                Cancelar
+              </button>
+              <button
+                mat-flat-button
+                class="boton-primario"
+                type="submit"
+                [disabled]="!puedeEnviar"
+              >
+                <mat-icon aria-hidden="true">send</mat-icon>
+                {{
+                  enviando()
+                    ? "Enviando…"
+                    : "Enviar a validación del Ordenador del Gasto"
+                }}
+              </button>
+            </div>
+
+            @if (ofertaComparada()?.excedePresupuesto) {
+              <div class="decision__error" role="alert">
+                <mat-icon aria-hidden="true">error_outline</mat-icon>
+                <p>
+                  La oferta supera el techo presupuestal del CDP y no puede
+                  enviarse a validación (RN-40).
+                </p>
+              </div>
+            }
+
+            @if (errorEnvio()) {
+              <div class="decision__error" role="alert" aria-live="assertive">
+                <mat-icon aria-hidden="true">error_outline</mat-icon>
+                <p>{{ errorEnvio() }}</p>
+                <button
+                  class="boton-recto"
+                  type="button"
+                  [disabled]="enviando()"
+                  (click)="reintentarEnvio()"
+                >
+                  <mat-icon aria-hidden="true">refresh</mat-icon>
+                  Reintentar
+                </button>
+              </div>
+            }
+
+            @if (enviando()) {
+              <p class="decision__enviando" role="status" aria-live="polite">
+                <mat-spinner diameter="18" aria-hidden="true"></mat-spinner>
+                Registrando el envío a validación…
+              </p>
+            }
+          </form>
+        }
+
+        <!-- ─────────────── Resultado: enviada a validación ───────────────── -->
+        @if (vista() === "enviada") {
+          <section
+            class="decision__resultado decision__resultado--info"
+            aria-labelledby="decision-enviada-titulo"
+          >
+            <span class="decision__resultado-icono" aria-hidden="true">
+              <mat-icon>pending_actions</mat-icon>
+            </span>
+            <div class="decision__resultado-textos">
+              <span class="chip chip--info">
+                <mat-icon aria-hidden="true">send</mat-icon>
+                Enviada a validación
+              </span>
+              <h2 id="decision-enviada-titulo">
+                La decisión fue enviada al Ordenador del Gasto
+              </h2>
+              <p>
+                La oferta seleccionada quedó pendiente de la validación
+                definitiva. El Ordenador del Gasto podrá aprobarla o rechazarla
+                en las vistas de validación.
+              </p>
+
+              @if (decision(); as d) {
+                <div class="decision__justificacion">
+                  <span class="decision__rotulo">Justificación enviada</span>
+                  <div [innerHTML]="d.envio.justificacionHtml | htmlSeguro"></div>
+                </div>
+
+                <dl class="decision__datos">
+                  <div>
+                    <dt>Enviada por</dt>
+                    <dd>{{ d.envio.autor }} · {{ d.envio.rol }}</dd>
+                  </div>
+                  <div>
+                    <dt>Fecha y hora</dt>
+                    <dd>{{ d.envio.fecha }}</dd>
+                  </div>
+                  <div>
+                    <dt>Código de verificación</dt>
+                    <dd>{{ d.codigoVerificacion }}</dd>
+                  </div>
+                  <div>
+                    <dt>Notificación al proveedor</dt>
+                    <dd>
+                      {{
+                        d.envio.notificar
+                          ? "Programada (simulada)"
+                          : "No se registrará"
+                      }}
+                    </dd>
+                  </div>
+                </dl>
+
+                <etiqueta-por-definir
+                  texto="Por definir"
+                  detalle="Plazo y mecanismo de respuesta del Ordenador del Gasto."
+                ></etiqueta-por-definir>
+              }
+
+              <div class="decision__resultado-acciones">
+                <button class="boton-recto" type="button" (click)="verHistorial()">
+                  <mat-icon aria-hidden="true">history</mat-icon>
+                  Ver historial
+                </button>
+                <button class="boton-recto" type="button" (click)="volver()">
+                  <mat-icon aria-hidden="true">arrow_back</mat-icon>
+                  {{ etiquetaVolver }}
+                </button>
+              </div>
+            </div>
+          </section>
+        }
+
+        <!-- ─────────────── Resultado: decisión ya tomada ─────────────────── -->
+        @if (vista() === "decidida") {
+          <section
+            class="decision__resultado"
+            [class.decision__resultado--exito]="resultado() === 'aprobada'"
+            [class.decision__resultado--error]="resultado() === 'rechazada'"
+            aria-labelledby="decision-resultado-titulo"
+          >
+            <span class="decision__resultado-icono" aria-hidden="true">
+              <mat-icon>
+                {{ resultado() === "aprobada" ? "verified" : "cancel" }}
+              </mat-icon>
+            </span>
+            <div class="decision__resultado-textos">
+              <span
+                class="chip"
+                [class.chip--exito]="resultado() === 'aprobada'"
+                [class.decision__chip--rechazo]="resultado() === 'rechazada'"
+              >
+                <mat-icon aria-hidden="true">
+                  {{ resultado() === "aprobada" ? "check_circle" : "block" }}
+                </mat-icon>
+                {{ resultado() === "aprobada" ? "Aprobada" : "Rechazada" }}
+              </span>
+              <h2 id="decision-resultado-titulo">
+                {{
+                  resultado() === "aprobada"
+                    ? "La cotización fue aprobada"
+                    : "La cotización fue rechazada"
+                }}
+              </h2>
+              <p>
+                {{
+                  resultado() === "aprobada"
+                    ? "La oferta seleccionada quedó adjudicada. El expediente conserva la trazabilidad completa de la decisión."
+                    : "La convocatoria fue declarada desierta. El expediente conserva la trazabilidad completa de la decisión."
+                }}
+              </p>
+
+              @if (decision(); as d) {
+                <div class="decision__justificacion">
+                  <span class="decision__rotulo">Justificación final</span>
+                  <div [innerHTML]="justificacionFinal() | htmlSeguro"></div>
+                </div>
+
+                <dl class="decision__datos">
+                  <div>
+                    <dt>Enviada por</dt>
+                    <dd>{{ d.envio.autor }} · {{ d.envio.rol }}</dd>
+                  </div>
+                  <div>
+                    <dt>Enviada el</dt>
+                    <dd>{{ d.envio.fecha }}</dd>
+                  </div>
+                  @if (d.validacion; as validacion) {
+                    <div>
+                      <dt>Validada por</dt>
+                      <dd>{{ validacion.autor }} · {{ validacion.rol }}</dd>
+                    </div>
+                    <div>
+                      <dt>Validada el</dt>
+                      <dd>{{ validacion.fecha }}</dd>
+                    </div>
+                  }
+                  <div>
+                    <dt>Código de verificación</dt>
+                    <dd>{{ d.codigoVerificacion }}</dd>
+                  </div>
+                </dl>
+
+                @if (notificaciones().length) {
+                  <div class="decision__notificaciones">
+                    <span class="decision__rotulo">Notificación registrada (simulada)</span>
+                    <ul>
+                      @for (notificacion of notificaciones(); track notificacion.tipo + notificacion.fecha) {
+                        <li>
+                          <strong>{{ notificacion.destinatario }}</strong>
+                          · {{ notificacion.fecha }} ·
+                          {{ notificacion.tipo }} ·
+                          {{ notificacion.estadoEntrega }}
+                        </li>
+                      }
+                    </ul>
+                    <etiqueta-por-definir
+                      texto="Por definir"
+                      detalle="El envío real y su estado de entrega los registrará el backend (RF-13)."
+                    ></etiqueta-por-definir>
+                  </div>
+                }
+              } @else {
+                <p class="decision__nota">
+                  El expediente no conserva el detalle de la decisión. El estado
+                  de la solicitud refleja el resultado.
+                </p>
+              }
+
+              <div class="decision__resultado-acciones">
+                <button class="boton-recto" type="button" (click)="verHistorial()">
+                  <mat-icon aria-hidden="true">history</mat-icon>
+                  Ver historial
+                </button>
+                <button class="boton-recto" type="button" (click)="volver()">
+                  <mat-icon aria-hidden="true">arrow_back</mat-icon>
+                  {{ etiquetaVolver }}
+                </button>
+              </div>
+            </div>
+          </section>
+        }
+      }
+    }
+  </section>
+</plantilla-pagina-contenedora>

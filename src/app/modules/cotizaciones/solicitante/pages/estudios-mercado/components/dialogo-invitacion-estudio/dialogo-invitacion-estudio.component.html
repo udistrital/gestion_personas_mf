@@ -1,0 +1,265 @@
+<div class="dialogo-invitacion">
+  <header class="dialogo-invitacion__cabecera">
+    <div>
+      <span class="dialogo-invitacion__sello">
+        Estudio de Mercado {{ datos.estudio.id }}
+      </span>
+      <h2 id="dialogo-invitacion-titulo" class="dialogo-invitacion__titulo">
+        Invitar proveedores al estudio de mercado
+      </h2>
+      <p class="dialogo-invitacion__subtitulo">
+        Se generará una notificación formal con enlace único para la radicación
+        de cotizaciones en ÁGORA.
+      </p>
+    </div>
+    <button
+      class="dialogo-invitacion__cerrar"
+      type="button"
+      aria-label="Cerrar el modal de invitación"
+      [disabled]="estado() === 'enviando'"
+      (click)="cerrar()"
+    >
+      <mat-icon aria-hidden="true">close</mat-icon>
+    </button>
+  </header>
+
+  <mat-dialog-content class="dialogo-invitacion__contenido">
+    @if (estado() === "formulario") {
+      <form class="dialogo-invitacion__formulario" [formGroup]="formulario">
+        <div class="campo">
+          <span class="campo__etiqueta">
+            Destinatarios seleccionados ({{ cantidad() }})
+          </span>
+          <div class="dialogo-invitacion__destinatarios">
+            @for (proveedor of datos.proveedores; track proveedor.proveedor.id) {
+              <span class="dialogo-invitacion__destinatario">
+                <mat-icon aria-hidden="true">apartment</mat-icon>
+                {{ proveedor.proveedor.nombre }}
+              </span>
+            } @empty {
+              <p class="dialogo-invitacion__vacio">
+                No hay proveedores seleccionados.
+              </p>
+            }
+          </div>
+        </div>
+
+        <div class="campo">
+          <label class="campo__etiqueta" for="invitacion-asunto">
+            Asunto de la invitación oficial
+          </label>
+          <mat-form-field appearance="outline">
+            <input
+              matInput
+              id="invitacion-asunto"
+              [value]="asunto()"
+              readonly
+              aria-label="Asunto de la invitación oficial"
+            />
+          </mat-form-field>
+        </div>
+
+        <div class="campo">
+          <label class="campo__etiqueta" for="invitacion-mensaje">
+            Mensaje institucional y alcance <b aria-hidden="true">*</b>
+          </label>
+          <mat-form-field appearance="outline">
+            <textarea
+              matInput
+              id="invitacion-mensaje"
+              formControlName="mensaje"
+              rows="5"
+              aria-label="Mensaje institucional de la invitación"
+              aria-describedby="invitacion-mensaje-contador"
+            ></textarea>
+            <mat-error>
+              El mensaje debe tener al menos {{ minimo }} caracteres.
+            </mat-error>
+          </mat-form-field>
+          <span
+            id="invitacion-mensaje-contador"
+            class="dialogo-invitacion__contador"
+            [class.dialogo-invitacion__contador--error]="caracteresMensaje < minimo"
+          >
+            {{ caracteresMensaje }} / mín. {{ minimo }} caracteres
+          </span>
+        </div>
+
+        <div class="campo-grid campo-grid--two">
+          <div class="campo">
+            <campo-fecha
+              formControlName="fechaLimiteFecha"
+              etiqueta="Fecha límite de recepción"
+              [requerido]="true"
+              [min]="minFecha"
+              ayuda="Debe ser una fecha futura."
+            ></campo-fecha>
+          </div>
+          <div class="campo">
+            <label class="campo__etiqueta" for="invitacion-hora">
+              Hora límite <b aria-hidden="true">*</b>
+            </label>
+            <mat-form-field appearance="outline">
+              <input
+                matInput
+                id="invitacion-hora"
+                type="time"
+                formControlName="fechaLimiteHora"
+                aria-label="Hora límite de recepción"
+              />
+              <mat-error>Seleccione la hora límite.</mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <div class="campo">
+          <span class="campo__etiqueta">Documentos adjuntos</span>
+          <carga-archivos
+            id="invitacion-adjuntos"
+            formControlName="adjuntos"
+            etiqueta="Adjuntar ficha técnica"
+            [formatos]="['pdf', 'xlsx', 'docx']"
+            [tamanoMaxMb]="10"
+            [multiple]="true"
+          ></carga-archivos>
+        </div>
+
+        <mat-checkbox formControlName="notificar">
+          Notificar por correo electrónico institucional con la ficha técnica
+          adjunta
+        </mat-checkbox>
+
+        <div class="dialogo-invitacion__legal" role="note">
+          <mat-icon aria-hidden="true">gavel</mat-icon>
+          <p>
+            <strong>Advertencia legal:</strong> esta invitación formal no
+            constituye adjudicación, contrato ni compromiso presupuestal
+            obligatorio para la Universidad Distrital Francisco José de Caldas
+            (Decreto 1082 de 2015). El estudio tiene fines orientativos para la
+            estimación de costos de mercado.
+          </p>
+        </div>
+      </form>
+    } @else if (estado() === "confirmacion") {
+      <div class="dialogo-invitacion__confirmacion">
+        <span class="dialogo-invitacion__icono" aria-hidden="true">
+          <mat-icon>forward_to_inbox</mat-icon>
+        </span>
+        <h3>Confirmar envío de invitaciones</h3>
+        <p>
+          Se enviarán <strong>{{ cantidad() }}</strong>
+          {{ cantidad() === 1 ? "invitación" : "invitaciones" }} a los
+          proveedores seleccionados. Verifique el asunto y el plazo antes de
+          continuar.
+        </p>
+        <dl class="dialogo-invitacion__resumen">
+          <div>
+            <dt>Asunto</dt>
+            <dd>{{ asunto() }}</dd>
+          </div>
+          <div>
+            <dt>Fecha límite</dt>
+            <dd>{{ fechaLimiteTexto }}</dd>
+          </div>
+          <div>
+            <dt>Adjuntos</dt>
+            <dd>
+              {{ formulario.controls.adjuntos.value.length }}
+              {{ formulario.controls.adjuntos.value.length === 1 ? "archivo" : "archivos" }}
+            </dd>
+          </div>
+          <div>
+            <dt>Notificación por correo</dt>
+            <dd>{{ formulario.controls.notificar.value ? "Sí" : "No" }}</dd>
+          </div>
+        </dl>
+      </div>
+    } @else if (estado() === "enviando") {
+      <div class="dialogo-invitacion__estado" aria-busy="true" aria-live="polite">
+        <mat-spinner diameter="42"></mat-spinner>
+        <h3>Enviando invitaciones…</h3>
+        <p>Estamos registrando el envío y el radicado del estudio.</p>
+      </div>
+    } @else if (estado() === "exito") {
+      <div class="dialogo-invitacion__exito" role="status">
+        <span class="dialogo-invitacion__icono dialogo-invitacion__icono--exito" aria-hidden="true">
+          <mat-icon>mark_email_read</mat-icon>
+        </span>
+        <h3>¡Invitaciones enviadas exitosamente!</h3>
+        <p>
+          Se emitieron <strong>{{ cantidad() }}</strong>
+          {{ cantidad() === 1 ? "notificación oficial" : "notificaciones oficiales" }}
+          con acuse de recibo electrónico.
+        </p>
+        @if (resultado()?.radicado; as radicado) {
+          <div class="dialogo-invitacion__radicado">
+            Radicado: {{ radicado }}
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="dialogo-invitacion__error" role="alert">
+        <mat-icon aria-hidden="true">error_outline</mat-icon>
+        <h3>No fue posible enviar las invitaciones</h3>
+        <p>{{ error() }}</p>
+        <p>El mensaje y los destinatarios se conservan para reintentar.</p>
+      </div>
+    }
+  </mat-dialog-content>
+
+  <footer class="dialogo-invitacion__pie">
+    @if (estado() === "formulario") {
+      <button mat-stroked-button class="boton-secundario-estudio" type="button" (click)="cerrar()">
+        Cancelar
+      </button>
+      <button
+        mat-flat-button
+        class="boton-primario"
+        type="button"
+        [disabled]="cantidad() === 0"
+        (click)="continuar()"
+      >
+        <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+        Revisar y continuar
+      </button>
+    } @else if (estado() === "confirmacion") {
+      <button mat-stroked-button class="boton-secundario-estudio" type="button" (click)="volver()">
+        <mat-icon aria-hidden="true">arrow_back</mat-icon>
+        Volver
+      </button>
+      <button
+        mat-flat-button
+        class="boton-primario"
+        type="button"
+        (click)="enviar()"
+      >
+        <mat-icon aria-hidden="true">send</mat-icon>
+        Enviar invitaciones formales
+      </button>
+    } @else if (estado() === "enviando") {
+      <button mat-stroked-button class="boton-secundario-estudio" type="button" disabled>Enviando…</button>
+    } @else if (estado() === "exito") {
+      <button
+        mat-flat-button
+        class="boton-primario"
+        type="button"
+        (click)="cerrar()"
+      >
+        Cerrar y volver al listado
+      </button>
+    } @else {
+      <button mat-stroked-button class="boton-secundario-estudio" type="button" (click)="volver()">
+        Volver al mensaje
+      </button>
+      <button
+        mat-flat-button
+        class="boton-primario"
+        type="button"
+        (click)="enviar()"
+      >
+        <mat-icon aria-hidden="true">refresh</mat-icon>
+        Reintentar envío
+      </button>
+    }
+  </footer>
+</div>

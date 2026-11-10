@@ -815,6 +815,12 @@
   color: var(--agora-warning-text);
 }
 
+.comparador__badge--exito {
+  border-color: var(--agora-success-border);
+  background: var(--agora-success-surface);
+  color: var(--agora-success);
+}
+
 .comparador__fila--accion > .comparador__fila-etiqueta,
 .comparador__fila--accion > .comparador__td {
   border-bottom: none;
@@ -843,6 +849,18 @@
   color: var(--agora-on-primary);
   font-size: 0.75rem;
   font-weight: 700;
+}
+
+.comparador__preseleccionada--aprobada {
+  border-color: var(--agora-success-border);
+  background: var(--agora-success-surface);
+  color: var(--agora-success);
+}
+
+.comparador__preseleccionada--rechazada {
+  border-color: var(--agora-error-border);
+  background: var(--agora-error-surface);
+  color: var(--agora-error);
 }
 
 .comparador__nota-error {

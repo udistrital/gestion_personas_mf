@@ -1,0 +1,968 @@
+<plantilla-pagina-contenedora
+  [breadcrumb]="breadcrumb"
+  title="Subsanación documental"
+  [mostrarBotonRegresar]="true"
+  (regresar)="volver()"
+>
+  <section class="subsanacion" aria-labelledby="subsanacion-titulo">
+    @if (vista() === "no-encontrado") {
+      <div class="subsanacion__estado" role="status">
+        <mat-icon aria-hidden="true">search_off</mat-icon>
+        <h2 id="subsanacion-titulo">Solicitud no encontrada</h2>
+        <p>No existe una solicitud con ese identificador o ya no está disponible.</p>
+        <button class="boton-recto" type="button" (click)="volver()">
+          <mat-icon aria-hidden="true">arrow_back</mat-icon>
+          Volver
+        </button>
+      </div>
+    } @else if (vista() === "error") {
+      <div class="subsanacion__estado subsanacion__estado--error" role="alert">
+        <mat-icon aria-hidden="true">error_outline</mat-icon>
+        <h2 id="subsanacion-titulo">No pudimos cargar la subsanación</h2>
+        <p>
+          {{
+            mensajeError() ||
+              "Ocurrió un problema al consultar el expediente. Intente nuevamente."
+          }}
+        </p>
+        <button class="boton-recto" type="button" (click)="reintentarCarga()">
+          <mat-icon aria-hidden="true">refresh</mat-icon>
+          Reintentar
+        </button>
+      </div>
+    } @else if (solicitud(); as s) {
+      <header class="subsanacion__cabecera">
+        <div class="subsanacion__cabecera-principal">
+          <div class="subsanacion__textos">
+            <div class="subsanacion__chips">
+              <h2 id="subsanacion-titulo" class="subsanacion__titulo">
+                Subsanación documental
+              </h2>
+              <chip-estado [estado]="s.estado"></chip-estado>
+              <span class="chip chip--recto">
+                <span class="subsanacion__chip-etiqueta">N.°</span>
+                <span>{{ s.id }}</span>
+              </span>
+              <span class="chip chip--recto">
+                <span class="subsanacion__chip-etiqueta">Vigencia</span>
+                <span>{{ s.vigencia }}</span>
+              </span>
+              @if (estadoPeriodo(); as estado) {
+                <chip-estado [estado]="estado"></chip-estado>
+              }
+            </div>
+            <p class="subsanacion__objeto">{{ s.titulo }}</p>
+            <p class="subsanacion__descripcion">
+              Habilitación del periodo formal para corregir o complementar
+              documentos observados. La decisión final sigue en cabeza del
+              Ordenador del Gasto.
+            </p>
+          </div>
+
+          <div class="subsanacion__acciones-cabecera">
+            <button class="boton-recto" type="button" (click)="volver()">
+              <mat-icon aria-hidden="true">arrow_back</mat-icon>
+              <span>{{ etiquetaVolver() }}</span>
+            </button>
+            @if (subsanacion()) {
+              <button class="boton-recto" type="button" (click)="irAlHistorial()">
+                <mat-icon aria-hidden="true">history</mat-icon>
+                <span>Ver historial</span>
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="subsanacion__cierre">
+          <mat-icon aria-hidden="true">schedule</mat-icon>
+          <span>
+            Cierre de cotización:
+            <strong>{{ s.cierre || "Sin fecha" }}</strong>
+          </span>
+        </div>
+      </header>
+
+      <p class="visually-oculto" aria-live="polite">{{ anuncio() }}</p>
+
+      <section class="subsanacion__callout" role="note">
+        <span class="subsanacion__callout-icono" aria-hidden="true">
+          <mat-icon>gavel</mat-icon>
+        </span>
+        <div>
+          <span class="subsanacion__callout-rotulo">
+            Marco normativo institucional · Art. 18 Ley 1437 · RF-19 / RN-08
+          </span>
+          <p>
+            La subsanación permite a los oferentes corregir o complementar
+            documentos admitidos dentro de un periodo definido. Todos los cambios
+            quedan registrados con fecha, hora y usuario, y el sistema no permite
+            cambios fuera del periodo.
+          </p>
+        </div>
+      </section>
+
+      @if (vista() === "sin-permiso") {
+        <div class="subsanacion__estado" role="status">
+          <mat-icon aria-hidden="true">lock</mat-icon>
+          <h3>Acceso restringido a los roles solicitantes</h3>
+          <p>
+            La subsanación está disponible para el Jefe de Dependencia y el
+            Ordenador del Gasto.
+          </p>
+          <button class="boton-recto" type="button" (click)="volver()">
+            <mat-icon aria-hidden="true">arrow_back</mat-icon>
+            Volver
+          </button>
+        </div>
+      } @else if (vista() === "no-disponible") {
+        <div class="subsanacion__estado subsanacion__estado--bloqueo" role="status">
+          <mat-icon aria-hidden="true">lock_clock</mat-icon>
+          <h3>La subsanación no está disponible en este estado</h3>
+          <p>
+            Solo se puede configurar cuando la solicitud está en evaluación y el
+            periodo de cotización ya terminó. En las etapas anteriores todavía
+            hay proveedores sin cargar documentos; en las posteriores la
+            subsanación queda como historial de consulta.
+          </p>
+          <div class="subsanacion__bloqueo-plazo">
+            <contador-regresivo [fechaCierre]="s.cierre"></contador-regresivo>
+          </div>
+          <button class="boton-recto" type="button" (click)="volver()">
+            <mat-icon aria-hidden="true">arrow_back</mat-icon>
+            {{ etiquetaVolver() }}
+          </button>
+        </div>
+      } @else if (vista() === "cargando") {
+        <div class="subsanacion__esqueleto" aria-busy="true" aria-live="polite">
+          <span class="visually-oculto">Cargando la subsanación…</span>
+          <span class="esqueleto esqueleto--barra" aria-hidden="true"></span>
+          <div class="subsanacion__esqueleto-tarjetas" aria-hidden="true">
+            @for (bloque of [1, 2, 3]; track bloque) {
+              <span class="esqueleto esqueleto--metrica"></span>
+            }
+          </div>
+          <span class="esqueleto esqueleto--tabla" aria-hidden="true"></span>
+        </div>
+      } @else if (vista() === "sin-oferentes") {
+        <div class="subsanacion__estado" role="status">
+          <mat-icon aria-hidden="true">rule_folder</mat-icon>
+          <h3>No hay proponentes con cotización</h3>
+          <p>
+            Todos los oferentes de la solicitud cumplen los requisitos
+            habilitantes o la etapa evaluativa no generó requerimientos de
+            subsanación.
+          </p>
+          <button class="boton-recto" type="button" (click)="irAlComparador()">
+            <mat-icon aria-hidden="true">arrow_back</mat-icon>
+            Regresar a la evaluación
+          </button>
+        </div>
+      } @else if (subsanacion(); as periodo) {
+        @if (estadoPeriodo() === "activa" || estadoPeriodo() === "configurada") {
+          <section class="subsanacion__banner-activo" aria-labelledby="periodo-activo-titulo">
+            <div class="subsanacion__banner-textos">
+              <span class="subsanacion__banner-chip">
+                <mat-icon aria-hidden="true">pending_actions</mat-icon>
+                {{ estadoPeriodo() === "activa" ? "Vigencia del plazo" : "Periodo programado" }}
+              </span>
+              <h3 id="periodo-activo-titulo">
+                {{
+                  estadoPeriodo() === "activa"
+                    ? "Periodo de subsanación en curso"
+                    : "Periodo de subsanación programado"
+                }}
+              </h3>
+              <p>
+                Inició: {{ formatear(periodo.inicio) }} · Cierre previsto:
+                {{ formatear(periodo.fin) }} (Radicado {{ periodo.radicado }})
+              </p>
+            </div>
+            <div class="subsanacion__banner-contador">
+              <span class="subsanacion__banner-contador-rotulo">Tiempo para el cierre</span>
+              <contador-regresivo
+                [fechaCierre]="periodo.fin"
+                [mostrarMinutos]="true"
+                etiquetaCerrado="Periodo cerrado"
+              ></contador-regresivo>
+            </div>
+          </section>
+
+          <section class="subsanacion__tarjeta" aria-labelledby="seguimiento-titulo">
+            <div class="subsanacion__tarjeta-cabecera">
+              <div>
+                <h3 id="seguimiento-titulo">Seguimiento de recepciones</h3>
+                <p>Estado de cargue de documentos por los proponentes notificados.</p>
+              </div>
+              <span class="chip chip--recto">
+                {{ resumenPeriodo()?.subsanados ?? 0 }} de
+                {{ resumenPeriodo()?.totalDocumentos ?? 0 }} documentos
+              </span>
+            </div>
+
+            <div class="subsanacion__tabla-scroll">
+              <table class="tabla-detalle" aria-label="Seguimiento de la subsanación por oferente">
+                <caption class="visually-oculto">
+                  Progreso de cargue de documentos por oferente
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col" class="tabla-detalle__th">Oferente convocado</th>
+                    <th scope="col" class="tabla-detalle__th">Documentos requeridos</th>
+                    <th scope="col" class="tabla-detalle__th">Progreso</th>
+                    <th scope="col" class="tabla-detalle__th">Última modificación</th>
+                    <th scope="col" class="tabla-detalle__th">Estado temporal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (resumen of oferentesSeguimiento(); track resumen.proveedorId) {
+                    <tr class="tabla-detalle__fila">
+                      <td class="tabla-detalle__td">
+                        <span class="tabla-detalle__celda-titulo">{{ resumen.nombre }}</span>
+                        <span class="tabla-detalle__celda-nota">{{ resumen.nit }}</span>
+                      </td>
+                      <td class="tabla-detalle__td">
+                        {{ resumen.total }}
+                        {{ resumen.total === 1 ? "requerimiento" : "requerimientos" }}
+                      </td>
+                      <td class="tabla-detalle__td">
+                        <div class="subsanacion__progreso">
+                          <mat-progress-bar
+                            mode="determinate"
+                            [value]="resumen.porcentaje"
+                            [attr.aria-label]="
+                              'Progreso de ' + resumen.nombre + ': ' + resumen.porcentaje + '%'
+                            "
+                          ></mat-progress-bar>
+                          <span>{{ avanceOferente(resumen) }} ({{ resumen.porcentaje }}%)</span>
+                        </div>
+                      </td>
+                      <td class="tabla-detalle__td">
+                        {{ resumen.ultimaModificacion || "Sin registro de cargue" }}
+                      </td>
+                      <td class="tabla-detalle__td">
+                        <chip-estado [estado]="resumen.estado"></chip-estado>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <div class="subsanacion__acciones subsanacion__acciones--borde">
+              <button
+                class="boton-recto boton-recto--peligro"
+                type="button"
+                [disabled]="!puedeCancelar()"
+                (click)="cancelarPeriodo()"
+              >
+                <mat-icon aria-hidden="true">cancel</mat-icon>
+                Cancelar periodo
+              </button>
+              <button
+                mat-flat-button
+                class="boton-primario"
+                type="button"
+                [disabled]="!puedeAmpliar()"
+                (click)="ampliarPeriodo()"
+              >
+                <mat-icon aria-hidden="true">update</mat-icon>
+                Ampliar plazo
+              </button>
+            </div>
+          </section>
+
+          <section class="subsanacion__metricas" aria-label="Resumen del periodo">
+            <article class="subsanacion__metrica">
+              <span class="subsanacion__metrica-rotulo">Oferentes convocados</span>
+              <strong>{{ resumenPeriodo()?.oferentes ?? 0 }}</strong>
+              <span>proponentes con cotización</span>
+            </article>
+            <article class="subsanacion__metrica">
+              <span class="subsanacion__metrica-rotulo">Documentos requeridos</span>
+              <strong>{{ resumenPeriodo()?.totalDocumentos ?? 0 }}</strong>
+              <span>{{ resumenPeriodo()?.subsanados ?? 0 }} subsanados</span>
+            </article>
+            <article class="subsanacion__metrica">
+              <span class="subsanacion__metrica-rotulo">Plazo habilitado</span>
+              <strong>{{ duracionPeriodo(periodo) }}</strong>
+              <span>hasta {{ formatear(periodo.fin) }}</span>
+            </article>
+            <article class="subsanacion__metrica">
+              <span class="subsanacion__metrica-rotulo">Canal de notificación</span>
+              <strong>{{ periodo.notificar ? "Activo" : "Sin envío" }}</strong>
+              <span>Correo + portal (simulado)</span>
+            </article>
+          </section>
+        } @else if (estadoPeriodo() === "vencida") {
+          <section class="subsanacion__banner-cerrado" aria-labelledby="periodo-cerrado-titulo">
+            <span class="subsanacion__banner-cerrado-icono" aria-hidden="true">
+              <mat-icon>lock_clock</mat-icon>
+            </span>
+            <div>
+              <span class="subsanacion__banner-chip">Periodo cerrado definitivamente</span>
+              <h3 id="periodo-cerrado-titulo">Resultados de la subsanación documental</h3>
+              <p>
+                Recepción cerrada automáticamente por vencimiento del plazo
+                ({{ formatear(periodo.fin) }}). El comité evaluador puede
+                continuar la ponderación técnica.
+              </p>
+            </div>
+            <div class="subsanacion__acciones">
+              <button class="boton-recto" type="button" (click)="irAlHistorial()">
+                <mat-icon aria-hidden="true">history</mat-icon>
+                Ver historial y auditoría
+              </button>
+              <button class="boton-recto boton-recto--vino" type="button" (click)="irAlComparador()">
+                <mat-icon aria-hidden="true">rate_review</mat-icon>
+                Continuar a evaluación final
+              </button>
+            </div>
+          </section>
+
+          <section class="subsanacion__metricas" aria-label="Resultados del periodo">
+            <article class="subsanacion__metrica">
+              <span class="subsanacion__metrica-rotulo">Documentos subsanados</span>
+              <strong>{{ resumenPeriodo()?.subsanados ?? 0 }}</strong>
+              <span>de {{ resumenPeriodo()?.totalDocumentos ?? 0 }} requeridos</span>
+            </article>
+            <article class="subsanacion__metrica">
+              <span class="subsanacion__metrica-rotulo">Documentos no aportados</span>
+              <strong>{{ resumenPeriodo()?.noSubsanados ?? 0 }}</strong>
+              <span>fuera del plazo legal</span>
+            </article>
+            <article class="subsanacion__metrica">
+              <span class="subsanacion__metrica-rotulo">Oferentes habilitados</span>
+              <strong>{{ resumenPeriodo()?.oferentesHabilitados ?? 0 }}</strong>
+              <span>pasan a orden de elegibilidad</span>
+            </article>
+          </section>
+
+          <section class="subsanacion__tarjeta" aria-labelledby="resultados-oferentes-titulo">
+            <div class="subsanacion__tarjeta-cabecera">
+              <div>
+                <h3 id="resultados-oferentes-titulo">Estado por oferente</h3>
+                <p>Resultado consolidado del periodo de subsanación.</p>
+              </div>
+            </div>
+            <div class="subsanacion__lista-oferentes">
+              @for (resumen of oferentesSeguimiento(); track resumen.proveedorId) {
+                <article class="subsanacion__oferente">
+                  <div class="subsanacion__oferente-cabecera">
+                    <div>
+                      <strong>{{ resumen.nombre }}</strong>
+                      <span>{{ resumen.nit }} · {{ resumen.tipoPersona }}</span>
+                    </div>
+                    <chip-estado [estado]="resumen.estado"></chip-estado>
+                  </div>
+                  <div class="subsanacion__progreso">
+                    <mat-progress-bar
+                      mode="determinate"
+                      [value]="resumen.porcentaje"
+                      [attr.aria-label]="'Progreso de ' + resumen.nombre"
+                    ></mat-progress-bar>
+                    <span>{{ avanceOferente(resumen) }} ({{ resumen.porcentaje }}%)</span>
+                  </div>
+                  <ul class="subsanacion__documentos-resumen">
+                    @for (documento of resumen.documentos; track documento.id) {
+                      <li [class.subsanacion__documento--error]="documento.noSubsanado">
+                        <mat-icon aria-hidden="true">
+                          {{ documento.subsanado ? "check_circle" : "cancel" }}
+                        </mat-icon>
+                        <span>
+                          {{ documento.nombre }}:
+                          {{
+                            documento.subsanado
+                              ? "Subsanado"
+                              : documento.noSubsanado
+                                ? "No subsanado en plazo"
+                                : "Pendiente"
+                          }}
+                        </span>
+                      </li>
+                    }
+                  </ul>
+                  <button
+                    class="boton-recto"
+                    type="button"
+                    (click)="verCotizacion(resumen.proveedorId)"
+                  >
+                    <mat-icon aria-hidden="true">visibility</mat-icon>
+                    Ver cotización (S-10)
+                  </button>
+                </article>
+              }
+            </div>
+          </section>
+        } @else {
+          <section class="subsanacion__banner-cancelado" role="status">
+            <mat-icon aria-hidden="true">cancel</mat-icon>
+            <div>
+              <h3>Periodo de subsanación cancelado</h3>
+              <p>
+                {{ periodo.cancelacion?.motivo }}
+                @if (periodo.cancelacion?.fecha) {
+                  · {{ formatear(periodo.cancelacion!.fecha) }}
+                }
+              </p>
+            </div>
+            <button class="boton-recto" type="button" (click)="irAlHistorial()">
+              <mat-icon aria-hidden="true">history</mat-icon>
+              Ver historial
+            </button>
+          </section>
+
+        }
+      }
+
+      @if (
+        vista() === "listo" &&
+        (!subsanacion() || (subsanacion()?.cancelacion && puedeConfigurar()))
+      ) {
+        <form
+          class="subsanacion__formulario"
+          [formGroup]="formulario"
+          (ngSubmit)="habilitar()"
+        >
+        @if (borradorRestaurado()) {
+          <div class="subsanacion__aviso" role="status">
+            <mat-icon aria-hidden="true">restore</mat-icon>
+            <p>
+              Se restauró el borrador guardado en este navegador. Puedes
+              continuar donde lo dejaste o descartarlo al salir.
+            </p>
+          </div>
+        }
+
+        <section class="subsanacion__tarjeta" aria-labelledby="oferentes-titulo">
+          <div class="subsanacion__tarjeta-cabecera">
+            <div class="subsanacion__tarjeta-titulos">
+              <span class="subsanacion__tarjeta-icono" aria-hidden="true">
+                <mat-icon>group</mat-icon>
+              </span>
+              <div>
+                <h3 id="oferentes-titulo">1. Oferentes que subsanan</h3>
+                <p>
+                  Seleccione las empresas o personas naturales que requieren
+                  subsanar o aclarar soportes.
+                </p>
+              </div>
+            </div>
+            <span class="chip chip--recto">
+              {{ proveedoresSeleccionados }} de {{ candidatos().length }} seleccionados
+            </span>
+          </div>
+
+          <div class="subsanacion__herramientas">
+            <mat-form-field appearance="outline" class="subsanacion__buscador">
+              <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+              <input
+                matInput
+                type="search"
+                placeholder="Buscar oferente por NIT o razón social…"
+                aria-label="Buscar oferente"
+                [value]="busqueda()"
+                (input)="busqueda.set($any($event.target).value)"
+              />
+            </mat-form-field>
+            <button class="boton-recto" type="button" (click)="seleccionarConObservaciones()">
+              <mat-icon aria-hidden="true">checklist</mat-icon>
+              Seleccionar todos con observaciones
+            </button>
+          </div>
+
+          @if (errorSeleccion) {
+            <div class="subsanacion__error" role="alert" aria-live="polite">
+              <mat-icon aria-hidden="true">error</mat-icon>
+              <p>{{ errorSeleccion }}</p>
+            </div>
+          }
+
+          <div class="subsanacion__tabla-scroll">
+            <table class="tabla-detalle" aria-label="Oferentes que pueden subsanar">
+              <caption class="visually-oculto">
+                Oferentes con cotización, documentos observados y estado de
+                subsanación
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col" class="tabla-detalle__th tabla-detalle__th--check">
+                    <span class="visually-oculto">Seleccionar</span>
+                  </th>
+                  <th scope="col" class="tabla-detalle__th">Documento / NIT</th>
+                  <th scope="col" class="tabla-detalle__th">Nombre o razón social</th>
+                  <th scope="col" class="tabla-detalle__th">Tipo persona</th>
+                  <th scope="col" class="tabla-detalle__th tabla-detalle__th--numero">
+                    Precio con IVA
+                  </th>
+                  <th scope="col" class="tabla-detalle__th">Documentos observados</th>
+                  <th scope="col" class="tabla-detalle__th">Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (oferente of candidatosFiltrados(); track oferente.proveedorId) {
+                  <tr
+                    class="tabla-detalle__fila"
+                    [class.subsanacion__fila--sin-observaciones]="
+                      documentosObservadosDe(oferente) === 0
+                    "
+                  >
+                    <td class="tabla-detalle__td tabla-detalle__td--check">
+                      <mat-checkbox
+                        [checked]="estaSeleccionado(oferente.proveedorId)"
+                        (change)="toggleOferente(oferente.proveedorId, $event)"
+                        [attr.aria-label]="'Seleccionar a ' + oferente.nombre"
+                      ></mat-checkbox>
+                    </td>
+                    <td class="tabla-detalle__td">{{ oferente.nit || "—" }}</td>
+                    <td class="tabla-detalle__td">
+                      <span class="tabla-detalle__celda-titulo">
+                        {{ oferente.nombre || "Proveedor sin nombre" }}
+                      </span>
+                      <span class="tabla-detalle__celda-nota">
+                        Representante: {{ oferente.representante || "—" }}
+                      </span>
+                    </td>
+                    <td class="tabla-detalle__td">{{ oferente.tipoPersona || "—" }}</td>
+                    <td class="tabla-detalle__td tabla-detalle__td--numero">
+                      {{ moneda(oferente.valor || 0) }}
+                    </td>
+                    <td class="tabla-detalle__td">
+                      @if (documentosObservadosDe(oferente) > 0) {
+                        <span class="chip chip--advertencia">
+                          {{ documentosObservadosDe(oferente) }}
+                          {{
+                            documentosObservadosDe(oferente) === 1
+                              ? "documento observado"
+                              : "documentos observados"
+                          }}
+                        </span>
+                      } @else {
+                        <span class="chip chip--exito">0 observados (completo)</span>
+                      }
+                    </td>
+                    <td class="tabla-detalle__td">
+                      <chip-estado [estado]="estadoCandidato(oferente)"></chip-estado>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="subsanacion__tarjeta" aria-labelledby="documentos-titulo">
+          <div class="subsanacion__tarjeta-cabecera">
+            <div class="subsanacion__tarjeta-titulos">
+              <span class="subsanacion__tarjeta-icono" aria-hidden="true">
+                <mat-icon>description</mat-icon>
+              </span>
+              <div>
+                <h3 id="documentos-titulo">2. Documentos y soportes a subsanar</h3>
+                <p>
+                  Detalle los requerimientos formales aplicables a cada
+                  proponente seleccionado.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          @if (proveedoresSeleccionados === 0) {
+            <div class="subsanacion__vacio">
+              <mat-icon aria-hidden="true">touch_app</mat-icon>
+              <p>Selecciona al menos un oferente en la tabla para configurar sus documentos.</p>
+            </div>
+          } @else {
+            <mat-accordion multi>
+              @for (
+                grupo of formulario.controls.oferentes.controls;
+                track grupo.get("proveedorId")?.value;
+                let pi = $index
+              ) {
+                @if (candidatoDeGrupo(grupo); as candidato) {
+                  <mat-expansion-panel [expanded]="true">
+                    <mat-expansion-panel-header>
+                      <mat-panel-title>
+                        <span class="subsanacion__acordeon-titulo">
+                          <mat-icon aria-hidden="true">business</mat-icon>
+                          {{ candidato.nombre }}
+                        </span>
+                      </mat-panel-title>
+                      <mat-panel-description>
+                        {{ documentosDe(grupo).length }}
+                        {{
+                          documentosDe(grupo).length === 1
+                            ? "requerimiento"
+                            : "requerimientos"
+                        }}
+                      </mat-panel-description>
+                    </mat-expansion-panel-header>
+
+                    <div class="subsanacion__documentos">
+                      @for (
+                        documentoGrupo of documentosDe(grupo);
+                        track documentoGrupo.get("documentoId")?.value;
+                        let di = $index
+                      ) {
+                        @if (documentoDeGrupo(grupo, documentoGrupo); as documento) {
+                          <article
+                            class="subsanacion__documento"
+                            [class.subsanacion__documento--bloqueado]="
+                              documento.bloqueadoPorPliego
+                            "
+                          >
+                            <div class="subsanacion__documento-cabecera">
+                              <div class="subsanacion__documento-titulos">
+                                <span class="subsanacion__documento-nombre">
+                                  <mat-icon aria-hidden="true">{{ documento.icono }}</mat-icon>
+                                  {{ documento.nombre }}
+                                </span>
+                                <span class="chip chip--recto">
+                                  {{ documento.etiquetaClasificacion }}
+                                </span>
+                                @if (documento.motivo) {
+                                  <span class="chip chip--advertencia">
+                                    {{ etiquetaMotivo(documento.motivo) }}
+                                  </span>
+                                }
+                                @if (documento.afectaPuntaje) {
+                                  <span
+                                    class="chip chip--advertencia"
+                                    matTooltip="La posibilidad de subsanar documentos que afectan puntaje debe estar definida en las reglas aplicables de la Universidad."
+                                  >
+                                    <mat-icon aria-hidden="true">warning</mat-icon>
+                                    Afecta puntaje
+                                  </span>
+                                }
+                              </div>
+
+                              @if (documento.bloqueadoPorPliego) {
+                                <span class="chip chip--neutro">
+                                  <mat-icon aria-hidden="true">lock</mat-icon>
+                                  Bloqueado por pliego
+                                </span>
+                              } @else {
+                                <div class="subsanacion__toggle">
+                                  <span>¿Subsanable?</span>
+                                  <mat-slide-toggle
+                                    [formControl]="controlSubsanable(documentoGrupo)"
+                                    (change)="alCambiarSubsanable(documentoGrupo, $event)"
+                                    [attr.aria-label]="
+                                      'Incluir ' + documento.nombre + ' en la subsanación'
+                                    "
+                                  ></mat-slide-toggle>
+                                </div>
+                              }
+                            </div>
+
+                            @if (documento.bloqueadoPorPliego) {
+                              <p class="subsanacion__nota">
+                                <mat-icon aria-hidden="true">info</mat-icon>
+                                Este documento no es subsanable conforme al pliego y
+                                las directrices de contratación.
+                              </p>
+                            } @else {
+                              <div class="campo">
+                                <label
+                                  class="campo__etiqueta"
+                                  [attr.for]="'observacion-' + pi + '-' + di"
+                                >
+                                  Observación formal al oferente
+                                  <b aria-hidden="true">*</b>
+                                </label>
+                                <mat-form-field appearance="outline">
+                                  <textarea
+                                    matInput
+                                    [id]="'observacion-' + pi + '-' + di"
+                                    [formControl]="controlObservacion(documentoGrupo)"
+                                    rows="2"
+                                    [readonly]="!controlSubsanable(documentoGrupo).value"
+                                    [attr.aria-describedby]="
+                                      mostrarErrorObservacion(documentoGrupo)
+                                        ? 'observacion-error-' + pi + '-' + di
+                                        : 'observacion-ayuda-' + pi + '-' + di
+                                    "
+                                    placeholder="Indique al oferente qué debe corregir o complementar."
+                                    (blur)="marcarObservacionTocada(documentoGrupo)"
+                                  ></textarea>
+                                  @if (mostrarErrorObservacion(documentoGrupo)) {
+                                    <mat-error [id]="'observacion-error-' + pi + '-' + di">
+                                      La observación es obligatoria y debe tener al
+                                      menos {{ minimo }} caracteres.
+                                    </mat-error>
+                                  }
+                                </mat-form-field>
+                                <span
+                                  class="campo__ayuda"
+                                  [id]="'observacion-ayuda-' + pi + '-' + di"
+                                >
+                                  Obligatorio · mínimo {{ minimo }} caracteres ·
+                                  {{ controlObservacion(documentoGrupo).value.length }}
+                                  escritos
+                                </span>
+                              </div>
+                            }
+                          </article>
+                        }
+                      }
+                    </div>
+                  </mat-expansion-panel>
+                }
+              }
+            </mat-accordion>
+          }
+        </section>
+
+        <section class="subsanacion__tarjeta" aria-labelledby="periodo-titulo">
+          <div class="subsanacion__tarjeta-cabecera">
+            <div class="subsanacion__tarjeta-titulos">
+              <span class="subsanacion__tarjeta-icono" aria-hidden="true">
+                <mat-icon>calendar_month</mat-icon>
+              </span>
+              <div>
+                <h3 id="periodo-titulo">3. Periodo y condiciones de subsanación</h3>
+                <p>
+                  Establezca la ventana temporal formal para la recepción de
+                  subsanaciones.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="campo-grid campo-grid--four">
+            <div class="campo">
+              <campo-fecha
+                formControlName="inicioFecha"
+                etiqueta="Fecha de inicio"
+                [requerido]="true"
+                [min]="minInicio"
+                ayuda="Posterior al cierre de cotización."
+              ></campo-fecha>
+            </div>
+            <div class="campo">
+              <label class="campo__etiqueta" for="inicio-hora">
+                Hora de inicio <b aria-hidden="true">*</b>
+              </label>
+              <mat-form-field appearance="outline">
+                <input
+                  matInput
+                  id="inicio-hora"
+                  type="time"
+                  formControlName="inicioHora"
+                  aria-label="Hora de inicio"
+                />
+              </mat-form-field>
+            </div>
+            <div class="campo">
+              <campo-fecha
+                formControlName="finFecha"
+                etiqueta="Fecha de finalización"
+                [requerido]="true"
+                [min]="minFin"
+                ayuda="Debe ser posterior al inicio."
+              ></campo-fecha>
+            </div>
+            <div class="campo">
+              <label class="campo__etiqueta" for="fin-hora">
+                Hora de finalización <b aria-hidden="true">*</b>
+              </label>
+              <mat-form-field appearance="outline">
+                <input
+                  matInput
+                  id="fin-hora"
+                  type="time"
+                  formControlName="finHora"
+                  aria-label="Hora de finalización"
+                />
+              </mat-form-field>
+            </div>
+          </div>
+
+          @if (errorPeriodo) {
+            <p class="campo__fallo" role="alert" aria-live="assertive">
+              <mat-icon aria-hidden="true">error_outline</mat-icon>
+              {{ errorPeriodo }}
+            </p>
+          }
+
+          <div class="campo-grid campo-grid--three">
+            <div class="subsanacion__lectura">
+              <span class="campo__etiqueta">Duración calculada</span>
+              <strong>
+                {{ duracionDias() }}
+                {{ duracionDias() === 1 ? "día hábil" : "días hábiles" }}
+              </strong>
+              <span>{{ duracionHoras() }} horas calendario</span>
+            </div>
+            <div class="subsanacion__lectura">
+              <span class="campo__etiqueta">Zona horaria institucional</span>
+              <strong>Colombia (UTC-5)</strong>
+              <span>Sincronizado con hora legal</span>
+            </div>
+            <div class="subsanacion__lectura">
+              <span class="campo__etiqueta">Jornada de referencia</span>
+              <strong>08:00 - 17:00</strong>
+              <span>Lunes a viernes</span>
+            </div>
+          </div>
+
+          @if (calendarioDegradado()) {
+            <etiqueta-por-definir
+              texto="Calendario parcial"
+              detalle="No se pudieron consultar todos los festivos; el conteo solo descuenta fines de semana."
+            ></etiqueta-por-definir>
+          }
+
+          <div class="campo">
+            <label class="campo__etiqueta" id="motivo-subsanacion-etiqueta">
+              Mensaje formal para los oferentes convocados
+              <b aria-hidden="true">*</b>
+            </label>
+            <editor-enriquecido
+              formControlName="motivo"
+              [idEtiqueta]="'motivo-subsanacion-etiqueta'"
+              [idError]="mostrarErrorMotivo ? 'motivo-subsanacion-error' : ''"
+              [minCaracteres]="minimo"
+              [rows]="4"
+              pista="Texto del correo oficial de notificación y de la comunicación en el portal."
+              [ayuda]="'Obligatorio · mínimo ' + minimo + ' caracteres de texto'"
+              (blur)="marcarMotivoTocado()"
+            ></editor-enriquecido>
+            @if (mostrarErrorMotivo) {
+              <p
+                id="motivo-subsanacion-error"
+                class="campo__fallo"
+                role="alert"
+                aria-live="assertive"
+              >
+                El mensaje formal es obligatorio y debe tener al menos
+                {{ minimo }} caracteres.
+              </p>
+            }
+          </div>
+
+          <div class="subsanacion__checks">
+            <mat-checkbox formControlName="notificar">
+              Notificar automáticamente por correo institucional
+            </mat-checkbox>
+            <mat-checkbox formControlName="permitirReemplazo">
+              Permitir reemplazo de archivos existentes
+            </mat-checkbox>
+          </div>
+
+          <p class="subsanacion__nota">
+            <mat-icon aria-hidden="true">info</mat-icon>
+            La notificación se registra de forma simulada (RF-13). El envío real
+            y el bloqueo de adjuntos fuera del periodo los aplicará el backend.
+          </p>
+
+          <etiqueta-por-definir
+            texto="Por definir"
+            detalle="Duración máxima del periodo, jornada hábil exacta y máximo de ampliaciones."
+          ></etiqueta-por-definir>
+        </section>
+
+        <section class="subsanacion__tarjeta" aria-labelledby="resumen-titulo">
+          <div class="subsanacion__tarjeta-cabecera">
+            <div class="subsanacion__tarjeta-titulos">
+              <span class="subsanacion__tarjeta-icono" aria-hidden="true">
+                <mat-icon>fact_check</mat-icon>
+              </span>
+              <div>
+                <h3 id="resumen-titulo">4. Resumen ejecutivo de la subsanación</h3>
+                <p>Verifique los parámetros antes de abrir la convocatoria.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="subsanacion__metricas">
+            <article class="subsanacion__metrica">
+              <span class="subsanacion__metrica-rotulo">Oferentes convocados</span>
+              <strong>{{ proveedoresSeleccionados }}</strong>
+              <span>
+                {{ proveedoresConObservaciones() }} con observaciones
+              </span>
+            </article>
+            <article class="subsanacion__metrica">
+              <span class="subsanacion__metrica-rotulo">Documentos requeridos</span>
+              <strong>{{ totalDocumentosSeleccionados() }}</strong>
+              <span>{{ documentosAfectanPuntaje() }} afecta puntaje</span>
+            </article>
+            <article class="subsanacion__metrica">
+              <span class="subsanacion__metrica-rotulo">Plazo habilitado</span>
+              <strong>{{ duracionDias() }} días hábiles</strong>
+              <span>
+                {{ fechaInicioIso ? formatear(fechaInicioIso) : "Sin inicio" }} al
+                {{ fechaFinIso ? formatear(fechaFinIso) : "sin fin" }}
+              </span>
+            </article>
+            <article class="subsanacion__metrica">
+              <span class="subsanacion__metrica-rotulo">Canal de notificación</span>
+              <strong>{{ formulario.controls.notificar.value ? "Activo" : "Sin envío" }}</strong>
+              <span>Correo + portal (simulado)</span>
+            </article>
+          </div>
+        </section>
+
+        <div class="subsanacion__barra">
+          <div class="subsanacion__barra-estado">
+            @if (ultimoGuardado(); as guardado) {
+              <mat-icon aria-hidden="true">cloud_done</mat-icon>
+              <span>Borrador guardado {{ formatear(guardado) }}</span>
+            } @else {
+              <mat-icon aria-hidden="true">info</mat-icon>
+              <span>El borrador se guarda en este navegador mientras editas.</span>
+            }
+          </div>
+          <div class="subsanacion__acciones">
+            <button class="boton-recto" type="button" (click)="cancelarFormulario()">
+              Cancelar
+            </button>
+            <button class="boton-recto" type="button" (click)="guardarBorrador()">
+              <mat-icon aria-hidden="true">save</mat-icon>
+              Guardar borrador
+            </button>
+            <button
+              mat-flat-button
+              class="boton-primario"
+              type="button"
+              [disabled]="!puedeHabilitar"
+              (click)="habilitar()"
+            >
+              <mat-icon aria-hidden="true">send</mat-icon>
+              Habilitar subsanación
+            </button>
+          </div>
+        </div>
+
+        @if (errorSeleccion) {
+          <div class="subsanacion__error" role="alert" aria-live="polite">
+            <mat-icon aria-hidden="true">error_outline</mat-icon>
+            <p>{{ errorSeleccion }}</p>
+          </div>
+        }
+        </form>
+      }
+
+      <section class="subsanacion__por-definir" aria-label="Puntos normativos por definir">
+        <span class="subsanacion__por-definir-rotulo">
+          <mat-icon aria-hidden="true">help</mat-icon>
+          Puntos normativos por definir
+        </span>
+        <div class="subsanacion__por-definir-chips">
+          <etiqueta-por-definir
+            texto="Matriz de documentos subsanables"
+            detalle="La matriz institucional formal de documentos subsanables (RF-19) está pendiente de aprobación."
+          ></etiqueta-por-definir>
+          <etiqueta-por-definir
+            texto="Documentos que afectan puntaje"
+            detalle="¿Se puede subsanar información que afecte puntajes o ponderaciones económicas?"
+          ></etiqueta-por-definir>
+          <etiqueta-por-definir
+            texto="Quién puede habilitar"
+            detalle="Jefe de Dependencia y Ordenador del Gasto; la participación del Comité Evaluador está por definir."
+          ></etiqueta-por-definir>
+        </div>
+      </section>
+    }
+  </section>
+</plantilla-pagina-contenedora>

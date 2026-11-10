@@ -536,3 +536,44 @@
   height: 0.875rem;
   font-size: 0.875rem;
 }
+
+/* Acciones del encabezado: estudios de mercado + nueva solicitud. */
+.listado__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.listado__boton-secundario {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-sizing: border-box;
+  min-height: 42px;
+  padding: 0.625rem 1.1rem;
+  border: 1px solid var(--agora-borde-control);
+  border-radius: 0.5rem;
+  background-color: var(--agora-surface);
+  color: var(--agora-primary);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.listado__boton-secundario:hover {
+  background-color: var(--agora-superficie-neutra);
+}
+
+.listado__boton-secundario:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--agora-primary) 45%, transparent);
+  outline-offset: 2px;
+}
+
+.listado__boton-secundario mat-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  font-size: 1.125rem;
+}

@@ -120,7 +120,6 @@ export class ComparadorCotizacionesComponent implements OnInit {
   readonly resultado = signal<ResultadoComparativo | null>(null);
   readonly ocultos = signal<ReadonlySet<string>>(new Set<string>());
   readonly anuncio = signal("");
-  readonly preseleccionando = signal(false);
   readonly pestana = signal<PestanaComparador>("general");
 
   busqueda = "";
@@ -417,23 +416,10 @@ export class ComparadorCotizacionesComponent implements OnInit {
     );
   }
 
-  /* ── Presupuesto, preselección y permisos ──────────────────────────────── */
+  /* ── Presupuesto y permisos ─────────────────────────────────────────────── */
 
   get presupuesto(): number {
     return this.resultado()?.valorPresupuesto ?? 0;
-  }
-
-  get ofertaPreseleccionada(): OfertaComparada | null {
-    return (
-      this.resultado()?.ofertas.find((oferta) => oferta.seleccionado) ?? null
-    );
-  }
-
-  get ahorroPreseleccionado(): number {
-    const oferta = this.ofertaPreseleccionada;
-    return oferta && oferta.valorPresupuesto > 0
-      ? Math.max(0, oferta.valorPresupuesto - oferta.total)
-      : 0;
   }
 
   readonly accionesComparador = computed<readonly AccionComparador[]>(() => {
@@ -447,27 +433,18 @@ export class ComparadorCotizacionesComponent implements OnInit {
     return this.accionesComparador().includes(accion);
   }
 
-  puedePreseleccionar(oferta: OfertaComparada): boolean {
-    return (
-      !oferta.excedePresupuesto &&
-      !oferta.seleccionado &&
-      !this.preseleccionando() &&
-      this.puedeAccion("preseleccionar")
-    );
-  }
-
-  puedeQuitarPreseleccion(): boolean {
-    return (
-      !!this.ofertaPreseleccionada &&
-      !this.preseleccionando() &&
-      this.puedeAccion("quitar-preseleccion")
-    );
-  }
-
-  get puedeContinuarDecision(): boolean {
-    return (
-      !!this.ofertaPreseleccionada && this.puedeAccion("continuar-decision")
-    );
+  /** Estado de la decisión vigente para una oferta, si es la enviada. */
+  estadoDecisionOferta(
+    oferta: OfertaComparada,
+  ): "pendiente" | "aprobada" | "rechazada" | null {
+    const decision = this.solicitud()?.decision;
+    if (!decision || decision.proveedorId !== oferta.proveedor.id) {
+      return null;
+    }
+    if (decision.fase === "enviada") {
+      return "pendiente";
+    }
+    return decision.fase === "aprobada" ? "aprobada" : "rechazada";
   }
 
   get puedeExportar(): boolean {
@@ -582,84 +559,6 @@ export class ComparadorCotizacionesComponent implements OnInit {
 
   /* ── Acciones ──────────────────────────────────────────────────────────── */
 
-  async preseleccionar(oferta: OfertaComparada): Promise<void> {
-    const solicitud = this.solicitud();
-    if (!solicitud || !this.puedePreseleccionar(oferta)) {
-      return;
-    }
-
-    const reemplaza = !!this.ofertaPreseleccionada;
-    const confirmacion = await this.alerta.showConfirmAlert(
-      reemplaza
-        ? `Se reemplazará la preselección actual por ${oferta.proveedor.nombre}. Esta acción es una recomendación y no constituye adjudicación (RN-34).`
-        : `Se preseleccionará la oferta de ${oferta.proveedor.nombre} por ${formatoCop(oferta.total)}. Esta acción es una recomendación y no constituye adjudicación (RN-34).`,
-      reemplaza ? "Reemplazar preselección" : "Preseleccionar oferta",
-    );
-    if (!confirmacion.isConfirmed) {
-      return;
-    }
-
-    this.preseleccionando.set(true);
-    this.servicio
-      .seleccionarOferente(solicitud, oferta.id, this.oferenteIds)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (resultado) => {
-          this.aplicarResultado(resultado, true);
-          this.preseleccionando.set(false);
-          void this.alerta.showSuccessAlert(
-            `${oferta.proveedor.nombre} quedó preseleccionada. La decisión final corresponde al Ordenador del Gasto.`,
-            "Preselección registrada",
-          );
-        },
-        error: (error: Error) => {
-          this.preseleccionando.set(false);
-          void this.alerta.showErrorAlert(
-            error.message ||
-              "No fue posible registrar la preselección. Intente nuevamente.",
-          );
-        },
-      });
-  }
-
-  async quitarPreseleccion(): Promise<void> {
-    const solicitud = this.solicitud();
-    const oferta = this.ofertaPreseleccionada;
-    if (!solicitud || !oferta || !this.puedeQuitarPreseleccion()) {
-      return;
-    }
-
-    const confirmacion = await this.alerta.showConfirmAlert(
-      `Se retirará la preselección de ${oferta.proveedor.nombre}. La decisión final sigue en cabeza del Ordenador del Gasto.`,
-      "Quitar preselección",
-    );
-    if (!confirmacion.isConfirmed) {
-      return;
-    }
-
-    this.preseleccionando.set(true);
-    this.servicio
-      .seleccionarOferente(solicitud, null, this.oferenteIds)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (resultado) => {
-          this.aplicarResultado(resultado, true);
-          this.preseleccionando.set(false);
-          void this.alerta.showSuccessAlert(
-            "La preselección fue retirada del expediente.",
-            "Preselección retirada",
-          );
-        },
-        error: (error: Error) => {
-          this.preseleccionando.set(false);
-          void this.alerta.showErrorAlert(
-            error.message ||
-              "No fue posible retirar la preselección. Intente nuevamente.",
-          );
-        },
-      });
-  }
-
   verOferta(oferta: OfertaComparada): void {
     const solicitud = this.solicitud();
     if (!solicitud || !this.puedeVerOferta) {
@@ -676,20 +575,6 @@ export class ComparadorCotizacionesComponent implements OnInit {
     void this.router.navigate(comandos, {
       queryParams: { volver: "comparador" },
     });
-  }
-
-  continuarDecision(): void {
-    const solicitud = this.solicitud();
-    if (!solicitud || !this.puedeContinuarDecision) {
-      return;
-    }
-    const comandos = this.permisos.rutaAccionComparador(
-      "continuar-decision",
-      solicitud.id,
-    );
-    if (comandos) {
-      void this.router.navigate(comandos);
-    }
   }
 
   exportar(formato: "xlsx" | "pdf"): void {

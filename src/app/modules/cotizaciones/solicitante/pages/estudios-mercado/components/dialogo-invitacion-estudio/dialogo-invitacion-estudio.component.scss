@@ -1,0 +1,288 @@
+@use "src/app/shared/styles/tokens" as t;
+@use "src/app/shared/styles/campos-registro" as campos;
+
+@include campos.estilos;
+
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.dialogo-invitacion {
+  display: flex;
+  max-height: 92vh;
+  flex-direction: column;
+  background: var(--agora-surface);
+  color: var(--agora-text);
+}
+
+.dialogo-invitacion__cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.25rem;
+  background: var(--agora-primary);
+  color: var(--agora-on-primary);
+}
+
+.dialogo-invitacion__sello {
+  display: inline-flex;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: var(--agora-primary-dark);
+  color: var(--agora-on-primary);
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.dialogo-invitacion__titulo {
+  margin: 0.4rem 0 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.dialogo-invitacion__subtitulo {
+  margin: 0.2rem 0 0;
+  max-width: 40rem;
+  color: color-mix(in srgb, var(--agora-on-primary) 82%, transparent);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.dialogo-invitacion__cerrar {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--agora-on-primary);
+  cursor: pointer;
+}
+
+.dialogo-invitacion__cerrar:hover:not(:disabled) {
+  background: var(--agora-primary-dark);
+}
+
+.dialogo-invitacion__contenido {
+  min-height: 0;
+  flex: 1 1 auto;
+  padding: 1.25rem;
+  overflow-y: auto;
+}
+
+.dialogo-invitacion__formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.dialogo-invitacion__destinatarios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.dialogo-invitacion__destinatario {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-primary);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.dialogo-invitacion__destinatario mat-icon {
+  width: 0.95rem;
+  height: 0.95rem;
+  font-size: 0.95rem;
+}
+
+.dialogo-invitacion__vacio {
+  margin: 0;
+  color: var(--agora-texto-neutro);
+  font-size: 0.75rem;
+}
+
+.dialogo-invitacion__contador {
+  align-self: flex-end;
+  color: var(--agora-texto-neutro);
+  font-size: 0.6875rem;
+}
+
+.dialogo-invitacion__contador--error {
+  color: var(--agora-error);
+  font-weight: 600;
+}
+
+.dialogo-invitacion__legal {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--agora-warning-border);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-warning-surface);
+  color: var(--agora-warning-text);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.dialogo-invitacion__legal mat-icon {
+  flex: 0 0 auto;
+  width: 1.1rem;
+  height: 1.1rem;
+  font-size: 1.1rem;
+}
+
+.dialogo-invitacion__legal p {
+  margin: 0;
+}
+
+.dialogo-invitacion__confirmacion,
+.dialogo-invitacion__estado,
+.dialogo-invitacion__exito,
+.dialogo-invitacion__error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1.5rem 1rem;
+  text-align: center;
+}
+
+.dialogo-invitacion__confirmacion {
+  align-items: stretch;
+  text-align: left;
+}
+
+.dialogo-invitacion__confirmacion h3,
+.dialogo-invitacion__estado h3,
+.dialogo-invitacion__exito h3,
+.dialogo-invitacion__error h3 {
+  margin: 0;
+  color: var(--agora-primary-dark);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.dialogo-invitacion__confirmacion p,
+.dialogo-invitacion__estado p,
+.dialogo-invitacion__exito p,
+.dialogo-invitacion__error p {
+  margin: 0;
+  color: var(--agora-texto-neutro);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+
+.dialogo-invitacion__icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 999px;
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-primary);
+}
+
+.dialogo-invitacion__icono--exito {
+  background: var(--agora-success-surface);
+  color: var(--agora-success);
+}
+
+.dialogo-invitacion__icono mat-icon {
+  width: 1.6rem;
+  height: 1.6rem;
+  font-size: 1.6rem;
+}
+
+.dialogo-invitacion__resumen {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0.5rem 0 0;
+  padding: 0.75rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-superficie-neutra);
+}
+
+.dialogo-invitacion__resumen div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.dialogo-invitacion__resumen dt {
+  color: var(--agora-primary);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.dialogo-invitacion__resumen dd {
+  margin: 0;
+  color: var(--agora-text);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.dialogo-invitacion__radicado {
+  padding: 0.45rem 0.75rem;
+  border: 1px solid var(--agora-borde-control);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-texto-neutro);
+  font-size: 0.75rem;
+}
+
+.dialogo-invitacion__error {
+  border: 1px solid var(--agora-error-border);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-error-surface);
+  color: var(--agora-error);
+}
+
+.dialogo-invitacion__error h3 {
+  color: var(--agora-error);
+}
+
+.dialogo-invitacion__error p {
+  color: var(--agora-error);
+}
+
+.dialogo-invitacion__error mat-icon {
+  width: 2rem;
+  height: 2rem;
+  font-size: 2rem;
+}
+
+.dialogo-invitacion__pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.85rem 1.25rem;
+  border-top: 1px solid var(--agora-borde-tarjeta);
+  background: var(--agora-superficie-neutra);
+}
+
+@media (min-width: t.$bp-sm) {
+  .dialogo-invitacion__resumen {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+}

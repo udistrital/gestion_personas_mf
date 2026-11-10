@@ -1,0 +1,123 @@
+<div class="detalle-proveedor">
+  <header class="detalle-proveedor__cabecera">
+    <div class="detalle-proveedor__identidad">
+      <span class="detalle-proveedor__avatar" aria-hidden="true">
+        {{ proveedor.proveedor.nombre.charAt(0) }}
+      </span>
+      <div>
+        <span class="detalle-proveedor__sello">Ficha del proveedor</span>
+        <h2 id="detalle-proveedor-titulo" class="detalle-proveedor__titulo">
+          {{ proveedor.proveedor.nombre }}
+        </h2>
+        <p class="detalle-proveedor__documento">
+          {{ proveedor.documento }} · {{ proveedor.rup }}
+        </p>
+      </div>
+    </div>
+    <button
+      class="detalle-proveedor__cerrar"
+      type="button"
+      aria-label="Cerrar la ficha del proveedor"
+      (click)="cerrar()"
+    >
+      <mat-icon aria-hidden="true">close</mat-icon>
+    </button>
+  </header>
+
+  <div class="detalle-proveedor__privacidad" role="note">
+    <mat-icon aria-hidden="true">shield</mat-icon>
+    <span>
+      Datos de contacto parcialmente enmascarados de conformidad con la Ley
+      1581 de 2012 y los permisos de rol (CA-028).
+    </span>
+  </div>
+
+  <mat-dialog-content class="detalle-proveedor__contenido">
+    <section class="detalle-proveedor__seccion" aria-labelledby="proveedor-general">
+      <h3 id="proveedor-general" class="detalle-proveedor__seccion-titulo">
+        <mat-icon aria-hidden="true">apartment</mat-icon>
+        Información general y registro
+      </h3>
+      <div class="detalle-proveedor__grid">
+        <div>
+          <span class="detalle-proveedor__etiqueta">Tipo de persona</span>
+          <span class="detalle-proveedor__dato">
+            {{ proveedor.identidad.etiquetaTipoPersona }}
+          </span>
+        </div>
+        <div>
+          <span class="detalle-proveedor__etiqueta">Estado de inscripción</span>
+          <span class="detalle-proveedor__dato">{{ estadoInscripcion }}</span>
+        </div>
+        <div>
+          <span class="detalle-proveedor__etiqueta">Representante</span>
+          <span class="detalle-proveedor__dato">
+            {{ proveedor.identidad.representante }}
+          </span>
+        </div>
+        <div>
+          <span class="detalle-proveedor__etiqueta">Estado de invitación</span>
+          <span class="detalle-proveedor__dato">
+            <chip-estado [estado]="proveedor.estadoInvitacion"></chip-estado>
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <section class="detalle-proveedor__seccion" aria-labelledby="proveedor-contacto">
+      <h3 id="proveedor-contacto" class="detalle-proveedor__seccion-titulo">
+        <mat-icon aria-hidden="true">contacts</mat-icon>
+        Ubicación y canales oficiales
+      </h3>
+      <div class="detalle-proveedor__contacto">
+        <span>
+          <mat-icon aria-hidden="true">location_on</mat-icon>
+          {{ proveedor.identidad.direccionFiscal }},
+          {{ proveedor.identidad.ubicacion }}
+        </span>
+        <span>
+          <mat-icon aria-hidden="true">mail</mat-icon>
+          {{ proveedor.correoEnmascarado }}
+        </span>
+        <span>
+          <mat-icon aria-hidden="true">call</mat-icon>
+          {{ proveedor.telefonoEnmascarado }}
+        </span>
+      </div>
+    </section>
+
+    <section class="detalle-proveedor__seccion" aria-labelledby="proveedor-ciiu">
+      <h3 id="proveedor-ciiu" class="detalle-proveedor__seccion-titulo">
+        <mat-icon aria-hidden="true">category</mat-icon>
+        Actividades económicas CIIU coincidentes
+      </h3>
+      <div class="detalle-proveedor__actividades">
+        @for (actividad of actividades; track actividad.codigo) {
+          <div class="detalle-proveedor__actividad">
+            <span class="detalle-proveedor__codigo">{{ actividad.codigo }}</span>
+            <span>{{ actividad.descripcion }}</span>
+          </div>
+        } @empty {
+          <p class="detalle-proveedor__dato">Sin actividades coincidentes.</p>
+        }
+      </div>
+    </section>
+  </mat-dialog-content>
+
+  <footer class="detalle-proveedor__pie">
+    <button mat-stroked-button class="boton-secundario-estudio" type="button" (click)="cerrar()">
+      Cerrar ficha
+    </button>
+    @if (puedeInvitar) {
+      <button
+        mat-flat-button
+        class="boton-primario"
+        type="button"
+        (click)="invitar()"
+      >
+        <mat-icon aria-hidden="true">forward_to_inbox</mat-icon>
+        Invitar a este proveedor
+      </button>
+    }
+  </footer>
+</div>
