@@ -22,8 +22,16 @@ const routes: Routes = [
   {
     path: ":id/responder",
     component: ResponderSolicitudComponent,
+    data: { modo: "responder" },
     resolve: { detalleProveedor: detalleProveedorResolver },
     title: "ÁGORA · Responder solicitud",
+  },
+  {
+    path: ":id/actualizar",
+    component: ResponderSolicitudComponent,
+    data: { modo: "actualizar" },
+    resolve: { detalleProveedor: detalleProveedorResolver },
+    title: "ÁGORA · Modificar respuesta",
   },
   {
     path: ":id",

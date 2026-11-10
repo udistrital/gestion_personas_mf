@@ -1,6 +1,7 @@
 import { Component, Input } from "@angular/core";
 import {
   ESTADOS_CHIP,
+  EstadoActualizacionRespuesta,
   EstadoEstudioMercado,
   EstadoInvitacionEstudio,
   EstadoOferente,
@@ -31,7 +32,8 @@ export class ChipEstadoComponent {
       | EstadoSubsanacion
       | EstadoSubsanacionOferente
       | EstadoEstudioMercado
-      | EstadoInvitacionEstudio,
+      | EstadoInvitacionEstudio
+      | EstadoActualizacionRespuesta,
   ) {
     this.meta = ESTADOS_CHIP[estado];
   }

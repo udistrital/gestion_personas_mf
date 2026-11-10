@@ -14,6 +14,31 @@ import type { ResumenDiferencias } from "./edicion-solicitud.model";
 import type { ItemSolicitud } from "./items.model";
 import type { Solicitud, TipoCotizacion } from "./solicitud.model";
 
+/** Resumen de la última respuesta radicada por el proveedor. */
+export interface ResumenRespuestaVigente {
+  readonly version: string;
+  readonly revision: number;
+  readonly radicado?: string;
+  readonly fecha: string;
+  readonly versionSolicitud: string;
+  readonly usuario?: string;
+  readonly total?: number;
+  /** Versión de solicitud para la que ya se aplicó una actualización. */
+  readonly actualizadaParaVersion?: string;
+}
+
+/** Identidad pública del proveedor que se muestra en el portal. */
+export interface ProveedorPublicoProveedor {
+  readonly id: string;
+  readonly nombre: string;
+  readonly nit: string;
+  readonly tipoPersona: string;
+  readonly correo: string;
+  readonly direccion: string;
+  readonly representante: string;
+  readonly ciudad: string;
+}
+
 /** Invitación del proveedor; los datos de la solicitud se conservan en Solicitud. */
 export interface InvitacionProveedor {
   readonly id: string;
@@ -21,12 +46,20 @@ export interface InvitacionProveedor {
   readonly estado: EstadoPostulacionProveedor;
   /** Fecha ISO de radicación; ausente mientras la postulación es borrador. */
   readonly fechaRadicacion?: string;
+  /** Última respuesta radicada y sus metadatos de versión. */
+  readonly respuestaVigente?: ResumenRespuestaVigente;
+  /** Historial completo de respuestas radicadas, de la más antigua a la última. */
+  readonly versionesRespuesta?: readonly ResumenRespuestaVigente[];
   /** Metadatos de una adenda oficialmente publicada para esta invitación. */
   readonly adendaPublicada?: {
+    readonly numero?: string;
     readonly versionAnterior: string;
     readonly versionVigente: string;
     readonly publicadaEl: string;
     readonly anexoId: string;
+    readonly motivo?: string;
+    readonly cierreAnterior?: string;
+    readonly cierreVigente?: string;
   };
 }
 
@@ -73,9 +106,7 @@ export interface SolicitudDetalleProveedor {
     >[];
   } | null;
   readonly itemsDetalle: ItemsDetalle;
-  readonly items: readonly (ItemSolicitud & {
-    readonly valorUnitarioTecho: number | null;
-  })[];
+  readonly items: readonly ItemSolicitud[];
   readonly contratacion: ContratacionDetalle | null;
   readonly documentos: {
     readonly anexos: readonly AnexoPublicoProveedor[];
@@ -88,12 +119,18 @@ export interface DetalleInvitacionProveedor {
   readonly invitacion: InvitacionProveedor;
   readonly solicitud: SolicitudDetalleProveedor;
   readonly yaRespondio: boolean;
+  readonly proveedor: ProveedorPublicoProveedor;
   readonly adenda: {
+    readonly numero?: string;
     readonly versionAnterior: string;
     readonly versionVigente: string;
     readonly publicadaEl: string;
     readonly anexoId: string;
+    readonly motivo?: string;
+    readonly cierreAnterior?: string;
+    readonly cierreVigente?: string;
     readonly diferencias: ResumenDiferencias;
+    readonly itemsAnteriores: readonly ItemSolicitud[];
   } | null;
 }
 

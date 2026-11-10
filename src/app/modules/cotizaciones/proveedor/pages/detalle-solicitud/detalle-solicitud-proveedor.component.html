@@ -65,6 +65,9 @@
                 </span>
                 <chip-estado [estado]="d.solicitud.estado"></chip-estado>
                 <chip-estado [estado]="d.invitacion.estado"></chip-estado>
+                @if (estadoActualizacion !== "sin-modificacion") {
+                  <chip-estado [estado]="estadoActualizacion"></chip-estado>
+                }
                 <span class="chip chip--recto">
                   {{
                     d.yaRespondio
@@ -98,6 +101,16 @@
                   >
                     <mat-icon aria-hidden="true">visibility</mat-icon>
                     <span>Ver observaciones</span>
+                  </button>
+                }
+                @if (puedeActualizar) {
+                  <button
+                    class="boton-recto boton-recto--vino"
+                    type="button"
+                    (click)="navegarA('actualizar')"
+                  >
+                    <mat-icon aria-hidden="true">edit_note</mat-icon>
+                    <span>Modificar respuesta</span>
                   </button>
                 }
                 <button
@@ -162,6 +175,25 @@
                 {{ d.adenda.publicadaEl }}. Consulte los cambios frente a la
                 versión {{ d.adenda.versionAnterior }}.
               </p>
+              @if (estadoActualizacion === "desactualizada") {
+                <p class="detalle-proveedor__alerta">
+                  <mat-icon aria-hidden="true">edit_note</mat-icon>
+                  Su oferta requiere recálculo por la adenda. Use «Modificar
+                  respuesta» antes del cierre.
+                </p>
+              } @else if (estadoActualizacion === "actualizada") {
+                <p class="detalle-proveedor__ok">
+                  <mat-icon aria-hidden="true">published_with_changes</mat-icon>
+                  Respuesta actualizada a la versión
+                  {{ d.invitacion.respuestaVigente?.version }}.
+                </p>
+              } @else if (estadoActualizacion === "vencida") {
+                <p class="detalle-proveedor__alerta">
+                  <mat-icon aria-hidden="true">lock_clock</mat-icon>
+                  El plazo para actualizar la respuesta terminó. Su oferta
+                  anterior se conserva marcada como desactualizada.
+                </p>
+              }
               @if (d.adenda.diferencias.total > 0) {
                 <ul class="detalle-proveedor__cambios">
                   @for (
@@ -180,6 +212,36 @@
                 </ul>
               }
             </div>
+          </section>
+        }
+
+        @if (d.invitacion.versionesRespuesta?.length) {
+          <section class="detalle-proveedor__historial" aria-labelledby="historial-respuesta-titulo">
+            <h2 id="historial-respuesta-titulo">Historial de la respuesta</h2>
+            <ol>
+              @for (version of d.invitacion.versionesRespuesta; track version.version) {
+                <li>
+                  <span class="detalle-proveedor__hito-punto">{{ version.version }}</span>
+                  <div class="detalle-proveedor__hito-contenido">
+                    <span class="detalle-proveedor__hito">
+                      {{
+                        version.actualizadaParaVersion
+                          ? "Respuesta actualizada"
+                          : "Respuesta radicada"
+                      }}
+                    </span>
+                    <time>{{ version.fecha }}</time>
+                    <span class="detalle-proveedor__nota">
+                      {{ version.radicado || "Sin radicado" }} · Solicitud
+                      {{ version.versionSolicitud }}
+                      @if (version.usuario) {
+                        · {{ version.usuario }}
+                      }
+                    </span>
+                  </div>
+                </li>
+              }
+            </ol>
           </section>
         }
 
@@ -449,7 +511,7 @@
 
         <tarjeta-seccion
           icono="inventory_2"
-          titulo="Ítems y valores techo"
+          titulo="Ítems de la solicitud"
           subtitulo="Bienes o servicios incluidos en la solicitud"
         >
           <p class="detalle-proveedor__ubicacion">
@@ -460,8 +522,8 @@
             <div class="tabla-detalle__scroll">
               <table class="tabla-detalle" aria-label="Ítems de la solicitud">
                 <caption class="tabla-detalle__caption">
-                  Lista de ítems con especificaciones, cantidad y valor unitario
-                  techo
+                  Lista de ítems con especificaciones, unidad de medida y
+                  cantidad
                 </caption>
                 <thead>
                   <tr>
@@ -494,12 +556,6 @@
                       class="tabla-detalle__th tabla-detalle__th--numero"
                     >
                       Cantidad
-                    </th>
-                    <th
-                      scope="col"
-                      class="tabla-detalle__th tabla-detalle__th--numero"
-                    >
-                      Valor unitario techo
                     </th>
                   </tr>
                 </thead>
@@ -542,19 +598,6 @@
                       </td>
                       <td class="tabla-detalle__td tabla-detalle__td--numero">
                         {{ item.cantidad }}
-                      </td>
-                      <td class="tabla-detalle__td tabla-detalle__td--numero">
-                        @if (
-                          item.valorUnitarioTecho !== null &&
-                          item.valorUnitarioTecho !== undefined
-                        ) {
-                          {{ formatoDinero(item.valorUnitarioTecho) }}
-                        } @else {
-                          <etiqueta-por-definir
-                            texto="Por definir"
-                            detalle="El valor techo no está disponible en los datos simulados."
-                          />
-                        }
                       </td>
                     </tr>
                   }

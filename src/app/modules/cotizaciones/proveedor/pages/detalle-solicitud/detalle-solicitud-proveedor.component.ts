@@ -122,6 +122,27 @@ export class DetalleSolicitudProveedorComponent implements OnInit {
     );
   }
 
+  get puedeActualizar(): boolean {
+    const detalle = this.detalle();
+    return (
+      !!detalle &&
+      this.permisos.puedeActualizarInvitacion(
+        detalle.invitacion,
+        detalle.solicitud,
+      )
+    );
+  }
+
+  get estadoActualizacion() {
+    const detalle = this.detalle();
+    return detalle
+      ? this.permisos.estadoActualizacion(
+          detalle.invitacion,
+          detalle.solicitud,
+        )
+      : "sin-modificacion";
+  }
+
   get puedeDescargarAnexos(): boolean {
     const detalle = this.detalle();
     return !!detalle && this.permisos.puedeDescargarAnexo(detalle.invitacion);
@@ -142,14 +163,18 @@ export class DetalleSolicitudProveedorComponent implements OnInit {
     return this.permisos.solicitudCerradaPorFecha(solicitud);
   }
 
-  navegarA(accion: "observar" | "responder"): void {
+  navegarA(accion: "observar" | "responder" | "actualizar"): void {
     const detalle = this.detalle();
     if (!detalle) {
       return;
     }
 
     const permitida =
-      accion === "observar" ? this.puedeObservar : this.puedeResponder;
+      accion === "observar"
+        ? this.puedeObservar
+        : accion === "actualizar"
+          ? this.puedeActualizar
+          : this.puedeResponder;
     if (!permitida) {
       return;
     }

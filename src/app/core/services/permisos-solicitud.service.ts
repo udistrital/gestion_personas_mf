@@ -23,9 +23,12 @@ import {
   AccionSolicitudMeta,
   AccionSubsanacion,
   AccionSubsanacionMeta,
+  ESTADOS_ACTUALIZACION_RESPUESTA,
   ESTADOS_SOLICITUD,
+  EstadoActualizacionRespuesta,
   EstadoEstudioMercado,
   EstadoSolicitud,
+  MATRIZ_SOLICITUD_PERMITE_ACTUALIZACION,
   MATRIZ_SOLICITUD_PERMITE_RESPUESTA,
 } from "../constants/estados-solicitud.const";
 import {
@@ -63,7 +66,10 @@ export interface SolicitudPermisable {
   readonly historialDecisiones?: readonly DecisionSolicitud[];
 }
 
-export type InvitacionPermisable = Pick<InvitacionProveedor, "estado">;
+export type InvitacionPermisable = Pick<
+  InvitacionProveedor,
+  "estado" | "adendaPublicada" | "respuestaVigente"
+>;
 type SolicitudForoPermisable = Pick<
   Solicitud,
   "estado" | "cierre" | "fechaLimiteObservaciones"
@@ -642,6 +648,9 @@ export class PermisosSolicitudService {
         if (accion === "formular-observacion") {
           return this.puedeFormularObservacion(invitacion, solicitud);
         }
+        if (accion === "actualizar") {
+          return this.puedeActualizarInvitacion(invitacion, solicitud);
+        }
         return this.puedeResponderInvitacion(invitacion, solicitud);
       },
     ).filter((accion) => accion !== "formular-observacion");
@@ -692,6 +701,97 @@ export class PermisosSolicitudService {
       MATRIZ_SOLICITUD_PERMITE_RESPUESTA[solicitud.estado] &&
       !this.solicitudCerradaPorFecha(solicitud)
     );
+  }
+
+  /**
+   * Estado derivado de la respuesta frente a la versión vigente (P-05).
+   *
+   * - `sin-modificacion`: no hay adenda pendiente o la respuesta ya corresponde
+   *   a la versión vigente sin haber sido actualizada.
+   * - `desactualizada`: hay adenda y la respuesta quedó en una versión anterior.
+   * - `actualizada`: la respuesta se actualizó para la versión vigente.
+   * - `vencida`: hay actualización pendiente y el plazo terminó.
+   */
+  estadoActualizacion(
+    invitacion: InvitacionPermisable,
+    solicitud: Pick<Solicitud, "cierre" | "version">,
+  ): EstadoActualizacionRespuesta {
+    const respuesta = invitacion.respuestaVigente;
+    if (!respuesta) {
+      return "sin-modificacion";
+    }
+
+    const versionVigente = solicitud.version ?? "v1.0";
+    if (respuesta.actualizadaParaVersion === versionVigente) {
+      return "actualizada";
+    }
+
+    const pendiente =
+      !!invitacion.adendaPublicada &&
+      respuesta.versionSolicitud !== versionVigente;
+    if (!pendiente) {
+      return "sin-modificacion";
+    }
+
+    return this.solicitudCerradaPorFecha(solicitud)
+      ? "vencida"
+      : "desactualizada";
+  }
+
+  /** Etiqueta visible del estado de actualización. */
+  etiquetaEstadoActualizacion(
+    estado: EstadoActualizacionRespuesta,
+  ): string {
+    return ESTADOS_ACTUALIZACION_RESPUESTA[estado].etiqueta;
+  }
+
+  /**
+   * Permiso centralizado para abrir P-05.
+   *
+   * Además de la matriz rol+estado, exige una respuesta radicada, una adenda
+   * publicada, una versión de solicitud distinta a la respondida y plazo
+   * vigente. La regla «una actualización por versión de solicitud» es
+   * provisional (RN-42): se implementa como una actualización por adenda.
+   */
+  puedeActualizarInvitacion(
+    invitacion: InvitacionPermisable,
+    solicitud: Solicitud,
+  ): boolean {
+    return !this.motivoActualizacionNoDisponible(invitacion, solicitud);
+  }
+
+  /** Explica por qué no se puede abrir P-05; vacío cuando sí se puede. */
+  motivoActualizacionNoDisponible(
+    invitacion: InvitacionPermisable,
+    solicitud: Solicitud,
+  ): string {
+    if (!this.rol.estaCargado() || !this.rol.tieneRol(ROL_PROVEEDOR)) {
+      return "Su rol no permite actualizar respuestas de cotización.";
+    }
+    if (!this.accionesInvitacionDe(invitacion.estado).includes("actualizar")) {
+      return "El estado actual de la invitación no permite modificar la respuesta.";
+    }
+    if (!invitacion.respuestaVigente) {
+      return "Todavía no existe una respuesta radicada que se pueda actualizar.";
+    }
+    if (!invitacion.adendaPublicada) {
+      return "La solicitud no tiene una modificación publicada que exija actualizar la respuesta.";
+    }
+    if (!MATRIZ_SOLICITUD_PERMITE_ACTUALIZACION[solicitud.estado]) {
+      return "El estado actual de la solicitud no permite actualizar la respuesta.";
+    }
+    if (this.solicitudCerradaPorFecha(solicitud)) {
+      return "El plazo de participación terminó: ya no es posible actualizar la respuesta.";
+    }
+
+    const versionVigente = solicitud.version ?? "v1.0";
+    if (
+      invitacion.respuestaVigente.actualizadaParaVersion === versionVigente ||
+      invitacion.respuestaVigente.versionSolicitud === versionVigente
+    ) {
+      return "Su respuesta ya corresponde a la versión vigente de la solicitud.";
+    }
+    return "";
   }
 
   solicitudCerradaPorFecha(solicitud: Pick<Solicitud, "cierre">): boolean {

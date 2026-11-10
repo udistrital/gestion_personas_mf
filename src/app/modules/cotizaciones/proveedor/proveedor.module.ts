@@ -14,6 +14,9 @@ import { DialogoDescartarModule } from "../components/dialogo-descartar/dialogo-
 import { DialogoExcedePresupuestoModule } from "../components/dialogo-excede-presupuesto/dialogo-excede-presupuesto.module";
 import { DialogoConfirmarEnvioModule } from "../components/dialogo-confirmar-envio/dialogo-confirmar-envio.module";
 import { DialogoEnvioExitosoModule } from "../components/dialogo-envio-exitoso/dialogo-envio-exitoso.module";
+import { AvisoAdendaComponent } from "../components/aviso-adenda/aviso-adenda.component";
+import { ResumenDiferenciasModule } from "../components/resumen-diferencias/resumen-diferencias.module";
+import { ExitoActualizacionComponent } from "./pages/actualizar-respuesta/exito-actualizacion/exito-actualizacion.component";
 
 @NgModule({
   declarations: [
@@ -22,6 +25,8 @@ import { DialogoEnvioExitosoModule } from "../components/dialogo-envio-exitoso/d
     DetalleSolicitudProveedorComponent,
     ObservacionesProveedorComponent,
     ResponderSolicitudComponent,
+    AvisoAdendaComponent,
+    ExitoActualizacionComponent,
   ],
   imports: [
     CommonModule,
@@ -33,6 +38,7 @@ import { DialogoEnvioExitosoModule } from "../components/dialogo-envio-exitoso/d
     DialogoExcedePresupuestoModule,
     DialogoConfirmarEnvioModule,
     DialogoEnvioExitosoModule,
+    ResumenDiferenciasModule,
     ProveedorRoutingModule,
   ],
 })

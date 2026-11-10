@@ -1,4 +1,5 @@
 import { extensionDe, type DocumentoOferente } from "./documentos.model";
+import type { ResumenDiferencias } from "./edicion-solicitud.model";
 import type { ItemSolicitud } from "./items.model";
 
 /**
@@ -25,17 +26,42 @@ export function esFormatoSoporteOferta(nombre: string): boolean {
 export type EstadoRespuestaProveedor = "borrador" | "enviada";
 export type TipoIvaOferta = "19" | "5" | "0" | "excluido" | "exento";
 export type ModalidadCotizacion = "individual" | "masivo";
+export type ModoRespuestaProveedor = "responder" | "actualizar";
 
 export interface ItemRespuestaProveedor {
   readonly itemId: ItemSolicitud["id"];
   readonly valorUnitario: number | null;
   readonly iva: TipoIvaOferta;
   readonly nota: string;
+  /** El ítem fue suprimido por la modificación de la solicitud. */
+  readonly eliminado?: boolean;
 }
 
+/**
+ * Documento aportado en una respuesta.
+ *
+ * Un documento puede ser un archivo nuevo (`archivo`) o un documento que ya
+ * quedó radicado en la versión anterior (`radicadoId`). Así la actualización
+ * conserva los soportes sin volver a subirlos y el mismo modelo sirve para
+ * P-04 y P-05.
+ */
 export interface DocumentoRespuestaProveedor {
   readonly requisitoId: string;
-  readonly archivo: File;
+  readonly archivo?: File;
+  readonly radicadoId?: string;
+  readonly nombre?: string;
+  readonly tamanoBytes?: number;
+}
+
+/** Resumen inmutable de una versión radicada de la respuesta. */
+export interface VersionRespuestaProveedor {
+  readonly version: string;
+  readonly revision: number;
+  readonly fecha: string;
+  readonly radicado?: string;
+  readonly versionSolicitud: string;
+  readonly total: number;
+  readonly usuario?: string;
 }
 
 export interface RespuestaProveedor {
@@ -51,14 +77,63 @@ export interface RespuestaProveedor {
   readonly modalidad: ModalidadCotizacion;
   readonly archivos: readonly DocumentoRespuestaProveedor[];
   readonly notaAdicional: string;
+  readonly total: number;
+  readonly version: string;
+  readonly revision: number;
+  /** Versión de la solicitud que se estaba respondiendo al radicar. */
+  readonly versionSolicitudRespondida: string;
+  /** Versión de solicitud para la que ya se aplicó esta actualización. */
+  readonly actualizadaParaVersion?: string;
   readonly fechaRadicacion?: string;
+  readonly fechaActualizacion?: string;
+  readonly usuarioActualizacion?: string;
+  readonly reemplazaRadicado?: string;
   readonly radicado?: string;
+  readonly versionesAnteriores: readonly VersionRespuestaProveedor[];
 }
 
 export interface BaseRespuestaProveedor {
   readonly items: readonly ItemSolicitud[];
   readonly documentos: readonly DocumentoOferente[];
   readonly respuesta: RespuestaProveedor | null;
+}
+
+/** Datos de la primera carga de P-05. */
+export interface BaseActualizacionRespuesta {
+  readonly items: readonly ItemSolicitud[];
+  /** Ítems de la versión de solicitud anterior, para la comparativa. */
+  readonly itemsAnteriores: readonly ItemSolicitud[];
+  readonly documentos: readonly DocumentoOferente[];
+  readonly respuestaVigente: RespuestaProveedor;
+  readonly adenda: {
+    readonly numero?: string;
+    readonly versionAnterior: string;
+    readonly versionVigente: string;
+    readonly publicadaEl: string;
+    readonly motivo?: string;
+    readonly diferencias: ResumenDiferencias;
+    readonly itemsAnteriores: readonly ItemSolicitud[];
+  };
+  readonly proveedor: {
+    readonly id: string;
+    readonly nombre: string;
+    readonly nit: string;
+    readonly tipoPersona: string;
+    readonly correo: string;
+    readonly direccion: string;
+    readonly representante: string;
+    readonly ciudad: string;
+  };
+  readonly borrador: RespuestaProveedor | null;
+}
+
+/** Resultado de radicar una actualización. */
+export interface ResultadoActualizacionRespuesta {
+  readonly respuesta: RespuestaProveedor;
+  readonly totalAnterior: number;
+  readonly itemsActivos: number;
+  readonly itemsSuprimidos: number;
+  readonly hash: string;
 }
 
 export interface TotalesRespuestaProveedor {

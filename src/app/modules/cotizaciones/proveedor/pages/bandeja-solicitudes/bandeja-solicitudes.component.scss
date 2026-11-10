@@ -543,6 +543,10 @@
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
 }
 
 .boton:focus-visible {
@@ -555,8 +559,11 @@
   color: var(--agora-on-primary);
 }
 
-.boton--primario:hover {
+.boton--primario:hover,
+.boton--primario:focus-visible,
+.boton--primario:active {
   background-color: var(--agora-primary-dark);
+  color: var(--agora-on-primary);
 }
 
 .boton--secundario {
@@ -565,8 +572,17 @@
   color: var(--agora-text);
 }
 
-.boton--secundario:hover {
+.boton--secundario:hover,
+.boton--secundario:focus-visible {
+  border-color: var(--agora-borde-control);
   background-color: var(--agora-superficie-neutra);
+  color: var(--agora-text);
+}
+
+.boton--secundario:active {
+  border-color: var(--agora-borde-control);
+  background-color: var(--agora-resalte-neutro);
+  color: var(--agora-text);
 }
 
 @media (min-width: t.$bp-md) {

@@ -1,7 +1,7 @@
 <plantilla-pagina-contenedora
   [breadcrumb]="breadcrumb"
-  title="Responder solicitud"
-  icon="edit_square"
+  [title]="tituloPagina"
+  [icon]="iconoPagina"
   [mostrarBotonRegresar]="true"
   (regresar)="volverAlDetalle()"
 >
@@ -35,14 +35,34 @@
       @case ("bloqueada") {
         <section class="estado" role="status" aria-live="polite">
           <mat-icon aria-hidden="true">lock</mat-icon>
-          <h2>Respuesta no habilitada</h2>
+          <h2>
+            {{ esActualizacion ? "Actualización no habilitada" : "Respuesta no habilitada" }}
+          </h2>
           <p>
-            Esta invitación ya fue respondida o su estado no permite iniciar una
-            respuesta desde P-04. Las actualizaciones posteriores corresponden
-            a un flujo futuro.
+            {{
+              esActualizacion
+                ? motivoBloqueo() || "La respuesta no se puede actualizar en este momento."
+                : "Esta invitación ya fue respondida o su estado no permite iniciar una respuesta desde P-04. Si el solicitante publicó una adenda, use «Modificar respuesta» desde el detalle."
+            }}
           </p>
-          <button type="button" class="boton-recto" (click)="volverAlDetalle()">Volver al detalle</button>
+          <button type="button" class="boton-recto" (click)="volverAlDetalle()">
+            Volver al detalle
+          </button>
         </section>
+      }
+      @case ("exito") {
+        @if (resultadoActualizacion(); as resultado) {
+          <exito-actualizacion
+            [resultado]="resultado"
+            [solicitudId]="detalle()?.solicitud?.id ?? ''"
+            [solicitudTitulo]="detalle()?.solicitud?.titulo ?? ''"
+            [cierre]="detalle()?.solicitud?.cierre ?? ''"
+            [numeroAdenda]="numeroAdenda"
+            (continuar)="irAlDetalle()"
+            (volverABandeja)="volverABandeja()"
+            (descargar)="descargarConstancia()"
+          ></exito-actualizacion>
+        }
       }
       @case ("listo") {
         @if (detalle(); as d) {
@@ -55,17 +75,64 @@
                   <chip-estado [estado]="d.solicitud.estado"></chip-estado>
                   <chip-estado [estado]="d.invitacion.estado"></chip-estado>
                   <span class="chip chip--recto">Versión {{ d.solicitud.version }}</span>
+                  @if (esActualizacion) {
+                    <span class="chip chip--advertencia">
+                      <mat-icon aria-hidden="true">edit_note</mat-icon>
+                      Modo actualización de oferta
+                    </span>
+                    <span class="chip chip--recto">
+                      Respuesta vigente {{ versionAnterior }} · {{ radicadoPrevio }}
+                    </span>
+                  }
                 </div>
               </div>
               <div class="encabezado-respuesta__plazo">
                 <span><mat-icon aria-hidden="true" color="primary">schedule</mat-icon> Cierre de recepción</span>
                 <contador-regresivo [fechaCierre]="d.solicitud.cierre"></contador-regresivo>
+                @if (esActualizacion) {
+                  <span class="encabezado-respuesta__nuevo-cierre">
+                    Nuevo cierre: <strong>{{ d.solicitud.cierre }}</strong>
+                  </span>
+                }
               </div>
             </header>
 
+            @if (esActualizacion && d.adenda; as adenda) {
+              <aviso-adenda
+                [diferencias]="adenda.diferencias"
+                [numero]="adenda.numero ?? ''"
+                [versionAnterior]="adenda.versionAnterior"
+                [versionVigente]="adenda.versionVigente"
+                [publicadaEl]="adenda.publicadaEl"
+                [motivo]="adenda.motivo ?? ''"
+                [abierto]="panelAdendaAbierto()"
+                (alternar)="alternarAdenda($event)"
+              ></aviso-adenda>
+            }
+
+            @if (esActualizacion && proveedor(); as p) {
+              <div class="proveedor-resumen" aria-label="Identidad del proveedor">
+                <span class="proveedor-resumen__avatar" aria-hidden="true">
+                  {{ p.nombre.slice(0, 2).toUpperCase() }}
+                </span>
+                <div class="proveedor-resumen__textos">
+                  <strong>{{ p.nombre }}</strong>
+                  <span>{{ p.nit }} · {{ p.tipoPersona }} · {{ p.ciudad }}</span>
+                  <span>{{ p.correo }} · {{ p.direccion }}</span>
+                </div>
+                <span class="chip chip--exito">
+                  <mat-icon aria-hidden="true">verified</mat-icon>
+                  Habilitado en banco UD
+                </span>
+              </div>
+            }
+
             <p class="descripcion">
-              Diligencie la oferta económica y los soportes requeridos para esta invitación.
-              Los datos publicados de la solicitud se presentan en modo de solo lectura.
+              {{
+                esActualizacion
+                  ? "Ajuste la oferta económica y los soportes según la modificación publicada. Los datos de la solicitud y las cantidades se conservan en modo de solo lectura."
+                  : "Diligencie la oferta económica y los soportes requeridos para esta invitación. Los datos publicados de la solicitud se presentan en modo de solo lectura."
+              }}
             </p>
 
             <asistente-pasos
@@ -73,7 +140,7 @@
               [pasoActual]="paso()"
               [pasoAlcanzado]="pasoAlcanzado()"
               [columnas]="4"
-              label="Progreso de respuesta"
+              [label]="esActualizacion ? 'Progreso de actualización' : 'Progreso de respuesta'"
               (pasoActualChange)="cambiarPaso($event)"
             ></asistente-pasos>
           </div>
@@ -84,12 +151,35 @@
                 <banner-paso
                   icono="inventory_2"
                   titulo="Paso 1: Elementos y servicios"
-                  descripcion="Registre el valor unitario y el tratamiento de IVA para cada elemento solicitado."
+                  [descripcion]="esActualizacion
+                    ? 'Revise los ítems modificados por la adenda y ajuste los precios de su oferta. Las cantidades y especificaciones de la solicitud no se modifican.'
+                    : 'Registre el valor unitario y el tratamiento de IVA para cada elemento solicitado.'"
                 ></banner-paso>
+                @if (esActualizacion) {
+                  <div class="barra-cambios" role="group" aria-label="Herramientas de la oferta">
+                    <div class="barra-cambios__toggle">
+                      <span>Ver detalle de elementos y/o servicios</span>
+                      <mat-slide-toggle
+                        [checked]="mostrarDetalleItems()"
+                        (change)="mostrarDetalleItems.set($event.checked)"
+                        aria-label="Mostrar u ocultar el detalle técnico de los ítems"
+                      >
+                        {{ mostrarDetalleItems() ? "Sí" : "No" }}
+                      </mat-slide-toggle>
+                    </div>
+                    <ul class="leyenda-cambios" aria-label="Convenciones de los ítems">
+                      <li><span class="leyenda-cambios__punto leyenda-cambios__punto--advertencia"></span> Cambió por adenda</li>
+                      <li><span class="leyenda-cambios__punto leyenda-cambios__punto--neutro"></span> Sin cambios</li>
+                      <li><span class="leyenda-cambios__punto leyenda-cambios__punto--error"></span> Eliminado por el solicitante</li>
+                    </ul>
+                  </div>
+                }
                 <plantilla-tarjeta-contenedora
                   icon="request_quote"
                   title="Oferta económica por ítem"
-                  description="La cantidad, unidad y descripción corresponden a la solicitud publicada y no se pueden modificar."
+                  [description]="esActualizacion
+                    ? 'Los ítems y cantidades provienen de la versión vigente de la solicitud; el valor unitario, el IVA y la ficha técnica son editables.'
+                    : 'La cantidad, unidad y descripción corresponden a la solicitud publicada y no se pueden modificar.'"
                 >
                   <div formGroupName="paso1" class="oferta-tabla-wrapper">
                     <div class="tabla-scroll oferta-tabla-scroll">
@@ -98,39 +188,70 @@
                           <tr>
                             <th scope="col" class="th-numero">#</th>
                             <th scope="col">Nombre del bien / servicio</th>
-                            <th scope="col" class="th-descripcion">Descripción solicitada</th>
+                            @if (mostrarDetalleItems()) {
+                              <th scope="col" class="th-descripcion">Descripción solicitada</th>
+                            }
                             <th scope="col" class="th-centro">Tipo</th>
                             <th scope="col" class="th-centro">Unidad</th>
                             <th scope="col" class="th-centro">Cant.</th>
                             <th scope="col" class="th-valor">Valor unitario ofrecido *</th>
                             <th scope="col" class="th-iva">IVA aplicable *</th>
-                            <th scope="col" class="th-observacion">Ficha técnica / Observación ofrecida</th>
+                            @if (mostrarDetalleItems()) {
+                              <th scope="col" class="th-observacion">Ficha técnica / Observación ofrecida</th>
+                            }
+                            @if (esActualizacion) {
+                              <th scope="col" class="th-centro">Estado</th>
+                            }
                             <th scope="col" class="th-subtotal">Subtotal COP</th>
                           </tr>
                         </thead>
                         <tbody formArrayName="items">
                           @for (item of itemsPaginados; track trackByItem($index, item); let iPagina = $index) {
                             @let i = paginaItems * porPaginaItems + iPagina;
-                            <tr [formGroupName]="i">
+                            <tr
+                              [formGroupName]="i"
+                              [class.fila-oferta--modificada]="esActualizacion && tipoCambioItem(item) === 'modificado'"
+                              [class.fila-oferta--eliminada]="esActualizacion && tipoCambioItem(item) === 'eliminado'"
+                              [class.fila-oferta--agregada]="esActualizacion && tipoCambioItem(item) === 'agregado'"
+                              [attr.aria-label]="esActualizacion
+                                ? item.nombre + ': ' + etiquetaCambioItem(item)
+                                : null"
+                            >
                               <td class="td-numero">{{ i + 1 | number: "2.0" }}</td>
                               <td>
                                 <div class="oferta-item">
                                   <span class="oferta-item__titulo">{{ item.nombre }}</span>
+                                  @if (esActualizacion && tipoCambioItem(item) !== "sin-cambios") {
+                                    <span [class]="claseCambioItem(item)">{{ etiquetaCambioItem(item) }}</span>
+                                  }
                                 </div>
                               </td>
-                              <td>
-                                <p class="oferta-item__descripcion oferta-item__descripcion--larga">{{ item.descripcion }}</p>
-                              </td>
+                              @if (mostrarDetalleItems()) {
+                                <td>
+                                  <p class="oferta-item__descripcion oferta-item__descripcion--larga">{{ item.descripcion }}</p>
+                                </td>
+                              }
                               <td class="td-centro">
                                 <span [class]="claseTipoItem(item.tipo)">{{ item.tipo === "bien" ? "Bien" : "Servicio" }}</span>
                               </td>
                               <td class="td-centro oferta-item__unidad">{{ item.unidad }}</td>
                               <td class="td-centro oferta-item__cantidad">
+                                @if (esActualizacion && tipoCambioItem(item) === "modificado" && itemAnterior(item.id)?.cantidad !== item.cantidad) {
+                                  <span class="oferta-item__cantidad--anterior">{{ itemAnterior(item.id)?.cantidad }}</span>
+                                  <mat-icon class="oferta-item__cantidad-flecha" aria-hidden="true">arrow_forward</mat-icon>
+                                }
                                 <span class="oferta-item__cantidad--cantidad">{{ item.cantidad }}</span>
                               </td>
                               <td>
                                 <div class="oferta-campo">
-                                  <label class="solo-lectura" [for]="'valor-' + i">Valor unitario (COP)</label>
+                                  <label class="campo__etiqueta solo-lectura" [for]="'valor-' + i">
+                                    Valor unitario (COP)
+                                  </label>
+                                  @if (esActualizacion && valorAnteriorItem(item.id) !== null && valorAnteriorItem(item.id) !== ofertaPara(item.id)?.valorUnitario) {
+                                    <span class="oferta-campo__anterior">
+                                      Valor anterior: {{ formatoMoneda(valorAnteriorItem(item.id) ?? 0) }}
+                                    </span>
+                                  }
                                   <campo-dinero
                                     [id]="'valor-' + i"
                                     [ariaLabel]="'Valor unitario en pesos colombianos para ' + item.nombre"
@@ -143,25 +264,57 @@
                               </td>
                               <td>
                                 <div class="oferta-campo">
-                                  <label class="solo-lectura" [for]="'iva-' + i">Tratamiento de IVA</label>
-                                  <select [id]="'iva-' + i" formControlName="iva" class="select-oferta">
-                                    <option value="19">19 % General</option>
-                                    <option value="5">5 %</option>
-                                    <option value="0">0 %</option>
-                                    <option value="excluido">Excluido</option>
-                                    <option value="exento">Exento</option>
-                                  </select>
+                                  <label class="campo__etiqueta solo-lectura" [for]="'iva-' + i">
+                                    Tratamiento de IVA
+                                  </label>
+                                  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                                    <mat-select
+                                      [id]="'iva-' + i"
+                                      formControlName="iva"
+                                      [attr.aria-label]="'Tratamiento de IVA para ' + item.nombre"
+                                      class="select-oferta"
+                                    >
+                                      <mat-option value="19">19 % General</mat-option>
+                                      <mat-option value="5">5 %</mat-option>
+                                      <mat-option value="0">0 %</mat-option>
+                                      <mat-option value="excluido">Excluido</mat-option>
+                                      <mat-option value="exento">Exento</mat-option>
+                                    </mat-select>
+                                  </mat-form-field>
                                   <span class="celda-secundaria">{{ formatoMoneda(ivaDelItem(item)) }} estimado</span>
                                 </div>
                               </td>
-                              <td>
-                                <div class="oferta-campo">
-                                  <label class="solo-lectura" [for]="'nota-' + i">Ficha técnica / Observación ofrecida</label>
-                                  <textarea [id]="'nota-' + i" rows="4" formControlName="nota" maxlength="500" placeholder="Especifique marca, modelo, garantía u observación..."></textarea>
-                                </div>
-                              </td>
+                              @if (mostrarDetalleItems()) {
+                                <td>
+                                  <div class="oferta-campo">
+                                    <label class="campo__etiqueta solo-lectura" [for]="'nota-' + i">
+                                      Ficha técnica / Observación ofrecida
+                                    </label>
+                                    <textarea
+                                      class="textarea-oferta"
+                                      [id]="'nota-' + i"
+                                      rows="3"
+                                      formControlName="nota"
+                                      maxlength="500"
+                                      placeholder="Especifique marca, modelo, garantía u observación..."
+                                      [attr.aria-label]="'Ficha técnica u observación para ' + item.nombre"
+                                    ></textarea>
+                                  </div>
+                                </td>
+                              }
+                              @if (esActualizacion) {
+                                <td class="td-centro">
+                                  <span [class]="claseCambioItem(item)">{{ etiquetaCambioItem(item) }}</span>
+                                  @if (tipoCambioItem(item) === "eliminado") {
+                                    <span class="celda-secundaria">Fuera del alcance</span>
+                                  }
+                                </td>
+                              }
                               <td class="td-subtotal">
                                 <div class="subtotal-oferta">
+                                  @if (esActualizacion && (tipoCambioItem(item) === "modificado" || tipoCambioItem(item) === "eliminado") && subtotalAnteriorItem(item) > 0) {
+                                    <span class="subtotal-oferta__anterior">{{ formatoMoneda(subtotalAnteriorItem(item)) }}</span>
+                                  }
                                   <span class="subtotal-oferta__valor">{{ formatoMoneda(subtotalConIvaDelItem(item)) }}</span>
                                   <span class="subtotal-oferta__iva">+ IVA: {{ formatoMoneda(ivaDelItem(item)) }}</span>
                                 </div>
@@ -173,7 +326,7 @@
                         </tbody>
                       </table>
                     </div>
-                    @if (totalItemsOferta > 0) {
+                    @if (totalFilasOferta > 0) {
                       <footer class="oferta-tabla-paginador">
                         <div class="oferta-tabla-paginador__info">
                           <span>Mostrar:</span>
@@ -195,7 +348,7 @@
                           Mostrando
                           <span class="oferta-tabla-paginador__rango-valor">{{ rangoInicioItems }}</span>–<span class="oferta-tabla-paginador__rango-valor">{{ rangoFinItems }}</span>
                           de
-                          <span class="oferta-tabla-paginador__rango-valor">{{ totalItemsOferta }}</span>
+                          <span class="oferta-tabla-paginador__rango-valor">{{ totalFilasOferta }}</span>
                           ítems
                         </div>
                         <nav aria-label="Paginación de ítems" class="oferta-tabla-paginador__navegacion">
@@ -251,6 +404,22 @@
                       </footer>
                     }
                   </div>
+                  @if (esActualizacion) {
+                    <div class="comparativa-totales" aria-live="polite">
+                      <div class="comparativa-totales__bloque">
+                        <span class="comparativa-totales__rotulo">Valor oferta anterior ({{ versionAnterior }})</span>
+                        <strong class="comparativa-totales__anterior">{{ formatoMoneda(respuestaVigente()?.total ?? 0) }}</strong>
+                      </div>
+                      <div class="comparativa-totales__bloque">
+                        <span class="comparativa-totales__rotulo">Diferencia neta</span>
+                        <strong class="comparativa-totales__diferencia">{{ formatoDiferencia(diferenciaTotal) }}</strong>
+                      </div>
+                      <div class="comparativa-totales__bloque comparativa-totales__bloque--nuevo">
+                        <span class="comparativa-totales__rotulo">Nuevo total {{ versionNueva }}</span>
+                        <strong>{{ formatoMoneda(totales.total) }}</strong>
+                      </div>
+                    </div>
+                  }
                   <div class="resumen-economico" aria-live="polite">
                     <div><span>Subtotal</span><strong>{{ formatoMoneda(totales.subtotal) }}</strong></div>
                     <div><span>Descuento</span><strong>{{ formatoMoneda(totales.descuento) }}</strong></div>
@@ -260,6 +429,24 @@
                   <p class="nota-provisional">
                     Descuento porcentual se distribuye proporcionalmente antes del IVA.
                   </p>
+                  @if (esActualizacion) {
+                    <div class="acciones-recalculo">
+                      <button
+                        type="button"
+                        class="boton-normativa"
+                        [disabled]="recalculando()"
+                        (click)="recalcular()"
+                      >
+                        <mat-icon aria-hidden="true">calculate</mat-icon>
+                        <span>{{ recalculando() ? "Recalculando…" : "Recalcular totales" }}</span>
+                      </button>
+                      @if (mensajeRecalculo()) {
+                        <span class="acciones-recalculo__mensaje" role="status" aria-live="polite">
+                          {{ mensajeRecalculo() }}
+                        </span>
+                      }
+                    </div>
+                  }
                   @if (presupuestoDisponible !== null) {
                     <section class="monitoreo-presupuesto" aria-labelledby="titulo-presupuesto">
                       <div class="resumen-seccion__encabezado">
@@ -293,7 +480,9 @@
                 <banner-paso
                   icono="event"
                   titulo="Paso 2: Vigencia y descuentos"
-                  descripcion="Indique hasta cuándo mantiene vigente su oferta y registre sus condiciones comerciales."
+                  [descripcion]="esActualizacion
+                    ? 'Revise la vigencia y las condiciones comerciales frente al nuevo cierre. La fecha de vencimiento debe ser igual o posterior al cierre vigente.'
+                    : 'Indique hasta cuándo mantiene vigente su oferta y registre sus condiciones comerciales.'"
                 ></banner-paso>
                 <div formGroupName="paso2">
                 <plantilla-tarjeta-contenedora
@@ -301,53 +490,57 @@
                   title="Vigencia de la oferta"
                   description="La oferta debe permanecer vigente, como mínimo, hasta el cierre de recepción."
                 >
-                  <div class="campos">
-                    <label class="campo">
-                      <span class="campo__etiqueta" id="fecha-vencimiento-etiqueta">
-                        Fecha de vencimiento de la cotización <strong aria-hidden="true">*</strong>
-                      </span>
-                      <span class="selector">
-                        <mat-icon class="selector__icono" aria-hidden="true">calendar_today</mat-icon>
-                        <input
-                          id="fecha-vencimiento"
-                          type="date"
-                          formControlName="fechaVencimiento"
-                          aria-labelledby="fecha-vencimiento-etiqueta"
-                          [attr.aria-describedby]="formulario.controls.paso2.controls.fechaVencimiento.touched && !fechaOfertaValida ? 'fecha-vencimiento-error' : 'fecha-vencimiento-ayuda'"
-                        />
-                      </span>
-                      <small id="fecha-vencimiento-ayuda">La oferta debe permanecer vigente al menos hasta el cierre de recepción.</small>
-                      @if (formulario.controls.paso2.controls.fechaVencimiento.touched && !fechaOfertaValida) {
-                        <span id="fecha-vencimiento-error" class="error-campo" aria-live="polite">La fecha no puede ser anterior al cierre de la solicitud.</span>
+                  <div class="campo-grid campo-grid--two">
+                    <div class="campo">
+                      <campo-fecha
+                        formControlName="fechaVencimiento"
+                        etiqueta="Fecha de vencimiento de la cotización"
+                        [requerido]="true"
+                        ayuda="La oferta debe permanecer vigente al menos hasta el cierre de recepción."
+                      ></campo-fecha>
+                      @if (diasVigencia !== null) {
+                        <span class="campo__ayuda" aria-live="polite">
+                          Vigencia calculada desde el cierre:
+                          <strong>{{ diasVigencia }} días calendario</strong>.
+                        </span>
                       }
-                    </label>
-                    @if (diasVigencia !== null) {
-                      <p class="ayuda" aria-live="polite">
-                        Vigencia calculada desde el cierre: <strong>{{ diasVigencia }} días calendario</strong>.
-                      </p>
-                    }
-                    <label class="campo">
-                      <span class="campo__etiqueta" id="descuento-etiqueta">Descuento comercial (%)</span>
-                      <span class="selector">
-                        <mat-icon class="selector__icono" aria-hidden="true">percent</mat-icon>
+                      @if (formulario.controls.paso2.controls.fechaVencimiento.touched && !fechaOfertaValida) {
+                        <span class="campo__fallo" role="alert" aria-live="polite">
+                          <mat-icon aria-hidden="true">error</mat-icon>
+                          <span>La fecha no puede ser anterior al cierre de la solicitud.</span>
+                        </span>
+                      }
+                    </div>
+
+                    <div class="campo">
+                      <label class="campo__etiqueta" for="descuento-comercial">
+                        Descuento comercial (%)
+                      </label>
+                      <mat-form-field appearance="outline">
+                        <mat-icon matPrefix aria-hidden="true">percent</mat-icon>
                         <input
+                          matInput
                           id="descuento-comercial"
                           type="number"
                           min="0"
                           max="100"
                           step="0.01"
                           formControlName="descuentoPorcentaje"
-                          aria-labelledby="descuento-etiqueta"
+                          aria-label="Descuento comercial"
                           aria-describedby="descuento-ayuda"
                         />
+                        <span matSuffix class="numero-unidad__sufijo">%</span>
+                        <mat-error>Ingrese un porcentaje entre 0 y 100.</mat-error>
+                      </mat-form-field>
+                      <span id="descuento-ayuda" class="campo__ayuda">
+                        Opcional · entre 0 % y 100 %. Se aplica antes de calcular el IVA.
                       </span>
-                      <small id="descuento-ayuda">Opcional · entre 0 % y 100 %. Se aplica antes de calcular el IVA.</small>
-                      @if (formulario.controls.paso2.controls.descuentoPorcentaje.touched && formulario.controls.paso2.controls.descuentoPorcentaje.invalid) {
-                        <span class="error-campo" aria-live="polite">Ingrese un porcentaje entre 0 y 100.</span>
-                      }
-                    </label>
+                    </div>
+
                     <div class="campo campo--editor">
-                      <span class="campo__etiqueta" id="condiciones-comerciales-etiqueta">Beneficios y condiciones comerciales</span>
+                      <span class="campo__etiqueta" id="condiciones-comerciales-etiqueta">
+                        Beneficios y condiciones comerciales
+                      </span>
                       <editor-enriquecido
                         formControlName="condicionesComerciales"
                         idEtiqueta="condiciones-comerciales-etiqueta"
@@ -357,7 +550,10 @@
                         [rows]="4"
                       ></editor-enriquecido>
                       @if (formulario.controls.paso2.controls.condicionesComerciales.touched && formulario.controls.paso2.controls.condicionesComerciales.hasError('maxlength')) {
-                        <span class="error-campo" aria-live="polite">El texto no puede superar los 600 caracteres.</span>
+                        <span class="campo__fallo" role="alert" aria-live="polite">
+                          <mat-icon aria-hidden="true">error</mat-icon>
+                          <span>El texto no puede superar los 600 caracteres.</span>
+                        </span>
                       }
                     </div>
                   </div>
@@ -512,12 +708,16 @@
                 <banner-paso
                   icono="upload_file"
                   titulo="Paso 3: Documentos y soportes"
-                  descripcion="Adjunte el soporte de la cotización y los documentos solicitados para la oferta."
+                  [descripcion]="esActualizacion
+                    ? 'Los documentos radicados en la versión anterior se conservan. Reemplace solo los que cambiaron por la modificación de la solicitud.'
+                    : 'Adjunte el soporte de la cotización y los documentos solicitados para la oferta.'"
                 ></banner-paso>
                 <plantilla-tarjeta-contenedora
                   icon="description"
                   title="Soporte de cotización"
-                  description="Adjunte el desglose económico formal de su oferta."
+                  [description]="esActualizacion
+                    ? 'El soporte de la versión anterior se conserva; adjunte uno nuevo solo si desea reemplazarlo.'
+                    : 'Adjunte el desglose económico formal de su oferta.'"
                 >
                   <div formGroupName="paso3" class="documento-bloque">
                     <section class="plantilla-cotizacion" aria-labelledby="plantilla-cotizacion-titulo">
@@ -551,14 +751,30 @@
                       </button>
                     </section>
 
+                    @if (esActualizacion && soporteRadicado(); as radicado) {
+                      <div class="documento-radicado" role="note">
+                        <mat-icon aria-hidden="true">verified</mat-icon>
+                        <span>
+                          Documento radicado en la versión anterior:
+                          <strong>{{ radicado.nombre || "Soporte de cotización" }}</strong>
+                          @if (radicado.tamanoBytes) {
+                            · {{ (radicado.tamanoBytes / 1024 / 1024).toFixed(1) }} MB
+                          }
+                        </span>
+                      </div>
+                    }
                     <span class="campo__etiqueta" id="soporte-cotizacion-etiqueta">
-                      Soporte detalle de la cotización <strong aria-hidden="true">*</strong>
+                      Soporte detalle de la cotización
+                      @if (!esActualizacion || !soporteRadicado()) {
+                        <strong aria-hidden="true">*</strong>
+                      }
                     </span>
                     <carga-archivos
                       id="soporte-cotizacion"
                       etiqueta="Seleccionar archivo desde el equipo"
                       [formatos]="formatos"
                       [tamanoMaxMb]="10"
+                      [requerido]="!esActualizacion || !soporteRadicado()"
                       formControlName="soporte"
                     ></carga-archivos>
                     <small class="ayuda">
@@ -566,7 +782,7 @@
                       tiempos de entrega y precios unitarios en COP, firmado por el representante
                       legal o el apoderado facultado.
                     </small>
-                    @if (formulario.controls.paso3.controls.soporte.touched && formulario.controls.paso3.controls.soporte.invalid) {
+                    @if (!soporteValido && formulario.controls.paso3.controls.soporte.touched) {
                       <span class="error-campo" aria-live="polite">El soporte de cotización es obligatorio.</span>
                     }
                   </div>
@@ -586,6 +802,17 @@
                               {{ documento.clasificacion === "obligatorio" ? "Obligatorio" : "Complementario" }}
                             </span>
                             <p>{{ documento.instruccion }}</p>
+                            @if (esActualizacion && documentoRadicado(documento.id); as radicado) {
+                              <div class="documento-radicado documento-radicado--compacto" role="note">
+                                <mat-icon aria-hidden="true">verified</mat-icon>
+                                <span>
+                                  Radicado: <strong>{{ radicado.nombre || documento.nombre }}</strong>
+                                  @if (radicado.tamanoBytes) {
+                                    · {{ (radicado.tamanoBytes / 1024 / 1024).toFixed(1) }} MB
+                                  }
+                                </span>
+                              </div>
+                            }
                           </div>
                           <carga-archivos
                             [id]="'documento-' + documento.id"
@@ -593,10 +820,10 @@
                             [formatos]="formatos"
                             [tamanoMaxMb]="10"
                             [compacto]="true"
-                            [requerido]="documento.clasificacion === 'obligatorio'"
+                            [requerido]="documentoObligatorioYNoRadicado(documento.id)"
                             [formControlName]="documento.id"
                           ></carga-archivos>
-                          @if (documentoObligatorio(documento.id) && controlArchivo(documento.id)?.touched && controlArchivo(documento.id)?.invalid) {
+                          @if (documentoObligatorioYNoRadicado(documento.id) && controlArchivo(documento.id)?.touched && documentoSinArchivo(documento.id)) {
                             <span class="error-campo" aria-live="polite">Adjunte este documento obligatorio.</span>
                           }
                         </article>
@@ -607,8 +834,10 @@
               } @else {
                 <banner-paso
                   icono="fact_check"
-                  titulo="Paso 4: Revisión y envío"
-                  descripcion="Revise la información de su oferta antes de radicar la respuesta. Una vez enviada no podrá modificarla desde esta pantalla."
+                  [titulo]="esActualizacion ? 'Paso 4: Revisión y actualización' : 'Paso 4: Revisión y envío'"
+                  [descripcion]="esActualizacion
+                    ? 'Revise los cambios frente a su respuesta anterior y radique la nueva versión. Una vez radicada, la actualización reemplaza legalmente la oferta vigente.'
+                    : 'Revise la información de su oferta antes de radicar la respuesta. Una vez enviada no podrá modificarla desde esta pantalla.'"
                 ></banner-paso>
 
                 <plantilla-tarjeta-contenedora
@@ -907,39 +1136,80 @@
                   </div>
                 </plantilla-tarjeta-contenedora>
 
+                @if (esActualizacion) {
+                  <resumen-diferencias
+                    [diferencias]="cambiosRespuesta"
+                    titulo="Cambios frente a su respuesta anterior"
+                    [descripcionPersonalizada]="'Ajustes que quedarán en la versión ' + versionNueva + ' de su oferta. Revíselos antes de radicar la actualización.'"
+                    [mostrarPaso]="true"
+                    sustantivo="cambio"
+                  ></resumen-diferencias>
+
+                  <div class="comparativa-final" aria-live="polite">
+                    <div>
+                      <span>Total respuesta anterior</span>
+                      <strong>{{ formatoMoneda(respuestaVigente()?.total ?? 0) }}</strong>
+                    </div>
+                    <div>
+                      <span>Total actualizado</span>
+                      <strong>{{ formatoMoneda(totales.total) }}</strong>
+                    </div>
+                    <div class="comparativa-final__diferencia">
+                      <span>Diferencia</span>
+                      <strong>{{ formatoDiferencia(diferenciaTotal) }}</strong>
+                    </div>
+                  </div>
+                }
+
                 <section class="aviso-preclusivo" role="note" aria-labelledby="aviso-preclusivo-titulo">
                   <span class="aviso-preclusivo__icono" aria-hidden="true">
                     <mat-icon>warning</mat-icon>
                   </span>
                   <div class="aviso-preclusivo__textos">
-                    <h3 id="aviso-preclusivo-titulo">Advertencia de radicación preclusiva</h3>
+                    <h3 id="aviso-preclusivo-titulo">
+                      {{ esActualizacion ? "Restricción precontractual de la actualización" : "Advertencia de radicación preclusiva" }}
+                    </h3>
                     <p>
-                      Solo se permite responder la cotización una vez. Verifique la información:
-                      una vez enviada no podrá modificarla, salvo que el solicitante modifique la
-                      solicitud mediante adenda.
+                      {{
+                        esActualizacion
+                          ? "Solo se permite actualizar su respuesta una vez por cada modificación de la solicitud. Verifique la información: al radicar, esta versión sustituye legalmente la oferta anterior."
+                          : "Solo se permite responder la cotización una vez. Verifique la información: una vez enviada no podrá modificarla, salvo que el solicitante modifique la solicitud mediante adenda."
+                      }}
                     </p>
                     <span class="aviso-preclusivo__nota">
-                      Fundamento legal: principio de preclusión de etapas precontractuales
-                      (Estatuto General de Contratación UD).
+                      {{
+                        esActualizacion
+                          ? "Criterio provisional RN-42: una actualización por adenda. Pendiente confirmación de negocio."
+                          : "Fundamento legal: principio de preclusión de etapas precontractuales (Estatuto General de Contratación UD)."
+                      }}
                     </span>
                   </div>
                 </section>
 
-                <plantilla-tarjeta-contenedora icon="verified_user" title="5. Declaración juramentada">
-                  <label class="declaracion" formGroupName="paso4">
-                    <input type="checkbox" formControlName="declaracionAceptada" />
-                    <span class="declaracion__textos">
-                      <strong>Declaración juramentada y aceptación de términos</strong>
-                      <span>
-                        Confirmo que la información suministrada es veraz y acepto las condiciones
-                        del proceso de cotización y el Estatuto de Contratación de la Universidad
-                        Distrital Francisco José de Caldas.
+                <plantilla-tarjeta-contenedora
+                  icon="verified_user"
+                  [title]="esActualizacion ? '5. Declaración de la actualización' : '5. Declaración juramentada'"
+                >
+                  <div class="declaracion" formGroupName="paso4">
+                    <mat-checkbox formControlName="declaracionAceptada">
+                      <span class="declaracion__textos">
+                        <strong>
+                          {{ esActualizacion ? "Confirmación expresa de la actualización" : "Declaración juramentada y aceptación de términos" }}
+                        </strong>
+                        <span>
+                          {{
+                            esActualizacion
+                              ? "Confirmo que los cambios económicos y técnicos incorporados corresponden a los requerimientos modificados por la adenda y mantengo vigentes las pólizas y certificaciones aportadas en la postulación original."
+                              : "Confirmo que la información suministrada es veraz y acepto las condiciones del proceso de cotización y el Estatuto de Contratación de la Universidad Distrital Francisco José de Caldas."
+                          }}
+                        </span>
                       </span>
-                    </span>
-                  </label>
+                    </mat-checkbox>
+                  </div>
                   @if (formulario.controls.paso4.controls.declaracionAceptada.touched && formulario.controls.paso4.controls.declaracionAceptada.invalid) {
-                    <span class="error-campo" aria-live="polite">
-                      Debe aceptar la declaración para continuar.
+                    <span class="campo__fallo" role="alert" aria-live="polite">
+                      <mat-icon aria-hidden="true">error</mat-icon>
+                      <span>Debe aceptar la declaración para continuar.</span>
                     </span>
                   }
                 </plantilla-tarjeta-contenedora>
@@ -953,7 +1223,7 @@
               <span>{{ error() }}</span>
               @if (paso() === 4) {
                 <button type="button" class="boton-recto" [disabled]="enviando()" (click)="enviar()">
-                  Reintentar envío
+                  {{ esActualizacion ? "Reintentar actualización" : "Reintentar envío" }}
                 </button>
               }
             </div>
@@ -963,10 +1233,10 @@
             [mostrarRegreso]="true"
             [tituloRegresar]="paso() > 1 ? 'Regresar' : 'Salir'"
             [esUltimoPaso]="paso() === 4"
-            [tituloFinal]="'Registrar cotización'"
-            [iconoFinal]="'send'"
+            [tituloFinal]="esActualizacion ? 'Radicar actualización' : 'Registrar cotización'"
+            [iconoFinal]="esActualizacion ? 'published_with_changes' : 'send'"
             [mostrarGuardar]="true"
-            [tituloGuardar]="'Guardar borrador'"
+            [tituloGuardar]="esActualizacion ? 'Guardar borrador de adenda' : 'Guardar borrador'"
             [deshabilitarGuardar]="guardando() || enviando()"
             [deshabilitarContinuar]="!pasoActualValido || enviando() || confirmandoEnvio() || guardando()"
             [estadoMensaje]="guardando() ? 'Guardando borrador…' : mensajeGuardado()"

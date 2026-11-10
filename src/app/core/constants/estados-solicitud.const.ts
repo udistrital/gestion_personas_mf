@@ -98,7 +98,19 @@ export type AccionInvitacionProveedor =
   | "observar"
   | "formular-observacion"
   | "responder"
+  | "actualizar"
   | "descargar-anexo";
+
+/**
+ * Estado derivado de la respuesta del proveedor frente a la versión vigente
+ * de la solicitud. No se persiste en la invitación: se calcula con
+ * `PermisosSolicitudService` a partir de la adenda y de la respuesta radicada.
+ */
+export type EstadoActualizacionRespuesta =
+  | "sin-modificacion"
+  | "desactualizada"
+  | "actualizada"
+  | "vencida";
 
 /** Acciones de una fila del tablero de oferentes (S-07). */
 export type AccionOferente =
@@ -287,6 +299,36 @@ export const ESTADOS_POSTULACION_PROVEEDOR: Readonly<
     etiqueta: "Vencida",
     tono: "neutro",
     icono: "schedule",
+    pulso: false,
+  },
+};
+
+/** Metadatos visuales del estado de actualización de la respuesta (P-05). */
+export const ESTADOS_ACTUALIZACION_RESPUESTA: Readonly<
+  Record<EstadoActualizacionRespuesta, EstadoSolicitudMeta>
+> = {
+  "sin-modificacion": {
+    etiqueta: "Sin modificaciones pendientes",
+    tono: "neutro",
+    icono: "check_circle",
+    pulso: false,
+  },
+  desactualizada: {
+    etiqueta: "Respuesta desactualizada",
+    tono: "advertencia",
+    icono: "edit_note",
+    pulso: true,
+  },
+  actualizada: {
+    etiqueta: "Respuesta actualizada",
+    tono: "exito",
+    icono: "published_with_changes",
+    pulso: false,
+  },
+  vencida: {
+    etiqueta: "Plazo vencido sin actualizar",
+    tono: "neutro",
+    icono: "lock_clock",
     pulso: false,
   },
 };
@@ -526,12 +568,14 @@ export const ESTADOS_CHIP: Readonly<
     | EstadoSubsanacion
     | EstadoSubsanacionOferente
     | EstadoEstudioMercado
-    | EstadoInvitacionEstudio,
+    | EstadoInvitacionEstudio
+    | EstadoActualizacionRespuesta,
     EstadoSolicitudMeta
   >
 > = {
   ...ESTADOS_SOLICITUD,
   ...ESTADOS_POSTULACION_PROVEEDOR,
+  ...ESTADOS_ACTUALIZACION_RESPUESTA,
   ...ESTADOS_OFERENTE,
   ...ESTADOS_SUBSANACION,
   ...ESTADOS_SUBSANACION_OFERENTE,
@@ -612,6 +656,11 @@ export const ACCIONES_INVITACION_PROVEEDOR: Readonly<
     etiqueta: "Responder",
     icono: "edit_square",
     ruta: "cotizaciones/bandeja-solicitudes/:id/responder",
+  },
+  actualizar: {
+    etiqueta: "Modificar respuesta",
+    icono: "edit_note",
+    ruta: "cotizaciones/bandeja-solicitudes/:id/actualizar",
   },
   "descargar-anexo": {
     etiqueta: "Descargar anexo",
@@ -810,6 +859,27 @@ export const MATRIZ_SOLICITUD_PERMITE_RESPUESTA: Readonly<
   "en-aprobacion": false,
   "enviada-con-modificaciones": true,
   "en-evaluacion": false,
+  adjudicada: false,
+  desierta: false,
+  cancelada: false,
+};
+
+/**
+ * Estados del proceso en los que se puede actualizar una respuesta ya radicada
+ * tras una modificación de la solicitud (P-05).
+ *
+ * Es provisional: RN-30 permite modificar ítems y cierre después de procesar,
+ * pero el momento exacto de cierre de la ventana de actualización aún no está
+ * definido por negocio. Se excluyen los estados terminales y la aprobación.
+ */
+export const MATRIZ_SOLICITUD_PERMITE_ACTUALIZACION: Readonly<
+  Record<EstadoSolicitud, boolean>
+> = {
+  borrador: false,
+  "enviada-proveedores": true,
+  "en-aprobacion": false,
+  "enviada-con-modificaciones": true,
+  "en-evaluacion": true,
   adjudicada: false,
   desierta: false,
   cancelada: false,

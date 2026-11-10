@@ -172,7 +172,17 @@
                     <span class="bandeja__tipo">{{ etiquetaTipo(fila) }}</span>
                   </td>
                   <td class="bandeja__td">
-                    <chip-estado [estado]="fila.invitacion.estado" />
+                    @let estadoActualizacion = permisos.estadoActualizacion(
+                      fila.invitacion,
+                      fila.solicitud
+                    );
+                    <chip-estado
+                      [estado]="
+                        estadoActualizacion === 'sin-modificacion'
+                          ? fila.invitacion.estado
+                          : estadoActualizacion
+                      "
+                    />
                   </td>
                   @if (hayColumnaAcciones()) {
                     <td class="bandeja__td bandeja__td--acciones">

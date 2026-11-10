@@ -2,52 +2,41 @@
   display: block;
 }
 
-:host(.campo--invalido) .campo-dinero {
-  border: 2px solid var(--agora-error);
-  outline: 2px solid color-mix(in srgb, var(--agora-error) 28%, transparent);
-  background: var(--agora-error-surface);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--agora-error) 12%, transparent);
-}
-
 .campo-dinero {
-  display: flex;
+  width: 100%;
+}
+
+/* El prefijo y el sufijo viven dentro de los icon-prefix/suffix de Material.
+   Se les da aire propio para que no queden pegados al borde del contorno. */
+.campo-dinero .mat-mdc-form-field-icon-prefix,
+.campo-dinero .mat-mdc-form-field-icon-suffix {
+  padding: 0 0.375rem;
+}
+
+.prefijo {
+  display: inline-flex;
   align-items: center;
-  box-sizing: border-box;
-  min-height: 2.4rem;
-  padding: 0 0.6rem;
-  border: 1px solid var(--agora-borde, #e8e2e2);
-  border-radius: 0.4rem;
-  background-color: var(--agora-superficie, #fff);
-  color: var(--agora-texto-titulo, #251819);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
-}
-
-.campo-dinero:focus-within {
-  border-color: var(--agora-vino, #69101b);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--agora-vino, #69101b) 10%, transparent);
-}
-
-.campo-dinero input {
-  min-width: 0;
-  flex: 1;
-  padding: 0.45rem 0.4rem;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
+  justify-content: center;
+  width: 1.375rem;
+  height: 1.375rem;
+  margin-right: 0.25rem;
+  border-radius: 50%;
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-primary);
   font-size: 0.875rem;
-  font-weight: 600;
-  text-align: right;
-}
-
-.prefijo,
-.sufijo {
-  color: var(--agora-text-muted);
-  font-size: 0.75rem;
   font-weight: 700;
 }
 
 .sufijo {
   margin-left: 0.5rem;
+  margin-right: 0.25rem;
+  color: var(--agora-texto-neutro);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.campo-dinero input.mat-mdc-input-element {
+  padding-right: 0.25rem;
+  text-align: right;
 }

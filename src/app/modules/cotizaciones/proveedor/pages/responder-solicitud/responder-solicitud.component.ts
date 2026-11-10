@@ -24,6 +24,7 @@ import { ImplicitAutenticationService } from "src/app/core/services/implicit_aut
 import { AlertService } from "src/app/shared/services/alert.service";
 import type {
   DetalleInvitacionProveedor,
+  ProveedorPublicoProveedor,
   SolicitudDetalleProveedor,
 } from "../../../models/invitacion-proveedor.model";
 import {
@@ -34,9 +35,18 @@ import {
   RespuestaProveedor,
   TipoIvaOferta,
 } from "../../../models/respuesta-proveedor.model";
+import type {
+  DocumentoRespuestaProveedor,
+  ModoRespuestaProveedor,
+  ResultadoActualizacionRespuesta,
+} from "../../../models/respuesta-proveedor.model";
 import type { ItemSolicitud } from "../../../models/items.model";
+import type { ResumenDiferencias } from "../../../models/edicion-solicitud.model";
+import { siguienteVersionModificacion } from "../../../models/edicion-solicitud.model";
+import type { EstadoActualizacionRespuesta } from "src/app/core/constants/estados-solicitud.const";
 import { textoPlanoDesdeHtml } from "src/app/shared/utils/texto-plano";
 import { BorradorRespuestaService } from "../../../services/borrador-respuesta.service";
+import { CambiosActualizacionService } from "../../../services/cambios-actualizacion.service";
 import { RespuestaProveedorService } from "../../../services/respuesta-proveedor.service";
 import { SolicitudesService } from "../../../services/solicitudes.service";
 import { ResultadoResolverDetalleProveedor } from "../detalle-solicitud/detalle-proveedor.resolver";
@@ -64,7 +74,8 @@ type EstadoVista =
   | "listo"
   | "error"
   | "no-encontrada"
-  | "bloqueada";
+  | "bloqueada"
+  | "exito";
 
 const PASO_INICIAL = 1;
 const PASO_FINAL = 4;
@@ -83,6 +94,7 @@ function maximoTextoEnriquecido(maximo: number) {
   templateUrl: "./responder-solicitud.component.html",
   styleUrls: ["./responder-solicitud.component.scss"],
   standalone: false,
+  host: { class: "formulario-material" },
 })
 export class ResponderSolicitudComponent implements OnInit {
   private readonly ruta = inject(ActivatedRoute);
@@ -92,12 +104,17 @@ export class ResponderSolicitudComponent implements OnInit {
   private readonly auth = inject(ImplicitAutenticationService);
   private readonly servicio = inject(RespuestaProveedorService);
   private readonly solicitudes = inject(SolicitudesService);
+  private readonly cambios = inject(CambiosActualizacionService);
   private readonly borradores = inject(BorradorRespuestaService);
   private readonly alerta = inject(AlertService);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
   private suscripcionAutoguardadoInstalada = false;
   private avisoPresupuestoAbierto = false;
+
+  /** Modo de la pantalla: respuesta inicial (P-04) o actualización (P-05). */
+  readonly modo: ModoRespuestaProveedor =
+    (this.ruta.snapshot.data["modo"] as ModoRespuestaProveedor) ?? "responder";
 
   @ViewChild("inicioPaso") private inicioPaso?: ElementRef<HTMLElement>;
 
@@ -114,6 +131,17 @@ export class ResponderSolicitudComponent implements OnInit {
   readonly error = signal("");
   readonly mensajeGuardado = signal("Los cambios se guardan automáticamente en este equipo.");
   readonly documentoIdentidad = signal("");
+  readonly proveedor = signal<ProveedorPublicoProveedor | null>(null);
+  readonly respuestaVigente = signal<RespuestaProveedor | null>(null);
+  readonly itemsAnteriores = signal<readonly ItemSolicitud[]>([]);
+  readonly cambiosSolicitud = signal<ResumenDiferencias>({ grupos: [], total: 0 });
+  readonly estadoActualizacion = signal<EstadoActualizacionRespuesta>("sin-modificacion");
+  readonly motivoBloqueo = signal("");
+  readonly panelAdendaAbierto = signal(true);
+  readonly mostrarDetalleItems = signal(true);
+  readonly resultadoActualizacion = signal<ResultadoActualizacionRespuesta | null>(null);
+  readonly recalculando = signal(false);
+  readonly mensajeRecalculo = signal("");
 
   paginaItems = 0;
   porPaginaItems = 5;
@@ -121,12 +149,47 @@ export class ResponderSolicitudComponent implements OnInit {
   porPaginaRevision = 5;
   readonly opcionesPorPagina = [5, 10, 25];
   readonly formatos = FORMATOS_SOPORTE_OFERTA;
-  readonly pasos = [
-    { numero: 1, nombre: "Elementos y servicios", subtitulo: "Oferta económica" },
-    { numero: 2, nombre: "Vigencia y descuentos", subtitulo: "Condiciones comerciales" },
-    { numero: 3, nombre: "Documentos y soportes", subtitulo: "Adjuntos requeridos" },
-    { numero: 4, nombre: "Revisión y envío", subtitulo: "Confirmar respuesta" },
-  ];
+
+  get esActualizacion(): boolean {
+    return this.modo === "actualizar";
+  }
+
+  get pasos() {
+    if (!this.esActualizacion) {
+      return [
+        { numero: 1, nombre: "Elementos y servicios", subtitulo: "Oferta económica" },
+        { numero: 2, nombre: "Vigencia y descuentos", subtitulo: "Condiciones comerciales" },
+        { numero: 3, nombre: "Documentos y soportes", subtitulo: "Adjuntos requeridos" },
+        { numero: 4, nombre: "Revisión y envío", subtitulo: "Confirmar respuesta" },
+      ];
+    }
+    return [
+      { numero: 1, nombre: "Elementos y servicios", subtitulo: "Modificación por adenda" },
+      { numero: 2, nombre: "Vigencia y descuentos", subtitulo: "Condiciones comerciales" },
+      { numero: 3, nombre: "Documentos y soportes", subtitulo: "Soportes vigentes" },
+      { numero: 4, nombre: "Revisión y actualización", subtitulo: "Radicación v2.0" },
+    ];
+  }
+
+  get tituloPagina(): string {
+    return this.esActualizacion
+      ? "Modificar respuesta de cotización"
+      : "Responder solicitud";
+  }
+
+  get iconoPagina(): string {
+    return this.esActualizacion ? "edit_note" : "edit_square";
+  }
+
+  get breadcrumb(): string {
+    if (!this.esActualizacion) {
+      return "<p>Gestión Proveedor › Cotizaciones › Solicitudes de cotización › <b>Responder solicitud</b></p>";
+    }
+    const id = this.detalle()?.solicitud.id;
+    return `<p>Gestión Proveedor › Cotizaciones › Solicitudes de cotización › ${
+      id ? `Solicitud ${id} › ` : ""
+    }<b>Modificar respuesta</b></p>`;
+  }
 
   readonly formulario = this.fb.group({
     paso1: this.fb.group({ items: this.fb.array([]) }),
@@ -137,7 +200,9 @@ export class ResponderSolicitudComponent implements OnInit {
     }),
     paso3: this.fb.group({
       modalidad: ["individual" as ModalidadCotizacion, Validators.required],
-      soporte: [[] as File[], Validators.required],
+      // La obligatoriedad se valida en `paso3Valido`: en P-05 un documento
+      // radicado en la versión anterior satisface el requisito.
+      soporte: [[] as File[]],
       requeridos: this.fb.group({}),
     }),
     paso4: this.fb.group({
@@ -146,20 +211,174 @@ export class ResponderSolicitudComponent implements OnInit {
     }),
   });
 
+  /** Ítems vigentes de la solicitud: los únicos que suman en la oferta. */
+  get itemsActivos(): readonly ItemSolicitud[] {
+    return this.solicitud()?.items ?? [];
+  }
+
   get totales() {
-    const solicitudes = this.items();
-    const ofertas = this.itemsRespuesta();
     return calcularTotalesRespuesta(
-      solicitudes,
-      ofertas,
+      this.itemsActivos,
+      this.itemsRespuesta(),
       this.formulario.controls.paso2.controls.descuentoPorcentaje.value,
+    );
+  }
+
+  /** Totales de la respuesta anterior, para la comparativa de P-05. */
+  get totalesAnteriores() {
+    const anterior = this.respuestaVigente();
+    const items = this.itemsAnteriores();
+    const ofertas = anterior?.items ?? [];
+    return calcularTotalesRespuesta(
+      items,
+      ofertas,
+      anterior?.descuentoPorcentaje ?? 0,
+    );
+  }
+
+  get diferenciaTotal(): number {
+    return this.totales.total - (this.respuestaVigente()?.total ?? 0);
+  }
+
+  get versionAnterior(): string {
+    return this.respuestaVigente()?.version ?? "v1.0";
+  }
+
+  get versionNueva(): string {
+    return this.respuestaVigente()
+      ? siguienteVersionModificacion(this.respuestaVigente()!.version)
+      : "v2.0";
+  }
+
+  get radicadoPrevio(): string {
+    return this.respuestaVigente()?.radicado ?? "Sin radicado";
+  }
+
+  get numeroAdenda(): string {
+    return this.detalle()?.adenda?.numero ?? "";
+  }
+
+  get itemsSuprimidos(): readonly ItemSolicitud[] {
+    return this.esActualizacion
+      ? this.itemsAnteriores().filter(
+          (anterior) => !this.itemsActivos.some((item) => item.id === anterior.id),
+        )
+      : [];
+  }
+
+  get cambiosRespuesta(): ResumenDiferencias {
+    if (!this.esActualizacion) {
+      return { grupos: [], total: 0 };
+    }
+    const actual = this.respuestaParaComparar();
+    return this.cambios.calcularRespuesta(
+      this.respuestaVigente(),
+      actual,
+      this.itemsActivos,
+      this.itemsAnteriores(),
+      this.documentos(),
     );
   }
 
   /** Nombre del archivo de soporte de cotización adjuntado. */
   get nombreSoporte(): string {
     const soporte = this.formulario.controls.paso3.controls.soporte.value;
-    return soporte?.[0]?.name ?? "Sin adjuntar";
+    return soporte?.[0]?.name ?? this.soporteRadicado()?.nombre ?? "Sin adjuntar";
+  }
+
+  /** Documentos radicados en la versión anterior, indexados por requisito. */
+  soporteRadicado(): DocumentoRespuestaProveedor | undefined {
+    return this.respuestaVigente()?.archivos.find(
+      (archivo) => archivo.requisitoId === "soporte-cotizacion",
+    );
+  }
+
+  documentoRadicado(id: string): DocumentoRespuestaProveedor | undefined {
+    return this.respuestaVigente()?.archivos.find(
+      (archivo) => archivo.requisitoId === id,
+    );
+  }
+
+  documentoObligatorioYNoRadicado(id: string): boolean {
+    return this.documentoObligatorio(id) && !this.documentoRadicado(id);
+  }
+
+  esItemEliminado(itemId: string): boolean {
+    return (
+      this.esActualizacion &&
+      !this.itemsActivos.some((item) => item.id === itemId)
+    );
+  }
+
+  tipoCambioItem(item: ItemSolicitud): string {
+    if (!this.esActualizacion) {
+      return "sin-cambios";
+    }
+    return this.cambios.estadoItem(item, this.itemsAnteriores(), this.itemsActivos);
+  }
+
+  etiquetaCambioItem(item: ItemSolicitud): string {
+    switch (this.tipoCambioItem(item)) {
+      case "agregado":
+        return "Nuevo por adenda";
+      case "modificado":
+        return "Cambió por adenda";
+      case "eliminado":
+        return "Eliminado por el solicitante";
+      default:
+        return "Sin cambios";
+    }
+  }
+
+  claseCambioItem(item: ItemSolicitud): string {
+    switch (this.tipoCambioItem(item)) {
+      case "agregado":
+        return "chip chip--info";
+      case "modificado":
+        return "chip chip--advertencia";
+      case "eliminado":
+        return "chip chip--error";
+      default:
+        return "chip chip--neutro";
+    }
+  }
+
+  valorAnteriorItem(itemId: string): number | null {
+    return (
+      this.respuestaVigente()?.items.find((oferta) => oferta.itemId === itemId)
+        ?.valorUnitario ?? null
+    );
+  }
+
+  subtotalAnteriorItem(item: ItemSolicitud): number {
+    const anterior = this.itemsAnteriores().find(
+      (previo) => previo.id === item.id,
+    );
+    const oferta = this.respuestaVigente()?.items.find(
+      (fila) => fila.itemId === item.id,
+    );
+    return (anterior?.cantidad ?? 0) * (oferta?.valorUnitario ?? 0);
+  }
+
+  itemAnterior(itemId: string): ItemSolicitud | undefined {
+    return this.itemsAnteriores().find((item) => item.id === itemId);
+  }
+
+  formatoDiferencia(valor: number): string {
+    const signo = valor > 0 ? "+" : "";
+    return `${signo}${this.formatoMoneda(valor)}`;
+  }
+
+  recalcular(): void {
+    this.recalculando.set(true);
+    this.mensajeRecalculo.set(
+      `Totales recalculados: ${this.formatoMoneda(this.totales.total)}.`,
+    );
+    this.recalculando.set(false);
+  }
+
+  alternarAdenda(abierto: boolean): void {
+    this.panelAdendaAbierto.set(abierto);
   }
 
   claseTipoItem(tipo: ItemSolicitud["tipo"]): string {
@@ -171,15 +390,7 @@ export class ResponderSolicitudComponent implements OnInit {
   }
 
   get totalArchivos(): number {
-    const paso3 = this.formulario.controls.paso3.getRawValue();
-    const adjuntos = paso3.requeridos as Record<string, File[]>;
-    return (
-      (paso3.soporte as File[]).length +
-      Object.values(adjuntos).reduce(
-        (total, archivos) => total + archivos.length,
-        0,
-      )
-    );
+    return this.archivosResumen.length;
   }
 
   get presupuestoDisponible(): number | null {
@@ -261,6 +472,29 @@ export class ResponderSolicitudComponent implements OnInit {
         });
       }
     }
+
+    if (this.esActualizacion) {
+      for (const radicado of this.respuestaVigente()?.archivos ?? []) {
+        const reemplazado =
+          radicado.requisitoId === "soporte-cotizacion"
+            ? (paso3.soporte as File[]).length > 0
+            : (documentos[radicado.requisitoId] ?? []).length > 0;
+        if (reemplazado) {
+          continue;
+        }
+        const requisito =
+          radicado.requisitoId === "soporte-cotizacion"
+            ? "Soporte de cotización"
+            : (this.documentos().find(
+                (documento) => documento.id === radicado.requisitoId,
+              )?.nombre ?? radicado.requisitoId);
+        filas.push({
+          requisito,
+          nombre: radicado.nombre ?? "Documento radicado",
+          tamano: this.formatearBytes(radicado.tamanoBytes ?? 0),
+        });
+      }
+    }
     return filas;
   }
 
@@ -272,9 +506,28 @@ export class ResponderSolicitudComponent implements OnInit {
       ...(paso3.soporte as File[]),
       ...Object.values(requeridos).flatMap((seleccionados) => seleccionados),
     ];
-    return this.formatearBytes(
-      archivos.reduce((total, archivo) => total + archivo.size, 0),
+    const seleccionados = archivos.reduce(
+      (total, archivo) => total + archivo.size,
+      0,
     );
+    const reemplazados = new Set<string>();
+    if ((paso3.soporte as File[]).length > 0) {
+      reemplazados.add("soporte-cotizacion");
+    }
+    for (const [id, seleccionadosArchivo] of Object.entries(requeridos)) {
+      if (seleccionadosArchivo.length > 0) {
+        reemplazados.add(id);
+      }
+    }
+    const radicados = this.esActualizacion
+      ? (this.respuestaVigente()?.archivos ?? [])
+          .filter((archivo) => !reemplazados.has(archivo.requisitoId))
+          .reduce(
+            (total, archivo) => total + (archivo.tamanoBytes ?? 0),
+            0,
+          )
+      : 0;
+    return this.formatearBytes(seleccionados + radicados);
   }
 
   /** Longitud de las observaciones adicionales del paso 4. */
@@ -287,7 +540,7 @@ export class ResponderSolicitudComponent implements OnInit {
   /* ── Paginación de la tabla de revisión (paso 4) ─────────────────────── */
   get itemsRevision(): readonly ItemSolicitud[] {
     const inicio = this.paginaRevision * this.porPaginaRevision;
-    return this.items().slice(inicio, inicio + this.porPaginaRevision);
+    return this.itemsActivos.slice(inicio, inicio + this.porPaginaRevision);
   }
 
   get totalPaginasRevision(): number {
@@ -361,9 +614,6 @@ export class ResponderSolicitudComponent implements OnInit {
     return `${dia}/${mes}/${anio}`;
   }
 
-  readonly breadcrumb =
-    "<p>Gestión Proveedor › Cotizaciones › Solicitudes de cotización › <b>Responder solicitud</b></p>";
-
   get filasOferta(): FormArray {
     return this.formulario.controls.paso1.controls.items;
   }
@@ -375,19 +625,28 @@ export class ResponderSolicitudComponent implements OnInit {
   }
 
   get totalItemsOferta(): number {
+    return this.itemsActivos.length;
+  }
+
+  get totalFilasOferta(): number {
     return this.items().length;
   }
 
   get totalPaginasItems(): number {
-    return Math.max(1, Math.ceil(this.totalItemsOferta / this.porPaginaItems));
+    return Math.max(1, Math.ceil(this.totalFilasOferta / this.porPaginaItems));
   }
 
   get rangoInicioItems(): number {
-    return this.totalItemsOferta === 0 ? 0 : this.paginaItems * this.porPaginaItems + 1;
+    return this.totalFilasOferta === 0
+      ? 0
+      : this.paginaItems * this.porPaginaItems + 1;
   }
 
   get rangoFinItems(): number {
-    return Math.min(this.totalItemsOferta, (this.paginaItems + 1) * this.porPaginaItems);
+    return Math.min(
+      this.totalFilasOferta,
+      (this.paginaItems + 1) * this.porPaginaItems,
+    );
   }
 
   get paginasVisiblesItems(): readonly number[] {
@@ -428,10 +687,39 @@ export class ResponderSolicitudComponent implements OnInit {
           this.fechaOfertaValida
         );
       case 3:
-        return this.formulario.controls.paso3.valid;
+        return this.paso3Valido;
       default:
         return this.formulario.controls.paso4.valid;
     }
+  }
+
+  get soporteValido(): boolean {
+    const soporte = this.formulario.controls.paso3.controls.soporte.value as
+      | File[]
+      | null;
+    return (
+      (soporte?.length ?? 0) > 0 ||
+      (this.esActualizacion && !!this.soporteRadicado())
+    );
+  }
+
+  get documentosValidos(): boolean {
+    const requeridos = this.formulario.controls.paso3.controls.requeridos;
+    return this.documentos().every((documento) => {
+      if (
+        documento.clasificacion !== "obligatorio" ||
+        this.documentoRadicado(documento.id)
+      ) {
+        return true;
+      }
+      const control = requeridos.get(documento.id);
+      const archivos = control?.value as File[] | null;
+      return (archivos?.length ?? 0) > 0;
+    });
+  }
+
+  get paso3Valido(): boolean {
+    return this.soporteValido && this.documentosValidos;
   }
 
   get fechaOfertaValida(): boolean {
@@ -460,6 +748,28 @@ export class ResponderSolicitudComponent implements OnInit {
     }
     this.detalle.set(resultado.detalle);
     this.solicitud.set(resultado.detalle.solicitud);
+    this.proveedor.set(resultado.detalle.proveedor);
+
+    if (this.esActualizacion) {
+      this.estadoActualizacion.set(
+        this.permisos.estadoActualizacion(
+          resultado.detalle.invitacion,
+          resultado.detalle.solicitud,
+        ),
+      );
+      const motivo = this.permisos.motivoActualizacionNoDisponible(
+        resultado.detalle.invitacion,
+        resultado.detalle.solicitud,
+      );
+      if (motivo) {
+        this.motivoBloqueo.set(motivo);
+        this.vista.set("bloqueada");
+        return;
+      }
+      void this.inicializarActualizacion();
+      return;
+    }
+
     if (!this.permisos.puedeResponderInvitacion(
       resultado.detalle.invitacion,
       resultado.detalle.solicitud,
@@ -523,28 +833,117 @@ export class ResponderSolicitudComponent implements OnInit {
     }
   }
 
+  private async inicializarActualizacion(): Promise<void> {
+    try {
+      const proveedorId = String((await this.auth.getDocument()) ?? "").trim();
+      if (!proveedorId) {
+        throw new Error("No fue posible identificar al proveedor en la sesión.");
+      }
+      this.documentoIdentidad.set(proveedorId);
+      const detalle = this.detalle();
+      if (!detalle) {
+        this.vista.set("no-encontrada");
+        return;
+      }
+
+      const base = await firstValueFrom(
+        this.servicio.obtenerActualizacion(detalle, proveedorId),
+      );
+      this.respuestaVigente.set(base.respuestaVigente);
+      this.itemsAnteriores.set(base.itemsAnteriores);
+      this.cambiosSolicitud.set(
+        this.cambios.cambiosSolicitud(base.adenda.diferencias),
+      );
+      this.documentos.set(base.documentos);
+
+      const eliminados = base.itemsAnteriores.filter(
+        (anterior) => !base.items.some((item) => item.id === anterior.id),
+      );
+      this.items.set([...base.items, ...eliminados]);
+      this.configurarFormulario(
+        this.items(),
+        base.documentos,
+        base.respuestaVigente.items,
+      );
+
+      this.formulario.patchValue({
+        paso2: {
+          fechaVencimiento: base.respuestaVigente.fechaVencimiento,
+          descuentoPorcentaje: base.respuestaVigente.descuentoPorcentaje,
+          condicionesComerciales: base.respuestaVigente.condicionesComerciales,
+        },
+        paso3: { modalidad: base.respuestaVigente.modalidad },
+        paso4: { notaAdicional: base.respuestaVigente.notaAdicional },
+      });
+
+      const borrador = this.borradores.cargar(
+        detalle.solicitud.id,
+        proveedorId,
+        this.contextoBorrador,
+      );
+      if (borrador) {
+        this.formulario.patchValue(borrador.formValue);
+        const pasoGuardado = Math.min(
+          Math.max(borrador.currentStep, 1),
+          PASO_FINAL,
+        );
+        this.paso.set(pasoGuardado);
+        this.pasoAlcanzado.set(pasoGuardado);
+        this.mensajeGuardado.set(
+          "Se restauró el borrador de actualización guardado en este equipo.",
+        );
+      } else {
+        this.mensajeGuardado.set(
+          "Borrador de actualización autoguardado en este equipo.",
+        );
+      }
+
+      this.vista.set("listo");
+      if (!this.suscripcionAutoguardadoInstalada) {
+        this.suscripcionAutoguardadoInstalada = true;
+        this.formulario.valueChanges
+          .pipe(debounceTime(800), takeUntilDestroyed(this.destroyRef))
+          .subscribe(() => this.autoguardar());
+      }
+    } catch (error) {
+      this.error.set(
+        error instanceof Error
+          ? error.message
+          : "No fue posible cargar la respuesta para actualizar.",
+      );
+      this.vista.set("error");
+    }
+  }
+
   private configurarFormulario(
     items: readonly ItemSolicitud[],
     documentos: readonly import("../../../models/documentos.model").DocumentoOferente[],
+    ofertas: readonly ItemRespuestaProveedor[] = [],
   ): void {
     this.filasOferta.clear();
     this.paginaItems = 0;
     for (const item of items) {
-      this.filasOferta.push(
-        this.fb.group({
-          itemId: [item.id],
-          valorUnitario: [null as number | null, [Validators.required, Validators.min(1)]],
-          iva: ["19" as TipoIvaOferta, Validators.required],
-          nota: ["", Validators.maxLength(500)],
-        }),
-      );
+      const oferta = ofertas.find((fila) => fila.itemId === item.id);
+      const eliminado = this.esItemEliminado(item.id);
+      const grupo = this.fb.group({
+        itemId: [item.id],
+        valorUnitario: [
+          oferta?.valorUnitario ?? null,
+          eliminado ? [] : [Validators.required, Validators.min(1)],
+        ],
+        iva: [oferta?.iva ?? ("19" as TipoIvaOferta), Validators.required],
+        nota: [oferta?.nota ?? "", Validators.maxLength(500)],
+      });
+      if (eliminado) {
+        grupo.controls.valorUnitario.disable();
+        grupo.controls.iva.disable();
+        grupo.controls.nota.disable();
+      }
+      this.filasOferta.push(grupo);
     }
     const controles: Record<string, AbstractControl> = {};
     for (const documento of documentos) {
-      controles[documento.id] = this.fb.control(
-        [],
-        documento.clasificacion === "obligatorio" ? Validators.required : [],
-      );
+      controles[documento.id] = this.fb.control([]);
     }
     this.formulario.controls.paso3.setControl(
       "requeridos",
@@ -553,7 +952,26 @@ export class ResponderSolicitudComponent implements OnInit {
   }
 
   private itemsRespuesta(): ItemRespuestaProveedor[] {
-    return this.filasOferta.getRawValue() as ItemRespuestaProveedor[];
+    return (this.filasOferta.getRawValue() as ItemRespuestaProveedor[]).filter(
+      (oferta) => !this.esItemEliminado(oferta.itemId),
+    );
+  }
+
+  private respuestaParaComparar(): RespuestaProveedor | null {
+    try {
+      return this.construirRespuesta("borrador");
+    } catch {
+      return null;
+    }
+  }
+
+  get contextoBorrador() {
+    return this.esActualizacion
+      ? {
+          modo: "actualizar" as const,
+          versionSolicitud: this.solicitud()?.version ?? "v1.0",
+        }
+      : undefined;
   }
 
   ofertaPara(itemId: string): ItemRespuestaProveedor | undefined {
@@ -638,10 +1056,13 @@ export class ResponderSolicitudComponent implements OnInit {
       proveedorId,
       this.valorFormulario(),
       this.paso(),
+      this.contextoBorrador,
     );
     this.mensajeGuardado.set(
       guardado
-        ? "Borrador guardado automáticamente en este equipo."
+        ? this.esActualizacion
+          ? "Borrador de actualización guardado automáticamente en este equipo."
+          : "Borrador guardado automáticamente en este equipo."
         : "No fue posible guardar el borrador en este equipo.",
     );
   }
@@ -797,17 +1218,26 @@ export class ResponderSolicitudComponent implements OnInit {
     this.error.set("");
     try {
       const respuesta = this.construirRespuesta("borrador");
-      await firstValueFrom(this.servicio.guardarBorrador(respuesta));
+      await firstValueFrom(
+        this.esActualizacion
+          ? this.servicio.guardarBorradorActualizacion(respuesta)
+          : this.servicio.guardarBorrador(respuesta),
+      );
       const guardado = this.borradores.guardar(
         detalle.solicitud.id,
         proveedorId,
         this.valorFormulario(),
         this.paso(),
+        this.contextoBorrador,
       );
       if (!guardado) {
         throw new Error("El almacenamiento local no está disponible.");
       }
-      this.mensajeGuardado.set("Borrador guardado en este equipo.");
+      this.mensajeGuardado.set(
+        this.esActualizacion
+          ? "Borrador de actualización guardado en este equipo."
+          : "Borrador guardado en este equipo.",
+      );
     } catch (error) {
       this.error.set(error instanceof Error ? error.message : "No fue posible guardar el borrador.");
     } finally {
@@ -838,15 +1268,11 @@ export class ResponderSolicitudComponent implements OnInit {
       return;
     }
     const detalle = this.detalle();
-    if (
-      !detalle ||
-      !this.permisos.puedeResponderInvitacion(
-        detalle.invitacion,
-        detalle.solicitud,
-      )
-    ) {
+    if (!detalle || !this.permisoVigente(detalle)) {
       this.error.set(
-        "El plazo de respuesta venció o el estado actual ya no permite radicar esta oferta.",
+        this.esActualizacion
+          ? "El plazo de actualización venció o el estado actual ya no permite radicar la modificación."
+          : "El plazo de respuesta venció o el estado actual ya no permite radicar esta oferta.",
       );
       this.vista.set("bloqueada");
       return;
@@ -868,6 +1294,21 @@ export class ResponderSolicitudComponent implements OnInit {
               fechaVencimiento:
                 this.formulario.controls.paso2.controls.fechaVencimiento
                   .value ?? "",
+              modo: this.esActualizacion ? "actualizacion" : "envio",
+              totalAnterior: this.respuestaVigente()?.total,
+              fechaCierre: detalle.solicitud.cierre ?? "",
+              versionAnterior: this.esActualizacion
+                ? this.versionAnterior
+                : undefined,
+              versionNueva: this.esActualizacion ? this.versionNueva : undefined,
+              adenda: this.esActualizacion
+                ? this.numeroAdenda
+                  ? `Adenda N.° ${this.numeroAdenda}`
+                  : "Adenda publicada"
+                : undefined,
+              radicadoPrevio: this.esActualizacion
+                ? this.radicadoPrevio
+                : undefined,
             },
             width: "640px",
             maxWidth: "96vw",
@@ -886,14 +1327,11 @@ export class ResponderSolicitudComponent implements OnInit {
     if (!confirmado || this.enviando()) {
       return;
     }
-    if (
-      !this.permisos.puedeResponderInvitacion(
-        detalle.invitacion,
-        detalle.solicitud,
-      )
-    ) {
+    if (!this.permisoVigente(detalle)) {
       this.error.set(
-        "El plazo de respuesta venció o el estado actual ya no permite radicar esta oferta.",
+        this.esActualizacion
+          ? "El plazo de actualización venció o el estado actual ya no permite radicar la modificación."
+          : "El plazo de respuesta venció o el estado actual ya no permite radicar esta oferta.",
       );
       this.vista.set("bloqueada");
       return;
@@ -901,21 +1339,63 @@ export class ResponderSolicitudComponent implements OnInit {
     this.enviando.set(true);
     this.error.set("");
     try {
-      const enviada = await firstValueFrom(
-        this.servicio.enviar(this.construirRespuesta("enviada")),
-      );
-      const solicitud = this.detalle()?.solicitud;
-      const proveedorId = this.documentoIdentidad();
-      if (solicitud && proveedorId) {
-        this.borradores.eliminar(solicitud.id, proveedorId);
+      const respuesta = this.construirRespuesta("enviada");
+      if (this.esActualizacion) {
+        const resultado = await firstValueFrom(this.servicio.actualizar(respuesta));
+        const solicitud = this.detalle()?.solicitud;
+        const proveedorId = this.documentoIdentidad();
+        if (solicitud && proveedorId) {
+          await firstValueFrom(
+            this.servicio.eliminarBorradorActualizacion(
+              solicitud.id,
+              proveedorId,
+              solicitud.version,
+            ),
+          );
+          this.borradores.eliminar(
+            solicitud.id,
+            proveedorId,
+            this.contextoBorrador,
+          );
+        }
+        this.resultadoActualizacion.set(resultado);
+        this.vista.set("exito");
+      } else {
+        const enviada = await firstValueFrom(this.servicio.enviar(respuesta));
+        const solicitud = this.detalle()?.solicitud;
+        const proveedorId = this.documentoIdentidad();
+        if (solicitud && proveedorId) {
+          this.borradores.eliminar(solicitud.id, proveedorId);
+        }
+        await this.mostrarAcuseRadicacion(
+          enviada,
+          solicitud?.id ?? enviada.solicitudId,
+        );
+        await this.volverABandeja();
       }
-      await this.mostrarAcuseRadicacion(enviada, solicitud?.id ?? enviada.solicitudId);
-      await this.volverABandeja();
     } catch (error) {
-      this.error.set(error instanceof Error ? error.message : "No fue posible enviar la respuesta.");
+      this.error.set(
+        error instanceof Error
+          ? error.message
+          : this.esActualizacion
+            ? "No fue posible actualizar la respuesta."
+            : "No fue posible enviar la respuesta.",
+      );
     } finally {
       this.enviando.set(false);
     }
+  }
+
+  private permisoVigente(detalle: DetalleInvitacionProveedor): boolean {
+    return this.esActualizacion
+      ? this.permisos.puedeActualizarInvitacion(
+          detalle.invitacion,
+          detalle.solicitud,
+        )
+      : this.permisos.puedeResponderInvitacion(
+          detalle.invitacion,
+          detalle.solicitud,
+        );
   }
 
   /**
@@ -958,16 +1438,37 @@ export class ResponderSolicitudComponent implements OnInit {
     }
     const paso3 = this.formulario.controls.paso3.getRawValue();
     const requeridos = paso3.requeridos as Record<string, File[]>;
-    const archivos = [
-      ...(paso3.soporte as File[]).map((archivo) => ({
-        requisitoId: "soporte-cotizacion",
-        archivo,
-      })),
-      ...Object.entries(requeridos).flatMap(([requisitoId, seleccionados]) =>
-        seleccionados.map((archivo) => ({ requisitoId, archivo })),
-      ),
-    ];
+    const archivos: DocumentoRespuestaProveedor[] = [];
+    const radicados = this.respuestaVigente()?.archivos ?? [];
+
+    const soporte = paso3.soporte as File[];
+    if (soporte.length > 0) {
+      archivos.push({ requisitoId: "soporte-cotizacion", archivo: soporte[0] });
+    } else {
+      const radicado = this.soporteRadicado();
+      if (radicado) {
+        archivos.push(radicado);
+      }
+    }
+
+    for (const documento of this.documentos()) {
+      const seleccionados = requeridos[documento.id] ?? [];
+      if (seleccionados.length > 0) {
+        for (const archivo of seleccionados) {
+          archivos.push({ requisitoId: documento.id, archivo });
+        }
+        continue;
+      }
+      const radicado = radicados.find(
+        (archivo) => archivo.requisitoId === documento.id,
+      );
+      if (radicado) {
+        archivos.push(radicado);
+      }
+    }
+
     const paso2 = this.formulario.controls.paso2.getRawValue();
+    const anterior = this.respuestaVigente();
     return {
       id: `RESP-${detalle.invitacion.id}`,
       solicitudId: detalle.solicitud.id,
@@ -981,6 +1482,14 @@ export class ResponderSolicitudComponent implements OnInit {
       modalidad: paso3.modalidad as ModalidadCotizacion,
       archivos,
       notaAdicional: this.formulario.controls.paso4.controls.notaAdicional.value ?? "",
+      total: this.totales.total,
+      version: this.esActualizacion ? this.versionNueva : "v1.0",
+      revision: this.esActualizacion ? (anterior?.revision ?? 1) + 1 : 1,
+      versionSolicitudRespondida: detalle.solicitud.version,
+      actualizadaParaVersion: this.esActualizacion
+        ? detalle.solicitud.version
+        : undefined,
+      versionesAnteriores: anterior?.versionesAnteriores ?? [],
     };
   }
 
@@ -996,6 +1505,19 @@ export class ResponderSolicitudComponent implements OnInit {
         }
         this.detalle.set(detalle);
         this.solicitud.set(detalle.solicitud);
+        this.proveedor.set(detalle.proveedor);
+        if (this.esActualizacion) {
+          const motivo = this.permisos.motivoActualizacionNoDisponible(
+            detalle.invitacion,
+            detalle.solicitud,
+          );
+          if (motivo) {
+            this.motivoBloqueo.set(motivo);
+            this.vista.set("bloqueada");
+            return;
+          }
+          return this.inicializarActualizacion();
+        }
         if (!this.permisos.puedeResponderInvitacion(detalle.invitacion, detalle.solicitud)) {
           this.vista.set("bloqueada");
           return;
@@ -1011,7 +1533,7 @@ export class ResponderSolicitudComponent implements OnInit {
   }
 
   async volverAlDetalle(): Promise<void> {
-    if (this.formulario.dirty) {
+    if (this.formulario.dirty && this.vista() !== "exito") {
       const solicitudId = this.detalle()?.solicitud.id ?? "";
       const resultado = await firstValueFrom(
         this.dialog
@@ -1034,9 +1556,19 @@ export class ResponderSolicitudComponent implements OnInit {
       if (solicitudId && proveedorId) {
         try {
           await firstValueFrom(
-            this.servicio.eliminarBorrador(solicitudId, proveedorId),
+            this.esActualizacion
+              ? this.servicio.eliminarBorradorActualizacion(
+                  solicitudId,
+                  proveedorId,
+                  this.solicitud()?.version ?? "v1.0",
+                )
+              : this.servicio.eliminarBorrador(solicitudId, proveedorId),
           );
-          this.borradores.eliminar(solicitudId, proveedorId);
+          this.borradores.eliminar(
+            solicitudId,
+            proveedorId,
+            this.contextoBorrador,
+          );
         } catch (error) {
           this.error.set(
             error instanceof Error
@@ -1059,6 +1591,22 @@ export class ResponderSolicitudComponent implements OnInit {
     void this.router.navigate(["cotizaciones", "bandeja-solicitudes"]);
   }
 
+  irAlDetalle(): void {
+    const id = this.detalle()?.solicitud.id;
+    void this.router.navigate(
+      id
+        ? ["cotizaciones", "bandeja-solicitudes", id]
+        : ["cotizaciones", "bandeja-solicitudes"],
+    );
+  }
+
+  descargarConstancia(): void {
+    void this.alerta.showAlert(
+      "Descarga en preparación",
+      "La generación de la constancia en PDF aún no está implementada. La actualización ya quedó registrada con su radicado y fecha.",
+    );
+  }
+
   documentoObligatorio(id: string): boolean {
     return this.documentos().some(
       (documento) =>
@@ -1068,6 +1616,11 @@ export class ResponderSolicitudComponent implements OnInit {
 
   controlArchivo(requisitoId: string): AbstractControl | null {
     return this.formulario.controls.paso3.controls.requeridos.get(requisitoId);
+  }
+
+  documentoSinArchivo(requisitoId: string): boolean {
+    const archivos = this.controlArchivo(requisitoId)?.value as File[] | null;
+    return (archivos?.length ?? 0) === 0;
   }
 
   private get formularioCompletoValido(): boolean {
@@ -1082,7 +1635,7 @@ export class ResponderSolicitudComponent implements OnInit {
       return this.formulario.controls.paso2.valid && this.fechaOfertaValida;
     }
     if (paso === 3) {
-      return this.formulario.controls.paso3.valid;
+      return this.paso3Valido;
     }
     return this.formulario.controls.paso4.valid;
   }

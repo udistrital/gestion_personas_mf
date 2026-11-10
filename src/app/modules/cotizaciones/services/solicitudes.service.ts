@@ -12,7 +12,9 @@ import type {
   GrupoFiltroInvitacion,
   InvitacionProveedor,
   InvitacionProveedorConSolicitud,
+  ProveedorPublicoProveedor,
   ResultadoListadoInvitaciones,
+  ResumenRespuestaVigente,
   SolicitudDetalleProveedor,
 } from "../models/invitacion-proveedor.model";
 import {
@@ -71,15 +73,16 @@ import {
   ACTIVIDADES_CIIU,
   ActividadCiiu,
   ActividadVinculada,
+  PROVEEDORES_MOCK,
   SegmentacionProveedores,
   buscarProveedores,
   exigeSnies,
+  identidadProveedor,
 } from "../models/proveedores.model";
 import type {
   DatosEdicionSolicitud,
   ModoEdicionSolicitud,
   ModificacionPendiente,
-  ResumenDiferencias,
   ResultadoGuardadoSolicitud,
   VersionEdicionSolicitud,
 } from "../models/edicion-solicitud.model";
@@ -160,6 +163,13 @@ export abstract class SolicitudesService {
   abstract registrarRespuestaProveedor(
     solicitudId: string,
     fechaRadicacion: string,
+    respuesta?: ResumenRespuestaVigente,
+  ): void;
+
+  /** Refleja la actualización de la respuesta en P-01 y P-02 (P-05). */
+  abstract registrarActualizacionProveedor(
+    solicitudId: string,
+    respuesta: ResumenRespuestaVigente,
   ): void;
 
   /**
@@ -735,12 +745,60 @@ const SOLICITUDES_PROVEEDOR_MOCK: readonly Solicitud[] = [
     unidadEjecutora: "1",
     titulo:
       "Renovación y licenciamiento de plataforma de gestión de laboratorios virtuales STEM",
-    apertura: "24/10/2026",
-    cierre: "02/11/2026",
+    apertura: fechaCortaRelativa(-10),
+    // La fecha base es la versión anterior; la adenda proyecta el cierre nuevo.
+    cierre: fechaCortaRelativa(-1),
     dependencia: "Recursos Educativos",
     tipoCotizacion: "SERVICIO",
     estado: "enviada-con-modificaciones",
-    fechaLimiteObservaciones: "2026-10-30T18:00:00-05:00",
+    fechaLimiteObservaciones: fechaLimiteRelativa(1),
+    version: "v1.0",
+    revision: 1,
+  },
+  {
+    id: "SOL-2026-0138",
+    vigencia: 2026,
+    unidadEjecutora: "1",
+    titulo:
+      "Adquisición de herramientas de analítica y tableros de control para planeación",
+    apertura: fechaCortaRelativa(-12),
+    cierre: fechaCortaRelativa(-2),
+    dependencia: "Oficina Asesora de Planeación",
+    tipoCotizacion: "SERVICIO",
+    estado: "enviada-con-modificaciones",
+    fechaLimiteObservaciones: fechaLimiteRelativa(-1),
+    version: "v1.0",
+    revision: 1,
+  },
+  {
+    id: "SOL-2026-0137",
+    vigencia: 2026,
+    unidadEjecutora: "2",
+    titulo:
+      "Suministro de equipos de laboratorio para prácticas de electrónica básica",
+    apertura: fechaCortaRelativa(-20),
+    cierre: fechaCortaRelativa(-11),
+    dependencia: "Facultad de Ingeniería",
+    tipoCotizacion: "BIEN",
+    estado: "enviada-con-modificaciones",
+    fechaLimiteObservaciones: fechaLimiteRelativa(-12),
+    version: "v1.0",
+    revision: 1,
+  },
+  {
+    id: "SOL-2026-0136",
+    vigencia: 2026,
+    unidadEjecutora: "2",
+    titulo:
+      "Servicio de mantenimiento preventivo de equipos de cómputo institucional",
+    apertura: fechaCortaRelativa(-5),
+    cierre: fechaCortaRelativa(4),
+    dependencia: "División de Planta Física",
+    tipoCotizacion: "SERVICIO",
+    estado: "enviada-proveedores",
+    fechaLimiteObservaciones: fechaLimiteRelativa(2),
+    version: "v1.0",
+    revision: 1,
   },
   {
     id: "SOL-2026-0135",
@@ -837,12 +895,146 @@ const INVITACIONES_PROVEEDOR_MOCK: readonly InvitacionProveedor[] = [
     solicitudId: "SOL-2026-0139",
     estado: "pendiente-ajuste",
     fechaRadicacion: "2026-10-25T10:20:00-05:00",
+    respuestaVigente: {
+      version: "v1.0",
+      revision: 1,
+      radicado: "RAD-2026-0881",
+      fecha: "2026-10-25T10:20:00-05:00",
+      versionSolicitud: "v1.0",
+      usuario: "900.842.119-4",
+      total: 207_536_000,
+    },
+    versionesRespuesta: [
+      {
+        version: "v1.0",
+        revision: 1,
+        radicado: "RAD-2026-0881",
+        fecha: "2026-10-25T10:20:00-05:00",
+        versionSolicitud: "v1.0",
+        usuario: "900.842.119-4",
+        total: 207_536_000,
+      },
+    ],
     adendaPublicada: {
+      numero: "1",
       versionAnterior: "v1.0",
       versionVigente: "v1.1",
       publicadaEl: "27/10/2026 09:00 COT",
       anexoId: "anexo-0139-adenda",
+      motivo:
+        "Ajuste de cantidades de cableado estructurado y ampliación del plazo técnico.",
+      cierreAnterior: fechaCortaRelativa(-1),
+      cierreVigente: fechaCortaRelativa(5),
     },
+  },
+  {
+    id: "INV-0138",
+    solicitudId: "SOL-2026-0138",
+    estado: "enviada",
+    fechaRadicacion: "2026-10-29T15:42:00-05:00",
+    respuestaVigente: {
+      version: "v2.0",
+      revision: 2,
+      radicado: "COT-RESP-SOL-2026-0138-V2",
+      fecha: "2026-10-29T15:42:00-05:00",
+      versionSolicitud: "v1.1",
+      usuario: "900.842.119-4",
+      total: 48_900_000,
+      actualizadaParaVersion: "v1.1",
+    },
+    versionesRespuesta: [
+      {
+        version: "v1.0",
+        revision: 1,
+        radicado: "RAD-2026-0874",
+        fecha: "2026-10-22T11:10:00-05:00",
+        versionSolicitud: "v1.0",
+        usuario: "900.842.119-4",
+        total: 45_200_000,
+      },
+      {
+        version: "v2.0",
+        revision: 2,
+        radicado: "COT-RESP-SOL-2026-0138-V2",
+        fecha: "2026-10-29T15:42:00-05:00",
+        versionSolicitud: "v1.1",
+        usuario: "900.842.119-4",
+        total: 48_900_000,
+        actualizadaParaVersion: "v1.1",
+      },
+    ],
+    adendaPublicada: {
+      numero: "1",
+      versionAnterior: "v1.0",
+      versionVigente: "v1.1",
+      publicadaEl: "28/10/2026 08:30 COT",
+      anexoId: "anexo-0138-adenda",
+      motivo: "Ajuste de alcance del tablero de control institucional.",
+      cierreAnterior: fechaCortaRelativa(-9),
+      cierreVigente: fechaCortaRelativa(-2),
+    },
+  },
+  {
+    id: "INV-0137",
+    solicitudId: "SOL-2026-0137",
+    estado: "pendiente-ajuste",
+    fechaRadicacion: "2026-10-18T09:15:00-05:00",
+    respuestaVigente: {
+      version: "v1.0",
+      revision: 1,
+      radicado: "RAD-2026-0869",
+      fecha: "2026-10-18T09:15:00-05:00",
+      versionSolicitud: "v1.0",
+      usuario: "900.842.119-4",
+      total: 31_700_000,
+    },
+    versionesRespuesta: [
+      {
+        version: "v1.0",
+        revision: 1,
+        radicado: "RAD-2026-0869",
+        fecha: "2026-10-18T09:15:00-05:00",
+        versionSolicitud: "v1.0",
+        usuario: "900.842.119-4",
+        total: 31_700_000,
+      },
+    ],
+    adendaPublicada: {
+      numero: "1",
+      versionAnterior: "v1.0",
+      versionVigente: "v1.1",
+      publicadaEl: "19/10/2026 16:20 COT",
+      anexoId: "anexo-0137-adenda",
+      motivo: "Corrección de cantidades de equipos de laboratorio.",
+      cierreAnterior: fechaCortaRelativa(-14),
+      cierreVigente: fechaCortaRelativa(-11),
+    },
+  },
+  {
+    id: "INV-0136",
+    solicitudId: "SOL-2026-0136",
+    estado: "enviada",
+    fechaRadicacion: "2026-11-04T10:05:00-05:00",
+    respuestaVigente: {
+      version: "v1.0",
+      revision: 1,
+      radicado: "RAD-2026-0889",
+      fecha: "2026-11-04T10:05:00-05:00",
+      versionSolicitud: "v1.0",
+      usuario: "900.842.119-4",
+      total: 18_400_000,
+    },
+    versionesRespuesta: [
+      {
+        version: "v1.0",
+        revision: 1,
+        radicado: "RAD-2026-0889",
+        fecha: "2026-11-04T10:05:00-05:00",
+        versionSolicitud: "v1.0",
+        usuario: "900.842.119-4",
+        total: 18_400_000,
+      },
+    ],
   },
   {
     id: "INV-0135",
@@ -904,6 +1096,9 @@ const INVITACIONES_PROVEEDOR_MOCK: readonly InvitacionProveedor[] = [
 const ORDENADORES_PROVEEDOR_MOCK: Readonly<Record<string, string>> = {
   "SOL-2026-0142": "Dr. Ricardo Gómez Morales",
   "SOL-2026-0139": "Dr. Ricardo Gómez Morales",
+  "SOL-2026-0138": "Dra. Elvia María Sanabria",
+  "SOL-2026-0137": "Ing. Martha Cecilia Bello",
+  "SOL-2026-0136": "Dr. Carlos Julio González",
   "SOL-2026-0135": "Ing. Martha Cecilia Bello",
   "SOL-2026-0128": "Dr. Carlos Julio González",
   "SOL-2026-0115": "Dr. Ricardo Gómez Morales",
@@ -3018,27 +3213,76 @@ function comoDetalle(
 
 function valoresConAdendaPublicada(
   valores: DatosEdicionSolicitud,
+  cierreVigente?: string,
 ): DatosEdicionSolicitud {
-  // Fixture provisional para demostrar una adenda publicada que cambia cantidades.
-  const [primerItem, ...demasItems] = valores.items.registros;
+  // Fixture provisional: la adenda ajusta el cableado (ítem 4), suprime la
+  // capacitación (ítem 5) y amplía el cierre. Los ids son los del fixture de
+  // ítems del módulo.
+  const registros = valores.items.registros
+    .filter((item) => item.id !== "5")
+    .map((item) =>
+      item.id === "4" ? { ...item, cantidad: 55 } : item,
+    );
   return {
     ...valores,
+    datosGenerales: {
+      ...valores.datosGenerales,
+      fechaCierre: cierreVigente
+        ? fechaIsoDesdeCorta(cierreVigente)
+        : valores.datosGenerales.fechaCierre,
+    },
     items: {
       ...valores.items,
-      registros: primerItem
-        ? [{ ...primerItem, cantidad: primerItem.cantidad + 1 }, ...demasItems]
-        : demasItems,
+      registros,
     },
   };
 }
 
-function diferenciasProveedor(
-  diferencias: ResumenDiferencias,
-): ResumenDiferencias {
-  const grupos = diferencias.grupos.filter((grupo) => grupo.paso !== 5);
+function proveedorPublicoMock(): ProveedorPublicoProveedor {
+  const base =
+    PROVEEDORES_MOCK.find((proveedor) => proveedor.id === "prov-28") ??
+    PROVEEDORES_MOCK[0];
+  const identidad = identidadProveedor(base);
   return {
-    grupos,
-    total: grupos.reduce((total, grupo) => total + grupo.cambios.length, 0),
+    id: base.id,
+    nombre: base.nombre,
+    nit: base.nit,
+    tipoPersona: identidad.etiquetaTipoPersona,
+    correo: identidad.correo,
+    direccion: identidad.direccionFiscal,
+    representante: identidad.representante,
+    ciudad: base.ciudad,
+  };
+}
+
+/**
+ * Proyección de la solicitud con la versión vigente de la adenda.
+ *
+ * La bandeja y el detalle del proveedor necesitan la misma fecha de cierre y
+ * la misma versión que la fotografía que se usa para calcular diferencias. Si
+ * solo se proyectara el detalle, P-01 mostraría el cierre anterior.
+ */
+function solicitudProveedorVigente(
+  invitacion: InvitacionProveedor,
+  solicitud: Solicitud,
+): Solicitud {
+  if (!invitacion.adendaPublicada) {
+    return solicitud;
+  }
+  const anteriores = datosEdicionDesdeDetalle(solicitud);
+  const vigentes = valoresConAdendaPublicada(
+    anteriores,
+    invitacion.adendaPublicada.cierreVigente,
+  );
+  return {
+    ...solicitud,
+    version:
+      invitacion.adendaPublicada.versionVigente ??
+      solicitud.version ??
+      "v1.0",
+    cierre:
+      fechaCortaDesdeIso(vigentes.datosGenerales.fechaCierre) ??
+      solicitud.cierre,
   };
 }
 
@@ -3085,10 +3329,7 @@ function proyectarSolicitudProveedor(
         }
       : null,
     itemsDetalle: solicitud.itemsDetalle,
-    items: solicitud.items.map((item) => ({
-      ...item,
-      valorUnitarioTecho: null,
-    })),
+    items: solicitud.items,
     contratacion: solicitud.contratacion,
     documentos: solicitud.documentos
       ? {
@@ -3240,10 +3481,11 @@ export class SolicitudesServiceMock extends SolicitudesService {
         const invitacion =
           this.invitacionesActualizadas.get(invitacionBase.solicitudId) ??
           invitacionBase;
-        const solicitud = solicitudes.get(invitacion.solicitudId);
-        if (!solicitud) {
+        const solicitudBase = solicitudes.get(invitacion.solicitudId);
+        if (!solicitudBase) {
           return [];
         }
+        const solicitud = solicitudProveedorVigente(invitacion, solicitudBase);
         return [
           {
             invitacion,
@@ -3355,7 +3597,10 @@ export class SolicitudesServiceMock extends SolicitudesService {
 
     const valoresAnteriores = datosEdicionDesdeDetalle(solicitud);
     const valoresVigentes = invitacion.adendaPublicada
-      ? valoresConAdendaPublicada(valoresAnteriores)
+      ? valoresConAdendaPublicada(
+          valoresAnteriores,
+          invitacion.adendaPublicada.cierreVigente,
+        )
       : valoresAnteriores;
     const solicitudVigente = comoDetalle(
       {
@@ -3364,25 +3609,31 @@ export class SolicitudesServiceMock extends SolicitudesService {
           invitacion.adendaPublicada?.versionVigente ??
           solicitud.version ??
           "v1.0",
+        cierre:
+          fechaCortaDesdeIso(valoresVigentes.datosGenerales.fechaCierre) ??
+          solicitud.cierre,
       },
       valoresVigentes,
     );
     const diferencias = invitacion.adendaPublicada
-      ? diferenciasProveedor(
-          this.diferencias.calcular(valoresAnteriores, valoresVigentes),
+      ? this.diferencias.calcular(
+          valoresAnteriores,
+          valoresVigentes,
+          "restringida",
         )
       : null;
 
     return of({
       invitacion,
       solicitud: proyectarSolicitudProveedor(solicitudVigente),
-      yaRespondio:
-        tienePostulacionRadicada(invitacion),
+      yaRespondio: tienePostulacionRadicada(invitacion),
+      proveedor: proveedorPublicoMock(),
       adenda:
         invitacion.adendaPublicada && diferencias
           ? {
               ...invitacion.adendaPublicada,
               diferencias,
+              itemsAnteriores: valoresAnteriores.items.registros,
             }
           : null,
     }).pipe(delay(retardo));
@@ -3391,6 +3642,7 @@ export class SolicitudesServiceMock extends SolicitudesService {
   registrarRespuestaProveedor(
     solicitudId: string,
     fechaRadicacion: string,
+    respuesta?: ResumenRespuestaVigente,
   ): void {
     const invitacion =
       this.invitacionesActualizadas.get(solicitudId) ??
@@ -3400,10 +3652,47 @@ export class SolicitudesServiceMock extends SolicitudesService {
     if (!invitacion) {
       throw new Error("No existe la invitación asociada a la solicitud.");
     }
+    const versiones = respuesta
+      ? [
+          ...(invitacion.versionesRespuesta ?? []).filter(
+            (version) => version.version !== respuesta.version,
+          ),
+          respuesta,
+        ]
+      : invitacion.versionesRespuesta;
     this.invitacionesActualizadas.set(solicitudId, {
       ...invitacion,
       estado: "enviada",
       fechaRadicacion,
+      respuestaVigente: respuesta ?? invitacion.respuestaVigente,
+      versionesRespuesta: versiones,
+    });
+  }
+
+  registrarActualizacionProveedor(
+    solicitudId: string,
+    respuesta: ResumenRespuestaVigente,
+  ): void {
+    const invitacion =
+      this.invitacionesActualizadas.get(solicitudId) ??
+      INVITACIONES_PROVEEDOR_MOCK.find(
+        (item) => item.solicitudId === solicitudId,
+      );
+    if (!invitacion) {
+      throw new Error("No existe la invitación asociada a la solicitud.");
+    }
+    const versiones = [
+      ...(invitacion.versionesRespuesta ?? []).filter(
+        (version) => version.version !== respuesta.version,
+      ),
+      respuesta,
+    ];
+    this.invitacionesActualizadas.set(solicitudId, {
+      ...invitacion,
+      estado: "enviada",
+      fechaRadicacion: respuesta.fecha,
+      respuestaVigente: respuesta,
+      versionesRespuesta: versiones,
     });
   }
 

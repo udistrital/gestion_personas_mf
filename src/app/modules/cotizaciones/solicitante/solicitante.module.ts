@@ -24,7 +24,7 @@ import { AcordeonPasoComponent } from "./pages/asistente-solicitud/paso-7-revisi
 import { ListaVerificacionComponent } from "./pages/asistente-solicitud/paso-7-revision/components/lista-verificacion/lista-verificacion.component";
 import { DialogoProcesarComponent } from "./pages/asistente-solicitud/paso-7-revision/components/dialogo-procesar/dialogo-procesar.component";
 import { DialogoConfirmarModificacionComponent } from "./pages/asistente-solicitud/paso-7-revision/components/dialogo-confirmar-modificacion/dialogo-confirmar-modificacion.component";
-import { ResumenDiferenciasComponent } from "./pages/asistente-solicitud/paso-7-revision/components/resumen-diferencias/resumen-diferencias.component";
+import { ResumenDiferenciasModule } from "../components/resumen-diferencias/resumen-diferencias.module";
 import { DialogoDescartarModule } from "../components/dialogo-descartar/dialogo-descartar.module";
 import { EditarSolicitudComponent } from "./pages/editar-solicitud/editar-solicitud.component";
 import { paginadorEnEspanol } from "./mat-paginator-intl-es";
@@ -69,7 +69,6 @@ import {
     ListaVerificacionComponent,
     DialogoProcesarComponent,
     DialogoConfirmarModificacionComponent,
-    ResumenDiferenciasComponent,
     EditarSolicitudComponent,
     ForoObservacionesPageComponent,
     TableroOferentesComponent,
@@ -88,6 +87,7 @@ import {
     SolicitanteRoutingModule,
     ForoObservacionesModule,
     DialogoDescartarModule,
+    ResumenDiferenciasModule,
   ],
   providers: [
     // Único punto de enlace de SICAPITAL (cruce del paso 1 del asistente).

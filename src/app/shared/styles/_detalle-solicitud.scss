@@ -149,6 +149,12 @@
     background: var(--agora-resalte-neutro);
   }
 
+  .boton-recto:active:not(:disabled) {
+    background: var(--agora-resalte-neutro);
+    border-color: var(--agora-borde-control);
+    color: var(--agora-text);
+  }
+
   .boton-recto:focus-visible {
     outline: 2px solid var(--agora-primary);
     outline-offset: 2px;
@@ -160,9 +166,11 @@
     color: var(--agora-on-primary);
   }
 
-  .boton-recto--vino:hover:not(:disabled) {
+  .boton-recto--vino:hover:not(:disabled),
+  .boton-recto--vino:active:not(:disabled) {
     border-color: var(--agora-primary-dark);
     background: var(--agora-primary-dark);
+    color: var(--agora-on-primary);
   }
 
   /* ── Rejilla etiqueta/valor ─────────────────────────────────────────────── */

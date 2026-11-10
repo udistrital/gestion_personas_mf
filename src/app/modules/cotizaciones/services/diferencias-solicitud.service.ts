@@ -9,6 +9,7 @@ import {
 import { AREAS_SNIES, NUCLEOS_SNIES } from "../models/proveedores.model";
 import type {
   CambioCampo,
+  CambioItemSolicitud,
   DatosEdicionSolicitud,
   GrupoDiferencias,
   ResumenDiferencias,
@@ -37,23 +38,79 @@ const GRUPOS: Readonly<
  */
 @Injectable({ providedIn: "root" })
 export class DiferenciasSolicitudService {
-  /** Compara la fotografía base con el estado actual del formulario. */
+  /**
+   * Compara la fotografía base con el estado actual del formulario.
+   *
+   * `alcance: "restringida"` reproduce la modificación posterior al proceso
+   * (RN-25/RN-30): solo ítems y fecha de cierre. P-05 lo usa para no mostrar
+   * como modificable nada que la regla no permita cambiar.
+   */
   calcular(
     anterior: DatosEdicionSolicitud,
     nuevo: DatosEdicionSolicitud,
+    alcance: "completa" | "restringida" = "completa",
   ): ResumenDiferencias {
     const grupos: GrupoDiferencias[] = [
-      this.grupo(2, this.datosGenerales(anterior, nuevo)),
-      this.grupo(3, this.items(anterior, nuevo)),
-      this.grupo(4, this.contratacion(anterior, nuevo)),
-      this.grupo(5, this.proveedores(anterior, nuevo)),
-      this.grupo(6, this.documentos(anterior, nuevo)),
+      this.grupo(2, this.datosGenerales(anterior, nuevo, alcance)),
+      this.grupo(3, this.items(anterior, nuevo, alcance)),
+      ...(alcance === "completa"
+        ? [
+            this.grupo(4, this.contratacion(anterior, nuevo)),
+            this.grupo(5, this.proveedores(anterior, nuevo)),
+            this.grupo(6, this.documentos(anterior, nuevo)),
+          ]
+        : []),
     ].filter((grupo) => grupo.cambios.length > 0);
 
     return {
       grupos,
       total: grupos.reduce((total, grupo) => total + grupo.cambios.length, 0),
     };
+  }
+
+  /**
+   * Compara los ítems de dos versiones de la solicitud.
+   *
+   * Es la fuente única del estado por ítem (sin cambios, modificado, agregado
+   * o eliminado) que usan el resumen de S-04 y el paso 1 de P-05.
+   */
+  compararItems(
+    anterior: DatosEdicionSolicitud,
+    nuevo: DatosEdicionSolicitud,
+  ): readonly CambioItemSolicitud[] {
+    const previos = new Map(
+      anterior.items.registros.map((item) => [item.id, item]),
+    );
+    const actuales = new Map(nuevo.items.registros.map((item) => [item.id, item]));
+    const cambios: CambioItemSolicitud[] = [];
+
+    for (const [id, item] of actuales) {
+      const previo = previos.get(id);
+      if (!previo) {
+        cambios.push({ itemId: id, tipo: "agregado", vigente: item });
+        continue;
+      }
+      const modificado =
+        previo.nombre !== item.nombre ||
+        previo.descripcion !== item.descripcion ||
+        previo.cantidad !== item.cantidad ||
+        previo.unidad !== item.unidad ||
+        previo.tipo !== item.tipo;
+      cambios.push({
+        itemId: id,
+        tipo: modificado ? "modificado" : "sin-cambios",
+        anterior: previo,
+        vigente: item,
+      });
+    }
+
+    for (const [id, item] of previos) {
+      if (!actuales.has(id)) {
+        cambios.push({ itemId: id, tipo: "eliminado", anterior: item });
+      }
+    }
+
+    return cambios;
   }
 
   private grupo(paso: number, cambios: readonly CambioCampo[]): GrupoDiferencias {
@@ -79,9 +136,20 @@ export class DiferenciasSolicitudService {
   private datosGenerales(
     anterior: DatosEdicionSolicitud,
     nuevo: DatosEdicionSolicitud,
+    alcance: "completa" | "restringida",
   ): readonly CambioCampo[] {
     const antes = anterior.datosGenerales;
     const ahora = nuevo.datosGenerales;
+    if (alcance === "restringida") {
+      return this.compactar([
+        this.cambio(
+          2,
+          "Fecha de cierre",
+          this.fecha(antes.fechaCierre),
+          this.fecha(ahora.fechaCierre),
+        ),
+      ]);
+    }
     return this.compactar([
       this.cambio(
         2,
@@ -125,58 +193,59 @@ export class DiferenciasSolicitudService {
   private items(
     anterior: DatosEdicionSolicitud,
     nuevo: DatosEdicionSolicitud,
+    alcance: "completa" | "restringida",
   ): readonly CambioCampo[] {
     const cambios: CambioCampo[] = [];
-    const previos = new Map(
-      anterior.items.registros.map((item) => [item.id, item]),
-    );
-    const actuales = new Map(nuevo.items.registros.map((item) => [item.id, item]));
-
-    for (const [id, item] of actuales) {
-      const previo = previos.get(id);
-      if (!previo) {
+    for (const item of this.compararItems(anterior, nuevo)) {
+      if (item.tipo === "agregado" && item.vigente) {
         cambios.push({
           paso: 3,
-          etiqueta: `Ítem agregado: ${item.nombre}`,
+          etiqueta: `Ítem agregado: ${item.vigente.nombre}`,
           anterior: "—",
-          nuevo: this.describirItem(item),
+          nuevo: this.describirItem(item.vigente),
         });
+        continue;
+      }
+      if (item.tipo === "eliminado" && item.anterior) {
+        cambios.push({
+          paso: 3,
+          etiqueta: `Ítem eliminado: ${item.anterior.nombre}`,
+          anterior: this.describirItem(item.anterior),
+          nuevo: "—",
+        });
+        continue;
+      }
+      if (item.tipo !== "modificado" || !item.anterior || !item.vigente) {
         continue;
       }
       cambios.push(
         ...this.compactar([
-          this.cambio(3, `Ítem ${item.nombre} · Nombre`, previo.nombre, item.nombre),
           this.cambio(
             3,
-            `Ítem ${item.nombre} · Descripción técnica`,
-            this.texto(previo.descripcion),
-            this.texto(item.descripcion),
+            `Ítem ${item.vigente.nombre} · Nombre`,
+            item.anterior.nombre,
+            item.vigente.nombre,
           ),
           this.cambio(
             3,
-            `Ítem ${item.nombre} · Cantidad`,
-            String(previo.cantidad),
-            String(item.cantidad),
+            `Ítem ${item.vigente.nombre} · Descripción técnica`,
+            this.texto(item.anterior.descripcion),
+            this.texto(item.vigente.descripcion),
           ),
           this.cambio(
             3,
-            `Ítem ${item.nombre} · Unidad de medida`,
-            previo.unidad,
-            item.unidad,
-          )
+            `Ítem ${item.vigente.nombre} · Cantidad`,
+            String(item.anterior.cantidad),
+            String(item.vigente.cantidad),
+          ),
+          this.cambio(
+            3,
+            `Ítem ${item.vigente.nombre} · Unidad de medida`,
+            item.anterior.unidad,
+            item.vigente.unidad,
+          ),
         ]),
       );
-    }
-
-    for (const [id, item] of previos) {
-      if (!actuales.has(id)) {
-        cambios.push({
-          paso: 3,
-          etiqueta: `Ítem eliminado: ${item.nombre}`,
-          anterior: this.describirItem(item),
-          nuevo: "—",
-        });
-      }
     }
 
     const resumenAnterior = resumirItems(anterior.items.registros);
@@ -189,12 +258,16 @@ export class DiferenciasSolicitudService {
           String(resumenAnterior.totalItems),
           String(resumenNuevo.totalItems),
         ),
-        this.cambio(
-          3,
-          "Plantilla de cargue masivo",
-          anterior.items.archivo || "—",
-          nuevo.items.archivo || "—",
-        ),
+        ...(alcance === "completa"
+          ? [
+              this.cambio(
+                3,
+                "Plantilla de cargue masivo",
+                anterior.items.archivo || "—",
+                nuevo.items.archivo || "—",
+              ),
+            ]
+          : []),
       ]),
     );
 

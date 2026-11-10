@@ -334,8 +334,9 @@
 
 .detalle-proveedor__hito-punto {
   display: inline-flex;
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 1.8rem;
+  height: 1.8rem;
+  padding: 0.25rem;
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
@@ -675,4 +676,71 @@
   .tabla-detalle {
     min-width: 35rem;
   }
+}
+
+/* ── P-05: estado e historial de la respuesta ───────────────────────────── */
+.detalle-proveedor__alerta,
+.detalle-proveedor__ok {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.375rem;
+  margin: 0.5rem 0 0;
+  padding: 0.625rem 0.75rem;
+  border-radius: var(--agora-radio-md);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.detalle-proveedor__alerta {
+  border: 1px solid var(--agora-warning-border);
+  background: var(--agora-warning-surface);
+  color: var(--agora-warning-text);
+}
+
+.detalle-proveedor__ok {
+  border: 1px solid var(--agora-success-border);
+  background: var(--agora-success-surface);
+  color: var(--agora-success);
+}
+
+.detalle-proveedor__alerta mat-icon,
+.detalle-proveedor__ok mat-icon {
+  flex: 0 0 auto;
+  width: 1rem;
+  height: 1rem;
+  font-size: 1rem;
+}
+
+.detalle-proveedor__historial {
+  padding: 1.125rem 1.25rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-surface);
+}
+
+.detalle-proveedor__historial h2 {
+  margin: 0 0 0.75rem;
+  color: var(--agora-primary);
+  font-size: 1rem;
+}
+
+.detalle-proveedor__historial ol {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.detalle-proveedor__historial li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.detalle-proveedor__nota {
+  color: var(--agora-texto-neutro);
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
 }

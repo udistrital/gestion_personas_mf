@@ -7,8 +7,8 @@
 
 .diferencias {
   box-sizing: border-box;
-  width: 100%;
-  margin: 0 0 1.5rem;
+  width: min(100% - 3rem, 86.25rem);
+  margin: 0 auto;
   padding: 1.25rem 1.5rem;
   border: 1px solid var(--agora-border);
   border-radius: var(--agora-radio-lg);
@@ -240,4 +240,57 @@
   .diferencias__flecha {
     transform: rotate(90deg);
   }
+}
+
+/* Variante tabla del panel de adenda (P-05). */
+.diferencias__tabla-scroll {
+  margin-top: 0.875rem;
+  overflow-x: auto;
+  border: 1px solid var(--agora-border);
+  border-radius: var(--agora-radio-md);
+}
+
+.diferencias__tabla {
+  width: 100%;
+  min-width: 52rem;
+  border-collapse: collapse;
+  background: var(--agora-surface);
+  font-size: var(--agora-font-sm);
+}
+
+.diferencias__tabla th,
+.diferencias__tabla td {
+  padding: 0.625rem 0.75rem;
+  border-bottom: 1px solid var(--agora-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.diferencias__tabla thead th {
+  background: var(--agora-surface-soft);
+  color: var(--agora-primary);
+  font-size: var(--agora-font-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.diferencias__tabla tbody th {
+  color: var(--agora-text);
+  font-weight: 700;
+}
+
+.diferencias__tabla tbody tr:last-child th,
+.diferencias__tabla tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.diferencias__tabla .diferencias__anterior,
+.diferencias__tabla .diferencias__nuevo {
+  display: inline-block;
+}
+
+.diferencias__tabla td:last-child {
+  min-width: 13rem;
+  color: var(--agora-text-muted);
 }
