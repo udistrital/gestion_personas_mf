@@ -33,12 +33,23 @@ import { ForoObservacionesPageComponent } from "./pages/foro-observaciones/foro-
 import { TableroOferentesComponent } from "./pages/tablero-oferentes/tablero-oferentes.component";
 import { ComparadorCotizacionesComponent } from "./pages/comparador-cotizaciones/comparador-cotizaciones.component";
 import { DetalleProveedorOfertaComponent } from "./pages/detalle-proveedor-oferta/detalle-proveedor-oferta.component";
+import { DecisionCotizacionComponent } from "./pages/decision-cotizacion/decision-cotizacion.component";
+import { ConfigurarSubsanacionComponent } from "./pages/subsanacion/configurar-subsanacion/configurar-subsanacion.component";
+import { HistorialSubsanacionComponent } from "./pages/subsanacion/historial-subsanacion/historial-subsanacion.component";
 import { DetallePresentacionModule } from "./pages/detalle-solicitud/components/detalle-presentacion.module";
 import { PantallaPorDefinirComponent } from "./pages/pantalla-por-definir/pantalla-por-definir.component";
 import {
   OferentesService,
   OferentesServiceMock,
 } from "../services/oferentes.service";
+import {
+  EvaluacionService,
+  EvaluacionServiceMock,
+} from "../services/evaluacion.service";
+import {
+  SubsanacionService,
+  SubsanacionServiceMock,
+} from "../services/subsanacion.service";
 
 @NgModule({
   declarations: [
@@ -64,6 +75,9 @@ import {
     TableroOferentesComponent,
     ComparadorCotizacionesComponent,
     DetalleProveedorOfertaComponent,
+    DecisionCotizacionComponent,
+    ConfigurarSubsanacionComponent,
+    HistorialSubsanacionComponent,
     PantallaPorDefinirComponent,
   ],
   imports: [
@@ -80,6 +94,10 @@ import {
     { provide: SicapitalService, useClass: SicapitalServiceMock },
     // Único punto de enlace del tablero de oferentes (S-07).
     { provide: OferentesService, useClass: OferentesServiceMock },
+    // Único punto de enlace del trámite de decisión (S-11).
+    { provide: EvaluacionService, useClass: EvaluacionServiceMock },
+    // Único punto de enlace de la subsanación documental (S-12).
+    { provide: SubsanacionService, useClass: SubsanacionServiceMock },
     { provide: MatPaginatorIntl, useFactory: paginadorEnEspanol },
   ],
 })

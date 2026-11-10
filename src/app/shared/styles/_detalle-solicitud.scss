@@ -47,6 +47,18 @@
     color: var(--agora-texto-deshabilitado);
   }
 
+  .chip--advertencia {
+    border-color: var(--agora-warning-border);
+    background: var(--agora-warning-surface);
+    color: var(--agora-warning-text);
+  }
+
+  .chip--error {
+    border-color: var(--agora-error-border);
+    background: var(--agora-error-surface);
+    color: var(--agora-error);
+  }
+
   .chip--info {
     border-color: var(--agora-info-border);
     background: var(--agora-info-surface);

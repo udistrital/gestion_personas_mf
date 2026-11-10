@@ -82,6 +82,20 @@ export interface DocumentoOferente {
   readonly icono: string;
   /** Norma que respalda un requisito fijo ("RF-021: Requisito de Oferta"). */
   readonly norma?: string;
+  /**
+   * true si el documento puede corregirse o complementarse en S-12.
+   *
+   * Los requisitos bloqueados por el pliego se muestran en S-12, pero no se
+   * pueden seleccionar. Si se omite, se asume que el documento es subsanable.
+   */
+  readonly subsanable?: boolean;
+  /**
+   * true si el documento afecta el puntaje de la ponderación.
+   *
+   * Es provisional: la regla institucional sobre qué documentos con puntaje se
+   * pueden subsanar todavía no está definida.
+   */
+  readonly afectaPuntaje?: boolean;
 }
 
 /** Resumen de la matriz del oferente (cabecera de la tarjeta 2). */
@@ -289,6 +303,9 @@ export const DOCUMENTOS_OFERENTE_SEMILLA: readonly DocumentoOferente[] = [
     fijo: true,
     icono: "receipt_long",
     norma: "RF-021: Requisito de Oferta",
+    // La cotización formal es el soporte principal: no se subsana en S-12.
+    subsanable: false,
+    afectaPuntaje: false,
   },
   {
     id: "doc-rut",
@@ -298,6 +315,8 @@ export const DOCUMENTOS_OFERENTE_SEMILLA: readonly DocumentoOferente[] = [
       "Registro Único Tributario con actividad económica coincidente con el código CIIU del requerimiento.",
     fijo: false,
     icono: "badge",
+    subsanable: true,
+    afectaPuntaje: false,
   },
   {
     id: "doc-certificacion-bancaria",
@@ -307,6 +326,8 @@ export const DOCUMENTOS_OFERENTE_SEMILLA: readonly DocumentoOferente[] = [
       "Certificación de cuenta activa para abono y dispersión de recursos institucionales.",
     fijo: false,
     icono: "account_balance",
+    subsanable: true,
+    afectaPuntaje: false,
   },
   {
     id: "doc-catalogo-tecnico",
@@ -316,6 +337,8 @@ export const DOCUMENTOS_OFERENTE_SEMILLA: readonly DocumentoOferente[] = [
       "Ficha técnica extendida de fábrica para validación de especificaciones por el comité evaluador de la UD.",
     fijo: false,
     icono: "menu_book",
+    subsanable: true,
+    afectaPuntaje: true,
   },
 ];
 

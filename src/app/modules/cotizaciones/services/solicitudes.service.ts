@@ -1,7 +1,10 @@
 import { Injectable } from "@angular/core";
 import { Observable, of, throwError, delay } from "rxjs";
 import { EstadoSolicitud } from "src/app/core/constants/estados-solicitud.const";
-import { ACCIONES_SOLICITUD_POR_ESTADO } from "src/app/core/constants/acciones-por-rol-y-estado.const";
+import {
+  ACCIONES_DECISION_POR_ESTADO,
+  ACCIONES_SOLICITUD_POR_ESTADO,
+} from "src/app/core/constants/acciones-por-rol-y-estado.const";
 import type {
   ConteosFiltrosInvitaciones,
   DetalleInvitacionProveedor,
@@ -23,8 +26,16 @@ import {
   SolicitudDetalle,
   DatosCancelacionSolicitud,
   TipoCotizacion,
+  cierreSolicitudVencido,
+  fechaCierreSolicitud,
   tipoNecesidad,
 } from "../models/solicitud.model";
+import type {
+  DecisionSolicitud,
+  EnvioDecision,
+  NotificacionDecision,
+  RegistroEnvioDecision,
+} from "../models/decision.model";
 import {
   CaracteristicasDetalle,
   ContadoresPestanas,
@@ -79,7 +90,26 @@ import {
   versionSolicitud,
 } from "../models/edicion-solicitud.model";
 import type { ResultadoCruce } from "../models/necesidad.model";
-import { contarOfertasRecibidasDesde, SeleccionOferenteEvento } from "../models/oferente.model";
+import {
+  contarOfertasRecibidasDesde,
+  crearOferentes,
+  formatoFechaHoraOferente,
+} from "../models/oferente.model";
+import type {
+  AmpliacionSubsanacion,
+  CancelacionSubsanacion,
+  EventoSubsanacion,
+  OferenteSubsanacion,
+  RegistroSubsanacion,
+  Subsanacion,
+} from "../models/subsanacion.model";
+import {
+  SUBSANACIONES_MOCK,
+  crearOferentesSubsanables,
+  estadoSubsanacion,
+  eventosVigentes,
+  metaEventoSubsanacion,
+} from "../models/subsanacion.model";
 import { DiferenciasSolicitudService } from "./diferencias-solicitud.service";
 import { textoPlanoDesdeHtml } from "src/app/shared/utils/texto-plano";
 import { MIN_CARACTERES_JUSTIFICACION } from "src/app/shared/validators/justificacion.validator";
@@ -133,15 +163,51 @@ export abstract class SolicitudesService {
   ): void;
 
   /**
-   * Registra en la bitácora la preselección de una oferta desde S-09.
+   * Registra el envío a validación de una oferta (S-11).
    *
-   * No cambia el estado de la solicitud: la preselección es una recomendación
-   * y la decisión final corresponde al ordenador del gasto (RN-34).
+   * Deja la solicitud en `en-aprobacion`, guarda la justificación y la
+   * notificación simulada, y agrega el evento a la bitácora. No cambia la
+   * invitación a `aceptada`/`rechazada`: eso ocurre cuando las vistas del
+   * Ordenador del Gasto registren la validación final.
+   *
+   * Valida RN-24 (mínimo 20 caracteres), RN-29 (cierre vencido), RN-35 (un solo
+   * envío, salvo reenvío tras rechazo) y RN-40 (la oferta no puede superar el
+   * CDP).
    */
-  abstract registrarSeleccionOferente(
-    solicitudId: string,
-    seleccion: SeleccionOferenteEvento,
-  ): void;
+  abstract registrarEnvioDecision(
+    id: string,
+    datos: RegistroEnvioDecision,
+  ): Observable<SolicitudDetalle>;
+
+  /** Periodos de subsanación registrados para una solicitud (S-12). */
+  abstract obtenerSubsanaciones(
+    id: string,
+  ): Observable<readonly Subsanacion[]>;
+
+  /**
+   * Configura un periodo de subsanación (S-12).
+   *
+   * Solo se permite en `en-evaluacion`, con el cierre vencido y sin una
+   * decisión registrada. Valida fechas, oferentes, documentos y observaciones.
+   */
+  abstract registrarSubsanacion(
+    id: string,
+    datos: RegistroSubsanacion,
+  ): Observable<Subsanacion>;
+
+  /** Amplía el plazo de un periodo programado o activo. */
+  abstract ampliarSubsanacion(
+    id: string,
+    horas: number | null,
+    nuevaFecha: string | null,
+    motivo: string,
+  ): Observable<Subsanacion>;
+
+  /** Cancela un periodo programado o activo. */
+  abstract cancelarSubsanacion(
+    id: string,
+    motivo: string,
+  ): Observable<Subsanacion>;
 
   /**
    * Guarda una edición de la solicitud (S-04).
@@ -224,6 +290,147 @@ function fechaLimiteRelativa(dias: number): string {
   const mes = String(fecha.getMonth() + 1).padStart(2, "0");
   return `${fecha.getFullYear()}-${mes}-${dia}T23:59:00-05:00`;
 }
+
+/**
+ * Decisión de demostración para los escenarios de solo lectura.
+ *
+ * S-11 no produce la validación final; estos registros representan lo que
+ * dejarán las vistas exclusivas del Ordenador del Gasto (O-01 a O-04) cuando
+ * existan. El valor se completa en la vista con el total de la oferta.
+ */
+function decisionSemilla(
+  solicitudId: string,
+  fase: "aprobada" | "rechazada",
+  proveedorId: string,
+  proveedorNombre: string,
+  justificacionEnvio: string,
+  justificacionValidacion: string,
+  fechaEnvio: string,
+  fechaValidacion: string,
+  codigo: string,
+): DecisionSolicitud {
+  return {
+    id: `decision-${solicitudId}`,
+    solicitudId,
+    fase,
+    invitacionId: `INV-${solicitudId.slice(-4)}-${proveedorId.replace("prov-", "")}`,
+    proveedorId,
+    proveedorNombre,
+    valor: 0,
+    envio: {
+      justificacion: justificacionEnvio,
+      justificacionHtml: `<p>${justificacionEnvio}</p>`,
+      usuario: "raquimbayap",
+      autor: "Raúl Quimbaya",
+      rol: "Jefe de Dependencia",
+      fecha: fechaEnvio,
+      fechaIso: "",
+      notificar: true,
+    },
+    validacion: {
+      resultado: fase,
+      justificacion: justificacionValidacion,
+      justificacionHtml: `<p>${justificacionValidacion}</p>`,
+      usuario: "rgomez",
+      autor: "Dr. Ricardo Gómez Morales",
+      rol: "Ordenador del Gasto",
+      fecha: fechaValidacion,
+      fechaIso: "",
+    },
+    notificaciones: [
+      {
+        destinatario: proveedorNombre,
+        correo: "",
+        fecha: fechaValidacion,
+        fechaIso: "",
+        tipo: fase === "aprobada" ? "adjudicacion" : "rechazo",
+        estadoEntrega: "simulada",
+      },
+    ],
+    codigoVerificacion: codigo,
+  };
+}
+
+/**
+ * Escenarios de S-11 compartidos por el área solicitante y el portal del
+ * proveedor.
+ *
+ * - `0160`: cerrada, con oferta seleccionada y decisión pendiente (envío).
+ * - `0161`: decisión aprobada por las vistas futuras del OG (solo lectura).
+ * - `0162`: decisión rechazada / declaratoria de desierta (solo lectura).
+ */
+const SOLICITUDES_DECISION_MOCK: readonly Solicitud[] = [
+  {
+    id: "SOL-2026-0160",
+    vigencia: 2026,
+    unidadEjecutora: "1",
+    titulo:
+      "Adquisición de servidores blade y componentes de red para el datacenter Paiba",
+    apertura: "02/10/2026",
+    cierre: "20/10/2026",
+    dependencia: "DIRTEI - División de Recursos Tecnológicos e Informáticos",
+    tipoCotizacion: "BIEN",
+    estado: "en-evaluacion",
+    version: "v1.1",
+    revision: 2,
+    ultimaModificacion: "21/10/2026 09:15 COT",
+    fechaLimiteObservaciones: "2026-10-15T18:00:00-05:00",
+  },
+  {
+    id: "SOL-2026-0161",
+    vigencia: 2026,
+    unidadEjecutora: "1",
+    titulo:
+      "Suministro de estaciones de trabajo para el laboratorio de análisis de datos",
+    apertura: "02/10/2026",
+    cierre: "20/10/2026",
+    dependencia: "Vicerrectoría Académica",
+    tipoCotizacion: "BIEN",
+    estado: "adjudicada",
+    version: "v1.2",
+    revision: 3,
+    ultimaModificacion: "24/10/2026 11:20 COT",
+    fechaLimiteObservaciones: "2026-10-15T18:00:00-05:00",
+    decision: decisionSemilla(
+      "SOL-2026-0161",
+      "aprobada",
+      "prov-02",
+      "Soluciones Tecnológicas Universitarias LTDA",
+      "Se selecciona la oferta por cumplir el 100% de las especificaciones técnicas y presentar la mejor relación costo-beneficio.",
+      "Se ratifica la selección de la oferta por cumplir los requisitos técnicos y presupuestales del proceso.",
+      "22/10/2026 14:32 COT",
+      "24/10/2026 11:20 COT",
+      "SIGA-2026-DEC-99841",
+    ),
+  },
+  {
+    id: "SOL-2026-0162",
+    vigencia: 2026,
+    unidadEjecutora: "2",
+    titulo:
+      "Servicio integral de conectividad WAN e internet dedicado para el campus",
+    apertura: "01/09/2026",
+    cierre: "20/09/2026",
+    dependencia: "Red de Datos UD",
+    tipoCotizacion: "SERVICIO",
+    estado: "desierta",
+    version: "v1.0",
+    revision: 1,
+    ultimaModificacion: "25/09/2026 16:40 COT",
+    fechaLimiteObservaciones: "2026-09-15T18:00:00-05:00",
+    decision: decisionSemilla(
+      "SOL-2026-0162",
+      "rechazada",
+      "prov-01",
+      "Redes y Servidores de Colombia S.A.S.",
+      "La oferta no acredita el cumplimiento integral de las especificaciones técnicas ni el plazo de disponibilidad exigido.",
+      "Se rechaza la oferta y se declara desierta la convocatoria por incumplimiento de los requisitos habilitantes.",
+      "22/09/2026 10:05 COT",
+      "25/09/2026 16:40 COT",
+      "SIGA-2026-DEC-99842",
+    ),
+  },
+];
 
 const DATOS_MOCK: readonly Solicitud[] = [
   {
@@ -498,6 +705,7 @@ const DATOS_MOCK: readonly Solicitud[] = [
     revision: 1,
     ultimaModificacion: "20/09/2024 16:30 COT",
   },
+  ...SOLICITUDES_DECISION_MOCK,
 ];
 
 /**
@@ -619,6 +827,7 @@ const SOLICITUDES_PROVEEDOR_MOCK: readonly Solicitud[] = [
     tipoCotizacion: "BIEN",
     estado: "enviada-proveedores",
   },
+  ...SOLICITUDES_DECISION_MOCK,
 ];
 
 const INVITACIONES_PROVEEDOR_MOCK: readonly InvitacionProveedor[] = [
@@ -672,6 +881,24 @@ const INVITACIONES_PROVEEDOR_MOCK: readonly InvitacionProveedor[] = [
     estado: "declinada",
     fechaRadicacion: "2026-10-19T13:15:00-05:00",
   },
+  {
+    id: "INV-0160",
+    solicitudId: "SOL-2026-0160",
+    estado: "enviada",
+    fechaRadicacion: "2026-10-12T10:00:00-05:00",
+  },
+  {
+    id: "INV-0161",
+    solicitudId: "SOL-2026-0161",
+    estado: "aceptada",
+    fechaRadicacion: "2026-10-12T10:20:00-05:00",
+  },
+  {
+    id: "INV-0162",
+    solicitudId: "SOL-2026-0162",
+    estado: "rechazada",
+    fechaRadicacion: "2026-09-12T09:40:00-05:00",
+  },
 ];
 
 const ORDENADORES_PROVEEDOR_MOCK: Readonly<Record<string, string>> = {
@@ -684,6 +911,9 @@ const ORDENADORES_PROVEEDOR_MOCK: Readonly<Record<string, string>> = {
   "SOL-2026-0084": "Dr. Ricardo Gómez Morales",
   "SOL-2026-0072": "Lic. Fernando Triana",
   "SOL-2026-0064": "Ing. Martha Cecilia Bello",
+  "SOL-2026-0160": "Dr. Ricardo Gómez Morales",
+  "SOL-2026-0161": "Dr. Ricardo Gómez Morales",
+  "SOL-2026-0162": "Dr. Ricardo Gómez Morales",
 };
 
 const MAPA_TIPOS: Readonly<Record<string, TipoCotizacion>> = {
@@ -848,6 +1078,19 @@ const FIRMAS_MOCK: readonly FirmaAval[] = [
 ];
 
 /**
+ * CDP de los escenarios de S-11.
+ *
+ * El techo del mockup de S-11 es superior al CDP genérico del expediente; se
+ * sube solo para los escenarios nuevos, de modo que la oferta seleccionada
+ * pueda enviarse a validación sin caer en RN-40.
+ */
+const CDP_POR_SOLICITUD: Readonly<Record<string, number>> = {
+  "SOL-2026-0160": 320_000_000,
+  "SOL-2026-0161": 320_000_000,
+  "SOL-2026-0162": 320_000_000,
+};
+
+/**
  * Presupuesto de una solicitud.
  *
  * Devuelve `null` cuando la solicitud todavía no tiene CDP (borrador): así la
@@ -859,8 +1102,16 @@ function presupuestoDetalle(solicitud: Solicitud): PresupuestoDetalle | null {
     return null;
   }
 
+  const valorCdp = CDP_POR_SOLICITUD[solicitud.id] ?? VALOR_CDP_MOCK;
+  const imputaciones =
+    valorCdp === VALOR_CDP_MOCK
+      ? IMPUTACIONES_MOCK
+      : IMPUTACIONES_MOCK.map((imputacion, indice) =>
+          indice === 0 ? { ...imputacion, valor: valorCdp } : imputacion,
+        );
+
   return {
-    valorCdp: VALOR_CDP_MOCK,
+    valorCdp,
     sincronizado: true,
     mensajeSincronizacion: "SICAPITAL: Sincronizado y Aprobado",
     descripcionCdp:
@@ -868,9 +1119,9 @@ function presupuestoDetalle(solicitud: Solicitud): PresupuestoDetalle | null {
     saldo: {
       numeroCdp: NUMERO_CDP_MOCK,
       fechaExpedicion: "28 de Febrero de 2026",
-      saldoDisponible: 210_000_000,
+      saldoDisponible: valorCdp,
     },
-    imputaciones: IMPUTACIONES_MOCK,
+    imputaciones,
     firmas: FIRMAS_MOCK,
     textoNormativo: TEXTO_NORMATIVO_PRESUPUESTO,
   };
@@ -1708,42 +1959,166 @@ function eventoHistorial(semilla: EventoHistorialSemilla): EventoHistorial {
 }
 
 /**
- * Evento de preselección de una oferta (S-09).
- *
- * Deja constancia del proveedor y del valor, sin cambiar el estado de la
- * solicitud. El texto recuerda que la decisión final es del ordenador del gasto.
+ * Escapa el texto libre antes de interpolarlo en un detalle HTML de la
+ * bitácora. La justificación escribe el usuario y no debe interpretarse como
+ * marcado.
  */
-function eventoSeleccionOferente(
-  solicitud: Solicitud,
-  seleccion: SeleccionOferenteEvento,
-  fecha: string,
-  hora: string,
+function escaparHtml(texto: string): string {
+  return texto
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+/** Separa la fecha visible `dd/MM/yyyy HH:mm COT` en fecha y hora. */
+function partesFechaHora(fecha: string): { fecha: string; hora: string } {
+  const [dia = "", hora = "00:00"] = fecha.split(" ");
+  return { fecha: dia, hora };
+}
+
+/**
+ * Evento de bitácora del envío a validación (S-11).
+ *
+ * No se guarda en `historialEdiciones`: se deriva de la decisión, de modo que
+ * el evento sobrevive a una recarga y no se duplica con el que genera la
+ * validación final.
+ */
+function eventoEnvioDecision(
+  solicitudId: string,
+  decision: DecisionSolicitud,
+  estadoAnterior: EstadoSolicitud,
 ): EventoHistorial {
-  const retirada = !seleccion.proveedorId;
+  const { fecha, hora } = partesFechaHora(decision.envio.fecha);
   return eventoHistorial({
-    id: `evento-${solicitud.id}-seleccion-${Date.now()}`,
+    id: `evento-${solicitudId}-envio-${decision.id}`,
     fecha,
     hora,
     tipo: "estado",
-    titulo: retirada
-      ? "Preselección de oferta retirada"
-      : "Oferta preseleccionada para recomendación",
-    detalle: retirada
-      ? "Se retiró la preselección de la oferta. La decisión final continúa en cabeza del Ordenador del Gasto (RN-34)."
-      : `Se preseleccionó la oferta de <strong>${seleccion.proveedorNombre}</strong> por <strong>${formatoCop(seleccion.valor)} COP</strong>. Esta preselección es una recomendación y no constituye adjudicación (RN-34).`,
-    usuario: "sesion",
-    nombreUsuario: "Usuario autenticado",
-    rol: seleccion.rol,
-    estadoAnterior: solicitud.estado,
-    estadoNuevo: solicitud.estado,
-    icono: retirada ? "remove_done" : "how_to_reg",
-    tono: "primario",
-    resultado: retirada ? "Preselección retirada" : "Preselección registrada",
+    titulo: "Decisión enviada a validación del Ordenador del Gasto",
+    detalle: `Se remitió a validación la oferta de <strong>${escaparHtml(
+      decision.proveedorNombre,
+    )}</strong>. Justificación: ${escaparHtml(
+      decision.envio.justificacion,
+    )}`,
+    usuario: decision.envio.usuario,
+    nombreUsuario: decision.envio.autor,
+    rol: decision.envio.rol,
+    estadoAnterior,
+    estadoNuevo: "en-aprobacion",
+    icono: "send",
+    tono: "destacado",
+    resultado: "Enviada a validación",
     tonoResultado: "primario",
     evidencia: {
       icono: "verified_user",
-      texto: "Sujeta a la decisión del Ordenador del Gasto",
+      texto: "Pendiente de la decisión del Ordenador del Gasto",
     },
+  });
+}
+
+/**
+ * Evento de bitácora de la validación final.
+ *
+ * S-11 no lo produce; lo usan las semillas de los escenarios ya decididos y lo
+ * reutilizarán las vistas exclusivas del Ordenador del Gasto (O-01 a O-04).
+ */
+function eventoValidacionDecision(
+  solicitudId: string,
+  decision: DecisionSolicitud,
+  estadoAnterior: EstadoSolicitud,
+): EventoHistorial {
+  const validacion = decision.validacion;
+  const { fecha, hora } = partesFechaHora(validacion?.fecha ?? "");
+  const aprobada = validacion?.resultado === "aprobada";
+  return eventoHistorial({
+    id: `evento-${solicitudId}-validacion-${decision.id}`,
+    fecha,
+    hora,
+    tipo: "estado",
+    titulo: aprobada
+      ? "Decisión aprobada por el Ordenador del Gasto"
+      : "Cotización rechazada — declaratoria de desierta",
+    detalle: validacion
+      ? `Resultado: <strong>${aprobada ? "Aprobada" : "Rechazada"}</strong>. ${escaparHtml(
+          validacion.justificacion,
+        )}`
+      : "Se registró la validación de la decisión.",
+    usuario: validacion?.usuario ?? "sesion",
+    nombreUsuario: validacion?.autor ?? "Usuario autenticado",
+    rol: validacion?.rol ?? "Ordenador del Gasto",
+    estadoAnterior,
+    estadoNuevo: aprobada ? "adjudicada" : "desierta",
+    icono: aprobada ? "verified" : "cancel",
+    tono: "destacado",
+    resultado: aprobada ? "Decisión aprobada" : "Declaratoria de desierta",
+    tonoResultado: aprobada ? "exito" : "advertencia",
+    evidencia: {
+      icono: "campaign",
+      texto: "Notificación al proveedor simulada (RF-13)",
+    },
+  });
+}
+
+/**
+ * Eventos de todas las decisiones registradas, incluidas las anteriores a un
+ * reenvío después de un rechazo.
+ */
+function eventosDecisiones(solicitud: Solicitud): readonly EventoHistorial[] {
+  const decisiones = [
+    ...(solicitud.historialDecisiones ?? []),
+    ...(solicitud.decision ? [solicitud.decision] : []),
+  ];
+  return decisiones.flatMap((decision) => [
+    eventoEnvioDecision(solicitud.id, decision, "en-evaluacion"),
+    ...(decision.validacion
+      ? [eventoValidacionDecision(solicitud.id, decision, "en-aprobacion")]
+      : []),
+  ]);
+}
+
+/**
+ * Convierte un evento de subsanación en un evento de la bitácora de S-03.
+ *
+ * La subsanación no cambia el estado de la solicitud: el evento conserva el
+ * estado vigente y la pestaña Historial oculta el chip de estado para este tipo.
+ */
+function eventoSubsanacionAHistorial(
+  evento: EventoSubsanacion,
+  estado: EstadoSolicitud,
+): EventoHistorial {
+  const meta = metaEventoSubsanacion(evento.tipo);
+  const { fecha, hora } = partesFechaHora(
+    formatoFechaHoraOferente(evento.fecha),
+  );
+  const tono: TonoNodoHistorial =
+    meta.tono === "exito" || meta.tono === "primario"
+      ? "primario"
+      : meta.tono === "neutro"
+        ? "neutro"
+        : "destacado";
+  return eventoHistorial({
+    id: `subsanacion-${evento.id}`,
+    fecha,
+    hora,
+    tipo: "subsanacion",
+    titulo: meta.titulo,
+    detalle: evento.detalleHtml,
+    usuario: evento.usuario,
+    nombreUsuario: evento.nombreUsuario,
+    rol: evento.rol,
+    estadoAnterior: estado,
+    estadoNuevo: estado,
+    icono: meta.icono,
+    tono,
+    resultado: meta.resultado,
+    tonoResultado:
+      meta.tonoResultado === "advertencia" ? "advertencia" : meta.tonoResultado,
+    evidencia: evento.hash
+      ? { icono: "fingerprint", texto: evento.hash }
+      : evento.radicado
+        ? { icono: "fact_check", texto: `Radicado ${evento.radicado}` }
+        : undefined,
   });
 }
 
@@ -2118,6 +2493,10 @@ function historialPorDefecto(
   );
 
   if (solicitud.estado === "en-aprobacion") {
+    if (solicitud.decision) {
+      eventos.push(...eventosDecisiones(solicitud));
+      return eventos;
+    }
     eventos.push(
       eventoModificacion(
         `evento-${solicitud.id}-modificacion-pendiente`,
@@ -2147,6 +2526,11 @@ function historialPorDefecto(
         "09:15",
       ),
     );
+    return eventos;
+  }
+
+  if (solicitud.decision || solicitud.historialDecisiones?.length) {
+    eventos.push(...eventosDecisiones(solicitud));
     return eventos;
   }
 
@@ -2240,6 +2624,19 @@ function historialDetalle(
     selloTiempo: SELLO_TIEMPO_HISTORIAL,
     notaIntegridad: NOTA_INTEGRIDAD_HISTORIAL,
   };
+}
+
+/** Autor simulado de las actuaciones de subsanación (RN-08). */
+const AUTOR_SUBSANACION_MOCK = {
+  usuario: "raquimbayap",
+  autor: "Raúl Quimbaya",
+  rol: "Jefe de Dependencia",
+} as const;
+
+/** Fecha y hora en ISO-8601 con desfase de Colombia. */
+function isoColombia(fecha: Date): string {
+  const local = new Date(fecha.getTime() - 5 * 3_600_000);
+  return `${local.toISOString().slice(0, 19)}-05:00`;
 }
 
 /** Formatea una fecha/hora al estilo del expediente ("18/02/2026 11:40 COT"). */
@@ -2760,8 +3157,14 @@ export class SolicitudesServiceMock extends SolicitudesService {
   >();
   private readonly invitacionesActualizadas = new Map<string, InvitacionProveedor>();
 
+  /** Periodos de subsanación por solicitud, del más antiguo al más reciente. */
+  private readonly subsanaciones = new Map<string, readonly Subsanacion[]>();
+
   constructor(private readonly diferencias: DiferenciasSolicitudService) {
     super();
+    for (const [solicitudId, periodos] of Object.entries(SUBSANACIONES_MOCK)) {
+      this.subsanaciones.set(solicitudId, periodos);
+    }
   }
 
   listar(
@@ -2906,9 +3309,16 @@ export class SolicitudesServiceMock extends SolicitudesService {
       ? { ...solicitud, modificacionPendiente: pendiente }
       : solicitud;
 
-    return of(
-      comoDetalle(fila, edicion, this.historialEdiciones.get(id) ?? []),
-    ).pipe(delay(retardo));
+    const extras = [
+      ...(this.historialEdiciones.get(id) ?? []),
+      ...this.eventosSubsanacionHistorial(id, fila.estado),
+    ];
+    const detalle = comoDetalle(fila, edicion, extras);
+
+    return of({
+      ...detalle,
+      subsanacion: this.ultimaSubsanacion(id),
+    }).pipe(delay(retardo));
   }
 
   obtenerDetalleProveedor(
@@ -2997,28 +3407,644 @@ export class SolicitudesServiceMock extends SolicitudesService {
     });
   }
 
-  registrarSeleccionOferente(
-    solicitudId: string,
-    seleccion: SeleccionOferenteEvento,
-  ): void {
-    const solicitud = this.fila(solicitudId);
-    if (!solicitud) {
-      return;
+  /**
+   * Registra el envío a validación de una oferta (S-11).
+   *
+   * Es el único punto que cambia el estado a `en-aprobacion` y guarda la
+   * decisión. La validación final la registrarán las vistas exclusivas del
+   * Ordenador del Gasto; aquí solo se deja preparada la estructura.
+   */
+  registrarEnvioDecision(
+    id: string,
+    datos: RegistroEnvioDecision,
+  ): Observable<SolicitudDetalle> {
+    const params = new URLSearchParams(window.location.search);
+    const retardo = Number(params.get("mockRetardo")) || 800;
+
+    if (params.get("mockDecision") === "error-envio") {
+      return throwError(
+        () =>
+          new Error(
+            "No fue posible enviar la decisión a validación. Intente nuevamente.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const actual = this.fila(id);
+    if (!actual) {
+      return throwError(
+        () => new Error("La solicitud ya no existe en el expediente."),
+      ).pipe(delay(retardo));
+    }
+
+    const decisionVigente = actual.decision;
+    const reenvio = decisionVigente?.fase === "rechazada";
+
+    if (decisionVigente && !reenvio) {
+      return throwError(
+        () =>
+          new Error(
+            "La decisión ya fue enviada a validación y no puede modificarse (RN-35).",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    if (reenvio && decisionVigente.proveedorId === datos.proveedorId) {
+      return throwError(
+        () =>
+          new Error(
+            "El proveedor rechazado no puede volver a enviarse a validación. Selecciona otro proveedor.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    if (actual.estado === "desierta" && !reenvio) {
+      return throwError(
+        () =>
+          new Error(
+            "La solicitud está desierta y no tiene una decisión rechazada que permita reenviar.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const decisionesProveedor = [
+      ...(actual.historialDecisiones ?? []),
+      ...(actual.decision ? [actual.decision] : []),
+    ].filter((decision) => decision.proveedorId === datos.proveedorId);
+
+    if (decisionesProveedor.some((decision) => decision.fase === "rechazada")) {
+      return throwError(
+        () =>
+          new Error(
+            "El proveedor ya fue rechazado por el Ordenador del Gasto y no puede volver a enviarse a validación.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    if (
+      !ACCIONES_DECISION_POR_ESTADO[actual.estado].includes(
+        "enviar-a-validacion",
+      )
+    ) {
+      return throwError(
+        () =>
+          new Error(
+            "La solicitud cambió de estado y ya no se puede enviar a validación.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    if (!cierreSolicitudVencido(actual.cierre)) {
+      return throwError(
+        () =>
+          new Error(
+            "El periodo de cotización aún no ha terminado; la decisión se habilita al cierre (RN-29).",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const justificacion = textoPlanoDesdeHtml(datos.justificacionHtml).trim();
+    if (justificacion.length < MIN_CARACTERES_JUSTIFICACION) {
+      return throwError(
+        () =>
+          new Error(
+            `La justificación debe tener al menos ${MIN_CARACTERES_JUSTIFICACION} caracteres (RN-24).`,
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const valorCdp = presupuestoDetalle(actual)?.valorCdp ?? 0;
+    if (valorCdp > 0 && datos.valor > valorCdp) {
+      return throwError(
+        () =>
+          new Error(
+            "La oferta supera el techo presupuestal y no puede enviarse a validación (RN-40).",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    if (!datos.proveedorId || !datos.invitacionId) {
+      return throwError(
+        () =>
+          new Error(
+            "No hay una oferta seleccionada para enviar a validación.",
+          ),
+      ).pipe(delay(retardo));
     }
 
     const ahora = new Date();
-    const fecha = `${String(ahora.getDate()).padStart(2, "0")}/${String(
-      ahora.getMonth() + 1,
-    ).padStart(2, "0")}/${ahora.getFullYear()}`;
-    const hora = `${String(ahora.getHours()).padStart(2, "0")}:${String(
-      ahora.getMinutes(),
-    ).padStart(2, "0")}`;
-    const evento = eventoSeleccionOferente(solicitud, seleccion, fecha, hora);
+    const fecha = fechaHoraExpediente(ahora);
+    const codigo = `SIGA-${ahora.getFullYear()}-DEC-${String(
+      Date.now(),
+    ).slice(-5)}`;
 
-    this.historialEdiciones.set(solicitudId, [
-      ...(this.historialEdiciones.get(solicitudId) ?? []),
-      evento,
-    ]);
+    const envio: EnvioDecision = {
+      justificacion,
+      justificacionHtml: datos.justificacionHtml,
+      usuario: "sesion",
+      autor: "Usuario autenticado",
+      rol: "Solicitante (JD u OG)",
+      fecha,
+      fechaIso: ahora.toISOString(),
+      notificar: datos.notificar,
+    };
+
+    const notificaciones: readonly NotificacionDecision[] = datos.notificar
+      ? [
+          {
+            destinatario: datos.proveedorNombre,
+            correo: datos.correoProveedor ?? "",
+            fecha,
+            fechaIso: ahora.toISOString(),
+            tipo: "validacion",
+            estadoEntrega: "programada",
+          },
+        ]
+      : [];
+
+    const decision: DecisionSolicitud = {
+      id: `decision-${id}-${ahora.getTime()}`,
+      solicitudId: id,
+      fase: "enviada",
+      invitacionId: datos.invitacionId,
+      proveedorId: datos.proveedorId,
+      proveedorNombre: datos.proveedorNombre,
+      valor: datos.valor,
+      envio,
+      notificaciones,
+      codigoVerificacion: codigo,
+    };
+
+    const historialDecisiones = decisionVigente
+      ? [...(actual.historialDecisiones ?? []), decisionVigente]
+      : (actual.historialDecisiones ?? []);
+
+    const actualizada: Solicitud = {
+      ...actual,
+      estado: "en-aprobacion",
+      decision,
+      historialDecisiones,
+      ultimaModificacion: fecha,
+    };
+    this.filasEditadas.set(id, actualizada);
+
+    return of(
+      comoDetalle(
+        actualizada,
+        this.edicionBase(actualizada),
+        this.historialEdiciones.get(id) ?? [],
+      ),
+    ).pipe(delay(retardo));
+  }
+
+  obtenerSubsanaciones(id: string): Observable<readonly Subsanacion[]> {
+    return of(this.subsanaciones.get(id) ?? []).pipe(delay(350));
+  }
+
+  registrarSubsanacion(
+    id: string,
+    datos: RegistroSubsanacion,
+  ): Observable<Subsanacion> {
+    const params = new URLSearchParams(window.location.search);
+    const retardo = Number(params.get("mockRetardo")) || 800;
+
+    if (params.get("mockSubsanacion") === "error-envio") {
+      return throwError(
+        () =>
+          new Error(
+            "No fue posible habilitar el periodo de subsanación. Intente nuevamente.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const actual = this.fila(id);
+    if (!actual) {
+      return throwError(
+        () => new Error("La solicitud ya no existe en el expediente."),
+      ).pipe(delay(retardo));
+    }
+
+    if (actual.estado !== "en-evaluacion") {
+      return throwError(
+        () =>
+          new Error(
+            "La subsanación solo se puede configurar cuando la solicitud está en evaluación.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    if (actual.decision) {
+      return throwError(
+        () =>
+          new Error(
+            "La solicitud ya tiene una decisión registrada; la subsanación quedó cerrada.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const existente = this.ultimaSubsanacion(id);
+    if (existente && !existente.cancelacion) {
+      return throwError(
+        () =>
+          new Error(
+            "Ya existe un periodo de subsanación vigente para esta solicitud.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    if (!datos.oferentes.length) {
+      return throwError(
+        () =>
+          new Error(
+            "Debe seleccionar al menos un oferente para habilitar la subsanación.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const cierreMarca = fechaCierreSolicitud(actual.cierre);
+    const inicioMarca = Date.parse(datos.inicio);
+    const finMarca = Date.parse(datos.fin);
+
+    if (!Number.isFinite(inicioMarca) || !Number.isFinite(finMarca)) {
+      return throwError(
+        () =>
+          new Error(
+            "Las fechas del periodo de subsanación no son válidas.",
+          ),
+      ).pipe(delay(retardo));
+    }
+    if (cierreMarca !== null && inicioMarca <= cierreMarca) {
+      return throwError(
+        () =>
+          new Error(
+            "El inicio de la subsanación debe ser posterior al cierre de la cotización.",
+          ),
+      ).pipe(delay(retardo));
+    }
+    if (inicioMarca < Date.now() - 5 * 60_000) {
+      return throwError(
+        () =>
+          new Error(
+            "El inicio de la subsanación no puede estar en el pasado.",
+          ),
+      ).pipe(delay(retardo));
+    }
+    if (finMarca <= inicioMarca) {
+      return throwError(
+        () =>
+          new Error(
+            "La fecha de finalización debe ser posterior a la fecha de inicio.",
+          ),
+      ).pipe(delay(retardo));
+    }
+    if (finMarca <= Date.now()) {
+      return throwError(
+        () =>
+          new Error(
+            "La fecha de finalización debe ser futura.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const motivo = textoPlanoDesdeHtml(datos.motivoHtml).trim();
+    if (motivo.length < MIN_CARACTERES_JUSTIFICACION) {
+      return throwError(
+        () =>
+          new Error(
+            `El mensaje formal debe tener al menos ${MIN_CARACTERES_JUSTIFICACION} caracteres.`,
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const detalle = comoDetalle(actual);
+    const candidatos = crearOferentesSubsanables(
+      { id: actual.id, documentos: documentosDetalle(actual) },
+      crearOferentes(detalle, cierreSolicitudVencido(actual.cierre)),
+    );
+
+    const oferentes: OferenteSubsanacion[] = [];
+    const proveedoresVistos = new Set<string>();
+    for (const registro of datos.oferentes) {
+      if (proveedoresVistos.has(registro.proveedorId)) {
+        return throwError(
+          () =>
+            new Error(
+              "Un oferente está repetido en la configuración de la subsanación.",
+            ),
+        ).pipe(delay(retardo));
+      }
+      proveedoresVistos.add(registro.proveedorId);
+      const candidato = candidatos.find(
+        (item) => item.proveedorId === registro.proveedorId,
+      );
+      if (!candidato) {
+        return throwError(
+          () =>
+            new Error(
+              "Uno de los oferentes seleccionados ya no tiene una oferta válida.",
+            ),
+        ).pipe(delay(retardo));
+      }
+      if (!registro.documentos.length) {
+        return throwError(
+          () =>
+            new Error(
+              `Selecciona al menos un documento para ${candidato.nombre}.`,
+            ),
+        ).pipe(delay(retardo));
+      }
+
+      const vistos = new Set<string>();
+      const documentos = registro.documentos.map((item) => {
+        if (vistos.has(item.documentoId)) {
+          throw new Error(
+            `El documento ${item.documentoId} está repetido para ${candidato.nombre}.`,
+          );
+        }
+        vistos.add(item.documentoId);
+        const documento = candidato.documentos.find(
+          (doc) => doc.id === item.documentoId,
+        );
+        if (!documento) {
+          throw new Error(
+            `El documento ${item.documentoId} no pertenece a la matriz del oferente.`,
+          );
+        }
+        if (!documento.subsanable) {
+          throw new Error(
+            `El documento ${documento.nombre} no es subsanable conforme al pliego.`,
+          );
+        }
+        if (
+          item.observacion.trim().length < MIN_CARACTERES_JUSTIFICACION
+        ) {
+          throw new Error(
+            `La observación de ${documento.nombre} debe tener al menos ${MIN_CARACTERES_JUSTIFICACION} caracteres.`,
+          );
+        }
+        return {
+          ...documento,
+          estado: "pendiente" as const,
+          observacion: item.observacion.trim(),
+          seleccionado: true,
+        };
+      });
+
+      oferentes.push({ ...candidato, documentos });
+    }
+
+    const ahora = new Date();
+    const periodos = this.subsanaciones.get(id) ?? [];
+    const radicado = `ACT-SUB-${ahora.getFullYear()}-${String(
+      periodos.length + 1,
+    ).padStart(4, "0")}`;
+    const inicio = datos.inicio;
+    const fin = datos.fin;
+    const programado = Date.parse(inicio) > ahora.getTime();
+    const totalDocumentos = oferentes.reduce(
+      (total, oferente) => total + oferente.documentos.length,
+      0,
+    );
+
+    const periodo: Subsanacion = {
+      id: `subsanacion-${id}-${ahora.getTime()}`,
+      radicado,
+      solicitudId: id,
+      oferentes,
+      inicio,
+      fin,
+      motivoHtml: datos.motivoHtml,
+      notificar: datos.notificar,
+      permitirReemplazo: datos.permitirReemplazo,
+      configuradaPor: AUTOR_SUBSANACION_MOCK,
+      configuradaEl: isoColombia(ahora),
+      ampliaciones: [],
+      eventos: [
+        {
+          id: `evento-${id}-subsanacion-apertura-${ahora.getTime()}`,
+          tipo: "periodo-abierto",
+          fecha: isoColombia(ahora),
+          usuario: AUTOR_SUBSANACION_MOCK.usuario,
+          nombreUsuario: AUTOR_SUBSANACION_MOCK.autor,
+          rol: AUTOR_SUBSANACION_MOCK.rol,
+          detalleHtml: `${programado ? "Se programó" : "Se habilitó"} el periodo de subsanación del <strong>${formatoFechaHoraOferente(
+            inicio,
+          )}</strong> al <strong>${formatoFechaHoraOferente(
+            fin,
+          )}</strong> para <strong>${oferentes.length} oferentes</strong> y <strong>${totalDocumentos} documentos</strong>.`,
+          radicado,
+          dentroDelPeriodo: true,
+        },
+      ],
+    };
+
+    this.subsanaciones.set(id, [...periodos, periodo]);
+    return of(periodo).pipe(delay(retardo));
+  }
+
+  ampliarSubsanacion(
+    id: string,
+    horas: number | null,
+    nuevaFecha: string | null,
+    motivo: string,
+  ): Observable<Subsanacion> {
+    const params = new URLSearchParams(window.location.search);
+    const retardo = Number(params.get("mockRetardo")) || 700;
+
+    if (params.get("mockSubsanacion") === "error-ampliar") {
+      return throwError(
+        () =>
+          new Error(
+            "No fue posible ampliar el plazo de subsanación. Intente nuevamente.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const solicitud = this.fila(id);
+    if (!solicitud || solicitud.estado !== "en-evaluacion" || solicitud.decision) {
+      return throwError(
+        () =>
+          new Error(
+            "El periodo ya no admite cambios porque la solicitud salió de evaluación o tiene una decisión registrada.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const periodo = this.ultimaSubsanacion(id);
+    if (!periodo) {
+      return throwError(
+        () => new Error("No existe un periodo de subsanación para ampliar."),
+      ).pipe(delay(retardo));
+    }
+    if (periodo.cancelacion) {
+      return throwError(
+        () => new Error("El periodo fue cancelado y no se puede ampliar."),
+      ).pipe(delay(retardo));
+    }
+    if (estadoSubsanacion(periodo) === "vencida") {
+      return throwError(
+        () => new Error("El periodo ya venció y no se puede ampliar."),
+      ).pipe(delay(retardo));
+    }
+    if (motivo.trim().length < MIN_CARACTERES_JUSTIFICACION) {
+      return throwError(
+        () =>
+          new Error(
+            `El motivo de la ampliación debe tener al menos ${MIN_CARACTERES_JUSTIFICACION} caracteres.`,
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const ahora = new Date();
+    let fin: string;
+    if (nuevaFecha) {
+      const marca = Date.parse(nuevaFecha);
+      if (
+        !Number.isFinite(marca) ||
+        marca <= Date.parse(periodo.fin) ||
+        marca <= ahora.getTime()
+      ) {
+        return throwError(
+          () =>
+            new Error(
+              "La nueva fecha debe ser posterior al cierre actual y futura.",
+            ),
+        ).pipe(delay(retardo));
+      }
+      fin = nuevaFecha;
+    } else {
+      if (horas !== 24 && horas !== 48) {
+        return throwError(
+          () =>
+            new Error(
+              "Selecciona una ampliación de 24 o 48 horas, o una fecha personalizada.",
+            ),
+        ).pipe(delay(retardo));
+      }
+      fin = isoColombia(
+        new Date(Date.parse(periodo.fin) + horas * 3_600_000),
+      );
+    }
+
+    const ampliacion: AmpliacionSubsanacion = {
+      fecha: isoColombia(ahora),
+      nuevaFecha: fin,
+      horas: horas ?? undefined,
+      motivo: motivo.trim(),
+      usuario: AUTOR_SUBSANACION_MOCK.usuario,
+      autor: AUTOR_SUBSANACION_MOCK.autor,
+      rol: AUTOR_SUBSANACION_MOCK.rol,
+    };
+
+    const actualizado: Subsanacion = {
+      ...periodo,
+      fin,
+      ampliaciones: [...periodo.ampliaciones, ampliacion],
+      eventos: [
+        ...periodo.eventos,
+        {
+          id: `evento-${id}-subsanacion-ampliacion-${ahora.getTime()}`,
+          tipo: "periodo-ampliado",
+          fecha: isoColombia(ahora),
+          usuario: AUTOR_SUBSANACION_MOCK.usuario,
+          nombreUsuario: AUTOR_SUBSANACION_MOCK.autor,
+          rol: AUTOR_SUBSANACION_MOCK.rol,
+          detalleHtml: `El plazo se amplió hasta <strong>${formatoFechaHoraOferente(
+            fin,
+          )}</strong>. Motivo: ${escaparHtml(motivo.trim())}`,
+          justificacion: motivo.trim(),
+          dentroDelPeriodo: true,
+        },
+      ],
+    };
+
+    this.reemplazarUltimaSubsanacion(id, actualizado);
+    return of(actualizado).pipe(delay(retardo));
+  }
+
+  cancelarSubsanacion(
+    id: string,
+    motivo: string,
+  ): Observable<Subsanacion> {
+    const params = new URLSearchParams(window.location.search);
+    const retardo = Number(params.get("mockRetardo")) || 700;
+
+    if (params.get("mockSubsanacion") === "error-cancelar") {
+      return throwError(
+        () =>
+          new Error(
+            "No fue posible cancelar el periodo de subsanación. Intente nuevamente.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const solicitud = this.fila(id);
+    if (!solicitud || solicitud.estado !== "en-evaluacion" || solicitud.decision) {
+      return throwError(
+        () =>
+          new Error(
+            "El periodo ya no admite cambios porque la solicitud salió de evaluación o tiene una decisión registrada.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const periodo = this.ultimaSubsanacion(id);
+    if (!periodo) {
+      return throwError(
+        () => new Error("No existe un periodo de subsanación para cancelar."),
+      ).pipe(delay(retardo));
+    }
+    if (periodo.cancelacion) {
+      return throwError(
+        () => new Error("El periodo ya fue cancelado."),
+      ).pipe(delay(retardo));
+    }
+    if (estadoSubsanacion(periodo) === "vencida") {
+      return throwError(
+        () => new Error("El periodo ya venció y no se puede cancelar."),
+      ).pipe(delay(retardo));
+    }
+    if (motivo.trim().length < MIN_CARACTERES_JUSTIFICACION) {
+      return throwError(
+        () =>
+          new Error(
+            `El motivo de la cancelación debe tener al menos ${MIN_CARACTERES_JUSTIFICACION} caracteres.`,
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const ahora = new Date();
+    const cancelacion: CancelacionSubsanacion = {
+      fecha: isoColombia(ahora),
+      motivo: motivo.trim(),
+      usuario: AUTOR_SUBSANACION_MOCK.usuario,
+      autor: AUTOR_SUBSANACION_MOCK.autor,
+      rol: AUTOR_SUBSANACION_MOCK.rol,
+    };
+
+    const actualizado: Subsanacion = {
+      ...periodo,
+      cancelacion,
+      eventos: [
+        ...periodo.eventos,
+        {
+          id: `evento-${id}-subsanacion-cancelacion-${ahora.getTime()}`,
+          tipo: "periodo-cancelado",
+          fecha: isoColombia(ahora),
+          usuario: AUTOR_SUBSANACION_MOCK.usuario,
+          nombreUsuario: AUTOR_SUBSANACION_MOCK.autor,
+          rol: AUTOR_SUBSANACION_MOCK.rol,
+          detalleHtml: `El periodo de subsanación fue cancelado. Motivo: ${escaparHtml(
+            motivo.trim(),
+          )}`,
+          justificacion: motivo.trim(),
+          dentroDelPeriodo: true,
+        },
+      ],
+    };
+
+    this.reemplazarUltimaSubsanacion(id, actualizado);
+    return of(actualizado).pipe(delay(retardo));
   }
 
   /**
@@ -3367,6 +4393,37 @@ export class SolicitudesServiceMock extends SolicitudesService {
     return (
       this.filasEditadas.get(id) ??
       DATOS_MOCK.find((solicitud) => solicitud.id === id)
+    );
+  }
+
+  /** Último periodo de subsanación de una solicitud. */
+  private ultimaSubsanacion(id: string): Subsanacion | null {
+    return this.subsanaciones.get(id)?.at(-1) ?? null;
+  }
+
+  /** Reemplaza el último periodo (ampliación o cancelación). */
+  private reemplazarUltimaSubsanacion(
+    id: string,
+    periodo: Subsanacion,
+  ): void {
+    const periodos = this.subsanaciones.get(id) ?? [];
+    if (periodos.length === 0) {
+      this.subsanaciones.set(id, [periodo]);
+      return;
+    }
+    this.subsanaciones.set(id, [...periodos.slice(0, -1), periodo]);
+  }
+
+  /** Eventos de todas las subsanaciones, listos para la bitácora de S-03. */
+  private eventosSubsanacionHistorial(
+    id: string,
+    estado: EstadoSolicitud,
+  ): readonly EventoHistorial[] {
+    const periodos = this.subsanaciones.get(id) ?? [];
+    return periodos.flatMap((periodo) =>
+      eventosVigentes(periodo).map((evento) =>
+        eventoSubsanacionAHistorial(evento, estado),
+      ),
     );
   }
 

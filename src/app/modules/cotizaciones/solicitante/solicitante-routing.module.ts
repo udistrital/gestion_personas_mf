@@ -7,7 +7,9 @@ import { ForoObservacionesPageComponent } from "./pages/foro-observaciones/foro-
 import { TableroOferentesComponent } from "./pages/tablero-oferentes/tablero-oferentes.component";
 import { ComparadorCotizacionesComponent } from "./pages/comparador-cotizaciones/comparador-cotizaciones.component";
 import { DetalleProveedorOfertaComponent } from "./pages/detalle-proveedor-oferta/detalle-proveedor-oferta.component";
-import { PantallaPorDefinirComponent } from "./pages/pantalla-por-definir/pantalla-por-definir.component";
+import { DecisionCotizacionComponent } from "./pages/decision-cotizacion/decision-cotizacion.component";
+import { ConfigurarSubsanacionComponent } from "./pages/subsanacion/configurar-subsanacion/configurar-subsanacion.component";
+import { HistorialSubsanacionComponent } from "./pages/subsanacion/historial-subsanacion/historial-subsanacion.component";
 import { solicitudResolver } from "../resolvers/solicitud.resolver";
 
 /**
@@ -61,19 +63,27 @@ const routes: Routes = [
   },
   {
     path: ":id/evaluacion/decision",
-    component: PantallaPorDefinirComponent,
-    title: "ÁGORA · Decisión de la cotización",
-    data: {
-      titulo: "Decisión de la cotización",
-      pantalla: "S-11",
-      volver: "comparador",
-    },
+    component: DecisionCotizacionComponent,
+    resolve: { solicitud: solicitudResolver },
+    title: "ÁGORA · Decisión y justificación",
   },
   {
     path: ":id/evaluacion",
     component: ComparadorCotizacionesComponent,
     resolve: { solicitud: solicitudResolver },
     title: "ÁGORA · Comparador de cotizaciones",
+  },
+  {
+    path: ":id/subsanacion/historial",
+    component: HistorialSubsanacionComponent,
+    resolve: { solicitud: solicitudResolver },
+    title: "ÁGORA · Historial de subsanación",
+  },
+  {
+    path: ":id/subsanacion",
+    component: ConfigurarSubsanacionComponent,
+    resolve: { solicitud: solicitudResolver },
+    title: "ÁGORA · Subsanación documental",
   },
   {
     path: ":id",

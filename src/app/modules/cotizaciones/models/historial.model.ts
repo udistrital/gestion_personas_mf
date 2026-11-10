@@ -18,7 +18,8 @@ export type TipoEventoHistorial =
   | "creacion"
   | "modificacion"
   | "notificacion"
-  | "estado";
+  | "estado"
+  | "subsanacion";
 
 /** Catálogo de tipos de evento con sus etiquetas de filtro y de ficha. */
 export interface TipoEventoHistorialMeta {
@@ -46,6 +47,11 @@ export const TIPOS_EVENTO_HISTORIAL: readonly TipoEventoHistorialMeta[] = [
     valor: "estado",
     etiqueta: "Estados de proceso",
     etiquetaDetalle: "Estados de proceso",
+  },
+  {
+    valor: "subsanacion",
+    etiqueta: "Subsanaciones",
+    etiquetaDetalle: "Subsanaciones",
   },
 ];
 

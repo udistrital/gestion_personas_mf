@@ -113,17 +113,6 @@ export interface FiltroOferentes {
   ubicacion: string;
 }
 
-/** Datos que la preselección de S-09 deja en la bitácora del expediente. */
-export interface SeleccionOferenteEvento {
-  /** Proveedor elegido; `null` cuando se retira la preselección. */
-  readonly proveedorId: string | null;
-  readonly proveedorNombre: string;
-  /** Total de la oferta seleccionada; 0 al retirar. */
-  readonly valor: number;
-  /** Rol con el que se ejecutó la acción ("Jefe de dependencia", "Ordenador…"). */
-  readonly rol: string;
-}
-
 export interface ConteosOferentes {
   /** Proveedores del banco que cumplen la segmentación (RN-19). */
   readonly cumplen: number;
@@ -166,8 +155,6 @@ interface ConfigOferentesSolicitud {
   readonly responderian?: number;
   /** Proveedores que radicaron una adenda después de responder. */
   readonly modificados?: readonly string[];
-  /** Proveedor destacado por el jefe de dependencia (RN-33). */
-  readonly seleccionado?: string;
   /** Observaciones por proveedor (para el foro y el contador de postulados). */
   readonly observaciones?: Readonly<Record<string, number>>;
 }
@@ -186,7 +173,6 @@ const CONFIG_OFERENTES: Readonly<
   "SOL-2026-0039": {
     responderian: 4,
     modificados: ["prov-02"],
-    seleccionado: "prov-01",
     observaciones: {
       "prov-01": 1,
       "prov-05": 1,
@@ -208,6 +194,18 @@ const CONFIG_OFERENTES: Readonly<
   "SOL-2026-0151": {
     // Proceso vigente: todavía no hay respuestas y el tablero está bloqueado.
     responderian: 0,
+  },
+  "SOL-2026-0160": {
+    // Decisión pendiente de envío a validación (S-11).
+    responderian: 3,
+  },
+  "SOL-2026-0161": {
+    // Decisión aprobada por las vistas futuras del OG (solo lectura).
+    responderian: 3,
+  },
+  "SOL-2026-0162": {
+    // Decisión rechazada / declaratoria de desierta (solo lectura).
+    responderian: 2,
   },
 };
 
@@ -293,6 +291,13 @@ export function crearOferentes(
     return [];
   }
 
+  // Una decisión fija el estado de las invitaciones y el resaltado del
+  // proveedor enviado a validación. El historial conserva los rechazos previos
+  // para que el portal del proveedor no pierda su estado.
+  const decisiones = [
+    ...(solicitud.historialDecisiones ?? []),
+    ...(solicitud.decision ? [solicitud.decision] : []),
+  ];
   const elegibles = proveedoresElegibles(solicitud);
   const respondieron = config.sinRespuestas
     ? 0
@@ -366,10 +371,25 @@ export function crearOferentes(
       observacionIso ||
       isoDesdeFechaCorta(solicitud.apertura, 0, 8, 0);
 
+    const decisionProveedor = decisiones
+      .filter((decision) => decision.proveedorId === proveedor.id)
+      .at(-1);
+    const estadoInvitacion = decisionProveedor
+      ? decisionProveedor.fase === "aprobada"
+        ? "aceptada"
+        : decisionProveedor.fase === "rechazada"
+          ? "rechazada"
+          : "enviada"
+      : respuesta
+        ? "enviada"
+        : cerrada
+          ? "vencida"
+          : "borrador";
+
     const invitacion: InvitacionProveedor = {
       id: `INV-${solicitud.id.slice(-4)}-${proveedor.id.replace("prov-", "")}`,
       solicitudId: solicitud.id,
-      estado: respuesta ? "enviada" : cerrada ? "vencida" : "borrador",
+      estado: estadoInvitacion,
       fechaRadicacion: respuesta?.fechaEnvioIso,
       adendaPublicada: modificado
         ? {
@@ -391,7 +411,7 @@ export function crearOferentes(
       grupo: respuesta ? "con-oferta" : "sin-oferta",
       ultimaAccion: formatoFechaHoraOferente(ultimaAccionIso),
       ultimaAccionIso,
-      seleccionado: config.seleccionado === proveedor.id,
+      seleccionado: solicitud.decision?.proveedorId === proveedor.id,
     };
   });
 }

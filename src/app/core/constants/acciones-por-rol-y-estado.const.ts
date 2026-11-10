@@ -22,10 +22,14 @@
 import { environment } from "src/environments/environment";
 import {
   AccionComparador,
+  AccionDecision,
   AccionDetalleProveedor,
+  AccionEstudioMercado,
   AccionInvitacionProveedor,
   AccionOferente,
   AccionSolicitud,
+  AccionSubsanacion,
+  EstadoEstudioMercado,
   EstadoOferente,
   EstadoPostulacionProveedor,
   EstadoSolicitud,
@@ -62,6 +66,21 @@ export type AccionesComparadorPorRolYEstado = AccionesPorRolYEstado<
 export type AccionesDetalleProveedorPorRolYEstado = AccionesPorRolYEstado<
   EstadoSolicitud,
   AccionDetalleProveedor
+>;
+
+export type AccionesDecisionPorRolYEstado = AccionesPorRolYEstado<
+  EstadoSolicitud,
+  AccionDecision
+>;
+
+export type AccionesSubsanacionPorRolYEstado = AccionesPorRolYEstado<
+  EstadoSolicitud,
+  AccionSubsanacion
+>;
+
+export type AccionesEstudioMercadoPorRolYEstado = AccionesPorRolYEstado<
+  EstadoEstudioMercado,
+  AccionEstudioMercado
 >;
 
 /**
@@ -193,12 +212,14 @@ const ACCIONES_OFERENTE_BASE: Partial<
     "ver-observaciones",
     "ver-cotizacion",
     "ver-respuesta",
+    "continuar-decision",
   ],
   modifico: [
     "ver-oferente",
     "ver-observaciones",
     "ver-cotizacion",
     "ver-respuesta",
+    "continuar-decision",
   ],
   observo: ["ver-oferente", "ver-observaciones"],
   notificado: ["ver-oferente"],
@@ -217,45 +238,18 @@ export const ACCIONES_OFERENTE_POR_ROL_Y_ESTADO: AccionesOferentePorRolYEstado =
 /**
  * Acciones del comparador.
  *
- * JD y OG comparten las mismas acciones: ambos pueden preseleccionar una oferta
- * como recomendación y continuar a S-11. La decisión final sigue siendo del OG
- * (RN-34) y se implementará en esa pantalla, no aquí.
- *
- * En `adjudicada` el comparador es de solo lectura: no se preselecciona ni se
- * retira la preselección.
+ * El comparador es de solo lectura: la selección del proveedor se hace al
+ * enviarlo a validación desde S-07. Aquí solo se consulta y se exporta.
  */
 const ACCIONES_COMPARADOR_BASE: Partial<
   Record<EstadoSolicitud, readonly AccionComparador[]>
 > = {
-  "enviada-proveedores": [
-    "ver-oferta",
-    "preseleccionar",
-    "quitar-preseleccion",
-    "exportar",
-    "continuar-decision",
-  ],
-  "enviada-con-modificaciones": [
-    "ver-oferta",
-    "preseleccionar",
-    "quitar-preseleccion",
-    "exportar",
-    "continuar-decision",
-  ],
-  "en-evaluacion": [
-    "ver-oferta",
-    "preseleccionar",
-    "quitar-preseleccion",
-    "exportar",
-    "continuar-decision",
-  ],
-  "en-aprobacion": [
-    "ver-oferta",
-    "preseleccionar",
-    "quitar-preseleccion",
-    "exportar",
-    "continuar-decision",
-  ],
+  "enviada-proveedores": ["ver-oferta", "exportar"],
+  "enviada-con-modificaciones": ["ver-oferta", "exportar"],
+  "en-evaluacion": ["ver-oferta", "exportar"],
+  "en-aprobacion": ["ver-oferta", "exportar"],
   adjudicada: ["ver-oferta", "exportar"],
+  desierta: ["ver-oferta", "exportar"],
 };
 
 export const ACCIONES_COMPARADOR_POR_ROL_Y_ESTADO: AccionesComparadorPorRolYEstado =
@@ -269,34 +263,18 @@ export const ACCIONES_COMPARADOR_POR_ROL_Y_ESTADO: AccionesComparadorPorRolYEsta
 /**
  * Acciones con efecto del detalle del proveedor.
  *
- * La pantalla es de solo consulta; las únicas acciones que cambian algo son la
- * preselección y el paso a S-11. Ambas siguen la misma matriz que S-09 para no
- * abrir dos caminos distintos al mismo estado.
+ * La pantalla es de solo consulta; la única acción es enviar la oferta a
+ * validación desde la cabecera. La selección ya no se hace con preselección.
  */
 const ACCIONES_DETALLE_PROVEEDOR_BASE: Partial<
   Record<EstadoSolicitud, readonly AccionDetalleProveedor[]>
 > = {
-  "enviada-proveedores": [
-    "preseleccionar",
-    "quitar-preseleccion",
-    "continuar-decision",
-  ],
-  "enviada-con-modificaciones": [
-    "preseleccionar",
-    "quitar-preseleccion",
-    "continuar-decision",
-  ],
-  "en-evaluacion": [
-    "preseleccionar",
-    "quitar-preseleccion",
-    "continuar-decision",
-  ],
-  "en-aprobacion": [
-    "preseleccionar",
-    "quitar-preseleccion",
-    "continuar-decision",
-  ],
+  "enviada-proveedores": ["continuar-decision"],
+  "enviada-con-modificaciones": ["continuar-decision"],
+  "en-evaluacion": ["continuar-decision"],
+  "en-aprobacion": ["continuar-decision"],
   adjudicada: [],
+  desierta: ["continuar-decision"],
 };
 
 export const ACCIONES_DETALLE_PROVEEDOR_POR_ROL_Y_ESTADO: AccionesDetalleProveedorPorRolYEstado =
@@ -304,6 +282,86 @@ export const ACCIONES_DETALLE_PROVEEDOR_POR_ROL_Y_ESTADO: AccionesDetalleProveed
     [environment.ROL.JEFE_DEPENDENCIA]: ACCIONES_DETALLE_PROVEEDOR_BASE,
     [environment.ROL.ORDENADOR_DEL_GASTO]: ACCIONES_DETALLE_PROVEEDOR_BASE,
   };
+
+/* ─────────────────── Decisión y envío a validación (S-11) ─────────────────── */
+
+/**
+ * Acciones del trámite de decisión.
+ *
+ * S-11 solo registra el envío a validación: lo pueden hacer el Jefe de
+ * Dependencia y el Ordenador del Gasto. La validación final (aprobar o
+ * rechazar) no vive aquí: corresponde a las vistas exclusivas del OG
+ * (O-01 a O-04), que se implementarán después.
+ *
+ * `desierta` aparece para permitir el reenvío después de un rechazo. La regla
+ * fina (solo si hay una decisión rechazada y el proveedor es distinto del
+ * rechazado) la aplica `PermisosSolicitudService` y el servicio.
+ */
+const ACCIONES_DECISION_ENVIO: Partial<
+  Record<EstadoSolicitud, readonly AccionDecision[]>
+> = {
+  "enviada-proveedores": ["enviar-a-validacion"],
+  "enviada-con-modificaciones": ["enviar-a-validacion"],
+  "en-evaluacion": ["enviar-a-validacion"],
+  desierta: ["enviar-a-validacion"],
+};
+
+export const ACCIONES_DECISION_POR_ROL_Y_ESTADO: AccionesDecisionPorRolYEstado =
+  {
+    [environment.ROL.JEFE_DEPENDENCIA]: ACCIONES_DECISION_ENVIO,
+    [environment.ROL.ORDENADOR_DEL_GASTO]: ACCIONES_DECISION_ENVIO,
+  };
+
+/* ───────────────────── Subsanación documental (S-12) ───────────────────── */
+
+/**
+ * Acciones del periodo de subsanación.
+ *
+ * Solo se configura cuando la solicitud está en `en-evaluacion`: antes de esa
+ * etapa todavía hay proveedores que no han cargado documentos y la subsanación
+ * no tendría sentido. En las etapas posteriores solo se conserva el historial.
+ */
+const ACCIONES_SUBSANACION_BASE: Partial<
+  Record<EstadoSolicitud, readonly AccionSubsanacion[]>
+> = {
+  "en-evaluacion": ["configurar", "ver-historial"],
+  "en-aprobacion": ["ver-historial"],
+  adjudicada: ["ver-historial"],
+  desierta: ["ver-historial"],
+};
+
+export const ACCIONES_SUBSANACION_POR_ROL_Y_ESTADO: AccionesSubsanacionPorRolYEstado =
+  {
+    [environment.ROL.JEFE_DEPENDENCIA]: ACCIONES_SUBSANACION_BASE,
+    [environment.ROL.ORDENADOR_DEL_GASTO]: ACCIONES_SUBSANACION_BASE,
+  };
+
+/* ────────────────────── Estudios de mercado (S-13) ────────────────────── */
+
+/**
+ * Acciones del estudio de mercado.
+ *
+ * El ciclo es propio y no depende de `EstadoSolicitud`. El borrador se puede
+ * continuar y descartar; con invitaciones cursadas solo se consulta, se
+ * invitan más proveedores y se exporta. La aprobación final no vive en esta
+ * entrega: `aprobado` solo aparece en los datos semilla.
+ */
+const ACCIONES_ESTUDIO_MERCADO_BASE: Partial<
+  Record<EstadoEstudioMercado, readonly AccionEstudioMercado[]>
+> = {
+  borrador: ["ver-detalle", "editar", "invitar-proveedores", "descartar"],
+  "en-recepcion": ["ver-detalle", "invitar-proveedores", "exportar"],
+  cerrado: ["ver-detalle", "exportar"],
+  aprobado: ["ver-detalle", "exportar"],
+  descartado: ["ver-detalle"],
+};
+
+export const ACCIONES_ESTUDIO_MERCADO_POR_ROL_Y_ESTADO: AccionesEstudioMercadoPorRolYEstado =
+  {
+    [environment.ROL.JEFE_DEPENDENCIA]: ACCIONES_ESTUDIO_MERCADO_BASE,
+    [environment.ROL.ORDENADOR_DEL_GASTO]: ACCIONES_ESTUDIO_MERCADO_BASE,
+  };
+
 
 /* ─────────────────────────────── Helpers ─────────────────────────────── */
 
@@ -355,6 +413,39 @@ export function accionesDetalleProveedorPorRoles(
   return Array.from(new Set(acciones));
 }
 
+/** Acciones del trámite de decisión en un estado, uniendo todos los roles. */
+export function accionesDecisionPorRoles(
+  roles: readonly Rol[],
+  estado: EstadoSolicitud,
+): readonly AccionDecision[] {
+  const acciones = roles.flatMap(
+    (rol) => ACCIONES_DECISION_POR_ROL_Y_ESTADO[rol]?.[estado] ?? [],
+  );
+  return Array.from(new Set(acciones));
+}
+
+/** Acciones de subsanación en un estado, uniendo todos los roles. */
+export function accionesSubsanacionPorRoles(
+  roles: readonly Rol[],
+  estado: EstadoSolicitud,
+): readonly AccionSubsanacion[] {
+  const acciones = roles.flatMap(
+    (rol) => ACCIONES_SUBSANACION_POR_ROL_Y_ESTADO[rol]?.[estado] ?? [],
+  );
+  return Array.from(new Set(acciones));
+}
+
+/** Acciones de un estudio de mercado en un estado, uniendo todos los roles. */
+export function accionesEstudioPorRoles(
+  roles: readonly Rol[],
+  estado: EstadoEstudioMercado,
+): readonly AccionEstudioMercado[] {
+  const acciones = roles.flatMap(
+    (rol) => ACCIONES_ESTUDIO_MERCADO_POR_ROL_Y_ESTADO[rol]?.[estado] ?? [],
+  );
+  return Array.from(new Set(acciones));
+}
+
 /**
  * Acciones por estado del área solicitante, sin mirar el rol.
  *
@@ -373,4 +464,21 @@ export const ACCIONES_SOLICITUD_POR_ESTADO: Readonly<
     return acumulado;
   },
   {} as Record<EstadoSolicitud, readonly AccionSolicitud[]>,
+);
+
+/**
+ * Acciones del trámite de decisión por estado, sin mirar el rol.
+ *
+ * La usa la capa de datos (`registrarEnvioDecision`) para validar que el estado
+ * permite el envío. La pantalla sigue consultando la matriz por rol a través de
+ * `PermisosSolicitudService`.
+ */
+export const ACCIONES_DECISION_POR_ESTADO: Readonly<
+  Record<EstadoSolicitud, readonly AccionDecision[]>
+> = ESTADOS_SOLICITUD_LISTA.reduce(
+  (acumulado, estado) => {
+    acumulado[estado] = accionesDecisionPorRoles(ROLES_DISPONIBLES, estado);
+    return acumulado;
+  },
+  {} as Record<EstadoSolicitud, readonly AccionDecision[]>,
 );

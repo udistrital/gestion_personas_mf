@@ -1,0 +1,288 @@
+<section class="dialogo" aria-labelledby="dialogo-subsanacion-titulo">
+  <header class="dialogo__cabecera">
+    <span
+      class="dialogo__icono"
+      [class.dialogo__icono--exito]="vista() === 'exito'"
+      [class.dialogo__icono--error]="vista() === 'error'"
+      aria-hidden="true"
+    >
+      <mat-icon>{{ icono }}</mat-icon>
+    </span>
+    <div class="dialogo__titulos">
+      <span class="dialogo__sello">
+        {{
+          esConfigurar
+            ? "Actuación formal"
+            : esCancelar
+              ? "Acción crítica"
+              : "Modificación del plazo"
+        }}
+      </span>
+      <h2 id="dialogo-subsanacion-titulo" class="dialogo__titulo">
+        {{ titulo }}
+      </h2>
+      <p class="dialogo__subtitulo">{{ subtitulo }}</p>
+    </div>
+    <button
+      class="dialogo__cerrar"
+      type="button"
+      aria-label="Cerrar diálogo"
+      [disabled]="vista() === 'enviando'"
+      (click)="cerrar()"
+    >
+      <mat-icon aria-hidden="true">close</mat-icon>
+    </button>
+  </header>
+
+  @if (vista() === "error") {
+    <div class="dialogo__cuerpo" role="alert" aria-live="assertive">
+      <div class="dialogo__aviso dialogo__aviso--error">
+        <mat-icon aria-hidden="true">error_outline</mat-icon>
+        <p>{{ error() }}</p>
+      </div>
+      <p class="dialogo__nota">
+        No se perdió lo diligenciado. Puedes reintentar o cerrar y corregir.
+      </p>
+    </div>
+    <footer class="dialogo__pie">
+      <button class="boton boton--secundario" type="button" (click)="cerrar()">
+        Cerrar
+      </button>
+      <button class="boton boton--primario" type="button" (click)="reintentar()">
+        <mat-icon aria-hidden="true">refresh</mat-icon>
+        Reintentar
+      </button>
+    </footer>
+  } @else if (vista() === "exito") {
+    <div class="dialogo__cuerpo" role="status" aria-live="polite">
+      <p class="dialogo__exito-texto">
+        @if (esConfigurar) {
+          El periodo quedó habilitado y los oferentes fueron notificados de
+          forma simulada.
+        } @else if (esCancelar) {
+          El periodo quedó cancelado y la ventana de cargue fue revocada.
+        } @else {
+          El nuevo cierre quedó registrado en la auditoría del expediente.
+        }
+      </p>
+
+      @if (periodoResultado; as periodo) {
+        <div class="dialogo__resumen">
+          <div class="dialogo__resumen-cabecera">
+            <strong>{{ periodo.radicado }}</strong>
+            <chip-estado [estado]="estadoPeriodo(periodo)"></chip-estado>
+          </div>
+          <dl class="dialogo__datos">
+            <div>
+              <dt>Inicio</dt>
+              <dd>{{ formatear(periodo.inicio) }}</dd>
+            </div>
+            <div>
+              <dt>Cierre</dt>
+              <dd>{{ formatear(periodo.fin) }}</dd>
+            </div>
+            <div>
+              <dt>Oferentes</dt>
+              <dd>{{ periodo.oferentes.length }}</dd>
+            </div>
+            <div>
+              <dt>Documentos</dt>
+              <dd>
+                {{
+                  periodo.oferentes.reduce(
+                    (total, oferente) => total + oferente.documentos.length,
+                    0
+                  )
+                }}
+              </dd>
+            </div>
+          </dl>
+          <p class="dialogo__nota">
+            {{
+              periodo.notificar
+                ? "Canal: correo institucional + portal del proveedor (envío simulado, RF-13)."
+                : "Notificación no solicitada: el periodo quedó registrado sin envío."
+            }}
+          </p>
+        </div>
+      }
+    </div>
+    <footer class="dialogo__pie">
+      <button class="boton boton--primario" type="button" (click)="cerrar()">
+        <span>Continuar</span>
+        <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+      </button>
+    </footer>
+  } @else {
+    <form class="dialogo__formulario" [formGroup]="formulario" (ngSubmit)="confirmar()">
+      <div class="dialogo__cuerpo">
+        @if (esConfigurar) {
+          @if (resumenPeriodo; as resumen) {
+            <p class="dialogo__texto">
+              Se notificará a
+              <strong>{{ resumen.oferentes }} oferentes seleccionados</strong>.
+              La ventana oficial estará abierta desde
+              <strong>{{ formatear(resumen.inicio) }}</strong> hasta
+              <strong>{{ formatear(resumen.fin) }}</strong>.
+            </p>
+            <div class="dialogo__resumen">
+              <dl class="dialogo__datos">
+                <div>
+                  <dt>Oferentes</dt>
+                  <dd>{{ resumen.oferentes }}</dd>
+                </div>
+                <div>
+                  <dt>Documentos</dt>
+                  <dd>{{ resumen.documentos }}</dd>
+                </div>
+                <div>
+                  <dt>Notificación</dt>
+                  <dd>
+                    {{ resumen.notificar ? "Correo + portal" : "Sin envío" }}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          }
+          <div class="dialogo__aviso dialogo__aviso--info">
+            <mat-icon aria-hidden="true">info</mat-icon>
+            <p>
+              Una vez iniciado, cualquier modificación al plazo requerirá
+              justificación formal y quedará registrada en la traza de auditoría
+              del sistema.
+            </p>
+          </div>
+        }
+
+        @if (esCancelar || esAmpliar) {
+          @if (esAmpliar) {
+            <fieldset class="dialogo__grupo">
+              <legend class="campo__etiqueta">Tipo de ampliación</legend>
+              <mat-radio-group
+                formControlName="tipoAmpliacion"
+                aria-label="Tipo de ampliación"
+                class="opciones-radio"
+              >
+                <mat-radio-button value="24">24 horas</mat-radio-button>
+                <mat-radio-button value="48">48 horas</mat-radio-button>
+                <mat-radio-button value="personalizada">
+                  Fecha y hora personalizada
+                </mat-radio-button>
+              </mat-radio-group>
+            </fieldset>
+
+            @if (mostrarFechaPersonalizada) {
+              <div class="campo-grid campo-grid--two">
+                <div class="campo">
+                  <campo-fecha
+                    formControlName="nuevaFecha"
+                    etiqueta="Nueva fecha de cierre"
+                    [requerido]="true"
+                    [min]="null"
+                    ayuda="Debe ser posterior al cierre actual."
+                  ></campo-fecha>
+                </div>
+                <div class="campo">
+                  <label class="campo__etiqueta" for="ampliacion-hora">
+                    Hora de cierre
+                  </label>
+                  <mat-form-field appearance="outline">
+                    <input
+                      matInput
+                      id="ampliacion-hora"
+                      type="time"
+                      formControlName="nuevaHora"
+                      aria-label="Hora de cierre de la ampliación"
+                    />
+                  </mat-form-field>
+                </div>
+              </div>
+            }
+          }
+
+          <div class="campo">
+            <label class="campo__etiqueta" for="subsanacion-motivo">
+              {{
+                esCancelar
+                  ? "Motivo formal de cancelación"
+                  : "Motivo de la ampliación"
+              }}
+              <b aria-hidden="true">*</b>
+            </label>
+            <mat-form-field appearance="outline">
+              <textarea
+                matInput
+                id="subsanacion-motivo"
+                formControlName="motivo"
+                rows="3"
+                [attr.aria-describedby]="
+                  formulario.controls.motivo.invalid &&
+                  formulario.controls.motivo.touched
+                    ? 'subsanacion-motivo-error'
+                    : 'subsanacion-motivo-ayuda'
+                "
+                [placeholder]="
+                  esCancelar
+                    ? 'Indique la causa administrativa o técnica para revocar el periodo.'
+                    : 'Explique el sustento de la ampliación del plazo.'
+                "
+              ></textarea>
+              @if (
+                formulario.controls.motivo.invalid &&
+                formulario.controls.motivo.touched
+              ) {
+                <mat-error id="subsanacion-motivo-error">
+                  El motivo es obligatorio y debe tener al menos
+                  {{ minimo }} caracteres.
+                </mat-error>
+              }
+            </mat-form-field>
+            <span id="subsanacion-motivo-ayuda" class="campo__ayuda">
+              Obligatorio · mínimo {{ minimo }} caracteres ·
+              {{ motivoVisible.length }} escritos
+            </span>
+          </div>
+
+          @if (esCancelar) {
+            <mat-checkbox formControlName="aceptado">
+              Entiendo que la cancelación revoca la ventana de cargue de forma
+              inmediata.
+            </mat-checkbox>
+          }
+        }
+
+        @if (vista() === "enviando") {
+          <p class="dialogo__enviando" role="status" aria-live="polite">
+            <mat-spinner diameter="20" aria-hidden="true"></mat-spinner>
+            Procesando la actuación…
+          </p>
+        }
+      </div>
+
+      <footer class="dialogo__pie">
+        <button
+          class="boton boton--secundario"
+          type="button"
+          [disabled]="vista() === 'enviando'"
+          (click)="cerrar()"
+        >
+          {{ esConfigurar ? "Cancelar" : "Volver" }}
+        </button>
+        <button
+          class="boton"
+          [class.boton--primario]="!esCancelar"
+          [class.boton--peligro]="esCancelar"
+          type="submit"
+          [disabled]="!puedeConfirmar || vista() === 'enviando'"
+        >
+          <mat-icon aria-hidden="true">
+            {{ esCancelar ? "cancel" : esAmpliar ? "update" : "verified" }}
+          </mat-icon>
+          {{
+            vista() === "enviando" ? "Procesando…" : etiquetaConfirmar
+          }}
+        </button>
+      </footer>
+    </form>
+  }
+</section>

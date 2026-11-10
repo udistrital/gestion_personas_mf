@@ -48,6 +48,14 @@ export class EditorEnriquecidoComponent
   /** Id del elemento que titula el campo (la etiqueta que pinta el padre). */
   @Input() idEtiqueta = "";
 
+  /**
+   * Id del mensaje de error del campo.
+   *
+   * Permite que el error quede ligado al área editable con `aria-describedby`.
+   * El padre solo lo informa cuando el error está visible.
+   */
+  @Input() idError = "";
+
   /** Nota informativa bajo el contador (mockup: "Parámetro de…"). */
   @Input() nota = "";
 
@@ -122,6 +130,9 @@ export class EditorEnriquecidoComponent
     }
     if (this.minCaracteres > 0 || this.maxCaracteres > 0) {
       ids.push(this.idContador);
+    }
+    if (this.idError) {
+      ids.push(this.idError);
     }
     return ids.length ? ids.join(" ") : null;
   }

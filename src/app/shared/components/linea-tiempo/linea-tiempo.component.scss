@@ -85,6 +85,16 @@
   color: var(--agora-texto-neutro);
 }
 
+.linea-tiempo__nodo--exito {
+  background: var(--agora-success);
+  color: var(--agora-on-primary);
+}
+
+.linea-tiempo__nodo--error {
+  background: var(--agora-error);
+  color: var(--agora-on-primary);
+}
+
 /* Ficha del evento. */
 .linea-tiempo__ficha {
   display: flex;
@@ -343,4 +353,19 @@
   height: 1rem;
   color: var(--agora-primary);
   font-size: 1rem;
+}
+
+/*
+ * Cuando una pantalla aporta su propia plantilla de detalle (S-12), el bloque
+ * deja de ser una fila de "texto + sello" y pasa a ser el cuerpo del evento:
+ * comparación de archivos, justificación y hash en columna.
+ */
+.linea-tiempo__detalle.linea-tiempo__detalle--plantilla {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0.75rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
 }

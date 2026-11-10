@@ -36,7 +36,11 @@ import { formatoTamano } from "./items.model";
 /* ── Documentos de la oferta ──────────────────────────────────────────────── */
 
 /** Estado de un documento dentro de la oferta radicada. */
-export type EstadoDocumentoOferta = "cargado" | "subsanado" | "pendiente";
+export type EstadoDocumentoOferta =
+  | "cargado"
+  | "subsanado"
+  | "pendiente"
+  | "no-subsanado";
 
 /**
  * Documento aportado por el proveedor.

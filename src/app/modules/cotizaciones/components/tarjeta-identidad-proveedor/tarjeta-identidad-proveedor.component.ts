@@ -8,9 +8,9 @@ import type { EstadoOferente } from "src/app/core/constants/estados-solicitud.co
  * vistas de resultado del ordenador. No consulta servicios: recibe los datos
  * ya resueltos por la página.
  *
- * El resaltado del proveedor preseleccionado usa los tokens de advertencia del
- * repo (RN-33) y siempre va acompañado del texto "Preseleccionado", de modo
- * que el color no es el único indicador.
+ * El resaltado del proveedor enviado a validación usa los tokens del repo
+ * (RN-33) y siempre va acompañado de una etiqueta textual, de modo que el color
+ * no es el único indicador.
  */
 @Component({
   selector: "tarjeta-identidad-proveedor",
@@ -30,6 +30,8 @@ export class TarjetaIdentidadProveedorComponent {
   @Input() representante = "";
   @Input() estado: EstadoOferente | null = null;
   @Input() seleccionado = false;
+  /** Texto del badge cuando `seleccionado` es true. */
+  @Input() etiquetaSeleccion = "Seleccionado";
   @Input() version = "";
   @Input() modificadaEl = "";
   /** Nivel del nombre: `h1` en S-10, `h2` si se reutiliza dentro de otra vista. */

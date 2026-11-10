@@ -2,33 +2,51 @@ import { Injectable, inject } from "@angular/core";
 import { RolService } from "./rol.service";
 import {
   ACCIONES_COMPARADOR,
+  ACCIONES_DECISION,
   ACCIONES_DETALLE_PROVEEDOR,
+  ACCIONES_ESTUDIO_MERCADO,
   ACCIONES_INVITACION_PROVEEDOR,
   ACCIONES_OFERENTE,
   ACCIONES_SOLICITUD,
+  ACCIONES_SUBSANACION,
   AccionComparador,
   AccionComparadorMeta,
+  AccionDecision,
+  AccionDecisionMeta,
   AccionDetalleProveedor,
   AccionDetalleProveedorMeta,
+  AccionEstudioMercado,
+  AccionEstudioMercadoMeta,
   AccionInvitacionProveedor,
   AccionOferente,
   AccionSolicitud,
   AccionSolicitudMeta,
+  AccionSubsanacion,
+  AccionSubsanacionMeta,
   ESTADOS_SOLICITUD,
+  EstadoEstudioMercado,
   EstadoSolicitud,
   MATRIZ_SOLICITUD_PERMITE_RESPUESTA,
 } from "../constants/estados-solicitud.const";
 import {
   ACCIONES_INVITACION_POR_ROL_Y_ESTADO,
   accionesComparadorPorRoles,
+  accionesDecisionPorRoles,
   accionesDetalleProveedorPorRoles,
+  accionesEstudioPorRoles,
   accionesOferentePorRoles,
   accionesSolicitudPorRoles,
+  accionesSubsanacionPorRoles,
 } from "../constants/acciones-por-rol-y-estado.const";
+import type {
+  DecisionSolicitud,
+} from "src/app/modules/cotizaciones/models/decision.model";
+import { decisionDeProveedor } from "src/app/modules/cotizaciones/models/decision.model";
 import type {
   InvitacionProveedor,
 } from "src/app/modules/cotizaciones/models/invitacion-proveedor.model";
 import type { OferenteTablero } from "src/app/modules/cotizaciones/models/oferente.model";
+import type { Subsanacion } from "src/app/modules/cotizaciones/models/subsanacion.model";
 import { cierreSolicitudVencido } from "src/app/modules/cotizaciones/models/solicitud.model";
 import type { Solicitud } from "src/app/modules/cotizaciones/models/solicitud.model";
 import {
@@ -39,6 +57,10 @@ import {
 /** Contrato mínimo que la capa de datos debe garantizar para evaluar permisos. */
 export interface SolicitudPermisable {
   readonly estado: EstadoSolicitud;
+  /** Envío a validación y, si existe, decisión final del OG. */
+  readonly decision?: DecisionSolicitud;
+  /** Decisiones anteriores de reenvíos tras un rechazo. */
+  readonly historialDecisiones?: readonly DecisionSolicitud[];
 }
 
 export type InvitacionPermisable = Pick<InvitacionProveedor, "estado">;
@@ -46,6 +68,24 @@ type SolicitudForoPermisable = Pick<
   Solicitud,
   "estado" | "cierre" | "fechaLimiteObservaciones"
 >;
+/** Solicitud con los datos que necesitan los permisos de S-11. */
+export type SolicitudDecisionPermisable = Pick<
+  Solicitud,
+  "estado" | "cierre" | "decision" | "historialDecisiones"
+>;
+
+/** Solicitud con los datos que necesitan los permisos de S-12. */
+export interface SolicitudSubsanacionPermisable {
+  readonly estado: EstadoSolicitud;
+  readonly cierre: string | null;
+  readonly decision?: DecisionSolicitud;
+  readonly subsanacion?: Subsanacion | null;
+}
+
+/** Estudio de mercado con los datos que necesitan los permisos de S-13. */
+export interface EstudioPermisable {
+  readonly estado: EstadoEstudioMercado;
+}
 
 @Injectable({ providedIn: "root" })
 export class PermisosSolicitudService {
@@ -105,6 +145,44 @@ export class PermisosSolicitudService {
     return meta.rutaPorEstado?.[solicitud.estado] ?? meta.ruta;
   }
 
+  /* ───────────────────── Estudios de mercado (S-13) ───────────────────── */
+
+  /**
+   * Acciones que el menú de la fila ofrece para un estudio de mercado.
+   *
+   * Usa la matriz rol+estado propia del estudio; no reutiliza la matriz de
+   * solicitudes porque el ciclo de vida es distinto.
+   */
+  accionesEstudioPermitidas(
+    estudio: EstudioPermisable,
+  ): readonly AccionEstudioMercado[] {
+    if (!this.rol.estaCargado()) {
+      return [];
+    }
+    return accionesEstudioPorRoles(this.rol.roles(), estudio.estado);
+  }
+
+  /** true si el usuario puede crear estudios de mercado. */
+  puedeCrearEstudio(): boolean {
+    return this.rol.permisoCreacion(ROLES_SOLICITANTE);
+  }
+
+  /** Etiqueta visible de una acción del estudio. */
+  etiquetaAccionEstudio(accion: AccionEstudioMercado): string {
+    return ACCIONES_ESTUDIO_MERCADO[accion].etiqueta;
+  }
+
+  /** Ruta plantilla de una acción del estudio; `null` si la maneja la página. */
+  rutaAccionEstudio(accion: AccionEstudioMercado): string | null {
+    const meta: AccionEstudioMercadoMeta = ACCIONES_ESTUDIO_MERCADO[accion];
+    return meta.ruta;
+  }
+
+  /** true si la acción del estudio es destructiva. */
+  esPeligroEstudio(accion: AccionEstudioMercado): boolean {
+    return ACCIONES_ESTUDIO_MERCADO[accion].peligro === true;
+  }
+
   /* ───────────────────── Tablero de oferentes (S-07) ───────────────────── */
 
   /**
@@ -133,11 +211,18 @@ export class PermisosSolicitudService {
    * Acciones disponibles para una fila del tablero.
    *
    * La matriz rol+estado decide la base; aquí se aplican las reglas que
-   * dependen de los datos (observaciones, respuesta radicada) y del cierre.
+   * dependen de los datos (observaciones, respuesta radicada), del cierre y de
+   * la decisión. `continuar-decision` aparece en todas las ofertas mientras no
+   * haya una decisión vigente (o la vigente esté rechazada y el proveedor no
+   * sea el rechazado). `ver-respuesta` solo se muestra para proveedores que
+   * tengan una respuesta del Ordenador del Gasto, actual o histórica.
    */
   accionesOferentePermitidas(
     oferente: OferenteTablero,
-    solicitud: Pick<Solicitud, "estado" | "cierre">,
+    solicitud: Pick<
+      Solicitud,
+      "estado" | "cierre" | "decision" | "historialDecisiones"
+    >,
   ): readonly AccionOferente[] {
     if (
       !this.rol.estaCargado() ||
@@ -152,10 +237,22 @@ export class PermisosSolicitudService {
         if (accion === "ver-oferente") {
           return true;
         }
+        if (accion === "continuar-decision") {
+          return this.puedeEnviarAValidacion(
+            solicitud,
+            oferente.proveedor.id,
+          );
+        }
+        if (accion === "ver-respuesta") {
+          return (
+            !!decisionDeProveedor(solicitud, oferente.proveedor.id) &&
+            verOfertas
+          );
+        }
         if (accion === "ver-observaciones") {
           return oferente.observaciones > 0 && this.puede("foro", solicitud);
         }
-        // ver-cotizacion / ver-respuesta
+        // ver-cotizacion
         return !!oferente.respuesta && verOfertas;
       },
     );
@@ -187,6 +284,93 @@ export class PermisosSolicitudService {
         }
         return segmento;
       });
+  }
+
+  /* ───────────────── Decisión y envío a validación (S-11) ───────────────── */
+
+  /**
+   * true si el usuario pertenece a los roles que pueden abrir S-11.
+   *
+   * S-11 es la vista de envío a validación: la comparten JD y OG. La validación
+   * final (aprobar/rechazar) vive en las vistas exclusivas del OG (O-01 a O-04)
+   * y no se ofrece aquí. Los estados y la decisión se evalúan por separado.
+   */
+  puedeAccederDecision(): boolean {
+    return (
+      this.rol.estaCargado() && this.rol.tieneAlgunRol(ROLES_SOLICITANTE)
+    );
+  }
+
+  /** Acciones del trámite de decisión según los roles y el estado. */
+  accionesDecisionPermitidas(
+    solicitud: SolicitudPermisable,
+  ): readonly AccionDecision[] {
+    if (
+      !this.rol.estaCargado() ||
+      !this.rol.tieneAlgunRol(ROLES_SOLICITANTE)
+    ) {
+      return [];
+    }
+    return accionesDecisionPorRoles(this.rol.roles(), solicitud.estado);
+  }
+
+  /**
+   * true si la oferta puede enviarse a validación.
+   *
+   * Exige que el cierre haya vencido (RN-29) y que la matriz permita la acción.
+   * Si ya existe una decisión, solo se permite reenviar cuando la vigente fue
+   * rechazada y el proveedor es distinto del rechazado. Una solicitud `desierta`
+   * sin decisión registrada (fila antigua) no habilita el envío.
+   */
+  puedeEnviarAValidacion(
+    solicitud: SolicitudDecisionPermisable,
+    proveedorId?: string,
+  ): boolean {
+    const decision = solicitud.decision;
+    const decisionProveedor = proveedorId
+      ? decisionDeProveedor(solicitud, proveedorId)
+      : decision;
+    const reenvio = decision?.fase === "rechazada";
+
+    // Ningún proveedor rechazado (ni el vigente ni uno histórico) puede
+    // volver a enviarse.
+    if (decisionProveedor?.fase === "rechazada") {
+      return false;
+    }
+    if (decision && !reenvio) {
+      return false;
+    }
+    if (solicitud.estado === "desierta" && !reenvio) {
+      return false;
+    }
+
+    return (
+      this.rol.estaCargado() &&
+      this.rol.tieneAlgunRol(ROLES_SOLICITANTE) &&
+      this.puedeVerOfertas(solicitud) &&
+      this.accionesDecisionPermitidas(solicitud).includes(
+        "enviar-a-validacion",
+      )
+    );
+  }
+
+  /** true si ya existe un envío o un resultado consultable. */
+  puedeVerDecision(
+    solicitud: Pick<Solicitud, "estado" | "decision">,
+  ): boolean {
+    return (
+      this.rol.estaCargado() &&
+      this.rol.tieneAlgunRol(ROLES_SOLICITANTE) &&
+      (!!solicitud.decision ||
+        solicitud.estado === "adjudicada" ||
+        solicitud.estado === "desierta")
+    );
+  }
+
+  /** Texto visible de una acción del trámite de decisión. */
+  etiquetaAccionDecision(accion: AccionDecision): string {
+    const meta: AccionDecisionMeta = ACCIONES_DECISION[accion];
+    return meta.etiqueta;
   }
 
   /* ───────────────── Comparador de cotizaciones (S-09) ───────────────── */
@@ -272,6 +456,16 @@ export class PermisosSolicitudService {
     ) {
       return [];
     }
+
+    // Con una decisión pendiente o aprobada no se ofrece un nuevo envío. Si fue
+    // rechazada, la pantalla decide si el proveedor actual puede reenviarse.
+    if (solicitud.decision && solicitud.decision.fase !== "rechazada") {
+      return [];
+    }
+    if (solicitud.estado === "desierta" && !solicitud.decision) {
+      return [];
+    }
+
     return accionesDetalleProveedorPorRoles(
       this.rol.roles(),
       solicitud.estado,
@@ -290,6 +484,118 @@ export class PermisosSolicitudService {
   ): readonly string[] | null {
     const meta: AccionDetalleProveedorMeta =
       ACCIONES_DETALLE_PROVEEDOR[accion];
+    if (!meta.ruta) {
+      return null;
+    }
+    return meta.ruta
+      .split("/")
+      .map((segmento) => (segmento === ":id" ? solicitudId : segmento));
+  }
+
+  /* ─────────────────── Subsanación documental (S-12) ─────────────────── */
+
+  /** true si el usuario pertenece a los roles del área solicitante. */
+  puedeVerSubsanacionPorRol(): boolean {
+    return (
+      this.rol.estaCargado() && this.rol.tieneAlgunRol(ROLES_SOLICITANTE)
+    );
+  }
+
+  /**
+   * true si el usuario puede abrir la subsanación.
+   *
+   * Comparte la compuerta de S-07/S-10 (rol + estado) y exige que el periodo de
+   * cotización haya terminado. Configurar solo se permite en `en-evaluacion`;
+   * en las etapas posteriores la vista queda como historial de solo lectura.
+   */
+  puedeAccederSubsanacion(solicitud: SolicitudSubsanacionPermisable): boolean {
+    return (
+      this.rol.estaCargado() &&
+      this.rol.tieneAlgunRol(ROLES_SOLICITANTE) &&
+      this.puedeVerOfertas(solicitud) &&
+      this.accionesSubsanacionPermitidas(solicitud).length > 0
+    );
+  }
+
+  /** Acciones de subsanación según los roles del usuario y el estado. */
+  accionesSubsanacionPermitidas(
+    solicitud: SolicitudSubsanacionPermisable,
+  ): readonly AccionSubsanacion[] {
+    if (
+      !this.rol.estaCargado() ||
+      !this.rol.tieneAlgunRol(ROLES_SOLICITANTE)
+    ) {
+      return [];
+    }
+    return accionesSubsanacionPorRoles(this.rol.roles(), solicitud.estado);
+  }
+
+  /**
+   * true si se puede configurar un periodo nuevo.
+   *
+   * Exige `en-evaluacion`, cierre vencido, ausencia de decisión y que no exista
+   * un periodo vigente. Un periodo cancelado no bloquea uno nuevo.
+   */
+  puedeConfigurarSubsanacion(
+    solicitud: SolicitudSubsanacionPermisable,
+  ): boolean {
+    if (
+      !this.puedeAccederSubsanacion(solicitud) ||
+      solicitud.decision ||
+      !this.accionesSubsanacionPermitidas(solicitud).includes("configurar")
+    ) {
+      return false;
+    }
+    const subsanacion = solicitud.subsanacion;
+    return !subsanacion || !!subsanacion.cancelacion;
+  }
+
+  /** true si el usuario puede consultar el historial de subsanación. */
+  puedeVerHistorialSubsanacion(
+    solicitud: SolicitudSubsanacionPermisable,
+  ): boolean {
+    return (
+      this.puedeAccederSubsanacion(solicitud) &&
+      this.accionesSubsanacionPermitidas(solicitud).includes("ver-historial")
+    );
+  }
+
+  /** true si el periodo se puede cancelar (programado o activo). */
+  puedeCancelarSubsanacion(
+    solicitud: SolicitudSubsanacionPermisable,
+  ): boolean {
+    const subsanacion = solicitud.subsanacion;
+    if (!subsanacion || subsanacion.cancelacion) {
+      return false;
+    }
+    // Una vez enviada la decisión, el periodo deja de admitir cambios.
+    if (solicitud.estado !== "en-evaluacion" || solicitud.decision) {
+      return false;
+    }
+    return (
+      this.puedeAccederSubsanacion(solicitud) &&
+      Date.now() < Date.parse(subsanacion.fin)
+    );
+  }
+
+  /** true si el periodo se puede ampliar (programado o activo). */
+  puedeAmpliarSubsanacion(
+    solicitud: SolicitudSubsanacionPermisable,
+  ): boolean {
+    return this.puedeCancelarSubsanacion(solicitud);
+  }
+
+  /** Texto visible de una acción de subsanación. */
+  etiquetaAccionSubsanacion(accion: AccionSubsanacion): string {
+    return ACCIONES_SUBSANACION[accion].etiqueta;
+  }
+
+  /** Comandos de navegación de una acción de subsanación. */
+  rutaAccionSubsanacion(
+    accion: AccionSubsanacion,
+    solicitudId: string,
+  ): readonly string[] | null {
+    const meta: AccionSubsanacionMeta = ACCIONES_SUBSANACION[accion];
     if (!meta.ruta) {
       return null;
     }

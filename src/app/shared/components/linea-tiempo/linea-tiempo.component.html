@@ -67,9 +67,19 @@
 
         <h3 class="linea-tiempo__titulo">{{ evento.titulo }}</h3>
 
-        <!-- Detalle funcional: puede traer HTML del editor enriquecido -->
-        <div class="linea-tiempo__detalle">
-          @if (evento.detalle) {
+        <!-- Detalle funcional: plantilla propia o HTML del editor enriquecido -->
+        <div
+          class="linea-tiempo__detalle"
+          [class.linea-tiempo__detalle--plantilla]="!!detallePlantilla"
+        >
+          @if (detallePlantilla) {
+            <ng-container
+              *ngTemplateOutlet="
+                detallePlantilla;
+                context: { $implicit: evento }
+              "
+            ></ng-container>
+          } @else if (evento.detalle) {
             <p
               class="linea-tiempo__texto"
               [innerHTML]="evento.detalle | htmlSeguro"

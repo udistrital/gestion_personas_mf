@@ -4,6 +4,10 @@
 @use 'src/app/shared/styles/sweetalert';
 @use 'src/app/shared/styles/material-formulario' as material-formulario;
 
+/* El MF se monta dentro del Root: no usa el <link> de su index.html. Cargamos
+   la fuente de iconos desde aquí para que mat-icon no dependa del shell. */
+@import url("https://fonts.googleapis.com/icon?family=Material+Icons");
+
 /* ---------------------------------------------------------------------------
    Bootstrap 5.3 — solo variables, mixins y utilities.
    Se omiten a propósito `root`, `reboot`, `type`, `containers`, `grid` y todos
@@ -54,4 +58,37 @@ agora-gestion-personas-mf {
   min-height: 100vh;
   background: var(--agora-background);
   color: var(--agora-text);
+}
+
+/*
+ * Botones secundarios de los estudios de mercado (S-13).
+ *
+ * Conservan el hover suave del skin (fondo vino claro y texto vino) y evitan
+ * que el estado presionado de Material pinte el fondo vino sólido con el texto
+ * del mismo color. Se usa una clase explícita para no alterar otros formularios.
+ */
+.boton-secundario-estudio.mat-mdc-outlined-button {
+  --mat-button-outlined-label-text-color: var(--agora-primary);
+  --mat-button-outlined-outline-color: var(--agora-borde-control);
+  --mat-button-outlined-hover-state-layer-opacity: 0;
+  --mat-button-outlined-focus-state-layer-opacity: 0;
+  --mat-button-outlined-pressed-state-layer-opacity: 0;
+  background-color: var(--agora-surface);
+  color: var(--agora-primary);
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.boton-secundario-estudio.mat-mdc-outlined-button:is(:hover, :focus-visible, :active) {
+  --mat-button-outlined-label-text-color: var(--agora-primary);
+  --mat-button-outlined-outline-color: var(--agora-primary);
+  background-color: var(--agora-primary-light);
+  color: var(--agora-primary);
+}
+
+.boton-secundario-estudio.mat-mdc-outlined-button .mdc-button__label,
+.boton-secundario-estudio.mat-mdc-outlined-button mat-icon {
+  color: inherit;
 }

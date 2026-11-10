@@ -14,6 +14,8 @@ import {
   ProveedoresObjetivoDetalle,
 } from "./detalle-solicitud.model";
 import { ItemSolicitud, TipoNecesidadSolicitud } from "./items.model";
+import type { DecisionSolicitud } from "./decision.model";
+import type { Subsanacion } from "./subsanacion.model";
 
 export type TipoCotizacion = "BIEN" | "SERVICIO" | "BIEN_Y_SERVICIO";
 
@@ -54,6 +56,10 @@ export interface Solicitud {
   readonly cancelacion?: DatosCancelacionSolicitud;
   /** Cierre para formular observaciones; distinto del cierre de la solicitud. */
   readonly fechaLimiteObservaciones?: string | null;
+  /** Envío a validación y, si existe, decisión final del Ordenador del Gasto. */
+  readonly decision?: DecisionSolicitud;
+  /** Decisiones anteriores cuando se reenvió a validación tras un rechazo. */
+  readonly historialDecisiones?: readonly DecisionSolicitud[];
 }
 
 /** Criterios del formulario de filtros de S-01. */
@@ -102,6 +108,8 @@ export interface SolicitudDetalle extends Solicitud {
   readonly documentos: DocumentosDetalle | null;
   /** Bitácora de la pestaña 7; `null` si la solicitud aún no tiene eventos. */
   readonly historial: HistorialDetalle | null;
+  /** Último periodo de subsanación configurado (S-12). */
+  readonly subsanacion?: Subsanacion | null;
   readonly contadores: ContadoresPestanas;
   /**
    * Fotografía editable de la solicitud (S-04).
