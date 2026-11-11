@@ -1,0 +1,424 @@
+<plantilla-pagina-contenedora
+  [breadcrumb]="breadcrumb"
+  [title]="tituloPagina"
+  icon="assignment"
+  [mostrarBotonRegresar]="true"
+  (regresar)="volver()"
+>
+  <div class="mi-cotizacion">
+    @if (vista() === "cargando") {
+      <div class="esqueleto-pagina" aria-busy="true" aria-live="polite">
+        <span class="visually-oculto">Cargando su cotización radicada…</span>
+        <div class="esqueleto-pagina__cabecera" aria-hidden="true">
+          <span class="esqueleto esqueleto--titulo"></span>
+          <span class="esqueleto esqueleto--linea"></span>
+          <span class="esqueleto esqueleto--barra"></span>
+        </div>
+        <div class="esqueleto-pagina__metricas" aria-hidden="true">
+          @for (bloque of [1, 2, 3]; track bloque) {
+            <span class="esqueleto esqueleto--metrica"></span>
+          }
+        </div>
+        <div class="esqueleto-pagina__tabla" aria-hidden="true">
+          @for (fila of [1, 2, 3, 4, 5, 6]; track fila) {
+            <span class="esqueleto esqueleto--fila"></span>
+          }
+        </div>
+      </div>
+    } @else if (vista() === "error") {
+      <section class="estado" role="alert">
+        <mat-icon class="estado__icono estado__icono--error" aria-hidden="true">
+          error_outline
+        </mat-icon>
+        <h2 class="estado__titulo">No pudimos cargar su cotización</h2>
+        <p class="estado__texto">{{ error() }}</p>
+        <div class="estado__acciones">
+          <button class="boton-recto boton-recto--vino" type="button" (click)="reintentar()">
+            <mat-icon aria-hidden="true">refresh</mat-icon>
+            <span>Reintentar</span>
+          </button>
+          <button class="boton-recto" type="button" (click)="volver()">
+            <mat-icon aria-hidden="true">arrow_back</mat-icon>
+            <span>Volver a mis solicitudes</span>
+          </button>
+        </div>
+      </section>
+    } @else if (vista() === "no-encontrada") {
+      <section class="estado" role="status" aria-live="polite">
+        <mat-icon class="estado__icono" aria-hidden="true">search_off</mat-icon>
+        <h2 class="estado__titulo">Solicitud no encontrada o sin acceso</h2>
+        <p class="estado__texto">
+          No se encontró una invitación que permita consultar esta cotización.
+          Verifique el enlace o regrese a su bandeja de solicitudes.
+        </p>
+        <button class="boton-recto" type="button" (click)="volver()">
+          <mat-icon aria-hidden="true">arrow_back</mat-icon>
+          <span>Volver a mis solicitudes</span>
+        </button>
+      </section>
+    } @else if (detalle(); as d) {
+      <header class="cabecera">
+        <div class="cabecera__principal">
+          <div class="cabecera__textos">
+            <div class="cabecera__chips">
+              <chip-estado [estado]="d.solicitud.estado"></chip-estado>
+              @if (proyeccion()) {
+                <span class="chip chip--exito">
+                  <mat-icon aria-hidden="true">verified</mat-icon>
+                  <span>{{ cerrada ? "Radicada · solo lectura" : "Respuesta radicada" }}</span>
+                </span>
+              } @else {
+                <span class="chip chip--neutro">
+                  <mat-icon aria-hidden="true">pending</mat-icon>
+                  <span>Sin respuesta registrada</span>
+                </span>
+              }
+              @if (proyeccion() && proyeccion()!.respuesta.revision > 1) {
+                <span class="chip chip--info">
+                  <mat-icon aria-hidden="true">published_with_changes</mat-icon>
+                  <span>
+                    Versión {{ proyeccion()!.respuesta.revision }} (adenda aplicada)
+                  </span>
+                </span>
+              }
+              @if (estadoActualizacion !== "sin-modificacion") {
+                <chip-estado [estado]="estadoActualizacion"></chip-estado>
+              }
+            </div>
+
+            <p class="cabecera__objeto">{{ d.solicitud.titulo }}</p>
+
+            <div class="cabecera__meta">
+              @if (proyeccion(); as p) {
+                <span class="cabecera__dato">
+                  <mat-icon aria-hidden="true">schedule</mat-icon>
+                  <span>Radicado el <strong>{{ p.fechaRadicacion }}</strong></span>
+                </span>
+                <span class="cabecera__dato">
+                  <mat-icon aria-hidden="true">tag</mat-icon>
+                  <span>
+                    Radicado:
+                    <strong class="cabecera__radicado">{{ p.radicado }}</strong>
+                  </span>
+                </span>
+              } @else {
+                <span class="cabecera__dato">
+                  <mat-icon aria-hidden="true">domain</mat-icon>
+                  <span>{{ d.solicitud.dependencia }}</span>
+                </span>
+                <span class="cabecera__dato">
+                  <mat-icon aria-hidden="true">verified</mat-icon>
+                  <span>Respuesta única por proveedor (RN-35)</span>
+                </span>
+              }
+            </div>
+          </div>
+
+          <div class="cabecera__lateral">
+            @if (!cerrada) {
+              <div class="metrica-plazo" aria-label="Plazo de recepción de respuestas">
+                <span class="metrica-plazo__rotulo">Cierre de recepción</span>
+                <contador-regresivo [fechaCierre]="d.solicitud.cierre"></contador-regresivo>
+                <span class="metrica-plazo__nota">
+                  Recepción abierta hasta las 23:59 de la fecha de cierre.
+                </span>
+              </div>
+            } @else {
+              <div class="metrica-plazo metrica-plazo--cerrada">
+                <span class="metrica-plazo__rotulo">Proceso cerrado</span>
+                <strong>{{ d.solicitud.cierre ?? "Por definir" }} · 23:59 COT</strong>
+                <span class="metrica-plazo__nota">
+                  La respuesta se consulta en modo de solo lectura.
+                </span>
+              </div>
+            }
+
+            <div class="cabecera__acciones">
+              @if (proyeccion()) {
+                @if (!cerrada) {
+                  <button
+                    class="boton-recto boton-recto--vino"
+                    type="button"
+                    [disabled]="!puedeModificar"
+                    [attr.aria-describedby]="!puedeModificar && motivoSinModificar ? 'motivo-modificar' : null"
+                    (click)="modificar()"
+                  >
+                    <mat-icon aria-hidden="true">edit_note</mat-icon>
+                    <span>Modificar respuesta</span>
+                  </button>
+                }
+                <button class="boton-recto" type="button" (click)="descargarConstancia()">
+                  <mat-icon aria-hidden="true">download</mat-icon>
+                  <span>Descargar constancia</span>
+                </button>
+              }
+              <button class="boton-recto" type="button" (click)="volver()">
+                <mat-icon aria-hidden="true">arrow_back</mat-icon>
+                <span>Volver a mis solicitudes</span>
+              </button>
+            </div>
+
+            @if (proyeccion() && !cerrada && !puedeModificar && motivoSinModificar) {
+              <p id="motivo-modificar" class="cabecera__ayuda" role="note">
+                <mat-icon aria-hidden="true">info</mat-icon>
+                <span>{{ motivoSinModificar }}</span>
+              </p>
+            }
+          </div>
+        </div>
+      </header>
+
+      <div class="panorama">
+        <section class="identidad" aria-labelledby="identidad-proveedor">
+          <div class="identidad__cabecera">
+            <span class="identidad__icono" aria-hidden="true">
+              <mat-icon>corporate_fare</mat-icon>
+            </span>
+            <div class="identidad__titulos">
+              <span class="identidad__rotulo">Identidad registrada</span>
+              <h2 id="identidad-proveedor">{{ d.proveedor.nombre }}</h2>
+            </div>
+            <span class="chip chip--recto">{{ d.proveedor.tipoPersona }}</span>
+          </div>
+          <dl class="identidad__datos">
+            <div>
+              <dt>NIT / identificación tributaria</dt>
+              <dd>{{ d.proveedor.nit }}</dd>
+            </div>
+            <div>
+              <dt>Dirección fiscal notificada</dt>
+              <dd>{{ d.proveedor.direccion }}</dd>
+            </div>
+            <div>
+              <dt>Buzón de notificaciones</dt>
+              <dd>{{ d.proveedor.correo }}</dd>
+            </div>
+            <div>
+              <dt>Representante registrado</dt>
+              <dd>{{ d.proveedor.representante }}</dd>
+            </div>
+          </dl>
+          <p class="identidad__nota">
+            <mat-icon aria-hidden="true">info</mat-icon>
+            <span>
+              La vigencia del RUP y la matrícula mercantil no se consultan en
+              esta vista.
+            </span>
+          </p>
+        </section>
+
+        <aside class="callout" aria-labelledby="callout-validez">
+          <mat-icon aria-hidden="true">gavel</mat-icon>
+          <div>
+            <h2 id="callout-validez">Validez probatoria e inmutabilidad</h2>
+            <p>
+              La propuesta se radica bajo el Estatuto de Contratación de la
+              Universidad Distrital y la Ley 527 de 1999. Una vez enviada, la
+              oferta electrónica es vinculante y solo se modifica cuando la
+              solicitud cambia mediante adenda.
+            </p>
+          </div>
+        </aside>
+      </div>
+
+      @if (proyeccion(); as p) {
+        @if (d.adenda) {
+          <section class="adenda" aria-labelledby="adenda-titulo">
+            <div class="adenda__cabecera">
+              <span class="adenda__icono" aria-hidden="true">
+                <mat-icon>published_with_changes</mat-icon>
+              </span>
+              <div class="adenda__textos">
+                <h2 id="adenda-titulo">
+                  Modificación de la solicitud aplicada por la adenda
+                  {{ d.adenda.numero ? "N.° " + d.adenda.numero : "publicada" }}
+                </h2>
+                <p>
+                  Versión {{ d.adenda.versionAnterior }} → versión
+                  {{ d.adenda.versionVigente }} · publicada el
+                  {{ d.adenda.publicadaEl }}.
+                  @if (d.adenda.motivo) {
+                    {{ d.adenda.motivo }}
+                  }
+                </p>
+                @if (estadoActualizacion === "desactualizada") {
+                  <p class="adenda__alerta">
+                    <mat-icon aria-hidden="true">edit_note</mat-icon>
+                    Su respuesta quedó en una versión anterior de la solicitud.
+                    Actualíquela antes del cierre para que sea tenida en cuenta.
+                  </p>
+                } @else if (estadoActualizacion === "actualizada") {
+                  <p class="adenda__ok">
+                    <mat-icon aria-hidden="true">check_circle</mat-icon>
+                    Su respuesta ya incorpora la versión vigente de la
+                    solicitud.
+                  </p>
+                } @else if (estadoActualizacion === "vencida") {
+                  <p class="adenda__alerta">
+                    <mat-icon aria-hidden="true">lock_clock</mat-icon>
+                    El plazo terminó sin que la respuesta se actualizara a la
+                    versión vigente.
+                  </p>
+                }
+              </div>
+              <button class="boton-recto" type="button" (click)="verSolicitud()">
+                <mat-icon aria-hidden="true">visibility</mat-icon>
+                <span>Ver qué cambió</span>
+              </button>
+            </div>
+
+            <ul class="adenda__versiones" aria-label="Versiones radicadas">
+              @for (version of p.versiones; track version.version) {
+                <li class="adenda__version" [class.adenda__version--vigente]="version.vigente">
+                  <mat-icon aria-hidden="true">
+                    {{ version.vigente ? "verified" : "history" }}
+                  </mat-icon>
+                  <span>
+                    <strong>Versión {{ version.version }}</strong>
+                    {{ version.vigente ? "(vigente)" : "(archivada)" }} ·
+                    {{ version.fecha }} · {{ version.totalTexto }}
+                  </span>
+                  @if (!version.vigente) {
+                    <etiqueta-por-definir
+                      texto="Por definir"
+                      detalle="La consulta del detalle completo de una versión archivada depende de RF-016; hoy solo se conserva el resumen."
+                    ></etiqueta-por-definir>
+                  }
+                </li>
+              }
+            </ul>
+          </section>
+        }
+
+        @if (p.cerrada) {
+          <section class="cierre" aria-labelledby="cierre-titulo">
+            <span class="cierre__icono" aria-hidden="true">
+              <mat-icon>lock_clock</mat-icon>
+            </span>
+            <div>
+              <h2 id="cierre-titulo">
+                Proceso de cotización cerrado formalmente
+                ({{ d.solicitud.cierre ?? "sin fecha" }} · 23:59 COT)
+              </h2>
+              <p>
+                La recepción de ofertas concluyó. Su cotización radicada se
+                conserva en custodia y no admite modificaciones, retiros ni
+                adiciones.
+              </p>
+            </div>
+            <span class="chip chip--recto">Inalterable</span>
+          </section>
+        }
+
+        <app-resumen-mi-cotizacion
+          [proyeccion]="p"
+          [cerrada]="cerrada"
+        ></app-resumen-mi-cotizacion>
+
+        <app-tabla-items-ofertados
+          [filas]="filasPagina()"
+          [rangoInicio]="rangoInicio"
+          [total]="totalFilas"
+          [pagina]="pagina()"
+          [porPagina]="porPagina()"
+          [opcionesPorPagina]="opcionesPorPagina"
+          [totalPaginas]="totalPaginas"
+          [paginasVisibles]="paginasVisibles"
+          (paginaCambio)="irAPagina($event)"
+          (porPaginaCambio)="cambiarPorPagina($event)"
+        ></app-tabla-items-ofertados>
+
+        <app-valores-oferta
+          [totales]="p.totales"
+          [fechaVencimiento]="p.fechaVencimiento"
+          [diasVigencia]="p.diasVigencia"
+          [cerrada]="cerrada"
+          [excedePresupuesto]="p.excedePresupuesto"
+          [presupuesto]="d.solicitud.presupuesto?.valorCdp ?? null"
+        ></app-valores-oferta>
+
+        <div class="condiciones">
+          <section class="condiciones__tarjeta" aria-labelledby="condiciones-titulo">
+            <header>
+              <span class="condiciones__icono" aria-hidden="true">
+                <mat-icon>local_offer</mat-icon>
+              </span>
+              <div>
+                <span class="condiciones__rotulo">Condiciones comerciales</span>
+                <h2 id="condiciones-titulo">Descuentos y beneficios</h2>
+              </div>
+              <span class="chip chip--recto">
+                {{ p.respuesta.descuentoPorcentaje ?? 0 }} % descuento
+              </span>
+            </header>
+            <div
+              class="bloque-lectura"
+              [innerHTML]="p.respuesta.condicionesComerciales || '<p>Sin condiciones adicionales reportadas.</p>' | htmlSeguro"
+            ></div>
+          </section>
+
+          <section class="condiciones__tarjeta" aria-labelledby="observaciones-titulo">
+            <header>
+              <span class="condiciones__icono" aria-hidden="true">
+                <mat-icon>comment</mat-icon>
+              </span>
+              <div>
+                <span class="condiciones__rotulo">Declaraciones</span>
+                <h2 id="observaciones-titulo">Observaciones adicionales</h2>
+              </div>
+            </header>
+            <div
+              class="bloque-lectura"
+              [innerHTML]="p.respuesta.notaAdicional || '<p>Sin observaciones adicionales del proponente.</p>' | htmlSeguro"
+            ></div>
+          </section>
+        </div>
+
+        <app-documentos-ofertados
+          [documentos]="p.documentos"
+          [totalRadicados]="p.documentosRadicados"
+          [descargando]="descargando()"
+          [errorDescarga]="errorDescarga()"
+          (ver)="verDocumento($event)"
+          (descargar)="descargarDocumento($event)"
+          (cerrarError)="cerrarErrorDescarga()"
+        ></app-documentos-ofertados>
+
+        <tarjeta-seccion
+          icono="history"
+          titulo="Historial de la respuesta"
+          subtitulo="Radicación y modificaciones registradas con fecha, hora y usuario."
+        >
+          @if (p.eventos.length > 0) {
+            <linea-tiempo
+              [eventos]="p.eventos"
+              etiquetaLista="Historial de la respuesta radicada"
+            ></linea-tiempo>
+          } @else {
+            <p class="historial__vacio">No hay eventos registrados.</p>
+          }
+        </tarjeta-seccion>
+
+        <p class="nota-final" role="note">
+          <mat-icon aria-hidden="true">info</mat-icon>
+          <span>
+            Solo se permite responder la cotización una vez. La
+            modificación solo procede cuando el solicitante publica una adenda y
+            el plazo sigue vigente.
+          </span>
+        </p>
+      } @else {
+        <app-mi-cotizacion-vacia
+          [solicitudId]="d.solicitud.id"
+          [tituloSolicitud]="d.solicitud.titulo"
+          [cierre]="d.solicitud.cierre"
+          [presupuesto]="d.solicitud.presupuesto?.valorCdp ?? null"
+          [puedeResponder]="puedeResponder"
+          [motivo]="motivoSinResponder"
+          (responder)="responder()"
+          (verSolicitud)="verSolicitud()"
+        ></app-mi-cotizacion-vacia>
+      }
+    }
+  </div>
+</plantilla-pagina-contenedora>

@@ -639,6 +639,9 @@ export class PermisosSolicitudService {
         if (accion === "descargar-anexo") {
           return false;
         }
+        if (accion === "ver-mi-cotizacion") {
+          return true;
+        }
         if (accion === "ver-detalle-proveedor") {
           return true;
         }
@@ -701,6 +704,43 @@ export class PermisosSolicitudService {
       MATRIZ_SOLICITUD_PERMITE_RESPUESTA[solicitud.estado] &&
       !this.solicitudCerradaPorFecha(solicitud)
     );
+  }
+
+  /**
+   * Explica por qué el proveedor no puede responder la invitación.
+   *
+   * Devuelve una cadena vacía cuando sí puede. P-06 lo usa en el estado vacío;
+   * así el motivo sale de la misma matriz que habilita el botón y no de un
+   * texto duplicado en la plantilla.
+   */
+  motivoRespuestaNoDisponible(
+    invitacion: InvitacionPermisable,
+    solicitud: Solicitud,
+  ): string {
+    if (this.puedeResponderInvitacion(invitacion, solicitud)) {
+      return "";
+    }
+    if (!this.rol.estaCargado() || !this.rol.tieneRol(ROL_PROVEEDOR)) {
+      return "Su rol no permite responder solicitudes de cotización.";
+    }
+    if (invitacion.respuestaVigente) {
+      return "Ya existe una respuesta radicada. Use «Modificar» si la solicitud cambió mediante adenda.";
+    }
+    if (!this.accionesInvitacionDe(invitacion.estado).includes("responder")) {
+      return "El estado actual de la invitación no permite registrar una respuesta.";
+    }
+    if (!MATRIZ_SOLICITUD_PERMITE_RESPUESTA[solicitud.estado]) {
+      return "El estado actual de la solicitud ya no admite respuestas.";
+    }
+    if (this.solicitudCerradaPorFecha(solicitud)) {
+      return "El plazo de participación terminó: no se registró una cotización a tiempo.";
+    }
+    return "";
+  }
+
+  /** true si el usuario puede consultar su propia cotización (P-06). */
+  puedeVerMiCotizacion(): boolean {
+    return this.rol.estaCargado() && this.rol.tieneRol(ROL_PROVEEDOR);
   }
 
   /**

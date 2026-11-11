@@ -1,0 +1,61 @@
+<tarjeta-seccion
+  icono="fact_check"
+  titulo="Resumen de la respuesta"
+  subtitulo="Datos de la respuesta que su empresa radicó en la plataforma."
+>
+  <div acciones class="resumen__chips">
+    <span class="chip" [class.chip--exito]="!cerrada" [class.chip--neutro]="cerrada">
+      <mat-icon aria-hidden="true">{{ cerrada ? "lock" : "verified" }}</mat-icon>
+      <span>{{ estadoTexto }}</span>
+    </span>
+    @if (proyeccion.respuesta.revision > 1) {
+      <span class="chip chip--info">
+        <mat-icon aria-hidden="true">published_with_changes</mat-icon>
+        <span>Versión {{ proyeccion.respuesta.revision }} (adenda aplicada)</span>
+      </span>
+    }
+  </div>
+
+  <div class="datos-grid datos-grid--tres">
+    <par-etiqueta-valor
+      etiqueta="Radicado"
+      [valor]="proyeccion.radicado"
+      icono="fingerprint"
+    />
+    <par-etiqueta-valor
+      etiqueta="Fecha y hora de radicación"
+      [valor]="proyeccion.fechaRadicacion"
+      icono="schedule"
+    />
+    <par-etiqueta-valor
+      etiqueta="Versión de la respuesta"
+      [valor]="versionTexto"
+      icono="history_edu"
+    />
+    <par-etiqueta-valor
+      etiqueta="Solicitud respondida"
+      [valor]="proyeccion.versionSolicitud"
+      icono="description"
+    />
+    <par-etiqueta-valor
+      etiqueta="Total radicado con IVA"
+      [valor]="moneda(proyeccion.totales.total)"
+      icono="payments"
+      formato="destacado"
+    />
+    <par-etiqueta-valor
+      etiqueta="Vigencia de la oferta"
+      [valor]="proyeccion.fechaVencimiento"
+      icono="event_available"
+    />
+  </div>
+
+  @if (proyeccion.hash) {
+    <p class="resumen__hash">
+      <mat-icon aria-hidden="true">fingerprint</mat-icon>
+      <span>
+        Huella de integridad: <strong>{{ proyeccion.hash }}</strong>
+      </span>
+    </p>
+  }
+</tarjeta-seccion>

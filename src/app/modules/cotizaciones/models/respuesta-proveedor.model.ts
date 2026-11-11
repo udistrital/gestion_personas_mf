@@ -90,6 +90,14 @@ export interface RespuestaProveedor {
   readonly reemplazaRadicado?: string;
   readonly radicado?: string;
   readonly versionesAnteriores: readonly VersionRespuestaProveedor[];
+  /**
+   * Huella local de integridad de la versión radicada.
+   *
+   * Es provisional: no sustituye la firma institucional ni el sello
+   * criptográfico del gestor documental. Se calcula en el cliente para que la
+   * constancia de P-06 muestre una referencia estable.
+   */
+  readonly hash?: string;
 }
 
 export interface BaseRespuestaProveedor {
@@ -142,6 +150,76 @@ export interface TotalesRespuestaProveedor {
   readonly baseGravable: number;
   readonly iva: number;
   readonly total: number;
+}
+
+/** Fila de lectura de la oferta: ítem solicitado + precio y liquidación. */
+export interface FilaOfertaRespuesta {
+  readonly item: ItemSolicitud;
+  readonly oferta: ItemRespuestaProveedor | undefined;
+  readonly valorUnitario: number;
+  /** Cantidad × valor unitario, antes de descuento. */
+  readonly subtotal: number;
+  /** Subtotal menos la parte proporcional del descuento comercial. */
+  readonly baseGravable: number;
+  readonly iva: number;
+  /** Base gravable + IVA del ítem. */
+  readonly total: number;
+  readonly etiquetaIva: string;
+  readonly nota: string;
+}
+
+/** Tasa numérica de un tratamiento de IVA (19, 5, 0). */
+export function tasaIvaOferta(tipo: TipoIvaOferta | undefined): number {
+  return tipo === "19" || tipo === "5" || tipo === "0" ? Number(tipo) : 0;
+}
+
+/** Etiqueta visible del tratamiento de IVA de un ítem. */
+export function etiquetaIvaOferta(tipo: TipoIvaOferta | undefined): string {
+  if (tipo === "excluido" || tipo === "exento") {
+    return tipo === "excluido" ? "Excluido" : "Exento";
+  }
+  return `${tipo ?? "0"} %`;
+}
+
+/**
+ * Construye las filas de la oferta con la misma liquidación que
+ * `calcularTotalesRespuesta`: el descuento comercial se reparte de forma
+ * proporcional sobre cada ítem antes de aplicar el IVA.
+ *
+ * Así la suma de las filas coincide con las tarjetas de totales, tanto en P-06
+ * como en la revisión de P-04.
+ */
+export function construirFilasOferta(
+  items: readonly ItemSolicitud[],
+  ofertas: readonly ItemRespuestaProveedor[],
+  descuentoPorcentaje: number | null,
+): readonly FilaOfertaRespuesta[] {
+  return items.map((item) => {
+    const oferta = ofertas.find((fila) => fila.itemId === item.id);
+    const valorUnitario = oferta?.valorUnitario ?? 0;
+    const subtotal = item.cantidad * valorUnitario;
+    const factorDescuento = 1 - (descuentoPorcentaje ?? 0) / 100;
+    const baseGravable = Math.max(0, subtotal * factorDescuento);
+    const iva = baseGravable * (tasaIvaOferta(oferta?.iva) / 100);
+
+    return {
+      item,
+      oferta,
+      valorUnitario,
+      subtotal,
+      baseGravable,
+      iva,
+      total: baseGravable + iva,
+      etiquetaIva: etiquetaIvaOferta(oferta?.iva),
+      nota: oferta?.nota?.trim() ?? "",
+    };
+  });
+}
+
+/** Resultado de pedir un documento radicado de la propia respuesta (P-06). */
+export interface DocumentoRespuestaResuelto {
+  readonly disponible: boolean;
+  readonly mensaje: string;
 }
 
 export function calcularTotalesRespuesta(

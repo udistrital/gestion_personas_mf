@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { PermisosSolicitudService } from "src/app/core/services/permisos-solicitud.service";
 import { AlertService } from "src/app/shared/services/alert.service";
 import { formatoCop } from "../../../models/necesidad.model";
+import { solicitudCerrada } from "../../../models/solicitud.model";
 import type {
   DetalleInvitacionProveedor,
   AnexoPublicoProveedor,
@@ -150,17 +151,34 @@ export class DetalleSolicitudProveedorComponent implements OnInit {
 
   get solicitudCerrada(): boolean {
     const solicitud = this.detalle()?.solicitud;
-    if (!solicitud) {
-      return false;
+    return !!solicitud && solicitudCerrada(solicitud);
+  }
+
+  /** true si el proveedor ya radicó y puede consultar su propia respuesta. */
+  get puedeVerMiCotizacion(): boolean {
+    const detalle = this.detalle();
+    return (
+      !!detalle &&
+      detalle.yaRespondio &&
+      this.permisos.puedeVerMiCotizacion()
+    );
+  }
+
+  verMiCotizacion(): void {
+    const detalle = this.detalle();
+    if (!detalle || !this.puedeVerMiCotizacion) {
+      return;
     }
-    if (
-      solicitud.estado === "adjudicada" ||
-      solicitud.estado === "desierta" ||
-      solicitud.estado === "cancelada"
-    ) {
-      return true;
+    const ruta = this.permisos.rutaAccionInvitacion("ver-mi-cotizacion");
+    if (ruta) {
+      void this.router.navigate(
+        ruta
+          .split("/")
+          .map((segmento) =>
+            segmento === ":id" ? detalle.solicitud.id : segmento,
+          ),
+      );
     }
-    return this.permisos.solicitudCerradaPorFecha(solicitud);
   }
 
   navegarA(accion: "observar" | "responder" | "actualizar"): void {

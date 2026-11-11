@@ -17,6 +17,12 @@ import { DialogoEnvioExitosoModule } from "../components/dialogo-envio-exitoso/d
 import { AvisoAdendaComponent } from "../components/aviso-adenda/aviso-adenda.component";
 import { ResumenDiferenciasModule } from "../components/resumen-diferencias/resumen-diferencias.module";
 import { ExitoActualizacionComponent } from "./pages/actualizar-respuesta/exito-actualizacion/exito-actualizacion.component";
+import { MiCotizacionProveedorComponent } from "./pages/mi-cotizacion/mi-cotizacion-proveedor.component";
+import { ResumenMiCotizacionComponent } from "./pages/mi-cotizacion/components/resumen-respuesta/resumen-respuesta.component";
+import { TablaItemsOfertadosComponent } from "./pages/mi-cotizacion/components/tabla-items-ofertados/tabla-items-ofertados.component";
+import { ValoresOfertaComponent } from "./pages/mi-cotizacion/components/valores-oferta/valores-oferta.component";
+import { DocumentosOfertadosComponent } from "./pages/mi-cotizacion/components/documentos-ofertados/documentos-ofertados.component";
+import { EstadoVacioMiCotizacionComponent } from "./pages/mi-cotizacion/components/estado-vacio/estado-vacio.component";
 
 @NgModule({
   declarations: [
@@ -27,6 +33,12 @@ import { ExitoActualizacionComponent } from "./pages/actualizar-respuesta/exito-
     ResponderSolicitudComponent,
     AvisoAdendaComponent,
     ExitoActualizacionComponent,
+    MiCotizacionProveedorComponent,
+    ResumenMiCotizacionComponent,
+    TablaItemsOfertadosComponent,
+    ValoresOfertaComponent,
+    DocumentosOfertadosComponent,
+    EstadoVacioMiCotizacionComponent,
   ],
   imports: [
     CommonModule,

@@ -6,6 +6,7 @@ import { DetalleSolicitudProveedorComponent } from "./pages/detalle-solicitud/de
 import { detalleProveedorResolver } from "./pages/detalle-solicitud/detalle-proveedor.resolver";
 import { ObservacionesProveedorComponent } from "./pages/observaciones/observaciones-proveedor.component";
 import { ResponderSolicitudComponent } from "./pages/responder-solicitud/responder-solicitud.component";
+import { MiCotizacionProveedorComponent } from "./pages/mi-cotizacion/mi-cotizacion-proveedor.component";
 
 const routes: Routes = [
   {
@@ -32,6 +33,12 @@ const routes: Routes = [
     data: { modo: "actualizar" },
     resolve: { detalleProveedor: detalleProveedorResolver },
     title: "ÁGORA · Modificar respuesta",
+  },
+  {
+    path: ":id/mi-cotizacion",
+    component: MiCotizacionProveedorComponent,
+    resolve: { detalleProveedor: detalleProveedorResolver },
+    title: "ÁGORA · Mi cotización",
   },
   {
     path: ":id",

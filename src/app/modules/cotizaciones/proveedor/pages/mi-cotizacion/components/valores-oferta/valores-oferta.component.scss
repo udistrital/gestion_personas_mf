@@ -1,0 +1,166 @@
+@use "src/app/shared/styles/detalle-solicitud" as detalle;
+
+@include detalle.styles;
+
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.valores {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  gap: 1rem;
+}
+
+.valor {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 1rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-lg);
+  background: var(--agora-superficie-neutra);
+}
+
+.valor__rotulo {
+  color: var(--agora-texto-neutro);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.valor__cifra {
+  color: var(--agora-text);
+  font-size: clamp(1.15rem, 2.4vw, 1.5rem);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.valor__letras {
+  color: var(--agora-texto-neutro);
+  font-size: 0.75rem;
+  font-style: italic;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.valor--total {
+  position: relative;
+  border: 2px solid var(--agora-primary);
+  background: var(--agora-surface);
+  box-shadow: var(--agora-sombra-tarjeta);
+
+  .valor__rotulo,
+  .valor__cifra {
+    color: var(--agora-primary);
+  }
+}
+
+.valor__sello {
+  align-self: flex-start;
+  margin-top: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  background: var(--agora-primary);
+  color: var(--agora-on-primary);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.valores__alerta {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+  padding: 0.75rem;
+  border: 1px solid var(--agora-warning-border);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-warning-surface);
+  color: var(--agora-warning-text);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+
+  mat-icon {
+    flex: 0 0 auto;
+    color: var(--agora-warning-text);
+  }
+}
+
+.valores__pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 0.875rem;
+  border-top: 1px solid var(--agora-borde-tarjeta);
+  color: var(--agora-texto-neutro);
+  font-size: 0.8125rem;
+}
+
+.valores__vigencia {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+
+  mat-icon {
+    color: var(--agora-primary);
+  }
+
+  strong {
+    color: var(--agora-primary);
+  }
+}
+
+.valores__dias {
+  color: var(--agora-texto-neutro);
+  font-size: 0.75rem;
+}
+
+.valores__estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.valor__punto {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--agora-success);
+}
+
+.valor__punto--cerrado {
+  background: var(--agora-texto-deshabilitado);
+}
+
+.valores__descuento {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0.75rem 0 0;
+  color: var(--agora-texto-neutro);
+  font-size: 0.75rem;
+
+  mat-icon {
+    width: 1rem;
+    height: 1rem;
+    font-size: 1rem;
+    color: var(--agora-primary);
+  }
+
+  strong {
+    color: var(--agora-text);
+  }
+}

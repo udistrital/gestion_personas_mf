@@ -1,0 +1,70 @@
+<tarjeta-seccion
+  icono="payments"
+  titulo="Valores totales de la oferta"
+  subtitulo="Liquidación económica de la respuesta radicada, en pesos colombianos."
+>
+  <span acciones class="chip chip--recto">Moneda legal: COP</span>
+
+  <div class="valores">
+    <article class="valor">
+      <span class="valor__rotulo">Precio de la cotización (subtotal)</span>
+      <strong class="valor__cifra">{{ moneda(totales.subtotal) }}</strong>
+      <span class="valor__letras">«{{ subtotalLetras }}»</span>
+    </article>
+
+    <article class="valor">
+      <span class="valor__rotulo">Total IVA liquidado</span>
+      <strong class="valor__cifra">{{ moneda(totales.iva) }}</strong>
+      <span class="valor__letras">«{{ ivaLetras }}»</span>
+    </article>
+
+    <article class="valor valor--total">
+      <span class="valor__rotulo">Precio total con IVA incluido</span>
+      <strong class="valor__cifra">{{ moneda(totales.total) }}</strong>
+      <span class="valor__letras">«{{ totalLetras }}»</span>
+      <span class="valor__sello">Valor en firme radicado</span>
+    </article>
+  </div>
+
+  @if (excedePresupuesto && presupuesto !== null) {
+    <p class="valores__alerta" role="status" aria-live="polite">
+      <mat-icon aria-hidden="true">warning</mat-icon>
+      <span>
+        El total radicado ({{ moneda(totales.total) }}) supera el presupuesto
+        oficial estimado ({{ moneda(presupuesto) }}). Las
+        cotizaciones con valores superiores al límite no se tienen en cuenta.
+      </span>
+    </p>
+  }
+
+  <footer class="valores__pie">
+    <span class="valores__vigencia">
+      <mat-icon aria-hidden="true">event_available</mat-icon>
+      <span>
+        Fecha de vencimiento de la cotización:
+        <strong>{{ fechaVencimiento }}</strong>
+        @if (diasVigencia !== null) {
+          <span class="valores__dias">
+            ({{ diasVigencia }} días calendario desde el cierre)
+          </span>
+        }
+      </span>
+    </span>
+    <span class="valores__estado">
+      <span
+        class="valor__punto"
+        [class.valor__punto--cerrado]="cerrada"
+        aria-hidden="true"
+      ></span>
+      {{ cerrada ? "Estado: proceso cerrado" : "Estado: vigente en proceso" }}
+    </span>
+  </footer>
+
+  @if (totales.descuento > 0) {
+    <p class="valores__descuento">
+      <mat-icon aria-hidden="true">local_offer</mat-icon>
+      Descuento comercial aplicado: <strong>{{ moneda(totales.descuento) }}</strong>
+      sobre el subtotal.
+    </p>
+  }
+</tarjeta-seccion>

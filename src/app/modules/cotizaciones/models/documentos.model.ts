@@ -98,6 +98,44 @@ export interface DocumentoOferente {
   readonly afectaPuntaje?: boolean;
 }
 
+/* ── Documentos radicados en una oferta ───────────────────────────────────── */
+
+/** Estado de un documento dentro de la oferta radicada. */
+export type EstadoDocumentoOferta =
+  | "cargado"
+  | "subsanado"
+  | "pendiente"
+  | "no-subsanado";
+
+/**
+ * Documento aportado por el proveedor.
+ *
+ * Es la proyección de lectura que comparten el detalle del proveedor (S-10) y
+ * la consulta de la propia respuesta (P-06). `subsanado` y `pendiente` quedan
+ * definidos para cuando exista S-12 (RF-19/RN-08); hoy la semilla solo produce
+ * documentos cargados.
+ */
+export interface DocumentoOfertaRadicado {
+  readonly id: string;
+  /** Documento de la matriz de S-03; `null` para anexos libres. */
+  readonly requisitoId: string | null;
+  readonly nombre: string;
+  readonly nombreArchivo: string;
+  readonly clasificacion: ClasificacionDocumento;
+  readonly etiquetaClasificacion: string;
+  readonly formato: string;
+  readonly icono: string;
+  readonly estado: EstadoDocumentoOferta;
+  readonly fechaRadicacion: string;
+  readonly pesoBytes: number;
+  readonly peso: string;
+  readonly descripcion: string;
+  /** true para el soporte principal de la cotización. */
+  readonly principal: boolean;
+  /** false cuando el archivo no cumple los formatos de RN-41. */
+  readonly formatoValido: boolean;
+}
+
 /** Resumen de la matriz del oferente (cabecera de la tarjeta 2). */
 export interface ResumenDocumentosOferente {
   readonly total: number;

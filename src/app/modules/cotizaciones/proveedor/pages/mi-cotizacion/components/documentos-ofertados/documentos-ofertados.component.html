@@ -1,0 +1,143 @@
+<tarjeta-seccion
+  icono="attachment"
+  titulo="Documentos radicados y soportes"
+  subtitulo="Evidencia documental de la respuesta, con su clasificación y formato."
+>
+  <span acciones class="chip chip--recto">
+    {{ totalRadicados }} de {{ total }} radicados
+  </span>
+
+  @if (errorDescarga) {
+    <div class="documentos__error" role="alert" aria-live="assertive">
+      <mat-icon aria-hidden="true">error_outline</mat-icon>
+      <div class="documentos__error-textos">
+        <strong>No fue posible consultar el archivo</strong>
+        <p>{{ errorDescarga }}</p>
+      </div>
+      <button
+        class="boton-recto"
+        type="button"
+        aria-label="Cerrar aviso de error de descarga"
+        (click)="cerrarError.emit()"
+      >
+        <mat-icon aria-hidden="true">close</mat-icon>
+      </button>
+    </div>
+  }
+
+  @if (principal; as documento) {
+    <article class="documentos__principal">
+      <span class="documentos__icono" aria-hidden="true">
+        <mat-icon>{{ documento.icono }}</mat-icon>
+      </span>
+      <div class="documentos__textos">
+        <span class="documentos__rotulo">Soporte principal de la cotización</span>
+        <strong class="documentos__nombre">{{ documento.nombreArchivo }}</strong>
+        <span class="documentos__meta">
+          {{ documento.formato }} · {{ documento.peso }} · Radicado el
+          {{ documento.fechaRadicacion }}
+        </span>
+        @if (!documento.formatoValido) {
+          <span class="documentos__fallo">Formato no admitido (RN-41)</span>
+        }
+      </div>
+      <div class="documentos__acciones">
+        <button
+          class="boton-recto"
+          type="button"
+          [disabled]="descargando === documento.id || !puedeAccionar(documento)"
+          [attr.aria-label]="'Ver ' + documento.nombreArchivo"
+          (click)="ver.emit(documento)"
+        >
+          @if (descargando === documento.id) {
+            <mat-spinner diameter="14"></mat-spinner>
+          } @else {
+            <mat-icon aria-hidden="true">visibility</mat-icon>
+          }
+          <span>Vista previa</span>
+        </button>
+        <button
+          class="boton-recto boton-recto--vino"
+          type="button"
+          [disabled]="descargando === documento.id || !puedeAccionar(documento)"
+          [attr.aria-label]="'Descargar ' + documento.nombreArchivo"
+          (click)="descargar.emit(documento)"
+        >
+          @if (descargando === documento.id) {
+            <mat-spinner diameter="14"></mat-spinner>
+          } @else {
+            <mat-icon aria-hidden="true">download</mat-icon>
+          }
+          <span>Descargar</span>
+        </button>
+      </div>
+    </article>
+  }
+
+  @if (adicionales.length > 0) {
+    <ul class="documentos__lista">
+      @for (documento of adicionales; track documento.id) {
+        <li class="documento" [class.documento--pendiente]="documento.estado === 'pendiente'">
+          <span class="documento__icono" aria-hidden="true">
+            <mat-icon>{{ documento.icono }}</mat-icon>
+          </span>
+          <div class="documento__textos">
+            <span class="documento__nombre" [title]="documento.nombreArchivo">
+              {{ documento.nombre }}
+            </span>
+            <span class="documento__meta">
+              {{ documento.formato }} · {{ documento.peso }}
+            </span>
+            <span class="documento__chips">
+              <span
+                class="chip"
+                [class.chip--clasificacion--obligatorio]="documento.clasificacion === 'obligatorio'"
+                [class.chip--neutro]="documento.estado === 'pendiente'"
+              >
+                {{ documento.etiquetaClasificacion }}
+              </span>
+              <span
+                class="chip"
+                [class.chip--exito]="documento.estado !== 'pendiente'"
+                [class.chip--neutro]="documento.estado === 'pendiente'"
+              >
+                {{ etiquetaEstado(documento) }}
+              </span>
+            </span>
+          </div>
+          <div class="documento__acciones">
+            <button
+              class="documento__boton"
+              type="button"
+              [disabled]="descargando === documento.id || !puedeAccionar(documento)"
+              [attr.aria-label]="'Ver ' + documento.nombreArchivo"
+              (click)="ver.emit(documento)"
+            >
+              <mat-icon aria-hidden="true">visibility</mat-icon>
+            </button>
+            <button
+              class="documento__boton"
+              type="button"
+              [disabled]="descargando === documento.id || !puedeAccionar(documento)"
+              [attr.aria-label]="'Descargar ' + documento.nombreArchivo"
+              (click)="descargar.emit(documento)"
+            >
+              @if (descargando === documento.id) {
+                <mat-spinner diameter="14"></mat-spinner>
+              } @else {
+                <mat-icon aria-hidden="true">download</mat-icon>
+              }
+            </button>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+
+  <p class="documentos__nota">
+    <mat-icon aria-hidden="true">info</mat-icon>
+    <span>
+      Los formatos admitidos son PDF, XLS, XLSX, DOC y DOCX (RN-41).
+    </span>
+  </p>
+</tarjeta-seccion>

@@ -93,6 +93,16 @@
                 </div>
               }
               <div class="cabecera__acciones">
+                @if (puedeVerMiCotizacion) {
+                  <button
+                    class="boton-recto"
+                    type="button"
+                    (click)="verMiCotizacion()"
+                  >
+                    <mat-icon aria-hidden="true">request_quote</mat-icon>
+                    <span>Mi cotización</span>
+                  </button>
+                }
                 @if (puedeObservar) {
                   <button
                     class="boton-recto boton-recto--vino"

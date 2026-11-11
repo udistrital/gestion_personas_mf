@@ -3,6 +3,8 @@ import { Observable, delay, of, tap, throwError } from "rxjs";
 import type {
   BaseActualizacionRespuesta,
   BaseRespuestaProveedor,
+  DocumentoRespuestaProveedor,
+  DocumentoRespuestaResuelto,
   ItemRespuestaProveedor,
   ResultadoActualizacionRespuesta,
   RespuestaProveedor,
@@ -45,6 +47,24 @@ export abstract class RespuestaProveedorService {
   abstract actualizar(
     respuesta: RespuestaProveedor,
   ): Observable<ResultadoActualizacionRespuesta>;
+
+  /**
+   * Respuesta radicada del proveedor para la consulta de P-06.
+   *
+   * Devuelve `null` mientras no exista una respuesta enviada (un borrador no
+   * se considera radicado). Reutiliza la misma semilla y el mismo mapa que
+   * P-04/P-05, por lo que la vista no mantiene un modelo paralelo.
+   */
+  abstract obtenerMiCotizacion(
+    detalle: DetalleInvitacionProveedor,
+    proveedorId: string,
+  ): Observable<RespuestaProveedor | null>;
+
+  /** Documento radicado de la propia respuesta, para verlo o descargarlo. */
+  abstract obtenerDocumentoRespuesta(
+    radicadoId: string,
+    accion: "ver" | "descargar",
+  ): Observable<DocumentoRespuestaResuelto>;
 }
 
 @Injectable()
@@ -127,6 +147,58 @@ export class RespuestaProveedorServiceMock extends RespuestaProveedorService {
     }).pipe(delay(this.retardo()));
   }
 
+  obtenerMiCotizacion(
+    detalle: DetalleInvitacionProveedor,
+    proveedorId: string,
+  ): Observable<RespuestaProveedor | null> {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("mockMiCotizacion") === "error") {
+      return throwError(
+        () =>
+          new Error(
+            "No fue posible consultar su cotización radicada. Intente nuevamente.",
+          ),
+      ).pipe(delay(this.retardo()));
+    }
+
+    const respuesta = this.respuestaVigente(detalle, proveedorId);
+    return of(
+      respuesta && respuesta.estado === "enviada" ? respuesta : null,
+    ).pipe(delay(this.retardo()));
+  }
+
+  obtenerDocumentoRespuesta(
+    radicadoId: string,
+    accion: "ver" | "descargar",
+  ): Observable<DocumentoRespuestaResuelto> {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("mockDocumento") === "error") {
+      return throwError(
+        () =>
+          new Error(
+            "No fue posible consultar el archivo en el repositorio institucional (Alfresco UD).",
+          ),
+      ).pipe(delay(this.retardo()));
+    }
+
+    const documento = this.buscarDocumentoRadicado(radicadoId);
+    if (!documento) {
+      return throwError(
+        () =>
+          new Error(
+            "El documento solicitado no existe en la respuesta radicada.",
+          ),
+      ).pipe(delay(this.retardo()));
+    }
+
+    return of({
+      disponible: true,
+      mensaje: `${
+        accion === "ver" ? "Vista previa" : "Descarga"
+      } simulada de «${documento.nombre}». El repositorio institucional (Alfresco UD) aún no está conectado: el archivo real se servirá desde este mismo punto.`,
+    }).pipe(delay(this.retardo()));
+  }
+
   guardarBorrador(respuesta: RespuestaProveedor): Observable<void> {
     if (this.forzarError()) {
       return throwError(() => new Error("No fue posible guardar el borrador."));
@@ -181,15 +253,20 @@ export class RespuestaProveedorServiceMock extends RespuestaProveedorService {
     if (this.forzarError()) {
       return throwError(() => new Error("No fue posible enviar la respuesta."));
     }
+    const fecha = new Date().toISOString();
+    const total = respuesta.total;
     const enviada: RespuestaProveedor = {
       ...respuesta,
       estado: "enviada",
-      fechaRadicacion: new Date().toISOString(),
+      fechaRadicacion: fecha,
       radicado: `COT-${Date.now()}`,
       version: respuesta.version || "v1.0",
       revision: respuesta.revision || 1,
       versionesAnteriores: respuesta.versionesAnteriores ?? [],
-      archivos: [],
+      archivos: this.normalizarArchivos(respuesta.archivos),
+      hash: this.hashSimple(
+        `${respuesta.solicitudId}|${respuesta.version || "v1.0"}|${total}|${fecha}`,
+      ),
     };
     return of(enviada).pipe(
       delay(this.retardo()),
@@ -259,7 +336,10 @@ export class RespuestaProveedorServiceMock extends RespuestaProveedorService {
       usuarioActualizacion: respuesta.proveedorId,
       reemplazaRadicado: anterior.radicado,
       radicado,
-      archivos: [],
+      archivos: this.normalizarArchivos(respuesta.archivos),
+      hash: this.hashSimple(
+        `${respuesta.solicitudId}|${version}|${respuesta.total}|${fecha}`,
+      ),
       versionesAnteriores: [...anterior.versionesAnteriores, resumenAnterior],
     };
 
@@ -356,6 +436,8 @@ export class RespuestaProveedorServiceMock extends RespuestaProveedorService {
         usuario: version.usuario,
       }));
 
+    const total = calcularTotalesRespuesta(itemsFuente, items, 0).total;
+
     return {
       id: `RESP-${detalle.invitacion.id}`,
       solicitudId: detalle.solicitud.id,
@@ -369,7 +451,7 @@ export class RespuestaProveedorServiceMock extends RespuestaProveedorService {
       modalidad: "individual",
       archivos,
       notaAdicional: "",
-      total: calcularTotalesRespuesta(itemsFuente, items, 0).total,
+      total,
       version: resumen.version,
       revision: resumen.revision,
       versionSolicitudRespondida: resumen.versionSolicitud,
@@ -378,6 +460,9 @@ export class RespuestaProveedorServiceMock extends RespuestaProveedorService {
       fechaActualizacion: resumen.actualizadaParaVersion ? resumen.fecha : undefined,
       usuarioActualizacion: resumen.usuario,
       radicado: resumen.radicado,
+      hash: this.hashSimple(
+        `${detalle.solicitud.id}|${resumen.version}|${total}|${resumen.fecha}`,
+      ),
       versionesAnteriores,
     };
   }
@@ -417,6 +502,41 @@ export class RespuestaProveedorServiceMock extends RespuestaProveedorService {
       total: respuesta.total,
       actualizadaParaVersion: respuesta.actualizadaParaVersion,
     };
+  }
+
+  /**
+   * Conserva los metadatos de los documentos al radicar.
+   *
+   * El `File` no se guarda en memoria (no es serializable y el mock no sube
+   * binarios), pero la constancia de P-06 necesita el nombre, el tamaño y el
+   * radicado de cada soporte. Sin esta normalización, una respuesta recién
+   * enviada aparecería sin documentos.
+   */
+  private normalizarArchivos(
+    archivos: readonly DocumentoRespuestaProveedor[],
+  ): readonly DocumentoRespuestaProveedor[] {
+    return archivos.map((documento, indice) => ({
+      requisitoId: documento.requisitoId,
+      radicadoId:
+        documento.radicadoId ?? `radicado-${Date.now()}-${indice + 1}`,
+      nombre: documento.nombre ?? documento.archivo?.name ?? "documento.pdf",
+      tamanoBytes: documento.tamanoBytes ?? documento.archivo?.size ?? 0,
+    }));
+  }
+
+  /** Busca un documento radicado en las respuestas registradas. */
+  private buscarDocumentoRadicado(
+    radicadoId: string,
+  ): DocumentoRespuestaProveedor | undefined {
+    for (const respuesta of this.respuestas.values()) {
+      const documento = respuesta.archivos.find(
+        (archivo) => archivo.radicadoId === radicadoId,
+      );
+      if (documento) {
+        return documento;
+      }
+    }
+    return undefined;
   }
 
   private clave(solicitudId: string, proveedorId: string): string {
