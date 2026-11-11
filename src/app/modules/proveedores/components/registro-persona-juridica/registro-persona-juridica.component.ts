@@ -222,8 +222,14 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
           this.errorCatalogos = fallosUbicaciones.length
             ? `No fue posible cargar los catálogos de Ubicaciones: ${fallosUbicaciones.join(' y ')}.`
             : null;
+          const codigosDocumentoRepresentante = new Set(["CC", "CE", "PAS"]);
           this.catalogosSinRegistros = [
             catalogos.procedencia,
+            catalogos.tipoDocumento.filter(opcion =>
+              codigosDocumentoRepresentante.has(opcion.codigo?.toUpperCase() ?? ""),
+            ),
+            catalogos.regimenContributivo,
+            catalogos.tipoConformacion,
             tipoVia,
             tipoInterior,
             catalogos.cargo,
@@ -604,15 +610,18 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
   }
 
   private nombreTipoDocumentoRepresentante(valor: unknown): string {
-    switch (String(valor ?? "").toUpperCase()) {
+    const opcion = this.catalogos?.tipoDocumento.find(
+      tipoDocumento => tipoDocumento.id === Number(valor),
+    );
+    switch (opcion?.codigo?.toUpperCase()) {
       case "CC":
         return "C.C.";
       case "CE":
         return "C.E.";
-      case "PA":
+      case "PAS":
         return "Pasaporte";
       default:
-        return String(valor ?? "");
+        return opcion?.nombre ?? "";
     }
   }
 
@@ -700,22 +709,22 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
     nitConfirmacion: new FormControl('', [Validators.required, Validators.pattern(NIT)]),
     procedencia: new FormControl<number | null>(null, Validators.required),
     razonSocial: new FormControl('', Validators.required),
-    tipoDocumentoRepresentante: new FormControl<string | null>(null, Validators.required),
+    tipoDocumentoRepresentante: new FormControl<number | null>(null, Validators.required),
     documentoRepresentante: new FormControl('', [Validators.required, Validators.pattern(SOLO_DIGITOS)]),
     cargoRepresentante: new FormControl<number | null>(null, Validators.required),
     primerApellido: new FormControl('', Validators.required),
     segundoApellido: new FormControl(''),
     primerNombre: new FormControl('', Validators.required),
     segundoNombre: new FormControl(''),
-    regimenContributivo: new FormControl<string | null>(null, Validators.required),
+    regimenContributivo: new FormControl<number | null>(null, Validators.required),
     sujetoRetencion: new FormControl<boolean | null>(null, Validators.required),
     agenteRetenedor: new FormControl<boolean | null>(null, Validators.required),
-    responsableIca: new FormControl<string | null>(null, Validators.required),
-    responsableIva: new FormControl<string | null>(null, Validators.required),
-    clasificacionPyme: new FormControl<string | null>(null, Validators.required),
-    registroMercantilActivo: new FormControl<string | null>(null, Validators.required),
-    exclusividadImportacion: new FormControl<string | null>(null, Validators.required),
-    calidadGranContribuyente: new FormControl<string | null>(null, Validators.required),
+    responsableIca: new FormControl<boolean | null>(null, Validators.required),
+    responsableIva: new FormControl<boolean | null>(null, Validators.required),
+    clasificacionPyme: new FormControl<boolean | null>(null, Validators.required),
+    registroMercantilActivo: new FormControl<boolean | null>(null, Validators.required),
+    exclusividadImportacion: new FormControl<boolean | null>(null, Validators.required),
+    calidadGranContribuyente: new FormControl<boolean | null>(null, Validators.required),
     departamento: new FormControl<number | null>(null, Validators.required),
     ciudad: new FormControl<number | null>({ value: null, disabled: true }, Validators.required),
     tipoVia: new FormControl<number | null>(null, Validators.required),
@@ -735,7 +744,7 @@ export class RegistroPersonaJuridicaComponent implements OnInit {
     tipoCuenta: new FormControl<number | null>(null, Validators.required),
     numeroCuenta: new FormControl('', [Validators.required, Validators.pattern(CUENTA_BANCARIA)]),
     numeroCuentaConfirmacion: new FormControl('', [Validators.required, Validators.pattern(CUENTA_BANCARIA)]),
-    tipoConformacion: new FormControl<string | null>(null, Validators.required),
+    tipoConformacion: new FormControl<number | null>(null, Validators.required),
     capitalAutorizado: new FormControl('', [Validators.required, Validators.pattern(SOLO_DIGITOS)]),
     correoPagos: new FormControl('', [Validators.required, Validators.pattern(CORREO)]),
     correoPagosConfirmacion: new FormControl('', [Validators.required, Validators.pattern(CORREO)]),

@@ -45,6 +45,17 @@ export class RegistroPersonaJuridicaPaso1Component {
     return this.catalogos?.cargo ?? this.sinOpciones;
   }
 
+  get opcionesTipoDocumentoRepresentante(): OpcionCatalogo[] {
+    const codigosPermitidos = new Set(['CC', 'CE', 'PAS']);
+    return this.catalogos?.tipoDocumento.filter(opcion =>
+      codigosPermitidos.has(opcion.codigo?.toUpperCase() ?? ''),
+    ) ?? this.sinOpciones;
+  }
+
+  get opcionesRegimenContributivo(): OpcionCatalogo[] {
+    return this.catalogos?.regimenContributivo ?? this.sinOpciones;
+  }
+
   get opcionesTipoVia(): OpcionCatalogo[] {
     return this.catalogos?.tipoVia ?? this.sinOpciones;
   }
@@ -56,56 +67,6 @@ export class RegistroPersonaJuridicaPaso1Component {
   readonly opcionesSiNo: Opcion<boolean>[] = [
     { label: 'Sí', value: true },
     { label: 'No', value: false },
-  ];
-
-  readonly opcionesTipoDocumentoRepresentante: Opcion<string>[] = [
-    { label: 'C.C.', value: 'CC' },
-    { label: 'C.E.', value: 'CE' },
-    { label: 'Pasaporte', value: 'PA' },
-  ];
-
-  readonly opcionesRegimenContributivo: string[] = [
-    'Común / Ordinario (Impuesto sobre la Renta)',
-    'Régimen Simple de Tributación (RST)',
-    'Régimen Tributario Especial (ESAL / Fundaciones)',
-    'Entidad de Derecho Público / Oficial',
-  ];
-
-  readonly opcionesResponsableIca: string[] = [
-    'Régimen Común (Bimestral SHD)',
-    'Régimen Simplificado / Preferencial',
-    'No Sujeto / Exento de ICA Distrital',
-    'Régimen Especial Consorcios / UT',
-  ];
-
-  readonly opcionesResponsableIva: string[] = [
-    'Responsable de IVA (Gravado / Bimestral o Cuatrimestral)',
-    'No Responsable de IVA (Antiguo Simplificado)',
-    'Exento de IVA por Operaciones Especiales',
-  ];
-
-  readonly opcionesClasificacionPyme: string[] = [
-    'Sí - Pequeña Empresa (Hasta 204.653 UVT)',
-    'Sí - Microempresa (Hasta 23.563 UVT)',
-    'Sí - Mediana Empresa (Hasta 483.034 UVT)',
-    'No - Gran Empresa (Mayor a 483.034 UVT)',
-  ];
-
-  readonly opcionesRegistroMercantil: string[] = [
-    'Sí (Matrícula mercantil activa y renovada)',
-    'No (Exenta conforme a régimen legal)',
-  ];
-
-  readonly opcionesExclusividadImportacion: string[] = [
-    'No (Distribución local / Servicios nacionales)',
-    'Sí - Distribuidor o representante exclusivo importado',
-    'Sí - Importador directo no exclusivo',
-  ];
-
-  readonly opcionesCalidadGranContribuyente: string[] = [
-    'No (Contribuyente Régimen Ordinario Común)',
-    'Sí - Calificado por Resolución DIAN vigente',
-    'Autorretenedor por Resolución',
   ];
 
   /** true cuando los dos NIT coinciden y no están vacíos. */

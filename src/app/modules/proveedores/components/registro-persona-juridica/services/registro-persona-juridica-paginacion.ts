@@ -2,6 +2,18 @@ import { defer, EMPTY, expand, map, Observable, reduce, throwError } from 'rxjs'
 
 export const TAMANO_PAGINA = 1000;
 const MAXIMO_PAGINAS = 500;
+const COMPARADOR_ALFABETICO_ES = new Intl.Collator('es-CO', {
+  sensitivity: 'accent',
+  usage: 'sort',
+});
+
+export function ordenarOpcionesAlfabeticamente<T extends { nombre: string }>(
+  opciones: readonly T[],
+): T[] {
+  return [...opciones].sort((a, b) =>
+    COMPARADOR_ALFABETICO_ES.compare(a.nombre, b.nombre),
+  );
+}
 
 /**
  * Los CRUD (Beego) responden con un máximo de 10 registros si no se indica `limit`.

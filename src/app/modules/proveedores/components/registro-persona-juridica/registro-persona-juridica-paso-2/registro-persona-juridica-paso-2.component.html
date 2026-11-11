@@ -70,8 +70,8 @@
               placeholder="Seleccione..."
               aria-label="Tipo de conformación de la cuenta"
             >
-              @for (opcion of opcionesTipoConformacion; track opcion.value) {
-                <mat-option [value]="opcion.value">{{ opcion.label }}</mat-option>
+              @for (opcion of opcionesTipoConformacion; track opcion.id) {
+                <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
               }
             </mat-select>
             @if (errorRequerido(formulario, "tipoConformacion")) {

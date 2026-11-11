@@ -5,11 +5,6 @@ import {
   OpcionCatalogo,
 } from '../services/registro-persona-juridica-catalogos.service';
 
-interface Opcion<T> {
-  label: string;
-  value: T;
-}
-
 @Component({
   selector: 'registro-persona-juridica-paso-2',
   templateUrl: './registro-persona-juridica-paso-2.component.html',
@@ -32,11 +27,9 @@ export class RegistroPersonaJuridicaPaso2Component {
     return this.catalogos?.tiposCuentaBancaria ?? this.sinOpciones;
   }
 
-  readonly opcionesTipoConformacion: Opcion<string>[] = [
-    { label: 'Individual / Principal', value: 'individual' },
-    { label: 'Conjunta / Mancomunada', value: 'conjunta' },
-    { label: 'Consorcio / Unión Temporal', value: 'consorcial' },
-  ];
+  get opcionesTipoConformacion(): OpcionCatalogo[] {
+    return this.catalogos?.tipoConformacion ?? this.sinOpciones;
+  }
 
   /** true cuando los dos números de cuenta coinciden y no están vacíos. */
   get coincideCuenta(): boolean {

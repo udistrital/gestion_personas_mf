@@ -189,8 +189,8 @@
               placeholder="Seleccione..."
               aria-label="Tipo de documento del representante legal"
             >
-              @for (opcion of opcionesTipoDocumentoRepresentante; track opcion.value) {
-                <mat-option [value]="opcion.value">{{ opcion.label }}</mat-option>
+              @for (opcion of opcionesTipoDocumentoRepresentante; track opcion.id) {
+                <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
               }
             </mat-select>
             @if (errorRequerido(formulario, "tipoDocumentoRepresentante")) {
@@ -343,8 +343,8 @@
             placeholder="Seleccione..."
             aria-label="Régimen contributivo"
           >
-            @for (opcion of opcionesRegimenContributivo; track opcion) {
-              <mat-option [value]="opcion">{{ opcion }}</mat-option>
+            @for (opcion of opcionesRegimenContributivo; track opcion.id) {
+              <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option>
             }
           </mat-select>
           @if (errorRequerido(formulario, "regimenContributivo")) {
@@ -414,135 +414,111 @@
       </div>
 
       <div class="campo">
-        <label class="campo__etiqueta" for="responsableIca">
+        <label class="campo__etiqueta" id="responsable-ica-etiqueta">
           <span>Responsable de ICA (Bogotá D.C. - SHD) <b aria-hidden="true">*</b></span>
         </label>
-        <mat-form-field appearance="outline">
-          <mat-icon matPrefix aria-hidden="true">payments</mat-icon>
-          <mat-select
-            id="responsableIca"
-            formControlName="responsableIca"
-            placeholder="Seleccione..."
-            aria-label="Responsable de ICA"
-          >
-            @for (opcion of opcionesResponsableIca; track opcion) {
-              <mat-option [value]="opcion">{{ opcion }}</mat-option>
-            }
-          </mat-select>
-          @if (errorRequerido(formulario, "responsableIca")) {
-            <mat-error>Seleccione el régimen de ICA.</mat-error>
+        <mat-radio-group
+          formControlName="responsableIca"
+          class="opciones-radio"
+          aria-labelledby="responsable-ica-etiqueta"
+        >
+          @for (opcion of opcionesSiNo; track opcion.value) {
+            <mat-radio-button [value]="opcion.value">{{ opcion.label }}</mat-radio-button>
           }
-        </mat-form-field>
+        </mat-radio-group>
+        @if (errorRequerido(formulario, "responsableIca")) {
+          <span class="campo__fallo" role="alert">Seleccione una opción.</span>
+        }
       </div>
 
       <div class="campo">
-        <label class="campo__etiqueta" for="responsableIva">
+        <label class="campo__etiqueta" id="responsable-iva-etiqueta">
           <span>Responsable de IVA (Cód. 48 RUT) <b aria-hidden="true">*</b></span>
         </label>
-        <mat-form-field appearance="outline">
-          <mat-icon matPrefix aria-hidden="true">percent</mat-icon>
-          <mat-select
-            id="responsableIva"
-            formControlName="responsableIva"
-            placeholder="Seleccione..."
-            aria-label="Responsable de IVA"
-          >
-            @for (opcion of opcionesResponsableIva; track opcion) {
-              <mat-option [value]="opcion">{{ opcion }}</mat-option>
-            }
-          </mat-select>
-          @if (errorRequerido(formulario, "responsableIva")) {
-            <mat-error>Seleccione la condición frente al IVA.</mat-error>
+        <mat-radio-group
+          formControlName="responsableIva"
+          class="opciones-radio"
+          aria-labelledby="responsable-iva-etiqueta"
+        >
+          @for (opcion of opcionesSiNo; track opcion.value) {
+            <mat-radio-button [value]="opcion.value">{{ opcion.label }}</mat-radio-button>
           }
-        </mat-form-field>
+        </mat-radio-group>
+        @if (errorRequerido(formulario, "responsableIva")) {
+          <span class="campo__fallo" role="alert">Seleccione una opción.</span>
+        }
       </div>
 
       <div class="campo">
-        <label class="campo__etiqueta" for="clasificacionPyme">
+        <label class="campo__etiqueta" id="clasificacion-pyme-etiqueta">
           <span>Clasificación PYME / Tamaño Empresarial <b aria-hidden="true">*</b></span>
         </label>
-        <mat-form-field appearance="outline">
-          <mat-icon matPrefix aria-hidden="true">stacked_bar_chart</mat-icon>
-          <mat-select
-            id="clasificacionPyme"
-            formControlName="clasificacionPyme"
-            placeholder="Seleccione..."
-            aria-label="Clasificación PYME"
-          >
-            @for (opcion of opcionesClasificacionPyme; track opcion) {
-              <mat-option [value]="opcion">{{ opcion }}</mat-option>
-            }
-          </mat-select>
-          @if (errorRequerido(formulario, "clasificacionPyme")) {
-            <mat-error>Seleccione el tamaño empresarial.</mat-error>
+        <mat-radio-group
+          formControlName="clasificacionPyme"
+          class="opciones-radio"
+          aria-labelledby="clasificacion-pyme-etiqueta"
+        >
+          @for (opcion of opcionesSiNo; track opcion.value) {
+            <mat-radio-button [value]="opcion.value">{{ opcion.label }}</mat-radio-button>
           }
-        </mat-form-field>
+        </mat-radio-group>
+        @if (errorRequerido(formulario, "clasificacionPyme")) {
+          <span class="campo__fallo" role="alert">Seleccione una opción.</span>
+        }
       </div>
 
       <div class="campo">
-        <label class="campo__etiqueta" for="registroMercantilActivo">
+        <label class="campo__etiqueta" id="registro-mercantil-etiqueta">
           <span>Registro Mercantil / Matrícula Activa <b aria-hidden="true">*</b></span>
         </label>
-        <mat-form-field appearance="outline">
-          <mat-icon matPrefix aria-hidden="true">verified</mat-icon>
-          <mat-select
-            id="registroMercantilActivo"
-            formControlName="registroMercantilActivo"
-            placeholder="Seleccione..."
-            aria-label="Registro mercantil activo"
-          >
-            @for (opcion of opcionesRegistroMercantil; track opcion) {
-              <mat-option [value]="opcion">{{ opcion }}</mat-option>
-            }
-          </mat-select>
-          @if (errorRequerido(formulario, "registroMercantilActivo")) {
-            <mat-error>Indique si la matrícula está activa.</mat-error>
+        <mat-radio-group
+          formControlName="registroMercantilActivo"
+          class="opciones-radio"
+          aria-labelledby="registro-mercantil-etiqueta"
+        >
+          @for (opcion of opcionesSiNo; track opcion.value) {
+            <mat-radio-button [value]="opcion.value">{{ opcion.label }}</mat-radio-button>
           }
-        </mat-form-field>
+        </mat-radio-group>
+        @if (errorRequerido(formulario, "registroMercantilActivo")) {
+          <span class="campo__fallo" role="alert">Seleccione una opción.</span>
+        }
       </div>
 
       <div class="campo">
-        <label class="campo__etiqueta" for="exclusividadImportacion">
+        <label class="campo__etiqueta" id="exclusividad-importacion-etiqueta">
           <span>Exclusividad Producto de Importación <b aria-hidden="true">*</b></span>
         </label>
-        <mat-form-field appearance="outline">
-          <mat-icon matPrefix aria-hidden="true">local_shipping</mat-icon>
-          <mat-select
-            id="exclusividadImportacion"
-            formControlName="exclusividadImportacion"
-            placeholder="Seleccione..."
-            aria-label="Exclusividad de producto de importación"
-          >
-            @for (opcion of opcionesExclusividadImportacion; track opcion) {
-              <mat-option [value]="opcion">{{ opcion }}</mat-option>
-            }
-          </mat-select>
-          @if (errorRequerido(formulario, "exclusividadImportacion")) {
-            <mat-error>Seleccione una opción.</mat-error>
+        <mat-radio-group
+          formControlName="exclusividadImportacion"
+          class="opciones-radio"
+          aria-labelledby="exclusividad-importacion-etiqueta"
+        >
+          @for (opcion of opcionesSiNo; track opcion.value) {
+            <mat-radio-button [value]="opcion.value">{{ opcion.label }}</mat-radio-button>
           }
-        </mat-form-field>
+        </mat-radio-group>
+        @if (errorRequerido(formulario, "exclusividadImportacion")) {
+          <span class="campo__fallo" role="alert">Seleccione una opción.</span>
+        }
       </div>
 
       <div class="campo">
-        <label class="campo__etiqueta" for="calidadGranContribuyente">
+        <label class="campo__etiqueta" id="calidad-gran-contribuyente-etiqueta">
           <span>Calidad de Gran Contribuyente (DIAN) <b aria-hidden="true">*</b></span>
         </label>
-        <mat-form-field appearance="outline">
-          <mat-icon matPrefix aria-hidden="true">military_tech</mat-icon>
-          <mat-select
-            id="calidadGranContribuyente"
-            formControlName="calidadGranContribuyente"
-            placeholder="Seleccione..."
-            aria-label="Calidad de gran contribuyente"
-          >
-            @for (opcion of opcionesCalidadGranContribuyente; track opcion) {
-              <mat-option [value]="opcion">{{ opcion }}</mat-option>
-            }
-          </mat-select>
-          @if (errorRequerido(formulario, "calidadGranContribuyente")) {
-            <mat-error>Seleccione la calidad tributaria.</mat-error>
+        <mat-radio-group
+          formControlName="calidadGranContribuyente"
+          class="opciones-radio"
+          aria-labelledby="calidad-gran-contribuyente-etiqueta"
+        >
+          @for (opcion of opcionesSiNo; track opcion.value) {
+            <mat-radio-button [value]="opcion.value">{{ opcion.label }}</mat-radio-button>
           }
-        </mat-form-field>
+        </mat-radio-group>
+        @if (errorRequerido(formulario, "calidadGranContribuyente")) {
+          <span class="campo__fallo" role="alert">Seleccione una opción.</span>
+        }
       </div>
     </div>
   </plantilla-tarjeta-contenedora>

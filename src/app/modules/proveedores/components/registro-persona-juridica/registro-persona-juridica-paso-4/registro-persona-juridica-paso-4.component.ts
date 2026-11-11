@@ -47,6 +47,11 @@ export class RegistroPersonaJuridicaPaso4Component
   /** Opciones ya filtradas; se recalculan al cambiar catálogo o selección. */
   actividadesCiiuDisponibles: OpcionCiiu[] = [];
 
+  private readonly comparadorCiiu = new Intl.Collator('es-CO', {
+    sensitivity: 'accent',
+    usage: 'sort',
+  });
+
   /** Anuncio para lectores de pantalla después de agregar o retirar. */
   anuncioCiiu = '';
 
@@ -170,7 +175,8 @@ export class RegistroPersonaJuridicaPaso4Component
       .map(actividad => ({
         id: actividad.id,
         etiqueta: `${actividad.codigo ?? actividad.id} — ${actividad.nombre}`,
-      }));
+      }))
+      .sort((a, b) => this.comparadorCiiu.compare(a.etiqueta, b.etiqueta));
   }
 
   private idsSeleccionados(): number[] {

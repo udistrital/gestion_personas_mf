@@ -12,6 +12,7 @@ import { environment } from "src/environments/environment";
 import {
   obtenerTodasLasPaginas,
   descartarRegistrosVacios,
+  ordenarOpcionesAlfabeticamente,
 } from "./registro-persona-juridica-paginacion";
 
 interface GrupoInfoComplementaria {
@@ -88,6 +89,8 @@ export interface CatalogosPersonaJuridica {
   tipoDocumento: OpcionCatalogo[];
   actividadEconomicaCiiu: OpcionCatalogo[];
   tipoDeclaracion: OpcionCatalogo[];
+  regimenContributivo: OpcionCatalogo[];
+  tipoConformacion: OpcionCatalogo[];
   cargo: OpcionCatalogo[];
   entidadesBancarias: OpcionCatalogo[];
   tiposCuentaBancaria: OpcionCatalogo[];
@@ -229,6 +232,8 @@ export class RegistroPersonaJuridicaCatalogosService {
       camaraComercio: parametro("CAM_COM"),
       entidadesBancarias: parametro("EB"),
       tiposCuentaBancaria: parametro("TCB"),
+      regimenContributivo: parametro("REG_CONT"),
+      tipoConformacion: parametro("TIPO_CONFORMACIÓN"),
       // Catálogos que usa el formulario y que no figuran en PERSONA_JURIDICA_CONSUMO.md.
       responsabilidadFiscal: parametro("RESP_FIS"),
       tipoDocumento: parametro("TIP_DOC", {
@@ -715,9 +720,7 @@ export class RegistroPersonaJuridicaCatalogosService {
             }
           : {}),
       }));
-    return opciones.every((opcion) => typeof opcion.numeroOrden === "number")
-      ? opciones.sort((a, b) => Number(a.numeroOrden) - Number(b.numeroOrden))
-      : opciones;
+    return ordenarOpcionesAlfabeticamente(opciones);
   }
 
   private nombreRequerido(nombre: string | undefined): string {

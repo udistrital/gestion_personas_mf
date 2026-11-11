@@ -2,7 +2,11 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { catchError, map, Observable, shareReplay, switchMap, throwError } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { descartarRegistrosVacios, obtenerTodasLasPaginas } from './registro-persona-juridica-paginacion';
+import {
+  descartarRegistrosVacios,
+  obtenerTodasLasPaginas,
+  ordenarOpcionesAlfabeticamente,
+} from './registro-persona-juridica-paginacion';
 
 interface TipoLugar {
   Id: number;
@@ -108,7 +112,7 @@ export class RegistroPersonaJuridicaUbicacionesService {
         hijos.set(hijo.Id, { id: hijo.Id, nombre: hijo.Nombre });
       }
     }
-    return [...hijos.values()];
+    return ordenarOpcionesAlfabeticamente([...hijos.values()]);
   }
 
   obtenerProcedencias(): Observable<OpcionLugar[]> {
@@ -126,12 +130,12 @@ export class RegistroPersonaJuridicaUbicacionesService {
   private obtenerOpcionesPorTipo(codigoTipoLugar: string): Observable<OpcionLugar[]> {
     return this.obtenerLugaresPorTipo(codigoTipoLugar).pipe(
       map(lugares =>
-        lugares
+        ordenarOpcionesAlfabeticamente(lugares
           .filter(
             lugar =>
               lugar.Activo !== false && lugar.TipoLugarId.CodigoAbreviacion === codigoTipoLugar,
           )
-          .map(lugar => this.aOpcion(lugar)),
+          .map(lugar => this.aOpcion(lugar))),
       ),
     );
   }
