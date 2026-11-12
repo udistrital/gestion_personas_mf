@@ -26,6 +26,13 @@ import { TablaItemsOfertadosComponent } from "./pages/mi-cotizacion/components/t
 import { ValoresOfertaComponent } from "./pages/mi-cotizacion/components/valores-oferta/valores-oferta.component";
 import { DocumentosOfertadosComponent } from "./pages/mi-cotizacion/components/documentos-ofertados/documentos-ofertados.component";
 import { EstadoVacioMiCotizacionComponent } from "./pages/mi-cotizacion/components/estado-vacio/estado-vacio.component";
+import { SubsanacionProveedorComponent } from "./pages/subsanacion/subsanacion-proveedor.component";
+import { DialogoConfirmarSubsanacionComponent } from "./pages/subsanacion/components/dialogo-confirmar-subsanacion/dialogo-confirmar-subsanacion.component";
+import { DialogoExitoSubsanacionComponent } from "./pages/subsanacion/components/dialogo-exito-subsanacion/dialogo-exito-subsanacion.component";
+import {
+  SubsanacionService,
+  SubsanacionServiceMock,
+} from "../services/subsanacion.service";
 
 @NgModule({
   declarations: [
@@ -44,6 +51,9 @@ import { EstadoVacioMiCotizacionComponent } from "./pages/mi-cotizacion/componen
     ValoresOfertaComponent,
     DocumentosOfertadosComponent,
     EstadoVacioMiCotizacionComponent,
+    SubsanacionProveedorComponent,
+    DialogoConfirmarSubsanacionComponent,
+    DialogoExitoSubsanacionComponent,
   ],
   imports: [
     CommonModule,
@@ -58,6 +68,9 @@ import { EstadoVacioMiCotizacionComponent } from "./pages/mi-cotizacion/componen
     ResumenDiferenciasModule,
     TarjetaIdentidadProveedorModule,
     ProveedorRoutingModule,
+  ],
+  providers: [
+    { provide: SubsanacionService, useClass: SubsanacionServiceMock },
   ],
 })
 export class ProveedorModule {}

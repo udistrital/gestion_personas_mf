@@ -50,6 +50,8 @@ import type {
 } from "src/app/modules/cotizaciones/models/invitacion-proveedor.model";
 import type { OferenteTablero } from "src/app/modules/cotizaciones/models/oferente.model";
 import type { Subsanacion } from "src/app/modules/cotizaciones/models/subsanacion.model";
+import { estadoSubsanacion } from "src/app/modules/cotizaciones/models/subsanacion.model";
+import { radicacionSubsanacion } from "src/app/modules/cotizaciones/models/subsanacion-proveedor.model";
 import {
   cierreSolicitudVencido,
   solicitudCerrada,
@@ -629,6 +631,7 @@ export class PermisosSolicitudService {
   accionesInvitacionPermitidas(
     invitacion: InvitacionPermisable,
     solicitud: Solicitud,
+    proveedorId?: string,
   ): readonly AccionInvitacionProveedor[] {
     if (
       !this.rol.estaCargado() ||
@@ -647,6 +650,9 @@ export class PermisosSolicitudService {
         }
         if (accion === "ver-resultado") {
           return this.puedeVerResultado(solicitud);
+        }
+        if (accion === "subsanar") {
+          return this.puedeVerSubsanacionProveedor(solicitud, proveedorId);
         }
         if (accion === "ver-detalle-proveedor") {
           return true;
@@ -763,6 +769,88 @@ export class PermisosSolicitudService {
       this.rol.tieneRol(ROL_PROVEEDOR) &&
       solicitudCerrada(solicitud)
     );
+  }
+
+  /* ─────────────── Subsanación documental del proveedor (P-08) ─────────────── */
+
+  /**
+   * true si el proveedor de la sesión tiene un periodo de subsanación.
+   *
+   * No exige que el periodo esté activo: la vista también se abre en modo
+   * lectura cuando está programado, vencido, cancelado o ya radicado. Sí exige
+   * que el proveedor esté incluido en el periodo; no se revela la existencia
+   * de oferentes ajenos (RN-29).
+   */
+  puedeVerSubsanacionProveedor(
+    solicitud: Pick<Solicitud, "subsanacion">,
+    proveedorId?: string,
+  ): boolean {
+    if (!proveedorId || !this.rol.estaCargado() || !this.rol.tieneRol(ROL_PROVEEDOR)) {
+      return false;
+    }
+    return (
+      solicitud.subsanacion?.oferentes.some(
+        (oferente) => oferente.proveedorId === proveedorId,
+      ) ?? false
+    );
+  }
+
+  /** true si el proveedor puede cargar o reemplazar documentos ahora. */
+  puedeEditarSubsanacion(
+    solicitud: Pick<Solicitud, "subsanacion">,
+    proveedorId?: string,
+  ): boolean {
+    const periodo = solicitud.subsanacion;
+    if (!periodo || !this.puedeVerSubsanacionProveedor(solicitud, proveedorId)) {
+      return false;
+    }
+    return (
+      estadoSubsanacion(periodo) === "activa" &&
+      !radicacionSubsanacion(periodo, proveedorId!)
+    );
+  }
+
+  /**
+   * Explica por qué la subsanación no está disponible o no es editable.
+   *
+   * Devuelve una cadena vacía cuando el proveedor puede editar. P-08 y los
+   * avisos de P-02/P-06 usan el mismo texto para no duplicar reglas.
+   */
+  motivoSubsanacionNoDisponible(
+    solicitud: Pick<Solicitud, "subsanacion">,
+    proveedorId?: string,
+  ): string {
+    if (!this.rol.estaCargado() || !this.rol.tieneRol(ROL_PROVEEDOR)) {
+      return "Su rol no permite diligenciar la subsanación documental.";
+    }
+    const periodo = solicitud.subsanacion;
+    if (!periodo) {
+      return "No hay un periodo de subsanación habilitado para esta solicitud.";
+    }
+    if (!this.puedeVerSubsanacionProveedor(solicitud, proveedorId)) {
+      return "Su empresa no fue convocada al periodo de subsanación de esta solicitud.";
+    }
+    if (radicacionSubsanacion(periodo, proveedorId!)) {
+      return "Su subsanación ya fue radicada; la consulta queda en solo lectura.";
+    }
+    switch (estadoSubsanacion(periodo)) {
+      case "configurada":
+        return "El periodo de subsanación aún no inicia.";
+      case "vencida":
+        return "El periodo de subsanación finalizó; la consulta queda en solo lectura.";
+      case "cancelada":
+        return "El periodo de subsanación fue cancelado.";
+      case "activa":
+        return "";
+    }
+  }
+
+  /** true si el proveedor puede radicar formalmente la subsanación. */
+  puedeRadicarSubsanacion(
+    solicitud: Pick<Solicitud, "subsanacion">,
+    proveedorId?: string,
+  ): boolean {
+    return this.puedeEditarSubsanacion(solicitud, proveedorId);
   }
 
   /**

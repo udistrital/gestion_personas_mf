@@ -16,6 +16,7 @@ import type {
 import type {
   DocumentoOfertaRadicado,
   DocumentoOferente,
+  EstadoDocumentoOferta,
 } from "./documentos.model";
 import {
   etiquetaClasificacion,
@@ -37,6 +38,7 @@ import {
   construirFilasOferta,
   esFormatoSoporteOferta,
 } from "./respuesta-proveedor.model";
+import { estadoSubsanacion, eventoDocumento } from "./subsanacion.model";
 import { solicitudCerrada } from "./solicitud.model";
 
 /** Documento del soporte principal de la cotización. */
@@ -126,7 +128,9 @@ export function construirMiCotizacion(
     totales,
     documentos,
     documentosRadicados: documentos.filter(
-      (documento) => documento.estado !== "pendiente",
+      (documento) =>
+        documento.estado === "cargado" ||
+        documento.estado === "subsanado",
     ).length,
     versiones,
     eventos: eventosDeLaRespuesta(
@@ -222,15 +226,49 @@ export function documentosDeLaRespuesta(
     const archivo = archivos.find(
       (item) => item.requisitoId === documento.id,
     );
+    const periodo = detalle.solicitud.subsanacion;
+    const oferente = periodo?.oferentes.find(
+      (item) => item.proveedorId === detalle.proveedor.id,
+    );
+    const seleccionado =
+      oferente?.documentos.some(
+        (item) => item.id === documento.id && item.seleccionado,
+      ) ?? false;
+    const evento = periodo
+      ? eventoDocumento(periodo, detalle.proveedor.id, documento.id)
+      : null;
+    const vencida = periodo
+      ? estadoSubsanacion(periodo) === "vencida"
+      : false;
+    const archivoVigente = evento?.versionNueva
+      ? {
+          ...(archivo ?? {}),
+          requisitoId: documento.id,
+          nombre: evento.versionNueva.nombre,
+          tamanoBytes:
+            evento.versionNueva.pesoBytes ?? archivo?.tamanoBytes,
+          subsanadoEl: evento.fecha,
+          versionAnterior: evento.versionAnterior?.nombre,
+        }
+      : archivo;
+    const estado: EstadoDocumentoOferta | undefined = evento
+      ? "subsanado"
+      : vencida && seleccionado
+        ? "no-subsanado"
+        : undefined;
+
     return documentoRadicado({
       id: archivo?.radicadoId ?? documento.id,
       requisitoId: documento.id,
       nombre: documento.nombre,
-      archivo,
+      archivo: archivoVigente,
       clasificacion: documento.clasificacion,
       descripcion: documento.instruccion,
       principal: false,
-      fecha,
+      fecha: evento
+        ? formatoFechaHoraOferente(evento.fecha)
+        : fecha,
+      estado,
     });
   });
 
@@ -246,6 +284,8 @@ interface DatosDocumento {
   readonly descripcion: string;
   readonly principal: boolean;
   readonly fecha: string;
+  /** Estado explícito cuando la subsanación lo determina. */
+  readonly estado?: EstadoDocumentoOferta;
 }
 
 function documentoRadicado(datos: DatosDocumento): DocumentoOfertaRadicado {
@@ -258,6 +298,9 @@ function documentoRadicado(datos: DatosDocumento): DocumentoOfertaRadicado {
     datos.archivo?.archivo?.size ??
     0;
   const radicado = !!nombreArchivo;
+  const fechaRadicacion = datos.archivo?.subsanadoEl
+    ? formatoFechaHoraOferente(datos.archivo.subsanadoEl)
+    : datos.fecha;
 
   return {
     id: datos.id,
@@ -268,8 +311,14 @@ function documentoRadicado(datos: DatosDocumento): DocumentoOfertaRadicado {
     etiquetaClasificacion: etiquetaClasificacion(datos.clasificacion),
     formato: radicado ? etiquetaFormato(nombreArchivo) || "—" : "—",
     icono: radicado ? iconoPorFormato(nombreArchivo) : "file_present",
-    estado: radicado ? "cargado" : "pendiente",
-    fechaRadicacion: datos.fecha,
+    estado:
+      datos.estado ??
+      (datos.archivo?.subsanadoEl
+        ? "subsanado"
+        : radicado
+          ? "cargado"
+          : "pendiente"),
+    fechaRadicacion,
     pesoBytes,
     peso: radicado ? formatoTamano(pesoBytes) : "0 B",
     descripcion: datos.descripcion,

@@ -35,6 +35,15 @@ export class DocumentosOfertadosComponent {
   }
 
   etiquetaEstado(documento: DocumentoOfertaRadicado): string {
-    return documento.estado === "pendiente" ? "No radicado" : "Radicado";
+    switch (documento.estado) {
+      case "subsanado":
+        return "Subsanado";
+      case "no-subsanado":
+        return "No subsanado";
+      case "pendiente":
+        return "No radicado";
+      default:
+        return "Radicado";
+    }
   }
 }

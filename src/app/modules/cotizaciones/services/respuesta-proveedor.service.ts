@@ -60,6 +60,20 @@ export abstract class RespuestaProveedorService {
     proveedorId: string,
   ): Observable<RespuestaProveedor | null>;
 
+  /**
+   * Actualiza el archivo vigente de un requisito tras una subsanación (P-08).
+   *
+   * No crea una nueva versión de la oferta ni toca ítems, precios o totales:
+   * solo reemplaza el documento autorizado y conserva el radicado para que
+   * P-06 siga resolviendo la descarga.
+   */
+  abstract registrarDocumentoSubsanado(
+    detalle: DetalleInvitacionProveedor,
+    proveedorId: string,
+    requisitoId: string,
+    archivo: { readonly nombre: string; readonly tamanoBytes: number },
+  ): Observable<DocumentoRespuestaProveedor>;
+
   /** Documento radicado de la propia respuesta, para verlo o descargarlo. */
   abstract obtenerDocumentoRespuesta(
     radicadoId: string,
@@ -165,6 +179,48 @@ export class RespuestaProveedorServiceMock extends RespuestaProveedorService {
     return of(
       respuesta && respuesta.estado === "enviada" ? respuesta : null,
     ).pipe(delay(this.retardo()));
+  }
+
+  registrarDocumentoSubsanado(
+    detalle: DetalleInvitacionProveedor,
+    proveedorId: string,
+    requisitoId: string,
+    archivo: { readonly nombre: string; readonly tamanoBytes: number },
+  ): Observable<DocumentoRespuestaProveedor> {
+    const respuesta = this.respuestaVigente(detalle, proveedorId);
+    if (!respuesta || respuesta.estado !== "enviada") {
+      return throwError(
+        () =>
+          new Error(
+            "No existe una respuesta radicada sobre la cual registrar la subsanación.",
+          ),
+      ).pipe(delay(this.retardo()));
+    }
+
+    const existente = respuesta.archivos.find(
+      (documento) => documento.requisitoId === requisitoId,
+    );
+    const actualizado: DocumentoRespuestaProveedor = {
+      requisitoId,
+      radicadoId:
+        existente?.radicadoId ??
+        `radicado-${detalle.invitacion.id}-${requisitoId}-sub`,
+      nombre: archivo.nombre,
+      tamanoBytes: archivo.tamanoBytes,
+      subsanadoEl: new Date().toISOString(),
+      versionAnterior: existente?.nombre,
+    };
+    const archivos = existente
+      ? respuesta.archivos.map((documento) =>
+          documento.requisitoId === requisitoId ? actualizado : documento,
+        )
+      : [...respuesta.archivos, actualizado];
+
+    this.respuestas.set(this.clave(detalle.solicitud.id, proveedorId), {
+      ...respuesta,
+      archivos,
+    });
+    return of(actualizado).pipe(delay(this.retardo()));
   }
 
   obtenerDocumentoRespuesta(

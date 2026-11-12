@@ -223,6 +223,18 @@ const CONFIG_OFERENTES: Readonly<
     // Oferta enviada a validación del OG.
     responderian: 28,
   },
+  "SOL-2026-0165": {
+    // Periodo de subsanación activo con avance parcial (P-08).
+    responderian: 28,
+  },
+  "SOL-2026-0168": {
+    // Periodo de subsanación vencido con documentos pendientes (P-08).
+    responderian: 28,
+  },
+  "SOL-2026-0169": {
+    // Periodo de subsanación activo con todos los documentos cargados (P-08).
+    responderian: 28,
+  },
 };
 
 function dosDigitos(valor: number): string {

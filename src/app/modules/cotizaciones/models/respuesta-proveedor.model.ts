@@ -51,6 +51,10 @@ export interface DocumentoRespuestaProveedor {
   readonly radicadoId?: string;
   readonly nombre?: string;
   readonly tamanoBytes?: number;
+  /** ISO del último cargue o reemplazo dentro de la subsanación (P-08). */
+  readonly subsanadoEl?: string;
+  /** Nombre del archivo que reemplazó, para la trazabilidad. */
+  readonly versionAnterior?: string;
 }
 
 /** Resumen inmutable de una versión radicada de la respuesta. */

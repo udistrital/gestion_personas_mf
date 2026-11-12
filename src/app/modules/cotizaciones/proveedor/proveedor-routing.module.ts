@@ -8,6 +8,7 @@ import { ObservacionesProveedorComponent } from "./pages/observaciones/observaci
 import { ResponderSolicitudComponent } from "./pages/responder-solicitud/responder-solicitud.component";
 import { MiCotizacionProveedorComponent } from "./pages/mi-cotizacion/mi-cotizacion-proveedor.component";
 import { ResultadoProveedorComponent } from "./pages/resultado/resultado-proveedor.component";
+import { SubsanacionProveedorComponent } from "./pages/subsanacion/subsanacion-proveedor.component";
 
 const routes: Routes = [
   {
@@ -46,6 +47,12 @@ const routes: Routes = [
     component: ResultadoProveedorComponent,
     resolve: { detalleProveedor: detalleProveedorResolver },
     title: "ÁGORA · Respuesta del solicitante",
+  },
+  {
+    path: ":id/subsanar",
+    component: SubsanacionProveedorComponent,
+    resolve: { detalleProveedor: detalleProveedorResolver },
+    title: "ÁGORA · Subsanación documental",
   },
   {
     path: ":id",

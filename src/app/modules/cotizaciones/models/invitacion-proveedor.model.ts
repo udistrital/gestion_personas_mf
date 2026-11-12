@@ -13,6 +13,7 @@ import type { DocumentoOferente, AnexoSolicitud } from "./documentos.model";
 import type { ResumenDiferencias } from "./edicion-solicitud.model";
 import type { ItemSolicitud } from "./items.model";
 import type { Solicitud, TipoCotizacion } from "./solicitud.model";
+import type { Subsanacion } from "./subsanacion.model";
 
 /** Resumen de la última respuesta radicada por el proveedor. */
 export interface ResumenRespuestaVigente {
@@ -112,6 +113,8 @@ export interface SolicitudDetalleProveedor {
     readonly anexos: readonly AnexoPublicoProveedor[];
     readonly requeridos: readonly DocumentoOferente[];
   } | null;
+  /** Último periodo de subsanación que involucra al proveedor (P-08). */
+  readonly subsanacion?: Subsanacion | null;
 }
 
 /** Datos que P-02 necesita además de la solicitud proyectada. */
@@ -138,6 +141,8 @@ export interface DetalleInvitacionProveedor {
 export interface InvitacionProveedorConSolicitud {
   readonly invitacion: InvitacionProveedor;
   readonly solicitud: Solicitud;
+  /** Proveedor de la sesión; identifica su fila dentro de la subsanación. */
+  readonly proveedorId?: string;
   readonly ordenadorGasto: string;
 }
 

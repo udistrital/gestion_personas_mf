@@ -157,6 +157,12 @@
                     <span>Ver respuesta del solicitante</span>
                   </button>
                 }
+                @if (puedeVerSubsanacion) {
+                  <button class="boton-recto" type="button" (click)="verSubsanacion()">
+                    <mat-icon aria-hidden="true">upload_file</mat-icon>
+                    <span>{{ etiquetaBotonSubsanacion }}</span>
+                  </button>
+                }
               }
               <button class="boton-recto" type="button" (click)="volver()">
                 <mat-icon aria-hidden="true">arrow_back</mat-icon>

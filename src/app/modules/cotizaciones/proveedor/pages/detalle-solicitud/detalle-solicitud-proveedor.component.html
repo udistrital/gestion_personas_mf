@@ -133,6 +133,16 @@
                     <span>Modificar respuesta</span>
                   </button>
                 }
+                @if (puedeVerSubsanacion) {
+                  <button
+                    class="boton-recto"
+                    type="button"
+                    (click)="verSubsanacion()"
+                  >
+                    <mat-icon aria-hidden="true">upload_file</mat-icon>
+                    <span>{{ etiquetaBotonSubsanacion }}</span>
+                  </button>
+                }
                 <button
                   class="boton-recto"
                   type="button"
@@ -179,6 +189,63 @@
           >
             {{ textoCierre() }}
           </p>
+        }
+
+        @if (puedeVerSubsanacion && subsanacion; as sub) {
+          <section
+            class="detalle-proveedor__aviso detalle-proveedor__aviso--subsanacion"
+            role="status"
+          >
+            <mat-icon aria-hidden="true">upload_file</mat-icon>
+            <div>
+              <h2>Subsanación documental</h2>
+              <p class="detalle-proveedor__subsanacion-meta">
+                <chip-estado [estado]="sub.estadoPeriodo"></chip-estado>
+                <strong>{{ etiquetaSubsanacion }}</strong>
+                @if (sub.total > 0) {
+                  <span>· {{ sub.completados }}/{{ sub.total }} documentos</span>
+                }
+              </p>
+              <p>
+                @if (sub.radicada) {
+                  Su subsanación ya fue radicada. La consulta queda en solo
+                  lectura y los cambios están custodiados en el historial.
+                } @else {
+                  @switch (sub.estadoPeriodo) {
+                    @case ("configurada") {
+                      El periodo inicia el {{ sub.inicioTexto }}. Podrá cargar o
+                      reemplazar los documentos observados desde esa fecha.
+                    }
+                    @case ("activa") {
+                      Tiene hasta el {{ sub.finTexto }} para adjuntar o
+                      reemplazar los documentos observados.
+                    }
+                    @case ("vencida") {
+                      El periodo finalizó el {{ sub.finTexto }}. La consulta
+                      queda en solo lectura.
+                    }
+                    @case ("cancelada") {
+                      El periodo de subsanación fue cancelado por la entidad.
+                    }
+                  }
+                }
+              </p>
+              <button
+                class="boton-recto detalle-proveedor__aviso-accion"
+                type="button"
+                (click)="verSubsanacion()"
+              >
+                <mat-icon aria-hidden="true">upload_file</mat-icon>
+                <span>
+                  {{
+                    sub.estadoPeriodo === "activa" && !sub.radicada
+                      ? "Subsanar documentos"
+                      : "Consultar subsanación"
+                  }}
+                </span>
+              </button>
+            </div>
+          </section>
         }
 
         @if (puedeVerResultado) {

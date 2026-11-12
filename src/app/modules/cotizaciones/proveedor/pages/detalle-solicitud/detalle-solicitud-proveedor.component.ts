@@ -10,6 +10,11 @@ import type {
   AnexoPublicoProveedor,
 } from "../../../models/invitacion-proveedor.model";
 import { SolicitudesService } from "../../../services/solicitudes.service";
+import {
+  etiquetaAvanceSubsanacion,
+  resumenSubsanacionProveedor,
+} from "../../../models/subsanacion-proveedor.model";
+import type { ResumenSubsanacionProveedor } from "../../../models/subsanacion-proveedor.model";
 import { ResultadoResolverDetalleProveedor } from "./detalle-proveedor.resolver";
 
 type EstadoVista = "cargando" | "listo" | "no-encontrada" | "error";
@@ -168,6 +173,61 @@ export class DetalleSolicitudProveedorComponent implements OnInit {
   get puedeVerResultado(): boolean {
     const detalle = this.detalle();
     return !!detalle && this.permisos.puedeVerResultado(detalle.solicitud);
+  }
+
+  /** Resumen del periodo de subsanación que involucra al proveedor. */
+  get subsanacion(): ResumenSubsanacionProveedor | null {
+    const detalle = this.detalle();
+    const periodo = detalle?.solicitud.subsanacion;
+    return detalle && periodo
+      ? resumenSubsanacionProveedor(periodo, detalle.proveedor.id)
+      : null;
+  }
+
+  get puedeVerSubsanacion(): boolean {
+    const detalle = this.detalle();
+    return (
+      !!detalle &&
+      this.permisos.puedeVerSubsanacionProveedor(
+        detalle.solicitud,
+        detalle.proveedor.id,
+      )
+    );
+  }
+
+  get etiquetaSubsanacion(): string {
+    const resumen = this.subsanacion;
+    return resumen
+      ? etiquetaAvanceSubsanacion(resumen.estadoProveedor)
+      : "Subsanación documental";
+  }
+
+  get etiquetaBotonSubsanacion(): string {
+    const detalle = this.detalle();
+    return detalle &&
+      this.permisos.puedeEditarSubsanacion(
+        detalle.solicitud,
+        detalle.proveedor.id,
+      )
+      ? "Subsanar documentos"
+      : "Consultar subsanación";
+  }
+
+  verSubsanacion(): void {
+    const detalle = this.detalle();
+    if (!detalle || !this.puedeVerSubsanacion) {
+      return;
+    }
+    const ruta = this.permisos.rutaAccionInvitacion("subsanar");
+    if (ruta) {
+      void this.router.navigate(
+        ruta
+          .split("/")
+          .map((segmento) =>
+            segmento === ":id" ? detalle.solicitud.id : segmento,
+          ),
+      );
+    }
   }
 
   verResultado(): void {

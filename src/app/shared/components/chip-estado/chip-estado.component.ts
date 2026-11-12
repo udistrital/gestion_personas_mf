@@ -10,6 +10,7 @@ import {
   EstadoSolicitudMeta,
   EstadoSubsanacion,
   EstadoSubsanacionOferente,
+  EstadoDocumentoSubsanacionProveedor,
 } from "src/app/core/constants/estados-solicitud.const";
 
 /**
@@ -31,6 +32,7 @@ export class ChipEstadoComponent {
       | EstadoOferente
       | EstadoSubsanacion
       | EstadoSubsanacionOferente
+      | EstadoDocumentoSubsanacionProveedor
       | EstadoEstudioMercado
       | EstadoInvitacionEstudio
       | EstadoActualizacionRespuesta,

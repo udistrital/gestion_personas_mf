@@ -242,6 +242,20 @@
   background: var(--agora-surface-soft);
 }
 
+.detalle-proveedor__aviso--subsanacion {
+  border-color: var(--agora-warning-border);
+  background: var(--agora-warning-surface);
+}
+
+.detalle-proveedor__subsanacion-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--agora-text);
+  font-size: 0.8125rem;
+}
+
 .detalle-proveedor__aviso-accion {
   margin-top: 0.75rem;
 }

@@ -63,6 +63,14 @@ export type EstadoSubsanacionOferente =
   | "subsanado-completo"
   | "no-subsanado";
 
+/** Estado visible de un documento en la subsanación del proveedor (P-08). */
+export type EstadoDocumentoSubsanacionProveedor =
+  | "no-habilitado"
+  | "pendiente-carga"
+  | "adjuntado"
+  | "reemplazado"
+  | "no-subsanado-plazo";
+
 /**
  * Estado de un estudio de mercado (S-13).
  *
@@ -97,6 +105,7 @@ export type AccionInvitacionProveedor =
   | "ver-detalle-proveedor"
   | "ver-mi-cotizacion"
   | "ver-resultado"
+  | "subsanar"
   | "observar"
   | "formular-observacion"
   | "responder"
@@ -495,6 +504,42 @@ export const ESTADOS_SUBSANACION_OFERENTE: Readonly<
   },
 };
 
+/** Metadatos visuales de un documento dentro de la subsanación (P-08). */
+export const ESTADOS_DOCUMENTO_SUBSANACION_PROVEEDOR: Readonly<
+  Record<EstadoDocumentoSubsanacionProveedor, EstadoSolicitudMeta>
+> = {
+  "no-habilitado": {
+    etiqueta: "No habilitado",
+    tono: "neutro",
+    icono: "lock",
+    pulso: false,
+  },
+  "pendiente-carga": {
+    etiqueta: "Pendiente de cargue",
+    tono: "advertencia",
+    icono: "pending",
+    pulso: false,
+  },
+  adjuntado: {
+    etiqueta: "Cargado",
+    tono: "exito",
+    icono: "check_circle",
+    pulso: false,
+  },
+  reemplazado: {
+    etiqueta: "Reemplazado",
+    tono: "exito",
+    icono: "sync",
+    pulso: false,
+  },
+  "no-subsanado-plazo": {
+    etiqueta: "No subsanado en plazo",
+    tono: "advertencia",
+    icono: "block",
+    pulso: false,
+  },
+};
+
 /** Metadatos visuales del ciclo de un estudio de mercado (S-13). */
 export const ESTADOS_ESTUDIO_MERCADO: Readonly<
   Record<EstadoEstudioMercado, EstadoSolicitudMeta>
@@ -569,6 +614,7 @@ export const ESTADOS_CHIP: Readonly<
     | EstadoOferente
     | EstadoSubsanacion
     | EstadoSubsanacionOferente
+    | EstadoDocumentoSubsanacionProveedor
     | EstadoEstudioMercado
     | EstadoInvitacionEstudio
     | EstadoActualizacionRespuesta,
@@ -581,6 +627,7 @@ export const ESTADOS_CHIP: Readonly<
   ...ESTADOS_OFERENTE,
   ...ESTADOS_SUBSANACION,
   ...ESTADOS_SUBSANACION_OFERENTE,
+  ...ESTADOS_DOCUMENTO_SUBSANACION_PROVEEDOR,
   ...ESTADOS_ESTUDIO_MERCADO,
   ...ESTADOS_INVITACION_ESTUDIO,
 };
@@ -653,6 +700,11 @@ export const ACCIONES_INVITACION_PROVEEDOR: Readonly<
     etiqueta: "Respuesta del solicitante",
     icono: "task_alt",
     ruta: "cotizaciones/bandeja-solicitudes/:id/resultado",
+  },
+  subsanar: {
+    etiqueta: "Subsanación documental",
+    icono: "upload_file",
+    ruta: "cotizaciones/bandeja-solicitudes/:id/subsanar",
   },
   observar: {
     etiqueta: "Observaciones",

@@ -189,6 +189,19 @@
                         <span>Resultado disponible</span>
                       </span>
                     }
+                    @if (subsanacionDe(fila); as subsanacion) {
+                      <span class="bandeja__subsanacion">
+                        <chip-estado
+                          [estado]="subsanacion.estadoPeriodo"
+                        ></chip-estado>
+                        <span class="bandeja__subsanacion-texto">
+                          {{ etiquetaSubsanacion(subsanacion) }}
+                          @if (subsanacion.total > 0) {
+                            · {{ subsanacion.completados }}/{{ subsanacion.total }}
+                          }
+                        </span>
+                      </span>
+                    }
                   </td>
                   @if (hayColumnaAcciones()) {
                     <td class="bandeja__td bandeja__td--acciones">

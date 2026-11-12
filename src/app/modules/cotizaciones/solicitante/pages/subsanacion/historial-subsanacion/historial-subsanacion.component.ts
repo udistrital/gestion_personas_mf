@@ -12,7 +12,6 @@ import { interval } from "rxjs";
 import { PermisosSolicitudService } from "src/app/core/services/permisos-solicitud.service";
 import { AlertService } from "src/app/shared/services/alert.service";
 import type {
-  EtiquetaLineaTiempo,
   EventoLineaTiempo,
 } from "src/app/shared/components/linea-tiempo/linea-tiempo.component";
 import { ResultadoResolverSolicitud } from "../../../../resolvers/solicitud.resolver";
@@ -26,6 +25,7 @@ import type {
 } from "../../../../models/subsanacion.model";
 import {
   estadoSubsanacion,
+  eventoLineaTiempoSubsanacion,
   metaEventoSubsanacion,
 } from "../../../../models/subsanacion.model";
 import { SubsanacionService } from "../../../../services/subsanacion.service";
@@ -150,7 +150,9 @@ export class HistorialSubsanacionComponent implements OnInit {
   });
 
   readonly lineaTiempo = computed<readonly EventoLineaTiempo[]>(() =>
-    this.eventosFiltrados().map((evento) => this.mapearEvento(evento)),
+    this.eventosFiltrados().map((evento) =>
+      eventoLineaTiempoSubsanacion(evento),
+    ),
   );
 
   readonly esActiva = computed(
@@ -370,40 +372,5 @@ export class HistorialSubsanacionComponent implements OnInit {
       default:
         return "—";
     }
-  }
-
-  private mapearEvento(evento: EventoSubsanacion): EventoLineaTiempo {
-    const meta = metaEventoSubsanacion(evento.tipo);
-    const etiquetas: EtiquetaLineaTiempo[] = [
-      { texto: meta.etiqueta, tono: "neutro" },
-    ];
-    if (!evento.dentroDelPeriodo) {
-      etiquetas.push({ texto: "Fuera del periodo", tono: "advertencia" });
-    }
-
-    return {
-      id: evento.id,
-      titulo: meta.titulo,
-      icono: meta.icono,
-      tono: meta.tono,
-      fecha: formatoFechaHoraOferente(evento.fecha),
-      fechaIso: evento.fecha,
-      etiquetas,
-      resultado: {
-        texto: meta.resultado,
-        tono: meta.tonoResultado,
-      },
-      detalle: evento.detalleHtml,
-      autor: {
-        usuario: evento.usuario,
-        nombre: evento.nombreUsuario,
-        rol: evento.rol,
-      },
-      evidencia: evento.hash
-        ? { icono: "fingerprint", texto: evento.hash }
-        : evento.radicado
-          ? { icono: "fact_check", texto: `Radicado ${evento.radicado}` }
-          : undefined,
-    };
   }
 }

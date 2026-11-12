@@ -105,6 +105,7 @@ import type {
   CancelacionSubsanacion,
   EventoSubsanacion,
   OferenteSubsanacion,
+  RegistroEventoSubsanacion,
   RegistroSubsanacion,
   Subsanacion,
 } from "../models/subsanacion.model";
@@ -112,9 +113,11 @@ import {
   SUBSANACIONES_MOCK,
   crearOferentesSubsanables,
   estadoSubsanacion,
+  eventoDocumento,
   eventosVigentes,
   metaEventoSubsanacion,
 } from "../models/subsanacion.model";
+import { filtrarSubsanacionProveedor } from "../models/subsanacion-proveedor.model";
 import { DiferenciasSolicitudService } from "./diferencias-solicitud.service";
 import { textoPlanoDesdeHtml } from "src/app/shared/utils/texto-plano";
 import { MIN_CARACTERES_JUSTIFICACION } from "src/app/shared/validators/justificacion.validator";
@@ -230,6 +233,18 @@ export abstract class SolicitudesService {
   abstract cancelarSubsanacion(
     id: string,
     motivo: string,
+  ): Observable<Subsanacion>;
+
+  /**
+   * Registra un evento del proveedor dentro del periodo vigente (P-08).
+   *
+   * El servicio completa fecha, autor, nombre del oferente y radicado. Valida
+   * que el periodo esté activo, que el proveedor pertenezca a él y que el
+   * documento esté habilitado.
+   */
+  abstract registrarEventoSubsanacion(
+    id: string,
+    registro: RegistroEventoSubsanacion,
   ): Observable<Subsanacion>;
 
   /**
@@ -1069,6 +1084,54 @@ const SOLICITUDES_PROVEEDOR_MOCK: readonly Solicitud[] = [
     tipoCotizacion: "BIEN",
     estado: "enviada-proveedores",
   },
+  {
+    id: "SOL-2026-0165",
+    vigencia: 2026,
+    unidadEjecutora: "1",
+    titulo:
+      "Adquisición de servidores Blade y componentes de red para el Centro de Datos Institucional",
+    apertura: "15/09/2026",
+    cierre: "20/10/2026",
+    dependencia: "DIRTEI - División de Recursos Tecnológicos e Informáticos",
+    tipoCotizacion: "BIEN",
+    estado: "en-evaluacion",
+    version: "v1.0",
+    revision: 1,
+    ultimaModificacion: "10/11/2026 09:00 COT",
+    fechaLimiteObservaciones: "2026-10-10T18:00:00-05:00",
+  },
+  {
+    id: "SOL-2026-0168",
+    vigencia: 2026,
+    unidadEjecutora: "2",
+    titulo:
+      "Adquisición e implantación de infraestructura de red inalámbrica Wi-Fi 6",
+    apertura: "15/09/2026",
+    cierre: "20/10/2026",
+    dependencia: "Oficina de Infraestructura y Servicios",
+    tipoCotizacion: "BIEN",
+    estado: "en-evaluacion",
+    version: "v1.0",
+    revision: 1,
+    ultimaModificacion: "24/10/2026 08:30 COT",
+    fechaLimiteObservaciones: "2026-10-10T18:00:00-05:00",
+  },
+  {
+    id: "SOL-2026-0169",
+    vigencia: 2026,
+    unidadEjecutora: "3",
+    titulo:
+      "Suministro de estaciones de trabajo para el laboratorio de análisis de datos",
+    apertura: "15/09/2026",
+    cierre: "20/10/2026",
+    dependencia: "Vicerrectoría Académica",
+    tipoCotizacion: "BIEN",
+    estado: "en-evaluacion",
+    version: "v1.0",
+    revision: 1,
+    ultimaModificacion: "10/11/2026 11:20 COT",
+    fechaLimiteObservaciones: "2026-10-10T18:00:00-05:00",
+  },
   ...SOLICITUDES_DECISION_MOCK,
 ];
 
@@ -1587,6 +1650,84 @@ const INVITACIONES_PROVEEDOR_MOCK: readonly InvitacionProveedor[] = [
       },
     ],
   },
+  {
+    id: "INV-0165",
+    solicitudId: "SOL-2026-0165",
+    estado: "enviada",
+    fechaRadicacion: "2026-10-14T13:09:00-05:00",
+    respuestaVigente: {
+      version: "v1.0",
+      revision: 1,
+      radicado: "COT-RESP-SOL-2026-0165-V1",
+      fecha: "2026-10-14T13:09:00-05:00",
+      versionSolicitud: "v1.0",
+      usuario: "900.842.119-4",
+      total: 96_780_000,
+    },
+    versionesRespuesta: [
+      {
+        version: "v1.0",
+        revision: 1,
+        radicado: "COT-RESP-SOL-2026-0165-V1",
+        fecha: "2026-10-14T13:09:00-05:00",
+        versionSolicitud: "v1.0",
+        usuario: "900.842.119-4",
+        total: 96_780_000,
+      },
+    ],
+  },
+  {
+    id: "INV-0168",
+    solicitudId: "SOL-2026-0168",
+    estado: "enviada",
+    fechaRadicacion: "2026-10-14T13:09:00-05:00",
+    respuestaVigente: {
+      version: "v1.0",
+      revision: 1,
+      radicado: "COT-RESP-SOL-2026-0168-V1",
+      fecha: "2026-10-14T13:09:00-05:00",
+      versionSolicitud: "v1.0",
+      usuario: "900.842.119-4",
+      total: 84_220_000,
+    },
+    versionesRespuesta: [
+      {
+        version: "v1.0",
+        revision: 1,
+        radicado: "COT-RESP-SOL-2026-0168-V1",
+        fecha: "2026-10-14T13:09:00-05:00",
+        versionSolicitud: "v1.0",
+        usuario: "900.842.119-4",
+        total: 84_220_000,
+      },
+    ],
+  },
+  {
+    id: "INV-0169",
+    solicitudId: "SOL-2026-0169",
+    estado: "enviada",
+    fechaRadicacion: "2026-10-14T13:09:00-05:00",
+    respuestaVigente: {
+      version: "v1.0",
+      revision: 1,
+      radicado: "COT-RESP-SOL-2026-0169-V1",
+      fecha: "2026-10-14T13:09:00-05:00",
+      versionSolicitud: "v1.0",
+      usuario: "900.842.119-4",
+      total: 52_400_000,
+    },
+    versionesRespuesta: [
+      {
+        version: "v1.0",
+        revision: 1,
+        radicado: "COT-RESP-SOL-2026-0169-V1",
+        fecha: "2026-10-14T13:09:00-05:00",
+        versionSolicitud: "v1.0",
+        usuario: "900.842.119-4",
+        total: 52_400_000,
+      },
+    ],
+  },
 ];
 
 const ORDENADORES_PROVEEDOR_MOCK: Readonly<Record<string, string>> = {
@@ -1610,6 +1751,9 @@ const ORDENADORES_PROVEEDOR_MOCK: Readonly<Record<string, string>> = {
   "SOL-2026-0164": "Dr. Ricardo Gómez Morales",
   "SOL-2026-0166": "Dr. Ricardo Gómez Morales",
   "SOL-2026-0167": "Dr. Ricardo Gómez Morales",
+  "SOL-2026-0165": "Dr. Ricardo Gómez Morales",
+  "SOL-2026-0168": "Dra. Elvia María Sanabria",
+  "SOL-2026-0169": "Ing. Martha Cecilia Bello",
 };
 
 const MAPA_TIPOS: Readonly<Record<string, TipoCotizacion>> = {
@@ -1788,6 +1932,9 @@ const CDP_POR_SOLICITUD: Readonly<Record<string, number>> = {
   "SOL-2026-0164": 320_000_000,
   "SOL-2026-0166": 320_000_000,
   "SOL-2026-0167": 320_000_000,
+  "SOL-2026-0165": 320_000_000,
+  "SOL-2026-0168": 320_000_000,
+  "SOL-2026-0169": 320_000_000,
 };
 
 /**
@@ -3982,6 +4129,7 @@ export class SolicitudesServiceMock extends SolicitudesService {
         solicitud,
       ]),
     );
+    const proveedorId = proveedorPublicoMock().id;
     const filas: InvitacionProveedorConSolicitud[] =
       INVITACIONES_PROVEEDOR_MOCK.flatMap((invitacionBase) => {
         const invitacion =
@@ -3995,7 +4143,14 @@ export class SolicitudesServiceMock extends SolicitudesService {
         return [
           {
             invitacion,
-            solicitud,
+            solicitud: {
+              ...solicitud,
+              subsanacion: filtrarSubsanacionProveedor(
+                this.ultimaSubsanacion(solicitud.id),
+                proveedorId,
+              ),
+            },
+            proveedorId,
             ordenadorGasto:
               ORDENADORES_PROVEEDOR_MOCK[solicitud.id] ??
               "Por definir"
@@ -4098,6 +4253,7 @@ export class SolicitudesServiceMock extends SolicitudesService {
     if (!invitacion || !solicitud) {
       return of(null).pipe(delay(retardo));
     }
+    const proveedor = proveedorPublicoMock();
 
     const valoresAnteriores = datosEdicionDesdeDetalle(solicitud);
     const valoresVigentes = invitacion.adendaPublicada
@@ -4129,9 +4285,15 @@ export class SolicitudesServiceMock extends SolicitudesService {
 
     return of({
       invitacion,
-      solicitud: proyectarSolicitudProveedor(solicitudVigente),
+      solicitud: {
+        ...proyectarSolicitudProveedor(solicitudVigente),
+        subsanacion: filtrarSubsanacionProveedor(
+          this.ultimaSubsanacion(id),
+          proveedor.id,
+        ),
+      },
       yaRespondio: tienePostulacionRadicada(invitacion),
-      proveedor: proveedorPublicoMock(),
+      proveedor,
       adenda:
         invitacion.adendaPublicada && diferencias
           ? {
@@ -4880,6 +5042,196 @@ export class SolicitudesServiceMock extends SolicitudesService {
           dentroDelPeriodo: true,
         },
       ],
+    };
+
+    this.reemplazarUltimaSubsanacion(id, actualizado);
+    return of(actualizado).pipe(delay(retardo));
+  }
+
+  registrarEventoSubsanacion(
+    id: string,
+    registro: RegistroEventoSubsanacion,
+  ): Observable<Subsanacion> {
+    const params = new URLSearchParams(window.location.search);
+    const retardo = Number(params.get("mockRetardo")) || 650;
+    const esRadicacion = registro.tipo === "subsanacion-radicada";
+
+    if (
+      params.get("mockSubsanacionProveedor") ===
+      (esRadicacion ? "error-envio" : "error-adjunto")
+    ) {
+      return throwError(
+        () =>
+          new Error(
+            esRadicacion
+              ? "No fue posible radicar la subsanación. Intente nuevamente."
+              : "No fue posible registrar el documento. Intente nuevamente.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const periodo = this.ultimaSubsanacion(id);
+    if (!periodo) {
+      return throwError(
+        () => new Error("No existe un periodo de subsanación vigente."),
+      ).pipe(delay(retardo));
+    }
+    if (estadoSubsanacion(periodo) !== "activa") {
+      return throwError(
+        () =>
+          new Error(
+            "El periodo de subsanación no está activo; no se aceptan cambios.",
+          ),
+      ).pipe(delay(retardo));
+    }
+    if (periodo.cancelacion) {
+      return throwError(
+        () => new Error("El periodo de subsanación fue cancelado."),
+      ).pipe(delay(retardo));
+    }
+
+    const oferente = periodo.oferentes.find(
+      (item) => item.proveedorId === registro.proveedorId,
+    );
+    if (!oferente) {
+      return throwError(
+        () =>
+          new Error(
+            "Su empresa no está incluida en el periodo de subsanación.",
+          ),
+      ).pipe(delay(retardo));
+    }
+    const radicacionPrevia = periodo.eventos.some(
+      (evento) =>
+        evento.tipo === "subsanacion-radicada" &&
+        evento.oferenteId === registro.proveedorId,
+    );
+    if (radicacionPrevia) {
+      return throwError(
+        () =>
+          new Error(
+            "La subsanación ya fue radicada y no admite nuevos cambios.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const seleccionados = oferente.documentos.filter(
+      (documento) => documento.seleccionado,
+    );
+    if (seleccionados.length === 0) {
+      return throwError(
+        () =>
+          new Error(
+            "El periodo no tiene documentos habilitados para su empresa.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    if (!esRadicacion) {
+      const documento = seleccionados.find(
+        (item) => item.id === registro.documentoId,
+      );
+      if (!documento) {
+        return throwError(
+          () =>
+            new Error(
+              "El documento no está habilitado para su empresa en este periodo.",
+            ),
+        ).pipe(delay(retardo));
+      }
+      if (!documento.subsanable || documento.bloqueadoPorPliego) {
+        return throwError(
+          () =>
+            new Error(
+              "El documento está bloqueado por el pliego y no admite subsanación.",
+            ),
+        ).pipe(delay(retardo));
+      }
+      const existente = eventoDocumento(
+        periodo,
+        registro.proveedorId,
+        documento.id,
+      );
+      if (existente && !periodo.permitirReemplazo) {
+        return throwError(
+          () =>
+            new Error(
+              "El periodo no permite reemplazar un documento ya cargado.",
+            ),
+        ).pipe(delay(retardo));
+      }
+    }
+
+    if (esRadicacion) {
+      const faltantes = seleccionados.filter(
+        (documento) =>
+          documento.clasificacion === "obligatorio" &&
+          !eventoDocumento(periodo, registro.proveedorId, documento.id),
+      );
+      if (faltantes.length > 0) {
+        return throwError(
+          () =>
+            new Error(
+              `Faltan ${faltantes.length} documento(s) obligatorio(s) por cargar antes de radicar.`,
+            ),
+        ).pipe(delay(retardo));
+      }
+    }
+
+    const ahora = new Date();
+    const existente = registro.documentoId
+      ? eventoDocumento(periodo, registro.proveedorId, registro.documentoId)
+      : null;
+    const tipo = esRadicacion
+      ? "subsanacion-radicada"
+      : existente
+        ? "documento-reemplazado"
+        : "documento-cargado";
+    const completados = seleccionados.filter((documento) =>
+      eventoDocumento(periodo, registro.proveedorId, documento.id),
+    ).length;
+    const radicado = esRadicacion
+      ? `SUB-${ahora.getFullYear()}-${id.slice(-4)}-${String(
+          periodo.eventos.filter(
+            (evento) => evento.tipo === "subsanacion-radicada",
+          ).length + 1,
+        ).padStart(3, "0")}`
+      : undefined;
+    const justificacion = registro.justificacion?.trim() ?? "";
+    const detalleHtml = esRadicacion
+      ? `Radicación formal de la subsanación con <strong>${completados} de ${seleccionados.length}</strong> documentos habilitados.${
+          justificacion
+            ? ` <p><strong>Justificación:</strong> ${escaparHtml(justificacion)}</p>`
+            : ""
+        }`
+      : `El proveedor ${
+          tipo === "documento-cargado" ? "cargó" : "reemplazó"
+        } el documento <strong>${escaparHtml(
+          registro.documentoNombre ?? "documento",
+        )}</strong> dentro del periodo de subsanación.`;
+
+    const evento: EventoSubsanacion = {
+      id: `evento-${id}-${tipo}-${ahora.getTime()}`,
+      tipo,
+      fecha: isoColombia(ahora),
+      usuario: registro.usuario,
+      nombreUsuario: registro.nombreUsuario,
+      rol: registro.rol,
+      oferenteId: registro.proveedorId,
+      oferenteNombre: oferente.nombre,
+      documentoId: registro.documentoId,
+      documentoNombre: registro.documentoNombre,
+      detalleHtml,
+      justificacion: justificacion || undefined,
+      versionAnterior: registro.versionAnterior,
+      versionNueva: registro.versionNueva,
+      hash: registro.hash,
+      radicado,
+      dentroDelPeriodo: true,
+    };
+    const actualizado: Subsanacion = {
+      ...periodo,
+      eventos: [...periodo.eventos, evento],
     };
 
     this.reemplazarUltimaSubsanacion(id, actualizado);

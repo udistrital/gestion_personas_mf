@@ -16,6 +16,10 @@ import type {
   EstadoSubsanacionOferente,
 } from "src/app/core/constants/estados-solicitud.const";
 import type {
+  EtiquetaLineaTiempo,
+  EventoLineaTiempo,
+} from "src/app/shared/components/linea-tiempo/linea-tiempo.component";
+import type {
   ClasificacionDocumento,
   DocumentoOferente,
 } from "./documentos.model";
@@ -117,6 +121,7 @@ export type TipoEventoSubsanacion =
   | "periodo-abierto"
   | "documento-cargado"
   | "documento-reemplazado"
+  | "subsanacion-radicada"
   | "periodo-ampliado"
   | "periodo-cancelado"
   | "periodo-vencido"
@@ -126,8 +131,33 @@ export type TipoEventoSubsanacion =
 export interface ArchivoSubsanado {
   readonly nombre: string;
   readonly peso: string;
+  /** Peso en bytes; opcional para las semillas antiguas. */
+  readonly pesoBytes?: number;
   /** Hash simulado; el backend emitirá el definitivo. */
   readonly hash: string;
+}
+
+/**
+ * Datos que recibe la capa de datos para registrar un evento del proveedor.
+ *
+ * El servicio completa fecha, autor, id, nombre del oferente y radicado; así la
+ * pantalla no construye eventos por su cuenta.
+ */
+export interface RegistroEventoSubsanacion {
+  readonly tipo:
+    | "documento-cargado"
+    | "documento-reemplazado"
+    | "subsanacion-radicada";
+  readonly proveedorId: string;
+  readonly usuario: string;
+  readonly nombreUsuario?: string;
+  readonly rol: string;
+  readonly documentoId?: string;
+  readonly documentoNombre?: string;
+  readonly justificacion?: string;
+  readonly versionAnterior?: ArchivoSubsanado;
+  readonly versionNueva?: ArchivoSubsanado;
+  readonly hash?: string;
 }
 
 /** Evento del historial de subsanación. */
@@ -556,7 +586,7 @@ export function eventosVigentes(
       nombreUsuario: "Sistema ÁGORA",
       rol: "Automatización institucional",
       detalleHtml:
-        "La recepción de subsanaciones se cerró automáticamente por vencimiento del plazo. No se aceptan más adjuntos (RF-19/RF-16).",
+        "La recepción de subsanaciones se cerró automáticamente por vencimiento del plazo. No se aceptan más adjuntos.",
       dentroDelPeriodo: false,
     });
   }
@@ -609,6 +639,15 @@ export function metaEventoSubsanacion(
         resultado: "Dentro del periodo",
         tonoResultado: "exito",
       };
+    case "subsanacion-radicada":
+      return {
+        titulo: "Subsanación radicada por el proveedor",
+        icono: "send",
+        tono: "exito",
+        etiqueta: "Radicación",
+        resultado: "Dentro del periodo",
+        tonoResultado: "exito",
+      };
     case "periodo-ampliado":
       return {
         titulo: "Plazo de subsanación ampliado",
@@ -646,6 +685,49 @@ export function metaEventoSubsanacion(
         tonoResultado: "advertencia",
       };
   }
+}
+
+/**
+ * Mapea un evento de subsanación al modelo genérico de `linea-tiempo`.
+ *
+ * Lo comparten el historial del solicitante (S-12b) y el del proveedor (P-08):
+ * así el mismo evento se ve igual desde ambos roles y no hay dos traducciones.
+ */
+export function eventoLineaTiempoSubsanacion(
+  evento: EventoSubsanacion,
+): EventoLineaTiempo {
+  const meta = metaEventoSubsanacion(evento.tipo);
+  const etiquetas: EtiquetaLineaTiempo[] = [
+    { texto: meta.etiqueta, tono: "neutro" },
+  ];
+  if (!evento.dentroDelPeriodo) {
+    etiquetas.push({ texto: "Fuera del periodo", tono: "advertencia" });
+  }
+
+  return {
+    id: evento.id,
+    titulo: meta.titulo,
+    icono: meta.icono,
+    tono: meta.tono,
+    fecha: formatoFechaHoraOferente(evento.fecha),
+    fechaIso: evento.fecha,
+    etiquetas,
+    resultado: {
+      texto: meta.resultado,
+      tono: meta.tonoResultado,
+    },
+    detalle: evento.detalleHtml,
+    autor: {
+      usuario: evento.usuario,
+      nombre: evento.nombreUsuario,
+      rol: evento.rol,
+    },
+    evidencia: evento.hash
+      ? { icono: "fingerprint", texto: evento.hash }
+      : evento.radicado
+        ? { icono: "fact_check", texto: `Radicado ${evento.radicado}` }
+        : undefined,
+  };
 }
 
 /* ── Semillas simuladas ───────────────────────────────────────────────────── */
@@ -961,6 +1043,7 @@ const SUBSANACION_0161: Subsanacion = {
       versionNueva: {
         nombre: "anexo_tecnico_blade_dell_firmado_mayorista.pdf",
         peso: "3.6 MB",
+        pesoBytes: 3.6 * 1024 * 1024,
         hash: "a1b2c3d4e5f6a7b8c9d0e1f2a3b4",
       },
       hash: "SHA-256: a1b2c3d4e5f6a7b8c9d0e1f2a3b4",
@@ -1023,9 +1106,330 @@ const SUBSANACION_0161: Subsanacion = {
       nombreUsuario: "Sistema ÁGORA",
       rol: "Automatización institucional",
       detalleHtml:
-        "La recepción de subsanaciones se cerró automáticamente por vencimiento del plazo. No se aceptan más adjuntos (RF-19/RF-16).",
+        "La recepción de subsanaciones se cerró automáticamente por vencimiento del plazo. No se aceptan más adjuntos.",
       dentroDelPeriodo: false,
     },
+  ],
+};
+
+/* ── Escenarios del proveedor del portal (P-08) ───────────────────────────── */
+
+const NOMBRE_PROVEEDOR_PORTAL =
+  "Sistemas & Soluciones Tecnológicas de Colombia S.A.S.";
+
+function oferentePortal(
+  invitacionId: string,
+  valor: number,
+  documentos: readonly DocumentoSubsanable[],
+): OferenteSubsanacion {
+  return {
+    proveedorId: "prov-28",
+    invitacionId,
+    nombre: NOMBRE_PROVEEDOR_PORTAL,
+    nit: "901.482.304-8",
+    tipoPersona: "Persona jurídica",
+    representante: "Carlos Eduardo Mora Gómez",
+    valor,
+    documentos,
+  };
+}
+
+function eventoDocumentoProveedor(
+  id: string,
+  tipo: "documento-cargado" | "documento-reemplazado",
+  fecha: string,
+  documento: DocumentoSubsanable,
+  versionAnterior: ArchivoSubsanado,
+  versionNueva: ArchivoSubsanado,
+  detalle: string,
+): EventoSubsanacion {
+  return {
+    id,
+    tipo,
+    fecha,
+    usuario: "licitaciones",
+    nombreUsuario: "Carlos Eduardo Mora Gómez",
+    rol: "Representante Legal · Proveedor",
+    oferenteId: "prov-28",
+    oferenteNombre: NOMBRE_PROVEEDOR_PORTAL,
+    documentoId: documento.id,
+    documentoNombre: documento.nombre,
+    detalleHtml: detalle,
+    versionAnterior,
+    versionNueva,
+    hash: `SHA-256: ${versionNueva.hash}`,
+    dentroDelPeriodo: true,
+  };
+}
+
+const DOC_RUT_0165 = documentoSeed(
+  "doc-rut",
+  "RUT actualizado (Vigencia 2026)",
+  "obligatorio",
+  "badge",
+  "El RUT aportado no corresponde a la vigencia 2026; adjuntar el documento actualizado con la actividad económica del objeto.",
+  "vencido",
+);
+const DOC_BANCO_0165 = documentoSeed(
+  "doc-certificacion-bancaria",
+  "Certificación bancaria (no mayor a 30 días)",
+  "obligatorio",
+  "account_balance",
+  "La copia escaneada no permite leer el número de cuenta; remitir una certificación legible y vigente.",
+  "ilegible",
+);
+const DOC_CATALOGO_0165 = documentoSeed(
+  "doc-catalogo-tecnico",
+  "Catálogo técnico o brochures de los bienes ofrecidos",
+  "complementario",
+  "menu_book",
+  "Falta la firma digitalizada del fabricante autorizando la garantía on-site de 36 meses.",
+  "incompleto",
+  true,
+);
+
+/** Periodo activo con avance parcial (SOL-2026-0165). */
+const SUBSANACION_0165: Subsanacion = {
+  id: "subsanacion-0165",
+  radicado: "ACT-SUB-2026-0050",
+  solicitudId: "SOL-2026-0165",
+  oferentes: [
+    oferentePortal("INV-0165", 96_780_000, [
+      DOC_RUT_0165,
+      DOC_BANCO_0165,
+      DOC_CATALOGO_0165,
+    ]),
+  ],
+  inicio: isoRelativo(-1, 8, 0),
+  fin: isoRelativo(2, 17, 0),
+  motivoHtml:
+    "<p>Apreciados oferentes: se habilita el periodo de subsanación para allegar las aclaraciones y documentos observados por el comité técnico. Verifiquen con especial atención la vigencia del RUT y la legibilidad de la certificación bancaria. Una vez vencido el plazo, el sistema cerrará la recepción sin excepciones.</p>",
+  notificar: true,
+  permitirReemplazo: true,
+  configuradaPor: AUTOR_SEMILLA,
+  configuradaEl: isoRelativo(-1, 8, 5),
+  ampliaciones: [],
+  eventos: [
+    {
+      id: "evento-0165-apertura",
+      tipo: "periodo-abierto",
+      fecha: isoRelativo(-1, 8, 5),
+      usuario: AUTOR_SEMILLA.usuario,
+      nombreUsuario: AUTOR_SEMILLA.autor,
+      rol: AUTOR_SEMILLA.rol,
+      detalleHtml:
+        "Apertura formal del periodo de subsanación con notificación simulada al proveedor convocado (RF-13).",
+      radicado: "ACT-SUB-2026-0050",
+      dentroDelPeriodo: true,
+    },
+    eventoDocumentoProveedor(
+      "evento-0165-banco",
+      "documento-cargado",
+      isoRelativo(0, 9, 30),
+      DOC_BANCO_0165,
+      {
+        nombre: "Certificacion_Bancaria_9014823048_v1.0.pdf",
+        peso: "640 KB",
+        pesoBytes: 640 * 1024,
+        hash: "b2c3d4e5f6a7b8c9d0e1f2a3b4c5",
+      },
+      {
+        nombre: "certificacion_bancaria_bancolombia_oct2026.pdf",
+        peso: "1.2 MB",
+        pesoBytes: 1.2 * 1024 * 1024,
+        hash: "c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+      },
+      "El proveedor cargó una certificación bancaria legible emitida en los últimos 30 días.",
+    ),
+    eventoDocumentoProveedor(
+      "evento-0165-rut",
+      "documento-reemplazado",
+      isoRelativo(0, 10, 45),
+      DOC_RUT_0165,
+      {
+        nombre: "RUT_9014823048_2025.pdf",
+        peso: "1.4 MB",
+        pesoBytes: 1.4 * 1024 * 1024,
+        hash: "d4e5f6a7b8c9d0e1f2a3b4c5d6e7",
+      },
+      {
+        nombre: "RUT_9014823048_2026_actualizado.pdf",
+        peso: "1.4 MB",
+        pesoBytes: 1.4 * 1024 * 1024,
+        hash: "e5f6a7b8c9d0e1f2a3b4c5d6e7f8",
+      },
+      "El proveedor reemplazó el RUT anterior por la versión vigente 2026.",
+    ),
+  ],
+};
+
+const DOC_RUT_0168 = documentoSeed(
+  "doc-rut",
+  "RUT actualizado (Vigencia 2026)",
+  "obligatorio",
+  "badge",
+  "El RUT aportado corresponde a la vigencia anterior; adjuntar el documento actualizado.",
+  "vencido",
+);
+const DOC_BANCO_0168 = documentoSeed(
+  "doc-certificacion-bancaria",
+  "Certificación bancaria (no mayor a 30 días)",
+  "obligatorio",
+  "account_balance",
+  "La certificación bancaria no es legible; remitir una copia emitida en los últimos 30 días.",
+  "ilegible",
+);
+const DOC_CATALOGO_0168 = documentoSeed(
+  "doc-catalogo-tecnico",
+  "Catálogo técnico o brochures de los bienes ofrecidos",
+  "complementario",
+  "menu_book",
+  "Falta la firma digitalizada del fabricante autorizando la garantía on-site.",
+  "incompleto",
+  true,
+);
+
+/** Periodo vencido con documentos pendientes (SOL-2026-0168). */
+const SUBSANACION_0168: Subsanacion = {
+  id: "subsanacion-0168",
+  radicado: "ACT-SUB-2026-0051",
+  solicitudId: "SOL-2026-0168",
+  oferentes: [
+    oferentePortal("INV-0168", 84_220_000, [
+      DOC_RUT_0168,
+      DOC_BANCO_0168,
+      DOC_CATALOGO_0168,
+    ]),
+  ],
+  inicio: "2026-10-21T08:00:00-05:00",
+  fin: "2026-10-23T17:00:00-05:00",
+  motivoHtml:
+    "<p>Apreciados oferentes: se habilita el periodo de subsanación para corregir los documentos observados. La recepción cierra el 23/10/2026 a las 17:00 COT.</p>",
+  notificar: true,
+  permitirReemplazo: true,
+  configuradaPor: AUTOR_SEMILLA,
+  configuradaEl: "2026-10-21T08:30:00-05:00",
+  ampliaciones: [],
+  eventos: [
+    {
+      id: "evento-0168-apertura",
+      tipo: "periodo-abierto",
+      fecha: "2026-10-21T08:30:00-05:00",
+      usuario: AUTOR_SEMILLA.usuario,
+      nombreUsuario: AUTOR_SEMILLA.autor,
+      rol: AUTOR_SEMILLA.rol,
+      detalleHtml:
+        "Apertura formal del periodo de subsanación con notificación simulada al proveedor convocado (RF-13).",
+      radicado: "ACT-SUB-2026-0051",
+      dentroDelPeriodo: true,
+    },
+    eventoDocumentoProveedor(
+      "evento-0168-rut",
+      "documento-cargado",
+      "2026-10-22T10:00:00-05:00",
+      DOC_RUT_0168,
+      {
+        nombre: "RUT_9014823048_2025.pdf",
+        peso: "1.3 MB",
+        pesoBytes: 1.3 * 1024 * 1024,
+        hash: "f6a7b8c9d0e1f2a3b4c5d6e7f8a9",
+      },
+      {
+        nombre: "RUT_9014823048_2026.pdf",
+        peso: "1.4 MB",
+        pesoBytes: 1.4 * 1024 * 1024,
+        hash: "a7b8c9d0e1f2a3b4c5d6e7f8a9b0",
+      },
+      "El proveedor cargó el RUT actualizado a la vigencia 2026.",
+    ),
+  ],
+};
+
+const DOC_RUT_0169 = documentoSeed(
+  "doc-rut",
+  "RUT actualizado (Vigencia 2026)",
+  "obligatorio",
+  "badge",
+  "El RUT aportado debe acreditar la actividad económica del objeto contractual.",
+  "vencido",
+);
+const DOC_BANCO_0169 = documentoSeed(
+  "doc-certificacion-bancaria",
+  "Certificación bancaria (no mayor a 30 días)",
+  "obligatorio",
+  "account_balance",
+  "La certificación debe permitir leer el número de cuenta y el NIT.",
+  "ilegible",
+);
+
+/** Periodo activo con todos los documentos seleccionados cargados (SOL-2026-0169). */
+const SUBSANACION_0169: Subsanacion = {
+  id: "subsanacion-0169",
+  radicado: "ACT-SUB-2026-0052",
+  solicitudId: "SOL-2026-0169",
+  oferentes: [
+    oferentePortal("INV-0169", 52_400_000, [DOC_RUT_0169, DOC_BANCO_0169]),
+  ],
+  inicio: isoRelativo(-1, 8, 0),
+  fin: isoRelativo(2, 17, 0),
+  motivoHtml:
+    "<p>El periodo de subsanación se habilita para completar los documentos habilitados. Revise el estado de cada requisito antes de radicar.</p>",
+  notificar: true,
+  permitirReemplazo: true,
+  configuradaPor: AUTOR_SEMILLA,
+  configuradaEl: isoRelativo(-1, 8, 5),
+  ampliaciones: [],
+  eventos: [
+    {
+      id: "evento-0169-apertura",
+      tipo: "periodo-abierto",
+      fecha: isoRelativo(-1, 8, 5),
+      usuario: AUTOR_SEMILLA.usuario,
+      nombreUsuario: AUTOR_SEMILLA.autor,
+      rol: AUTOR_SEMILLA.rol,
+      detalleHtml:
+        "Apertura formal del periodo de subsanación con notificación simulada al proveedor convocado (RF-13).",
+      radicado: "ACT-SUB-2026-0052",
+      dentroDelPeriodo: true,
+    },
+    eventoDocumentoProveedor(
+      "evento-0169-rut",
+      "documento-cargado",
+      isoRelativo(0, 8, 50),
+      DOC_RUT_0169,
+      {
+        nombre: "RUT_9014823048_2025.pdf",
+        peso: "1.3 MB",
+        pesoBytes: 1.3 * 1024 * 1024,
+        hash: "b8c9d0e1f2a3b4c5d6e7f8a9b0c1",
+      },
+      {
+        nombre: "RUT_9014823048_2026.pdf",
+        peso: "1.4 MB",
+        pesoBytes: 1.4 * 1024 * 1024,
+        hash: "c9d0e1f2a3b4c5d6e7f8a9b0c1d2",
+      },
+      "El proveedor cargó el RUT actualizado a la vigencia 2026.",
+    ),
+    eventoDocumentoProveedor(
+      "evento-0169-banco",
+      "documento-cargado",
+      isoRelativo(0, 9, 15),
+      DOC_BANCO_0169,
+      {
+        nombre: "Certificacion_Bancaria_9014823048_v1.0.pdf",
+        peso: "640 KB",
+        pesoBytes: 640 * 1024,
+        hash: "d0e1f2a3b4c5d6e7f8a9b0c1d2e3",
+      },
+      {
+        nombre: "certificacion_bancaria_bancolombia_oct2026.pdf",
+        peso: "1.1 MB",
+        pesoBytes: 1.1 * 1024 * 1024,
+        hash: "e1f2a3b4c5d6e7f8a9b0c1d2e3f4",
+      },
+      "El proveedor cargó una certificación bancaria legible y vigente.",
+    ),
   ],
 };
 
@@ -1035,4 +1439,7 @@ export const SUBSANACIONES_MOCK: Readonly<
 > = {
   "SOL-2026-0160": [SUBSANACION_0160],
   "SOL-2026-0161": [SUBSANACION_0161],
+  "SOL-2026-0165": [SUBSANACION_0165],
+  "SOL-2026-0168": [SUBSANACION_0168],
+  "SOL-2026-0169": [SUBSANACION_0169],
 };

@@ -60,6 +60,8 @@ export interface Solicitud {
   readonly decision?: DecisionSolicitud;
   /** Decisiones anteriores cuando se reenvió a validación tras un rechazo. */
   readonly historialDecisiones?: readonly DecisionSolicitud[];
+  /** Último periodo de subsanación configurado (S-12). */
+  readonly subsanacion?: Subsanacion | null;
 }
 
 /** Criterios del formulario de filtros de S-01. */
@@ -108,8 +110,6 @@ export interface SolicitudDetalle extends Solicitud {
   readonly documentos: DocumentosDetalle | null;
   /** Bitácora de la pestaña 7; `null` si la solicitud aún no tiene eventos. */
   readonly historial: HistorialDetalle | null;
-  /** Último periodo de subsanación configurado (S-12). */
-  readonly subsanacion?: Subsanacion | null;
   readonly contadores: ContadoresPestanas;
   /**
    * Fotografía editable de la solicitud (S-04).

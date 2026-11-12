@@ -1,0 +1,86 @@
+<section class="dialogo" aria-labelledby="dialogo-confirmar-subsanacion-titulo">
+  <header class="dialogo__cabecera">
+    <span class="dialogo__icono" aria-hidden="true">
+      <mat-icon>mark_email_read</mat-icon>
+    </span>
+    <div class="dialogo__cabecera-textos">
+      <span class="dialogo__etiqueta">Formalización jurídica</span>
+      <h2 id="dialogo-confirmar-subsanacion-titulo" class="dialogo__titulo">
+        ¿Desea radicar la subsanación?
+      </h2>
+    </div>
+  </header>
+
+  <div class="dialogo__cuerpo">
+    <p class="dialogo__mensaje">
+      Se registrará la radicación formal de la subsanación de la solicitud
+      <strong>{{ datos.solicitudId }}</strong> y se notificará a la dependencia
+      solicitante. Después de radicar, la consulta queda en solo lectura.
+    </p>
+
+    <div class="resumen" aria-label="Resumen de archivos a radicar">
+      <span class="resumen__rotulo">Archivos que se radicarán</span>
+      @if (datos.documentos.length) {
+        <ul class="resumen__lista">
+          @for (documento of datos.documentos; track documento.nombre) {
+            <li>
+              <span class="resumen__nombre">
+                <mat-icon aria-hidden="true">description</mat-icon>
+                <span>{{ documento.nombre }}</span>
+              </span>
+              <span class="resumen__peso">{{ documento.peso }}</span>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="resumen__vacio">No hay archivos cargados para radicar.</p>
+      }
+    </div>
+
+    @if (datos.pendientesObligatorios > 0) {
+      <p class="dialogo__alerta" role="alert">
+        <mat-icon aria-hidden="true">error_outline</mat-icon>
+        <span>
+          Faltan {{ datos.pendientesObligatorios }} documento(s) obligatorio(s)
+          por cargar. Complete la subsanación antes de radicar.
+        </span>
+      </p>
+    }
+
+    @if (datos.justificacion) {
+      <div class="justificacion">
+        <span class="justificacion__rotulo">Justificación registrada</span>
+        <p>{{ datos.justificacion }}</p>
+      </div>
+    }
+
+    <p class="dialogo__hash">
+      <mat-icon aria-hidden="true">fingerprint</mat-icon>
+      <span>{{ datos.hash }}</span>
+    </p>
+
+    <p class="dialogo__nota">
+      <mat-icon aria-hidden="true">info</mat-icon>
+      <span>
+        El hash definitivo, el acta y la constancia PDF los emitirá el gestor
+        documental institucional. En esta demostración son provisionales.
+      </span>
+    </p>
+  </div>
+
+  <footer class="dialogo__pie">
+    <button class="boton-recto" type="button" (click)="revisar()">
+      <mat-icon aria-hidden="true">arrow_back</mat-icon>
+      <span>Cancelar y revisar</span>
+    </button>
+    <button
+      class="boton-recto boton-recto--vino"
+      type="button"
+      [disabled]="!puedeConfirmar"
+      (click)="confirmar()"
+    >
+      <mat-icon aria-hidden="true">verified</mat-icon>
+      <span>Confirmar y radicar</span>
+    </button>
+  </footer>
+</section>

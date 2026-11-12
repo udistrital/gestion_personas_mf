@@ -294,6 +294,45 @@ export class MiCotizacionProveedorComponent implements OnInit {
     return !!detalle && this.permisos.puedeVerResultado(detalle.solicitud);
   }
 
+  get puedeVerSubsanacion(): boolean {
+    const detalle = this.detalle();
+    return (
+      !!detalle &&
+      this.permisos.puedeVerSubsanacionProveedor(
+        detalle.solicitud,
+        detalle.proveedor.id,
+      )
+    );
+  }
+
+  get etiquetaBotonSubsanacion(): string {
+    const detalle = this.detalle();
+    return detalle &&
+      this.permisos.puedeEditarSubsanacion(
+        detalle.solicitud,
+        detalle.proveedor.id,
+      )
+      ? "Subsanar documentos"
+      : "Consultar subsanación";
+  }
+
+  verSubsanacion(): void {
+    const detalle = this.detalle();
+    if (!detalle || !this.puedeVerSubsanacion) {
+      return;
+    }
+    const ruta = this.permisos.rutaAccionInvitacion("subsanar");
+    if (ruta) {
+      void this.router.navigate(
+        ruta
+          .split("/")
+          .map((segmento) =>
+            segmento === ":id" ? detalle.solicitud.id : segmento,
+          ),
+      );
+    }
+  }
+
   verResultado(): void {
     const id = this.detalle()?.solicitud.id;
     if (id && this.puedeVerResultado) {
