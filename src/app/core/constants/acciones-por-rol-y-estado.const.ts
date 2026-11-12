@@ -168,6 +168,7 @@ export const ACCIONES_INVITACION_POR_ROL_Y_ESTADO: AccionesInvitacionPorRolYEsta
       borrador: [
         "ver-detalle-proveedor",
         "ver-mi-cotizacion",
+        "ver-resultado",
         "observar",
         "formular-observacion",
         "responder",
@@ -176,6 +177,7 @@ export const ACCIONES_INVITACION_POR_ROL_Y_ESTADO: AccionesInvitacionPorRolYEsta
       enviada: [
         "ver-detalle-proveedor",
         "ver-mi-cotizacion",
+        "ver-resultado",
         "observar",
         "formular-observacion",
         "actualizar",
@@ -184,6 +186,7 @@ export const ACCIONES_INVITACION_POR_ROL_Y_ESTADO: AccionesInvitacionPorRolYEsta
       "pendiente-ajuste": [
         "ver-detalle-proveedor",
         "ver-mi-cotizacion",
+        "ver-resultado",
         "observar",
         "formular-observacion",
         "actualizar",
@@ -192,30 +195,35 @@ export const ACCIONES_INVITACION_POR_ROL_Y_ESTADO: AccionesInvitacionPorRolYEsta
       excluida: [
         "ver-detalle-proveedor",
         "ver-mi-cotizacion",
+        "ver-resultado",
         "observar",
         "descargar-anexo",
       ],
       aceptada: [
         "ver-detalle-proveedor",
         "ver-mi-cotizacion",
+        "ver-resultado",
         "observar",
         "descargar-anexo",
       ],
       rechazada: [
         "ver-detalle-proveedor",
         "ver-mi-cotizacion",
+        "ver-resultado",
         "observar",
         "descargar-anexo",
       ],
       declinada: [
         "ver-detalle-proveedor",
         "ver-mi-cotizacion",
+        "ver-resultado",
         "observar",
         "descargar-anexo",
       ],
       vencida: [
         "ver-detalle-proveedor",
         "ver-mi-cotizacion",
+        "ver-resultado",
         "observar",
         "descargar-anexo",
       ],

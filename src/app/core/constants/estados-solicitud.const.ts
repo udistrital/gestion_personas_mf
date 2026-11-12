@@ -96,6 +96,7 @@ export type AccionSolicitud =
 export type AccionInvitacionProveedor =
   | "ver-detalle-proveedor"
   | "ver-mi-cotizacion"
+  | "ver-resultado"
   | "observar"
   | "formular-observacion"
   | "responder"
@@ -647,6 +648,11 @@ export const ACCIONES_INVITACION_PROVEEDOR: Readonly<
     etiqueta: "Mi cotización",
     icono: "request_quote",
     ruta: "cotizaciones/bandeja-solicitudes/:id/mi-cotizacion",
+  },
+  "ver-resultado": {
+    etiqueta: "Respuesta del solicitante",
+    icono: "task_alt",
+    ruta: "cotizaciones/bandeja-solicitudes/:id/resultado",
   },
   observar: {
     etiqueta: "Observaciones",

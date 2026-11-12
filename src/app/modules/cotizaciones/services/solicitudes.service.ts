@@ -38,6 +38,8 @@ import type {
   NotificacionDecision,
   RegistroEnvioDecision,
 } from "../models/decision.model";
+import type { ResultadoProveedor } from "../models/resultado-proveedor.model";
+import { construirResultadoProveedor } from "../models/resultado-proveedor.model";
 import {
   CaracteristicasDetalle,
   ContadoresPestanas,
@@ -158,6 +160,17 @@ export abstract class SolicitudesService {
   abstract obtenerDetalleProveedor(
     id: string,
   ): Observable<DetalleInvitacionProveedor | null>;
+
+  /**
+   * Resultado del proceso para el proveedor actual (P-07).
+   *
+   * Es el único punto de enlace con el futuro backend. La implementación debe
+   * devolver la decisión **filtrada** para el proveedor de la sesión: nunca la
+   * decisión, la oferta ni el valor de otro oferente (RN-29).
+   */
+  abstract obtenerResultadoProveedor(
+    id: string,
+  ): Observable<ResultadoProveedor | null>;
 
   /** Refleja la radicación en la invitación para las vistas P-01 y P-02. */
   abstract registrarRespuestaProveedor(
@@ -362,12 +375,62 @@ function decisionSemilla(
 }
 
 /**
+ * Decisión de demostración para una oferta enviada a validación.
+ *
+ * S-11 produce este registro y la validación final la registrarán las vistas
+ * del Ordenador del Gasto. P-07 lo usa para el estado «en validación».
+ */
+function decisionEnValidacionSemilla(
+  solicitudId: string,
+  proveedorId: string,
+  proveedorNombre: string,
+  justificacion: string,
+  fechaEnvio: string,
+  codigo: string,
+): DecisionSolicitud {
+  return {
+    id: `decision-${solicitudId}`,
+    solicitudId,
+    fase: "enviada",
+    invitacionId: `INV-${solicitudId.slice(-4)}`,
+    proveedorId,
+    proveedorNombre,
+    valor: 0,
+    envio: {
+      justificacion,
+      justificacionHtml: `<p>${justificacion}</p>`,
+      usuario: "raquimbayap",
+      autor: "Raúl Quimbaya",
+      rol: "Jefe de Dependencia",
+      fecha: fechaEnvio,
+      fechaIso: "",
+      notificar: true,
+    },
+    notificaciones: [
+      {
+        destinatario: proveedorNombre,
+        correo: "licitaciones@sistemasytecnologia.com.co",
+        fecha: fechaEnvio,
+        fechaIso: "",
+        tipo: "validacion",
+        estadoEntrega: "programada",
+      },
+    ],
+    codigoVerificacion: codigo,
+  };
+}
+
+/**
  * Escenarios de S-11 compartidos por el área solicitante y el portal del
  * proveedor.
  *
  * - `0160`: cerrada, con oferta seleccionada y decisión pendiente (envío).
  * - `0161`: decisión aprobada por las vistas futuras del OG (solo lectura).
  * - `0162`: decisión rechazada / declaratoria de desierta (solo lectura).
+ * - `0163`: decisión aprobada del proveedor del portal (P-07 favorable).
+ * - `0164`: decisión rechazada del proveedor del portal (P-07 rechazada).
+ * - `0166`: solicitud cancelada, sin decisión (P-07 cancelada).
+ * - `0167`: oferta enviada a validación (P-07 en validación).
  */
 const SOLICITUDES_DECISION_MOCK: readonly Solicitud[] = [
   {
@@ -438,6 +501,110 @@ const SOLICITUDES_DECISION_MOCK: readonly Solicitud[] = [
       "22/09/2026 10:05 COT",
       "25/09/2026 16:40 COT",
       "SIGA-2026-DEC-99842",
+    ),
+  },
+  {
+    id: "SOL-2026-0163",
+    vigencia: 2026,
+    unidadEjecutora: "1",
+    titulo:
+      "Adquisición de infraestructura de servidores Blade y componentes de red de alta disponibilidad para el Centro de Datos Institucional",
+    apertura: "15/09/2026",
+    cierre: "05/11/2026",
+    dependencia: "DIRTEI - División de Recursos Tecnológicos e Informáticos",
+    tipoCotizacion: "BIEN",
+    estado: "adjudicada",
+    version: "v1.0",
+    revision: 1,
+    ultimaModificacion: "07/11/2026 09:40 COT",
+    fechaLimiteObservaciones: "2026-10-10T18:00:00-05:00",
+    decision: decisionSemilla(
+      "SOL-2026-0163",
+      "aprobada",
+      "prov-28",
+      "Sistemas & Soluciones Tecnológicas de Colombia S.A.S.",
+      "Se selecciona la oferta por cumplir el 100% de las especificaciones técnicas y presentar la mejor relación costo-beneficio.",
+      "Se ratifica la selección de la oferta por cumplir los requisitos técnicos y presupuestales del proceso. Se solicita al proveedor alistar la documentación para la formalización.",
+      "06/11/2026 10:15 COT",
+      "07/11/2026 09:40 COT",
+      "SIGA-2026-DEC-99851",
+    ),
+  },
+  {
+    id: "SOL-2026-0164",
+    vigencia: 2026,
+    unidadEjecutora: "2",
+    titulo:
+      "Adquisición e implantación de infraestructura de red inalámbrica Wi-Fi 6 para los campus Macarena A y B",
+    apertura: "15/09/2026",
+    cierre: "03/11/2026",
+    dependencia: "Oficina de Infraestructura y Servicios",
+    tipoCotizacion: "BIEN",
+    estado: "desierta",
+    version: "v1.0",
+    revision: 1,
+    ultimaModificacion: "04/11/2026 15:05 COT",
+    fechaLimiteObservaciones: "2026-10-10T18:00:00-05:00",
+    decision: decisionSemilla(
+      "SOL-2026-0164",
+      "rechazada",
+      "prov-28",
+      "Sistemas & Soluciones Tecnológicas de Colombia S.A.S.",
+      "La oferta cumple las especificaciones técnicas, pero la validación documental identificó inconsistencias en los soportes habilitantes.",
+      "Se rechaza la cotización por inconsistencias documentales en los soportes habilitantes. La desestimación no genera inhabilidad para futuros procesos de selección.",
+      "04/11/2026 10:20 COT",
+      "04/11/2026 15:05 COT",
+      "SIGA-2026-DEC-99852",
+    ),
+  },
+  {
+    id: "SOL-2026-0166",
+    vigencia: 2026,
+    unidadEjecutora: "3",
+    titulo:
+      "Suministro de equipos de laboratorio para la Facultad de Ingeniería",
+    apertura: "15/09/2026",
+    cierre: "28/10/2026",
+    dependencia: "Facultad de Ingeniería",
+    tipoCotizacion: "BIEN",
+    estado: "cancelada",
+    version: "v1.0",
+    revision: 1,
+    ultimaModificacion: "29/10/2026 08:30 COT",
+    fechaLimiteObservaciones: "2026-10-10T18:00:00-05:00",
+    cancelacion: {
+      estadoAnterior: "en-evaluacion",
+      justificacion:
+        "La necesidad institucional fue replanteada antes de la evaluación definitiva.",
+      fecha: "29/10/2026 08:30 COT",
+      usuario: "raquimbayap",
+      autor: "Raúl Quimbaya",
+      rol: "Solicitante",
+      destinatariosNotificados: 12,
+    },
+  },
+  {
+    id: "SOL-2026-0167",
+    vigencia: 2026,
+    unidadEjecutora: "1",
+    titulo:
+      "Suministro de estaciones de trabajo para el laboratorio de análisis de datos",
+    apertura: "15/09/2026",
+    cierre: "06/11/2026",
+    dependencia: "Vicerrectoría Académica",
+    tipoCotizacion: "BIEN",
+    estado: "en-aprobacion",
+    version: "v1.0",
+    revision: 1,
+    ultimaModificacion: "07/11/2026 11:20 COT",
+    fechaLimiteObservaciones: "2026-10-10T18:00:00-05:00",
+    decision: decisionEnValidacionSemilla(
+      "SOL-2026-0167",
+      "prov-28",
+      "Sistemas & Soluciones Tecnológicas de Colombia S.A.S.",
+      "Se envía la oferta seleccionada a validación del Ordenador del Gasto por cumplir los requisitos técnicos y presupuestales.",
+      "07/11/2026 11:20 COT",
+      "SIGA-2026-DEC-99853",
     ),
   },
 ];
@@ -1265,7 +1432,9 @@ const INVITACIONES_PROVEEDOR_MOCK: readonly InvitacionProveedor[] = [
   {
     id: "INV-0161",
     solicitudId: "SOL-2026-0161",
-    estado: "aceptada",
+    // El proveedor del portal no fue el seleccionado: S-11 registró la
+    // decisión sobre otro oferente.
+    estado: "rechazada",
     fechaRadicacion: "2026-10-12T10:20:00-05:00",
     respuestaVigente: {
       version: "v1.0",
@@ -1314,6 +1483,110 @@ const INVITACIONES_PROVEEDOR_MOCK: readonly InvitacionProveedor[] = [
       },
     ],
   },
+  {
+    id: "INV-0163",
+    solicitudId: "SOL-2026-0163",
+    estado: "aceptada",
+    fechaRadicacion: "2026-10-14T13:09:00-05:00",
+    respuestaVigente: {
+      version: "v1.0",
+      revision: 1,
+      radicado: "COT-RESP-SOL-2026-0163-V1",
+      fecha: "2026-10-14T13:09:00-05:00",
+      versionSolicitud: "v1.0",
+      usuario: "900.842.119-4",
+      total: 98_450_000,
+    },
+    versionesRespuesta: [
+      {
+        version: "v1.0",
+        revision: 1,
+        radicado: "COT-RESP-SOL-2026-0163-V1",
+        fecha: "2026-10-14T13:09:00-05:00",
+        versionSolicitud: "v1.0",
+        usuario: "900.842.119-4",
+        total: 98_450_000,
+      },
+    ],
+  },
+  {
+    id: "INV-0164",
+    solicitudId: "SOL-2026-0164",
+    estado: "rechazada",
+    fechaRadicacion: "2026-10-14T13:09:00-05:00",
+    respuestaVigente: {
+      version: "v1.0",
+      revision: 1,
+      radicado: "COT-RESP-SOL-2026-0164-V1",
+      fecha: "2026-10-14T13:09:00-05:00",
+      versionSolicitud: "v1.0",
+      usuario: "900.842.119-4",
+      total: 84_220_000,
+    },
+    versionesRespuesta: [
+      {
+        version: "v1.0",
+        revision: 1,
+        radicado: "COT-RESP-SOL-2026-0164-V1",
+        fecha: "2026-10-14T13:09:00-05:00",
+        versionSolicitud: "v1.0",
+        usuario: "900.842.119-4",
+        total: 84_220_000,
+      },
+    ],
+  },
+  {
+    id: "INV-0166",
+    solicitudId: "SOL-2026-0166",
+    estado: "enviada",
+    fechaRadicacion: "2026-10-14T13:09:00-05:00",
+    respuestaVigente: {
+      version: "v1.0",
+      revision: 1,
+      radicado: "COT-RESP-SOL-2026-0166-V1",
+      fecha: "2026-10-14T13:09:00-05:00",
+      versionSolicitud: "v1.0",
+      usuario: "900.842.119-4",
+      total: 56_780_000,
+    },
+    versionesRespuesta: [
+      {
+        version: "v1.0",
+        revision: 1,
+        radicado: "COT-RESP-SOL-2026-0166-V1",
+        fecha: "2026-10-14T13:09:00-05:00",
+        versionSolicitud: "v1.0",
+        usuario: "900.842.119-4",
+        total: 56_780_000,
+      },
+    ],
+  },
+  {
+    id: "INV-0167",
+    solicitudId: "SOL-2026-0167",
+    estado: "enviada",
+    fechaRadicacion: "2026-10-14T13:09:00-05:00",
+    respuestaVigente: {
+      version: "v1.0",
+      revision: 1,
+      radicado: "COT-RESP-SOL-2026-0167-V1",
+      fecha: "2026-10-14T13:09:00-05:00",
+      versionSolicitud: "v1.0",
+      usuario: "900.842.119-4",
+      total: 45_900_000,
+    },
+    versionesRespuesta: [
+      {
+        version: "v1.0",
+        revision: 1,
+        radicado: "COT-RESP-SOL-2026-0167-V1",
+        fecha: "2026-10-14T13:09:00-05:00",
+        versionSolicitud: "v1.0",
+        usuario: "900.842.119-4",
+        total: 45_900_000,
+      },
+    ],
+  },
 ];
 
 const ORDENADORES_PROVEEDOR_MOCK: Readonly<Record<string, string>> = {
@@ -1333,6 +1606,10 @@ const ORDENADORES_PROVEEDOR_MOCK: Readonly<Record<string, string>> = {
   "SOL-2026-0160": "Dr. Ricardo Gómez Morales",
   "SOL-2026-0161": "Dr. Ricardo Gómez Morales",
   "SOL-2026-0162": "Dr. Ricardo Gómez Morales",
+  "SOL-2026-0163": "Dr. Ricardo Gómez Morales",
+  "SOL-2026-0164": "Dr. Ricardo Gómez Morales",
+  "SOL-2026-0166": "Dr. Ricardo Gómez Morales",
+  "SOL-2026-0167": "Dr. Ricardo Gómez Morales",
 };
 
 const MAPA_TIPOS: Readonly<Record<string, TipoCotizacion>> = {
@@ -1507,6 +1784,10 @@ const CDP_POR_SOLICITUD: Readonly<Record<string, number>> = {
   "SOL-2026-0160": 320_000_000,
   "SOL-2026-0161": 320_000_000,
   "SOL-2026-0162": 320_000_000,
+  "SOL-2026-0163": 320_000_000,
+  "SOL-2026-0164": 320_000_000,
+  "SOL-2026-0166": 320_000_000,
+  "SOL-2026-0167": 320_000_000,
 };
 
 /**
@@ -3600,6 +3881,7 @@ interface VersionGuardada {
  * - `?mockRetardo=3000` → retardo en ms (ver el loader más tiempo)
  * - `?mockDetalle=error` → falla la carga del detalle (estado de error de S-03)
  * - `?mockDetalleProveedor=error` → falla la carga del detalle P-02
+ * - `?mockResultado=error` → falla la consulta del resultado P-07
  * - `?mockNoInvitado=1` → simula una solicitud sin invitación para el proveedor
  * - `?mockGuardar=error` → falla el guardado de la edición (S-04)
  * - `?mockCancelar=error` → falla una cancelación (S-05)
@@ -3812,9 +4094,7 @@ export class SolicitudesServiceMock extends SolicitudesService {
     const invitacion = invitacionBase
       ? this.invitacionesActualizadas.get(id) ?? invitacionBase
       : undefined;
-    const solicitud = SOLICITUDES_PROVEEDOR_MOCK.find(
-      (item) => item.id === id,
-    );
+    const solicitud = this.fila(id);
     if (!invitacion || !solicitud) {
       return of(null).pipe(delay(retardo));
     }
@@ -3861,6 +4141,52 @@ export class SolicitudesServiceMock extends SolicitudesService {
             }
           : null,
     }).pipe(delay(retardo));
+  }
+
+  /**
+   * Resultado de P-07.
+   *
+   * La decisión se filtra con `construirResultadoProveedor`, que solo devuelve
+   * la del proveedor de la sesión. El resto de la solicitud (historial,
+   * decisiones de otros, ofertas ajenas) no sale de este método.
+   */
+  obtenerResultadoProveedor(
+    id: string,
+  ): Observable<ResultadoProveedor | null> {
+    const params = new URLSearchParams(window.location.search);
+    const retardo = Number(params.get("mockRetardo")) || 700;
+
+    if (params.get("mockResultado") === "error") {
+      return throwError(
+        () =>
+          new Error(
+            "No fue posible consultar la respuesta del solicitante. Intente nuevamente.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    if (params.get("mockNoInvitado") === "1") {
+      return of(null).pipe(delay(retardo));
+    }
+
+    const invitacionBase = INVITACIONES_PROVEEDOR_MOCK.find(
+      (item) => item.solicitudId === id,
+    );
+    const invitacion = invitacionBase
+      ? this.invitacionesActualizadas.get(id) ?? invitacionBase
+      : undefined;
+    const solicitud = this.fila(id);
+    if (!invitacion || !solicitud) {
+      return of(null).pipe(delay(retardo));
+    }
+
+    return of(
+      construirResultadoProveedor(
+        solicitud,
+        invitacion,
+        proveedorPublicoMock(),
+      ),
+    ).pipe(delay(retardo));
   }
 
   registrarRespuestaProveedor(
@@ -4905,7 +5231,8 @@ export class SolicitudesServiceMock extends SolicitudesService {
   private fila(id: string): Solicitud | undefined {
     return (
       this.filasEditadas.get(id) ??
-      DATOS_MOCK.find((solicitud) => solicitud.id === id)
+      DATOS_MOCK.find((solicitud) => solicitud.id === id) ??
+      SOLICITUDES_PROVEEDOR_MOCK.find((solicitud) => solicitud.id === id)
     );
   }
 

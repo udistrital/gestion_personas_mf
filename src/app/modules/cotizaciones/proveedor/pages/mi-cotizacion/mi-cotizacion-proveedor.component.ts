@@ -288,6 +288,24 @@ export class MiCotizacionProveedorComponent implements OnInit {
     }
   }
 
+  /** true si el proceso cerró y el proveedor puede consultar el resultado. */
+  get puedeVerResultado(): boolean {
+    const detalle = this.detalle();
+    return !!detalle && this.permisos.puedeVerResultado(detalle.solicitud);
+  }
+
+  verResultado(): void {
+    const id = this.detalle()?.solicitud.id;
+    if (id && this.puedeVerResultado) {
+      void this.router.navigate([
+        "/cotizaciones",
+        "bandeja-solicitudes",
+        id,
+        "resultado",
+      ]);
+    }
+  }
+
   /** Provisional: no hay generador de PDF institucional en el cliente. */
   descargarConstancia(): void {
     const proyeccion = this.proyeccion();

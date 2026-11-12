@@ -1,0 +1,386 @@
+<plantilla-pagina-contenedora
+  [breadcrumb]="breadcrumb"
+  [title]="tituloPagina"
+  icon="task_alt"
+  [mostrarBotonRegresar]="true"
+  (regresar)="volver()"
+>
+  <div class="resultado-proveedor">
+    @if (vista() === "cargando") {
+      <div class="esqueleto-pagina" aria-busy="true" aria-live="polite">
+        <span class="visually-oculto">
+          Cargando la respuesta del solicitante…
+        </span>
+        <div class="esqueleto-pagina__cabecera" aria-hidden="true">
+          <span class="esqueleto esqueleto--titulo"></span>
+          <span class="esqueleto esqueleto--linea"></span>
+          <span class="esqueleto esqueleto--barra"></span>
+        </div>
+        <div class="esqueleto-pagina__metricas" aria-hidden="true">
+          @for (bloque of [1, 2, 3]; track bloque) {
+            <span class="esqueleto esqueleto--metrica"></span>
+          }
+        </div>
+        <div class="esqueleto-pagina__tabla" aria-hidden="true">
+          @for (fila of [1, 2, 3, 4]; track fila) {
+            <span class="esqueleto esqueleto--fila"></span>
+          }
+        </div>
+      </div>
+    } @else if (vista() === "error") {
+      <section class="estado" role="alert">
+        <mat-icon class="estado__icono estado__icono--error" aria-hidden="true">
+          error_outline
+        </mat-icon>
+        <h2 class="estado__titulo">No pudimos cargar la respuesta</h2>
+        <p class="estado__texto">{{ error() }}</p>
+        <div class="estado__acciones">
+          <button class="boton-recto boton-recto--vino" type="button" (click)="reintentar()">
+            <mat-icon aria-hidden="true">refresh</mat-icon>
+            <span>Reintentar</span>
+          </button>
+          <button class="boton-recto" type="button" (click)="volver()">
+            <mat-icon aria-hidden="true">arrow_back</mat-icon>
+            <span>Volver a mis solicitudes</span>
+          </button>
+        </div>
+      </section>
+    } @else if (vista() === "no-encontrada") {
+      <section class="estado" role="status" aria-live="polite">
+        <mat-icon class="estado__icono" aria-hidden="true">search_off</mat-icon>
+        <h2 class="estado__titulo">Solicitud no encontrada o sin acceso</h2>
+        <p class="estado__texto">
+          No se encontró una invitación que permita consultar la respuesta del
+          solicitante. Verifique el enlace o regrese a su bandeja de
+          solicitudes.
+        </p>
+        <button class="boton-recto" type="button" (click)="volver()">
+          <mat-icon aria-hidden="true">arrow_back</mat-icon>
+          <span>Volver a mis solicitudes</span>
+        </button>
+      </section>
+    } @else if (detalle(); as d) {
+      <header class="cabecera">
+        <div class="cabecera__principal">
+          <div class="cabecera__textos">
+            <div class="cabecera__chips">
+              <span class="chip chip--recto">
+                <span class="cabecera__chip-etiqueta">N.° Solicitud:</span>
+                <span class="cabecera__chip-valor">{{ d.solicitud.id }}</span>
+              </span>
+              <span class="chip chip--recto">
+                <span class="cabecera__chip-etiqueta">Vigencia:</span>
+                <span class="cabecera__chip-valor">{{ d.solicitud.vigencia }}</span>
+              </span>
+              <chip-estado [estado]="d.solicitud.estado"></chip-estado>
+              <span class="chip chip--recto">{{ etiquetaProceso }}</span>
+              @if (resultado(); as r) {
+                <span
+                  class="chip"
+                  [class.chip--exito]="r.estado === 'favorable'"
+                  [class.chip--error]="r.estado === 'rechazada-ordenador'"
+                  [class.chip--advertencia]="r.estado === 'no-disponible' || r.estado === 'en-validacion'"
+                  [class.chip--neutro]="r.estado === 'no-seleccionado' || r.estado === 'sin-respuesta' || r.estado === 'cancelada'"
+                >
+                  <mat-icon aria-hidden="true">{{ datosBanner()?.icono }}</mat-icon>
+                  <span>{{ datosBanner()?.etiqueta }}</span>
+                </span>
+              }
+            </div>
+
+            <p class="cabecera__objeto">{{ d.solicitud.titulo }}</p>
+
+            <div class="cabecera__meta">
+              <span class="cabecera__dato">
+                <mat-icon aria-hidden="true">domain</mat-icon>
+                <span>{{ d.solicitud.dependencia }}</span>
+              </span>
+              <span class="cabecera__dato">
+                <mat-icon aria-hidden="true">event_available</mat-icon>
+                <span>
+                  Cierre:
+                  <strong>
+                    <time>{{ d.solicitud.cierre ?? "Por definir" }}</time>
+                  </strong>
+                </span>
+              </span>
+              @if (d.invitacion.respuestaVigente?.radicado; as radicado) {
+                <span class="cabecera__dato">
+                  <mat-icon aria-hidden="true">tag</mat-icon>
+                  <span>
+                    Radicado:
+                    <strong class="cabecera__radicado">{{ radicado }}</strong>
+                  </span>
+                </span>
+              }
+            </div>
+          </div>
+
+          <div class="cabecera__acciones">
+            @if (puedeVerCotizacion) {
+              <button class="boton-recto" type="button" (click)="verMiCotizacion()">
+                <mat-icon aria-hidden="true">request_quote</mat-icon>
+                <span>Ver mi cotización</span>
+              </button>
+            }
+            @if (puedeActualizar) {
+              <button
+                class="boton-recto"
+                type="button"
+                [disabled]="actualizando()"
+                (click)="refrescarResultado()"
+              >
+                <mat-icon aria-hidden="true">refresh</mat-icon>
+                <span>{{ actualizando() ? "Actualizando…" : "Actualizar estado" }}</span>
+              </button>
+            }
+            <button class="boton-recto" type="button" (click)="volver()">
+              <mat-icon aria-hidden="true">arrow_back</mat-icon>
+              <span>Volver a mis solicitudes</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      @if (error()) {
+        <p class="cabecera__error" role="alert" aria-live="assertive">
+          <mat-icon aria-hidden="true">error_outline</mat-icon>
+          <span>{{ error() }}</span>
+        </p>
+      }
+
+      @if (pasos().length) {
+        <linea-estados
+          [pasos]="pasos()"
+          label="Etapa del proceso de selección"
+        ></linea-estados>
+      }
+
+      @if (datosBanner(); as banner) {
+        <banner-resultado
+          [datos]="banner"
+          (descargar)="descargarConstancia()"
+        ></banner-resultado>
+      }
+
+      <div class="panorama">
+        <tarjeta-identidad-proveedor
+          class="identidad-panel"
+          [nombre]="d.proveedor.nombre"
+          [nit]="d.proveedor.nit"
+          etiquetaDocumento="NIT"
+          [tipoPersona]="d.proveedor.tipoPersona"
+          [ciudad]="d.proveedor.ciudad"
+          [correo]="d.proveedor.correo"
+          [direccion]="d.proveedor.direccion"
+          [representante]="d.proveedor.representante"
+          [version]="d.solicitud.version"
+          [seleccionado]="resultado()?.estado === 'favorable'"
+          etiquetaSeleccion="Seleccionado (favorable)"
+          [nivelTitulo]="2"
+        ></tarjeta-identidad-proveedor>
+
+        <aside class="callout" aria-labelledby="callout-validez">
+          <mat-icon aria-hidden="true">gavel</mat-icon>
+          <div>
+            <h2 id="callout-validez">Validez probatoria e inmutabilidad</h2>
+            <p>
+              La cotización y la decisión se registran bajo el Estatuto de
+              Contratación de la Universidad Distrital y la Ley 527 de 1999.
+              La decisión del Ordenador del Gasto es única y definitiva; esta
+              pantalla es de solo lectura.
+            </p>
+          </div>
+        </aside>
+      </div>
+
+      @if (resultado(); as r) {
+        @if (mostrarMensaje) {
+          <tarjeta-seccion
+            icono="rate_review"
+            titulo="Mensaje del solicitante"
+            [subtitulo]="
+              r.estado === 'no-seleccionado'
+                ? 'Retroalimentación general del proceso de selección.'
+                : 'Respuesta o recomendaciones registradas en la decisión.'
+            "
+          >
+            @if (r.decision; as decision) {
+              <div class="mensaje">
+                <div
+                  class="mensaje__texto"
+                  [innerHTML]="decision.justificacionHtml | htmlSeguro"
+                ></div>
+                <div class="mensaje__meta">
+                  <span>{{ decision.autor }} · {{ decision.rol }}</span>
+                  <time [attr.datetime]="decision.fechaIso || null">
+                    {{ decision.fecha }}
+                  </time>
+                </div>
+              </div>
+            } @else {
+              <p class="mensaje__general">
+                Agradecemos su participación en este proceso. Su empresa
+                permanece activa en el banco de proveedores de la Universidad
+                para futuras convocatorias.
+              </p>
+              <etiqueta-por-definir
+                texto="Por definir"
+                detalle="La respuesta personalizada para proveedores no seleccionados aún no se registra en S-11."
+              ></etiqueta-por-definir>
+            }
+          </tarjeta-seccion>
+        }
+
+        @if (cotizacion(); as c) {
+          <app-resumen-mi-cotizacion
+            [proyeccion]="c"
+            [cerrada]="true"
+          ></app-resumen-mi-cotizacion>
+          <div class="enlace-cotizacion">
+            <button class="boton-recto" type="button" (click)="verMiCotizacion()">
+              <mat-icon aria-hidden="true">open_in_new</mat-icon>
+              <span>Ver mi cotización completa</span>
+            </button>
+          </div>
+        } @else if (errorCotizacion()) {
+          <section class="estado estado--compacto" role="alert">
+            <mat-icon class="estado__icono estado__icono--error" aria-hidden="true">
+              error_outline
+            </mat-icon>
+            <h2 class="estado__titulo">No pudimos cargar su cotización</h2>
+            <p class="estado__texto">{{ errorCotizacion() }}</p>
+            <button class="boton-recto" type="button" (click)="reintentar()">
+              <mat-icon aria-hidden="true">refresh</mat-icon>
+              <span>Reintentar</span>
+            </button>
+          </section>
+        } @else if (!puedeVerCotizacion) {
+          <section class="sin-cotizacion" aria-labelledby="sin-cotizacion-titulo">
+            <span class="sin-cotizacion__icono" aria-hidden="true">
+              <mat-icon>request_quote</mat-icon>
+            </span>
+            <div>
+              <h2 id="sin-cotizacion-titulo">Sin cotización radicada</h2>
+              <p>
+                No hay una respuesta de su empresa para este proceso. Puede
+                consultar el detalle de la solicitud y las condiciones
+                publicadas.
+              </p>
+              <button class="boton-recto" type="button" (click)="verSolicitud()">
+                <mat-icon aria-hidden="true">visibility</mat-icon>
+                <span>Ver solicitud</span>
+              </button>
+            </div>
+          </section>
+        }
+
+        @if (r.decision; as decision) {
+          <tarjeta-seccion
+            icono="fact_check"
+            titulo="Decisión institucional"
+            subtitulo="Datos del dictamen registrado por el Ordenador del Gasto."
+          >
+            <div class="datos-grid datos-grid--tres">
+              <par-etiqueta-valor
+                etiqueta="Resultado"
+                [valor]="decision.resultado === 'aprobada' ? 'Aprobada' : 'Rechazada'"
+                icono="verified"
+              />
+              <par-etiqueta-valor
+                etiqueta="Emitida por"
+                [valor]="decision.autor"
+                [nota]="decision.rol"
+                icono="badge"
+              />
+              <par-etiqueta-valor
+                etiqueta="Fecha de la decisión"
+                [valor]="decision.fecha"
+                icono="event_available"
+              />
+              <par-etiqueta-valor
+                etiqueta="Código de verificación"
+                [valor]="decision.codigoVerificacion"
+                icono="fingerprint"
+              />
+              <par-etiqueta-valor
+                etiqueta="Notificación"
+                [valor]="r.notificacion ? r.notificacion.fecha : 'Por definir'"
+                [nota]="r.notificacion ? r.notificacion.estadoEntrega : ''"
+                icono="mark_email_read"
+              />
+            </div>
+          </tarjeta-seccion>
+        }
+
+        <tarjeta-seccion
+          icono="badge"
+          titulo="Equipo responsable"
+          subtitulo="Intervinientes institucionales del proceso de selección."
+        >
+          <div class="datos-grid datos-grid--tres">
+            <par-etiqueta-valor
+              etiqueta="Solicitante / gestor técnico"
+              [valor]="d.solicitud.general.responsable.nombres + ' ' + d.solicitud.general.responsable.apellidos"
+              [nota]="d.solicitud.general.responsable.identificacion"
+              icono="person"
+            />
+            <par-etiqueta-valor
+              etiqueta="Ordenador del gasto"
+              [valor]="d.solicitud.general.responsable.ordenadorGasto"
+              [nota]="d.solicitud.general.responsable.ordenadorCargo"
+              icono="account_balance"
+            />
+            <par-etiqueta-valor
+              etiqueta="Dependencia solicitante"
+              [valor]="d.solicitud.general.responsable.dependenciaSolicitante"
+              icono="apartment"
+            />
+            <par-etiqueta-valor
+              etiqueta="Dependencia destino"
+              [valor]="d.solicitud.general.responsable.dependenciaDestino"
+              icono="moving"
+            />
+            <par-etiqueta-valor
+              etiqueta="Unidad ejecutora"
+              [valor]="d.solicitud.general.responsable.unidadEjecutora"
+              icono="domain"
+            />
+            <par-etiqueta-valor
+              etiqueta="Dependencia de la solicitud"
+              [valor]="d.solicitud.dependencia"
+              icono="business"
+            />
+          </div>
+        </tarjeta-seccion>
+
+        @if (datosBanner(); as banner) {
+          <tarjeta-seccion
+            icono="route"
+            titulo="Próximos pasos"
+            [subtitulo]="banner.proximoPaso.titulo"
+          >
+            <div class="proximo">
+              <span class="proximo__icono" aria-hidden="true">
+                <mat-icon>{{ banner.proximoPaso.icono }}</mat-icon>
+              </span>
+              <p>{{ banner.proximoPaso.detalle }}</p>
+            </div>
+          </tarjeta-seccion>
+        }
+
+        <aside class="nota-solo-lectura" aria-labelledby="nota-solo-lectura-titulo">
+          <mat-icon aria-hidden="true">lock</mat-icon>
+          <div>
+            <h2 id="nota-solo-lectura-titulo">Consulta de solo lectura</h2>
+            <p>
+              La consulta es de solo lectura. La decisión final y la respuesta
+              son únicas y definitivas (RN-35 y RN-42); esta pantalla no
+              permite editar, reenviar ni replicar la cotización.
+            </p>
+          </div>
+        </aside>
+      }
+    }
+  </div>
+</plantilla-pagina-contenedora>

@@ -151,6 +151,12 @@
                   <mat-icon aria-hidden="true">download</mat-icon>
                   <span>Descargar constancia</span>
                 </button>
+                @if (puedeVerResultado) {
+                  <button class="boton-recto" type="button" (click)="verResultado()">
+                    <mat-icon aria-hidden="true">task_alt</mat-icon>
+                    <span>Ver respuesta del solicitante</span>
+                  </button>
+                }
               }
               <button class="boton-recto" type="button" (click)="volver()">
                 <mat-icon aria-hidden="true">arrow_back</mat-icon>

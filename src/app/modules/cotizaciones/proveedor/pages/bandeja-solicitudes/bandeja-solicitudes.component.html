@@ -183,6 +183,12 @@
                           : estadoActualizacion
                       "
                     />
+                    @if (permisos.puedeVerResultado(fila.solicitud)) {
+                      <span class="bandeja__resultado">
+                        <mat-icon aria-hidden="true">task_alt</mat-icon>
+                        <span>Resultado disponible</span>
+                      </span>
+                    }
                   </td>
                   @if (hayColumnaAcciones()) {
                     <td class="bandeja__td bandeja__td--acciones">

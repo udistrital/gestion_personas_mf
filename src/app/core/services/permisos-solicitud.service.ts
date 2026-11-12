@@ -50,7 +50,10 @@ import type {
 } from "src/app/modules/cotizaciones/models/invitacion-proveedor.model";
 import type { OferenteTablero } from "src/app/modules/cotizaciones/models/oferente.model";
 import type { Subsanacion } from "src/app/modules/cotizaciones/models/subsanacion.model";
-import { cierreSolicitudVencido } from "src/app/modules/cotizaciones/models/solicitud.model";
+import {
+  cierreSolicitudVencido,
+  solicitudCerrada,
+} from "src/app/modules/cotizaciones/models/solicitud.model";
 import type { Solicitud } from "src/app/modules/cotizaciones/models/solicitud.model";
 import {
   ROLES_SOLICITANTE,
@@ -642,6 +645,9 @@ export class PermisosSolicitudService {
         if (accion === "ver-mi-cotizacion") {
           return true;
         }
+        if (accion === "ver-resultado") {
+          return this.puedeVerResultado(solicitud);
+        }
         if (accion === "ver-detalle-proveedor") {
           return true;
         }
@@ -741,6 +747,22 @@ export class PermisosSolicitudService {
   /** true si el usuario puede consultar su propia cotización (P-06). */
   puedeVerMiCotizacion(): boolean {
     return this.rol.estaCargado() && this.rol.tieneRol(ROL_PROVEEDOR);
+  }
+
+  /**
+   * true si el proveedor puede consultar la respuesta del solicitante (P-07).
+   *
+   * Exige el rol PROVEEDOR y un proceso cerrado: el resultado solo se publica
+   * después del periodo de cotización (RN-29). Aunque la decisión esté
+   * pendiente, la pantalla explica el estado; por eso el permiso no depende de
+   * que exista una decisión final.
+   */
+  puedeVerResultado(solicitud: Pick<Solicitud, "estado" | "cierre">): boolean {
+    return (
+      this.rol.estaCargado() &&
+      this.rol.tieneRol(ROL_PROVEEDOR) &&
+      solicitudCerrada(solicitud)
+    );
   }
 
   /**

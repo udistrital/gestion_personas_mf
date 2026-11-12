@@ -7,6 +7,7 @@ import { detalleProveedorResolver } from "./pages/detalle-solicitud/detalle-prov
 import { ObservacionesProveedorComponent } from "./pages/observaciones/observaciones-proveedor.component";
 import { ResponderSolicitudComponent } from "./pages/responder-solicitud/responder-solicitud.component";
 import { MiCotizacionProveedorComponent } from "./pages/mi-cotizacion/mi-cotizacion-proveedor.component";
+import { ResultadoProveedorComponent } from "./pages/resultado/resultado-proveedor.component";
 
 const routes: Routes = [
   {
@@ -39,6 +40,12 @@ const routes: Routes = [
     component: MiCotizacionProveedorComponent,
     resolve: { detalleProveedor: detalleProveedorResolver },
     title: "ÁGORA · Mi cotización",
+  },
+  {
+    path: ":id/resultado",
+    component: ResultadoProveedorComponent,
+    resolve: { detalleProveedor: detalleProveedorResolver },
+    title: "ÁGORA · Respuesta del solicitante",
   },
   {
     path: ":id",

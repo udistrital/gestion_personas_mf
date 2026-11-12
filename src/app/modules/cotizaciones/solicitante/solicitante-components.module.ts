@@ -3,7 +3,7 @@ import { SharedModule } from "src/app/shared/shared.module";
 import { DialogoCancelarSolicitudComponent } from "./components/dialogo-cancelar-solicitud/dialogo-cancelar-solicitud.component";
 import { DialogoConfirmarDecisionComponent } from "./components/dialogo-confirmar-decision/dialogo-confirmar-decision.component";
 import { DialogoSubsanacionComponent } from "./components/dialogo-subsanacion/dialogo-subsanacion.component";
-import { TarjetaIdentidadProveedorComponent } from "../components/tarjeta-identidad-proveedor/tarjeta-identidad-proveedor.component";
+import { TarjetaIdentidadProveedorModule } from "../components/tarjeta-identidad-proveedor/tarjeta-identidad-proveedor.module";
 
 /** Componentes presentacionales compartidos entre S-01, S-03, S-10, S-11 y S-12. */
 @NgModule({
@@ -11,14 +11,13 @@ import { TarjetaIdentidadProveedorComponent } from "../components/tarjeta-identi
     DialogoCancelarSolicitudComponent,
     DialogoConfirmarDecisionComponent,
     DialogoSubsanacionComponent,
-    TarjetaIdentidadProveedorComponent,
   ],
-  imports: [SharedModule],
+  imports: [SharedModule, TarjetaIdentidadProveedorModule],
   exports: [
     DialogoCancelarSolicitudComponent,
     DialogoConfirmarDecisionComponent,
     DialogoSubsanacionComponent,
-    TarjetaIdentidadProveedorComponent,
+    TarjetaIdentidadProveedorModule,
   ],
 })
 export class SolicitanteComponentsModule {}

@@ -207,6 +207,22 @@ const CONFIG_OFERENTES: Readonly<
     // Decisión rechazada / declaratoria de desierta (solo lectura).
     responderian: 2,
   },
+  "SOL-2026-0163": {
+    // Resultado favorable de P-07: el proveedor del portal debe tener oferta.
+    responderian: 28,
+  },
+  "SOL-2026-0164": {
+    // Resultado rechazado por el OG: el proveedor del portal debe tener oferta.
+    responderian: 28,
+  },
+  "SOL-2026-0166": {
+    // Proceso cancelado con oferta radicada.
+    responderian: 28,
+  },
+  "SOL-2026-0167": {
+    // Oferta enviada a validación del OG.
+    responderian: 28,
+  },
 };
 
 function dosDigitos(valor: number): string {

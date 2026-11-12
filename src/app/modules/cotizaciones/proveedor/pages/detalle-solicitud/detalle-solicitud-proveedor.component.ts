@@ -164,6 +164,29 @@ export class DetalleSolicitudProveedorComponent implements OnInit {
     );
   }
 
+  /** true si el proceso cerró y el proveedor puede consultar el resultado. */
+  get puedeVerResultado(): boolean {
+    const detalle = this.detalle();
+    return !!detalle && this.permisos.puedeVerResultado(detalle.solicitud);
+  }
+
+  verResultado(): void {
+    const detalle = this.detalle();
+    if (!detalle || !this.puedeVerResultado) {
+      return;
+    }
+    const ruta = this.permisos.rutaAccionInvitacion("ver-resultado");
+    if (ruta) {
+      void this.router.navigate(
+        ruta
+          .split("/")
+          .map((segmento) =>
+            segmento === ":id" ? detalle.solicitud.id : segmento,
+          ),
+      );
+    }
+  }
+
   verMiCotizacion(): void {
     const detalle = this.detalle();
     if (!detalle || !this.puedeVerMiCotizacion) {

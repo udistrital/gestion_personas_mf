@@ -18,6 +18,9 @@ import { AvisoAdendaComponent } from "../components/aviso-adenda/aviso-adenda.co
 import { ResumenDiferenciasModule } from "../components/resumen-diferencias/resumen-diferencias.module";
 import { ExitoActualizacionComponent } from "./pages/actualizar-respuesta/exito-actualizacion/exito-actualizacion.component";
 import { MiCotizacionProveedorComponent } from "./pages/mi-cotizacion/mi-cotizacion-proveedor.component";
+import { ResultadoProveedorComponent } from "./pages/resultado/resultado-proveedor.component";
+import { BannerResultadoComponent } from "./pages/resultado/components/banner-resultado/banner-resultado.component";
+import { TarjetaIdentidadProveedorModule } from "../components/tarjeta-identidad-proveedor/tarjeta-identidad-proveedor.module";
 import { ResumenMiCotizacionComponent } from "./pages/mi-cotizacion/components/resumen-respuesta/resumen-respuesta.component";
 import { TablaItemsOfertadosComponent } from "./pages/mi-cotizacion/components/tabla-items-ofertados/tabla-items-ofertados.component";
 import { ValoresOfertaComponent } from "./pages/mi-cotizacion/components/valores-oferta/valores-oferta.component";
@@ -34,6 +37,8 @@ import { EstadoVacioMiCotizacionComponent } from "./pages/mi-cotizacion/componen
     AvisoAdendaComponent,
     ExitoActualizacionComponent,
     MiCotizacionProveedorComponent,
+    ResultadoProveedorComponent,
+    BannerResultadoComponent,
     ResumenMiCotizacionComponent,
     TablaItemsOfertadosComponent,
     ValoresOfertaComponent,
@@ -51,6 +56,7 @@ import { EstadoVacioMiCotizacionComponent } from "./pages/mi-cotizacion/componen
     DialogoConfirmarEnvioModule,
     DialogoEnvioExitosoModule,
     ResumenDiferenciasModule,
+    TarjetaIdentidadProveedorModule,
     ProveedorRoutingModule,
   ],
 })

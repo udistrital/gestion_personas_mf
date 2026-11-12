@@ -103,6 +103,16 @@
                     <span>Mi cotización</span>
                   </button>
                 }
+                @if (puedeVerResultado) {
+                  <button
+                    class="boton-recto"
+                    type="button"
+                    (click)="verResultado()"
+                  >
+                    <mat-icon aria-hidden="true">task_alt</mat-icon>
+                    <span>Respuesta del solicitante</span>
+                  </button>
+                }
                 @if (puedeObservar) {
                   <button
                     class="boton-recto boton-recto--vino"
@@ -169,6 +179,30 @@
           >
             {{ textoCierre() }}
           </p>
+        }
+
+        @if (puedeVerResultado) {
+          <section
+            class="detalle-proveedor__aviso detalle-proveedor__aviso--cerrada"
+            role="status"
+          >
+            <mat-icon aria-hidden="true">task_alt</mat-icon>
+            <div>
+              <h2>Respuesta del solicitante</h2>
+              <p>
+                El proceso ya cerró. Consulte el estado de su resultado y el
+                mensaje registrado, si existe.
+              </p>
+              <button
+                class="boton-recto detalle-proveedor__aviso-accion"
+                type="button"
+                (click)="verResultado()"
+              >
+                <mat-icon aria-hidden="true">task_alt</mat-icon>
+                <span>Consultar respuesta del solicitante</span>
+              </button>
+            </div>
+          </section>
         }
 
         @if (d.adenda) {
