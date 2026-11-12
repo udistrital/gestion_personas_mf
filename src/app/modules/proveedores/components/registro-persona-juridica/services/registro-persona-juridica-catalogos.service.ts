@@ -102,7 +102,7 @@ export interface CatalogosPersonaJuridica {
 // para que un catálogo lento no bloquee el resto del formulario.
 export type CatalogosTercerosParametros = Omit<
   CatalogosPersonaJuridica,
-  "tipoVia" | "tipoInterior" | "actividadEconomicaCiiu"
+  "tipoVia" | "tipoInterior" | "actividadEconomicaCiiu" | "tipoDocumento"
 >;
 
 interface OpcionesParametro {
@@ -236,10 +236,6 @@ export class RegistroPersonaJuridicaCatalogosService {
       tipoConformacion: parametro("TIPO_CONFORMACIÓN"),
       // Catálogos que usa el formulario y que no figuran en PERSONA_JURIDICA_CONSUMO.md.
       responsabilidadFiscal: parametro("RESP_FIS"),
-      tipoDocumento: parametro("TIP_DOC", {
-        codigoArea: "IT",
-        exigirCodigo: true,
-      }),
       tipoDeclaracion: parametro("TIP_DEC", { codigoArea: "IT" }),
     });
   }

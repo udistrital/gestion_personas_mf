@@ -123,9 +123,11 @@
       [esUltimoPaso]="pasoActual === pasos.length"
       [estadoMensaje]="estadoMensaje"
       [estadoDetalle]="estadoDetalle"
-      tituloFinal="Guardar y Registrar"
+      [mostrarGuardar]="false"
+      [deshabilitarContinuar]="guardando || envioIndeterminado"
+      tituloFinal="Guardar paso"
       iconoFinal="draw"
-      (regreso)="pasoActual = pasoActual - 1"
+      (regreso)="regresar()"
       (continuar)="continuar()"
       (finalizar)="finalizar()"
     ></barra-acciones-formulario>

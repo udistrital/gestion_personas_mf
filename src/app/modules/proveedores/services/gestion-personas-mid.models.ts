@@ -1,7 +1,7 @@
 export interface DatosIdentificacionMid {
   Numero: string;
   TipoDocumentoId?: number;
-  DigitoVerificacion?: string;
+  DigitoVerificacion?: number;
   CiudadExpedicion?: number;
   FechaExpedicion?: string;
 }
@@ -43,7 +43,7 @@ export interface ProveedorNaturalMid {
 
 export interface ProveedorJuridicoMid {
   NombreComercial?: string;
-  MatriculaMercantil?: number;
+  MatriculaMercantil?: string;
   FechaConstitucion?: string;
   FechaRenovacion?: string;
   ReportaBeneficiosFinales?: boolean;
@@ -80,6 +80,7 @@ export type NuevoProveedorJuridicoMidPayload = Omit<
 
 export interface ConsultaProveedorMidRequest {
   id: number;
+  fields?: string[];
 }
 
 export interface TerceroMidActualizacion extends TerceroMid {
@@ -87,7 +88,7 @@ export interface TerceroMidActualizacion extends TerceroMid {
 }
 
 export interface CuentaBancariaMidActualizacion extends CuentaBancariaMid {
-  Id: number;
+  Id?: number;
 }
 
 export interface ProveedorNaturalMidActualizacion

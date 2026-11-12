@@ -1,6 +1,6 @@
-import { HttpClient, HttpErrorResponse } from "@angular/common/http";
+import { HttpClient, HttpErrorResponse, HttpParams } from "@angular/common/http";
 import { Injectable } from "@angular/core";
-import { defer, map, Observable } from "rxjs";
+import { catchError, defer, map, Observable, switchMap, throwError } from "rxjs";
 import { environment } from "src/environments/environment";
 import {
   ActualizarProveedorJuridicoMidPayload,
@@ -26,6 +26,13 @@ export class GestionPersonasMidProtocolError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "GestionPersonasMidProtocolError";
+  }
+}
+
+export class GestionPersonasMidCatalogError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "GestionPersonasMidCatalogError";
   }
 }
 
@@ -254,6 +261,13 @@ export function resumirErrorMid(
   error: unknown,
   operacion: OperacionMid = "registro",
 ): ResultadoEnvioMid {
+  if (error instanceof GestionPersonasMidCatalogError) {
+    return {
+      tipo: "error",
+      mensaje: "No se pudo resolver el tipo de registro del proveedor.",
+      detalle: error.message,
+    };
+  }
   if (error instanceof GestionPersonasMidConfigurationError) {
     return {
       tipo: "error",
@@ -345,7 +359,16 @@ export class GestionPersonasMidService {
         );
       }
       const baseUrl = this.urlBaseConfigurada();
-      const request: ConsultaProveedorMidRequest = { id };
+      const request: ConsultaProveedorMidRequest = {
+        id,
+        fields: [
+          "Tercero",
+          "Tercero.DatosIdentificacion",
+          "ProveedorNatural",
+          "ProveedorJuridico",
+          "CuentaBancaria",
+        ],
+      };
       return this.http
         .post<unknown>(`${baseUrl}/proveedor/consulta`, request)
         .pipe(map(interpretarRespuestaMid));
@@ -379,14 +402,16 @@ export class GestionPersonasMidService {
   ): Observable<RespuestaMid> {
     return defer(() => {
       const baseUrl = this.urlBaseConfigurada();
-      const tipoRegistroId = this.resolverTipoRegistroId("P_NATURAL");
-      const request: ProveedorNaturalMidRequest = {
-        ...payload,
-        TipoRegistroId: tipoRegistroId,
-      };
-      return this.http
-        .post<unknown>(`${baseUrl}/proveedor`, request)
-        .pipe(map(interpretarRespuestaMid));
+      return this.resolverTipoRegistroId("P_NATURAL").pipe(
+        switchMap((tipoRegistroId) => {
+          const request: ProveedorNaturalMidRequest = {
+            ...payload,
+            TipoRegistroId: tipoRegistroId,
+          };
+          return this.http.post<unknown>(`${baseUrl}/proveedor`, request);
+        }),
+        map(interpretarRespuestaMid),
+      );
     });
   }
 
@@ -395,14 +420,16 @@ export class GestionPersonasMidService {
   ): Observable<RespuestaMid> {
     return defer(() => {
       const baseUrl = this.urlBaseConfigurada();
-      const tipoRegistroId = this.resolverTipoRegistroId("P_JURIDICA");
-      const request: ProveedorJuridicoMidRequest = {
-        ...payload,
-        TipoRegistroId: tipoRegistroId,
-      };
-      return this.http
-        .post<unknown>(`${baseUrl}/proveedor`, request)
-        .pipe(map(interpretarRespuestaMid));
+      return this.resolverTipoRegistroId("P_JURIDICA").pipe(
+        switchMap((tipoRegistroId) => {
+          const request: ProveedorJuridicoMidRequest = {
+            ...payload,
+            TipoRegistroId: tipoRegistroId,
+          };
+          return this.http.post<unknown>(`${baseUrl}/proveedor`, request);
+        }),
+        map(interpretarRespuestaMid),
+      );
     });
   }
 
@@ -421,7 +448,55 @@ export class GestionPersonasMidService {
 
   private resolverTipoRegistroId(
     codigo: "P_NATURAL" | "P_JURIDICA",
-  ): number {
-    return codigo === "P_NATURAL" ? 1 : 2;
+  ): Observable<number> {
+    const url = `${environment.TERCEROS_SERVICE.replace(/\/+$/, "")}/tipo_contribuyente`;
+    const params = new HttpParams()
+      .set("query", `CodigoAbreviacion:${codigo},Activo:true`)
+      .set("limit", "2");
+
+    return this.http.get<unknown>(url, { params }).pipe(
+      map((respuesta) => {
+        if (!Array.isArray(respuesta)) {
+          throw new GestionPersonasMidCatalogError(
+            "La consulta de tipo_contribuyente no devolvió un arreglo.",
+          );
+        }
+        const coincidencias = respuesta
+          .filter(esRegistro)
+          .filter(
+            (registro) =>
+              registro["Activo"] === true
+              && registro["CodigoAbreviacion"] === codigo,
+          );
+        if (coincidencias.length !== 1) {
+          throw new GestionPersonasMidCatalogError(
+            `Se esperaba un único tipo_contribuyente activo con código ${codigo}; se encontraron ${coincidencias.length}.`,
+          );
+        }
+        const id = coincidencias[0]["Id"];
+        if (typeof id !== "number" || !Number.isSafeInteger(id) || id <= 0) {
+          throw new GestionPersonasMidCatalogError(
+            `El tipo_contribuyente ${codigo} no contiene un Id entero positivo.`,
+          );
+        }
+        return id;
+      }),
+      catchError((error: unknown) => {
+        if (error instanceof GestionPersonasMidCatalogError) {
+          return throwError(() => error);
+        }
+        const detalle = error instanceof HttpErrorResponse
+          ? `HTTP ${error.status || "sin respuesta"} al consultar Terceros CRUD.`
+          : error instanceof Error
+            ? error.message
+            : "Error no identificado al consultar Terceros CRUD.";
+        return throwError(
+          () =>
+            new GestionPersonasMidCatalogError(
+              `No se pudo resolver ${codigo} desde /tipo_contribuyente. ${detalle}`,
+            ),
+        );
+      }),
+    );
   }
 }

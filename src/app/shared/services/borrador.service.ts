@@ -1,8 +1,7 @@
 /**
  * Contrato mínimo de todo borrador persistido en el navegador.
  *
- * Los tipos concretos (`BorradorRegistroPersonaNatural`,
- * `BorradorSolicitudNueva`, ...) lo extienden y añaden sus propios campos.
+ * Los tipos concretos lo extienden y añaden sus propios campos.
  */
 export interface BorradorBase {
   /** Esquema del borrador; cambia solo si cambia su forma de guardarse. */
@@ -18,9 +17,8 @@ export interface BorradorBase {
  *
  * Solo se preocupa por la clave, la versión y el manejo de errores de
  * almacenamiento; cada tipo de borrador aporta su modelo. No persiste
- * archivos: las capas que manejan `File` (registro de proveedores) descartan
- * los binarios antes de llamar a `guardar`, y los asistentes no guardan
- * archivos en el borrador (se suben en el servidor cuando exista).
+ * archivos; cada consumidor es responsable de preparar los datos antes de
+ * llamar a `guardar`.
  *
  * No se registra como provider: cada consumidor decide la clave
  * (`super("agora.…")`).

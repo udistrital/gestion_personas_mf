@@ -15,17 +15,15 @@ import {
   ValidatorFn,
   Validators,
 } from "@angular/forms";
-import { Router } from "@angular/router";
-import { asapScheduler, of, Subject } from "rxjs";
+import { ActivatedRoute, Router } from "@angular/router";
+import { asapScheduler, Observable, of, Subject } from "rxjs";
 import {
   catchError,
-  debounceTime,
   observeOn,
   switchMap,
   tap,
   timeout,
 } from "rxjs/operators";
-import { BorradorRegistroService } from "../../services/borrador-registro.service";
 import {
   CatalogosPersonaNaturalPaso1,
   CatalogosPersonaNaturalPaso2,
@@ -33,6 +31,9 @@ import {
   RegistroPersonaNaturalCatalogosService,
 } from "./registro-persona-natural-catalogos.service";
 import {
+  combinarProveedorMidMaterializado,
+  mapearActualizacionPersonaNaturalMid,
+  mapearConsultaPersonaNaturalMid,
   mapearPersonaNaturalMid,
 } from "../../services/gestion-personas-mid.mapper";
 import {
@@ -41,6 +42,10 @@ import {
   resumirErrorMid,
   resumirRespuestaMid,
 } from "../../services/gestion-personas-mid.service";
+import {
+  ProveedorMidMaterializado,
+  RespuestaMid,
+} from "../../services/gestion-personas-mid.models";
 import { textoPlanoDesdeHtml } from "src/app/shared/utils/texto-plano";
 import { ResumenRadicacionProveedor } from "./registro-persona-natural-exito/registro-persona-natural-exito.model";
 import { CIIU_PERSONA_NATURAL } from "./registro-persona-natural-paso-4/ciiu-persona-natural";
@@ -102,7 +107,7 @@ export class RegistroPersonaNaturalComponent implements OnInit {
 
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
-  private readonly borradorRegistroService = inject(BorradorRegistroService);
+  private readonly route = inject(ActivatedRoute);
   private readonly catalogosService = inject(RegistroPersonaNaturalCatalogosService);
   private readonly gestionPersonasMidService = inject(GestionPersonasMidService);
 
@@ -132,15 +137,17 @@ export class RegistroPersonaNaturalComponent implements OnInit {
   currentStep = 1;
   readonly totalSteps = 4;
 
-  borradorRestaurado = false;
-  estadoMensaje = "Aún no hay un borrador guardado";
+  estadoMensaje = "Sin cambios pendientes";
   estadoDetalle =
-    "Los cambios se guardarán en este navegador al escribir o al pulsar Guardar Borrador";
-  private suspenderAutoguardado = false;
-  private registroEnviandose = false;
-  private registroProcesado = false;
+    "Los pasos se guardan en el MID al continuar; para reabrir un registro se requiere ?id=<Id del proveedor>.";
+  guardando = false;
   envioIndeterminado = false;
+  reconciliacionPendiente = false;
+  hayCambiosPendientes = false;
   proveedorMidId?: number;
+  private proveedorPersistido?: ProveedorMidMaterializado;
+  private omisionesPendientes: string[] = [];
+  private registroParcial = false;
 
   /** true cuando el MID confirmó el registro y debe mostrarse la constancia. */
   registroCompletado = false;
@@ -854,13 +861,90 @@ export class RegistroPersonaNaturalComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.restaurarBorrador();
+    this.cargarProveedorPorIdDeRuta();
     this.cargarCatalogosPaso1();
     this.cargarCatalogosPaso2();
     this.cargarCatalogoCiiu();
     this.personaNaturalForm.valueChanges
-      .pipe(debounceTime(800), takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.persistirBorrador(true));
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.hayCambiosPendientes = true;
+        if (!this.guardando) {
+          this.estadoMensaje = "Hay cambios pendientes de guardar";
+          this.estadoDetalle = "Los cambios se envían al MID al guardar el paso.";
+        }
+      });
+  }
+
+  private cargarProveedorPorIdDeRuta(): void {
+    const valorId = this.route.snapshot.queryParamMap.get("id");
+    if (valorId === null) {
+      return;
+    }
+    const id = Number(valorId);
+    if (!Number.isSafeInteger(id) || id <= 0) {
+      this.envioIndeterminado = true;
+      this.estadoMensaje = "No se pudo consultar el proveedor";
+      this.estadoDetalle = "El parámetro de consulta id debe ser un entero positivo.";
+      return;
+    }
+
+    this.guardando = true;
+    this.estadoMensaje = "Consultando información guardada en el MID";
+    this.estadoDetalle = `Consultando el proveedor ${id}.`;
+    this.gestionPersonasMidService
+      .consultarProveedor(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (respuesta) => {
+          const resultado = resumirRespuestaMid(
+            respuesta,
+            [],
+            "consulta",
+          );
+          if (
+            !respuesta.Success
+            || !respuesta.Data
+            || respuesta.Data.Id !== id
+          ) {
+            this.guardando = false;
+            this.envioIndeterminado = true;
+            this.estadoMensaje = resultado.mensaje;
+            this.estadoDetalle = resultado.detalle;
+            return;
+          }
+          try {
+            this.proveedorPersistido = respuesta.Data;
+            this.proveedorMidId = id;
+            this.envioIndeterminado = false;
+            this.personaNaturalForm.patchValue(
+              mapearConsultaPersonaNaturalMid(respuesta.Data),
+              { emitEvent: false },
+            );
+            this.hayCambiosPendientes = false;
+            this.registroParcial = true;
+            this.estadoMensaje = "Información recuperada parcialmente del MID";
+            this.estadoDetalle = [
+              resultado.detalle,
+              "Solo se reconstruyen los campos disponibles en el contrato escribible actual.",
+            ].filter(Boolean).join(" ");
+          } catch (error) {
+            this.envioIndeterminado = true;
+            this.estadoMensaje = "No se pudo reconstruir el proveedor";
+            this.estadoDetalle =
+              error instanceof Error ? error.message : "Error no identificado.";
+          } finally {
+            this.guardando = false;
+          }
+        },
+        error: (error: unknown) => {
+          const resultado = resumirErrorMid(error, "consulta");
+          this.guardando = false;
+          this.envioIndeterminado = true;
+          this.estadoMensaje = resultado.mensaje;
+          this.estadoDetalle = resultado.detalle;
+        },
+      });
   }
 
   // =========================================================
@@ -872,32 +956,21 @@ export class RegistroPersonaNaturalComponent implements OnInit {
   // =========================================================
 
   continuar(): void {
+    if (this.guardando || this.envioIndeterminado) {
+      return;
+    }
     if (!this.validarPasoActual()) {
       this.marcarPasoActualComoTouched();
       return;
     }
 
     if (this.currentStep < this.totalSteps) {
-      this.currentStep++;
-      this.persistirBorrador(true);
+      this.guardarPasoActual(true);
     }
   }
 
   finalizarRegistro(): void {
-    if (this.registroEnviandose) {
-      return;
-    }
-    if (this.registroProcesado) {
-      this.estadoMensaje = "Este registro ya fue enviado al MID";
-      this.estadoDetalle = this.proveedorMidId
-        ? `Id del proveedor: ${this.proveedorMidId}. No se enviará un segundo POST.`
-        : "No se enviará un segundo POST.";
-      return;
-    }
-    if (this.envioIndeterminado) {
-      this.estadoMensaje = "El resultado del envío anterior sigue sin confirmarse";
-      this.estadoDetalle =
-        "Verifique el estado del registro antes de volver a enviarlo.";
+    if (this.guardando || this.envioIndeterminado) {
       return;
     }
     if (this.personaNaturalForm.invalid) {
@@ -907,59 +980,234 @@ export class RegistroPersonaNaturalComponent implements OnInit {
       return;
     }
 
-    let mapeo: ReturnType<typeof mapearPersonaNaturalMid>;
+    this.guardarPasoActual(false);
+  }
+
+  private guardarPasoActual(avanzar: boolean): void {
+    if (this.reconciliacionPendiente && this.proveedorMidId) {
+      this.reconciliarProveedor(
+        this.proveedorMidId,
+        avanzar,
+        this.omisionesPendientes,
+      );
+      return;
+    }
+
+    if (this.currentStep === 3) {
+      this.registroParcial = true;
+      this.hayCambiosPendientes = true;
+      this.estadoMensaje = "Paso 3 pendiente de integración";
+      this.estadoDetalle =
+        "El MID no dispone de una operación de carga de documentos; los archivos no se enviaron.";
+      if (avanzar) {
+        this.currentStep++;
+      }
+      return;
+    }
+
+    let solicitud: Observable<RespuestaMid>;
+    let omisiones: string[];
+    let operacion: "registro" | "actualizacion" =
+      this.currentStep === 1 && !this.proveedorMidId
+        ? "registro"
+        : "actualizacion";
     try {
-      mapeo = mapearPersonaNaturalMid(this.personaNaturalForm.getRawValue());
+      if (this.currentStep === 1 && !this.proveedorMidId) {
+        const mapeo = mapearPersonaNaturalMid(
+          this.personaNaturalForm.getRawValue(),
+        );
+        solicitud = this.gestionPersonasMidService.registrarPersonaNatural(
+          mapeo.payload,
+        );
+        omisiones = mapeo.omisiones;
+        operacion = "registro";
+      } else {
+        if (!this.proveedorMidId || !this.proveedorPersistido) {
+          this.estadoMensaje = "No se puede actualizar sin reconciliar el proveedor";
+          this.estadoDetalle =
+            "Consulte el estado del registro en el MID antes de continuar.";
+          return;
+        }
+        const valor = this.personaNaturalForm.getRawValue();
+        const formularioPaso = {
+          identificacion: this.currentStep === 1 ? valor.identificacion : {},
+          experiencia: this.currentStep === 1 ? valor.experiencia : {},
+          afiliacionesFinanzas:
+            this.currentStep === 2 ? valor.afiliacionesFinanzas : {},
+          actividadDeclaracion:
+            this.currentStep === 4 ? valor.actividadDeclaracion : {},
+        };
+        const mapeo = mapearActualizacionPersonaNaturalMid(
+          formularioPaso,
+          this.proveedorPersistido,
+        );
+        if (this.currentStep === 2) {
+          mapeo.omisiones.push(
+            "Afiliaciones, información financiera y contacto de tesorería no se enviaron: el MID no declara esos nodos como escribibles.",
+          );
+        }
+        if (this.currentStep === 4) {
+          mapeo.omisiones.push(
+            "Actividades CIIU y consentimiento no se enviaron: el MID no declara esos nodos como escribibles.",
+          );
+        }
+        solicitud = this.gestionPersonasMidService.actualizarPersonaNatural(
+          mapeo.payload,
+        );
+        omisiones = mapeo.omisiones;
+        operacion = "actualizacion";
+      }
     } catch (error) {
-      const resultado = resumirErrorMid(error);
+      const resultado = resumirErrorMid(error, operacion);
       this.estadoMensaje = resultado.mensaje;
       this.estadoDetalle = resultado.detalle;
       return;
     }
 
-    this.registroEnviandose = true;
-    this.estadoMensaje = "Enviando el registro al MID";
-    this.estadoDetalle = "No cierre esta página mientras se procesa la solicitud.";
+    this.guardando = true;
+    this.estadoMensaje = "Guardando paso en el MID";
+    this.estadoDetalle = "Esperando confirmación del servicio.";
+    solicitud.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (respuesta) => {
+        const resultado = resumirRespuestaMid(
+          respuesta,
+          omisiones,
+          operacion,
+        );
+        if (resultado.tipo === "rejected" || resultado.tipo === "error") {
+          this.guardando = false;
+          this.estadoMensaje = resultado.mensaje;
+          this.estadoDetalle = resultado.detalle;
+          return;
+        }
+        if (resultado.tipo === "indeterminate") {
+          this.guardando = false;
+          this.envioIndeterminado = true;
+          this.proveedorMidId = resultado.proveedorId ?? this.proveedorMidId;
+          this.estadoMensaje = resultado.mensaje;
+          this.estadoDetalle = resultado.detalle;
+          return;
+        }
+
+        const id = resultado.proveedorId ?? this.proveedorMidId;
+        if (id === undefined) {
+          this.guardando = false;
+          this.envioIndeterminado = true;
+          this.estadoMensaje = "No se pudo confirmar el Id del proveedor";
+          this.estadoDetalle =
+            "El resultado de escritura es incierto. No se repetirá automáticamente.";
+          return;
+        }
+        this.proveedorMidId = id;
+        this.registroParcial = this.registroParcial
+          || omisiones.length > 0
+          || resultado.tipo === "partial";
+        this.reconciliacionPendiente = true;
+        this.omisionesPendientes = omisiones;
+        this.reconciliarProveedor(id, avanzar, omisiones);
+      },
+      error: (error: unknown) => {
+        const resultado = resumirErrorMid(error, operacion);
+        this.guardando = false;
+        this.envioIndeterminado = resultado.tipo === "indeterminate";
+        this.estadoMensaje = resultado.mensaje;
+        this.estadoDetalle = resultado.detalle;
+      },
+    });
+  }
+
+  private reconciliarProveedor(
+    id: number,
+    avanzar: boolean,
+    omisiones: string[],
+  ): void {
+    this.guardando = true;
+    this.estadoMensaje = "Reconciliando con el MID";
+    this.estadoDetalle = `Consultando el proveedor ${id} antes de continuar.`;
     this.gestionPersonasMidService
-      .registrarPersonaNatural(mapeo.payload)
+      .consultarProveedor(id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (respuesta) => {
-          const resultado = resumirRespuestaMid(respuesta, mapeo.omisiones);
-          this.registroEnviandose = false;
-          this.registroProcesado =
-            resultado.tipo === "success" || resultado.tipo === "partial";
-          this.envioIndeterminado = resultado.tipo === "indeterminate";
-          this.proveedorMidId = resultado.proveedorId;
-          this.estadoMensaje = resultado.mensaje;
-          this.estadoDetalle = resultado.detalle;
+          const resultado = resumirRespuestaMid(
+            respuesta,
+            [],
+            "consulta",
+          );
+          if (
+            !respuesta.Success
+            || !respuesta.Data
+            || respuesta.Data.Id !== id
+          ) {
+            this.guardando = false;
+            this.reconciliacionPendiente = true;
+            this.estadoMensaje = resultado.mensaje;
+            this.estadoDetalle = resultado.detalle;
+            return;
+          }
 
-          if (resultado.tipo === "success" || resultado.tipo === "partial") {
+          try {
+            this.proveedorPersistido = this.proveedorPersistido
+              ? combinarProveedorMidMaterializado(
+                this.proveedorPersistido,
+                respuesta.Data,
+              )
+              : respuesta.Data;
+            this.personaNaturalForm.patchValue(
+              mapearConsultaPersonaNaturalMid(this.proveedorPersistido),
+              { emitEvent: false },
+            );
+          } catch (error) {
+            this.guardando = false;
+            this.reconciliacionPendiente = true;
+            this.estadoMensaje = "No se pudo reconstruir el proveedor";
+            this.estadoDetalle =
+              error instanceof Error ? error.message : "Error no identificado.";
+            return;
+          }
+
+          this.guardando = false;
+          this.envioIndeterminado = false;
+          this.reconciliacionPendiente = false;
+          this.hayCambiosPendientes = this.registroParcial
+            || resultado.tipo === "partial";
+          this.registroParcial = this.registroParcial
+            || resultado.tipo === "partial";
+          if (omisiones.length > 0 || this.registroParcial) {
+            this.estadoMensaje = "Guardado parcial confirmado por el MID";
+            this.estadoDetalle = [
+              `Id del proveedor: ${id}.`,
+              ...omisiones,
+              resultado.tipo === "partial" ? resultado.detalle : "",
+            ].filter(Boolean).join(" ");
+          } else {
+            this.estadoMensaje = "Guardado confirmado por el MID";
+            this.estadoDetalle = `Id del proveedor: ${id}.`;
+          }
+
+          if (avanzar) {
+            this.currentStep++;
+          } else if (!this.hayCambiosPendientes) {
             this.prepararConstancia(resultado);
           }
         },
         error: (error: unknown) => {
-          const resultado = resumirErrorMid(error);
-          this.registroEnviandose = false;
-          this.envioIndeterminado = resultado.tipo === "indeterminate";
-          this.estadoMensaje = resultado.mensaje;
+          const resultado = resumirErrorMid(error, "consulta");
+          this.guardando = false;
+          this.reconciliacionPendiente = true;
+          this.estadoMensaje = "Reconciliación pendiente";
           this.estadoDetalle = resultado.detalle;
         },
       });
   }
 
   /**
-   * Sustituye el formulario del paso 4 por la constancia de radicación y
-   * cierra el borrador: un registro ya enviado no debe restaurarse al volver.
+   * Sustituye el formulario del paso 4 por la constancia de radicación.
    */
   private prepararConstancia(resultado: ResultadoEnvioMid): void {
     const resumen = this.construirResumenRadicacion(resultado);
     this.resumenRadicacion = resumen;
     this.registroCompletado = true;
-    this.borradorRestaurado = false;
-    this.suspenderAutoguardado = true;
-    this.borradorRegistroService.eliminar();
-
     void this.calcularHashRadicacion(resumen).then((hash) => {
       if (this.resumenRadicacion === resumen) {
         this.resumenRadicacion = { ...resumen, hash };
@@ -1108,49 +1356,23 @@ export class RegistroPersonaNaturalComponent implements OnInit {
   }
 
   regresar(): void {
-    if (this.currentStep > 1) {
+    if (!this.guardando && this.currentStep > 1) {
       this.currentStep--;
-      this.persistirBorrador(true);
     }
   }
 
   irAlPaso(paso: number): void {
-    if (paso < 1 || paso > this.totalSteps) {
+    if (this.guardando || paso < 1 || paso > this.totalSteps) {
       return;
     }
     if (paso < this.currentStep) {
       this.currentStep = paso;
-      this.persistirBorrador(true);
       return;
     }
 
-    // Avanzar solo es posible validando cada paso intermedio, igual que el botón Continuar.
-    while (this.currentStep < paso) {
-      const pasoPrevio = this.currentStep;
+    if (paso > this.currentStep) {
       this.continuar();
-      if (this.currentStep === pasoPrevio) {
-        break;
-      }
     }
-  }
-
-  guardarBorrador(): void {
-    this.persistirBorrador(false);
-  }
-
-  descartarBorrador(): void {
-    this.suspenderAutoguardado = true;
-    this.borradorRegistroService.eliminar();
-    this.borradorRestaurado = false;
-    this.personaNaturalForm.reset();
-    this.currentStep = 1;
-    this.estadoMensaje = "Borrador descartado";
-    this.estadoDetalle =
-      "Puede empezar de nuevo. Los cambios nuevos se guardarán en este navegador.";
-
-    setTimeout(() => {
-      this.suspenderAutoguardado = false;
-    }, 900);
   }
 
   // =========================================================
@@ -1320,28 +1542,6 @@ export class RegistroPersonaNaturalComponent implements OnInit {
     URL.revokeObjectURL(url);
   }
 
-  // =========================================================
-  // BORRADOR
-  // =========================================================
-
-  private restaurarBorrador(): void {
-    const borrador = this.borradorRegistroService.cargar();
-    if (!borrador) {
-      return;
-    }
-
-    this.personaNaturalForm.patchValue(borrador.formValue, {
-      emitEvent: false,
-    });
-    this.sincronizarValidadoresCondicionales();
-    this.currentStep = Math.min(
-      Math.max(borrador.currentStep, 1),
-      this.totalSteps,
-    );
-    this.borradorRestaurado = true;
-    this.actualizarEstadoGuardado(borrador.savedAt, true);
-  }
-
   private sincronizarValidadoresDocumento(): void {
     const tipoDocumento = this.personaNaturalForm.get(
       "identificacion.tipoDocumento",
@@ -1424,47 +1624,6 @@ export class RegistroPersonaNaturalComponent implements OnInit {
       adjunto.setValue(null, { emitEvent: false });
     }
     adjunto.updateValueAndValidity({ emitEvent: false });
-  }
-
-  persistirBorrador(esAutoguardado: boolean): void {
-    if (this.suspenderAutoguardado) {
-      return;
-    }
-
-    const savedAt = new Date().toISOString();
-    const ok = this.borradorRegistroService.guardar({
-      version: 1,
-      currentStep: this.currentStep,
-      savedAt,
-      formValue: this.personaNaturalForm.getRawValue() as Record<
-        string,
-        unknown
-      >,
-    });
-
-    if (!ok) {
-      this.estadoMensaje = "No se pudo guardar el borrador";
-      this.estadoDetalle =
-        "El almacenamiento del navegador no está disponible o está lleno.";
-      return;
-    }
-
-    this.actualizarEstadoGuardado(savedAt, esAutoguardado);
-  }
-
-  private actualizarEstadoGuardado(
-    savedAt: string,
-    esAutoguardado: boolean,
-  ): void {
-    const momento = new Intl.DateTimeFormat("es-CO", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    }).format(new Date(savedAt));
-
-    this.estadoMensaje = esAutoguardado
-      ? "Borrador Persona Natural autoguardado con éxito"
-      : "Borrador Persona Natural guardado con éxito";
-    this.estadoDetalle = `${momento} · Guardado en este navegador`;
   }
 
   // =========================================================

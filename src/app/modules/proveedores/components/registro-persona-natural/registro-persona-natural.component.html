@@ -12,25 +12,6 @@
 
   <div class="registro-persona-natural-contenido">
 
-  @if (borradorRestaurado) {
-    <section class="aviso-borrador" role="status">
-      <div class="aviso-borrador__texto">
-        <strong>Se restauró un borrador anterior.</strong>
-        <span>
-          Los archivos adjuntos no se guardan en el navegador; vuelva a
-          cargarlos en el paso de documentos si los necesita.
-        </span>
-      </div>
-      <button
-        class="aviso-borrador__descartar"
-        type="button"
-        (click)="descartarBorrador()"
-      >
-        Descartar borrador
-      </button>
-    </section>
-  }
-
   <!-- ========================================================= -->
   <!-- STEPPER                                                   -->
   <!-- ========================================================= -->
@@ -131,7 +112,6 @@
           [documentosForm]="documentosForm"
           [declaranteRenta]="declaranteRenta"
           (estadoCambio)="estadoMensaje = $event.mensaje; estadoDetalle = $event.detalle"
-          (solicitarPersistencia)="persistirBorrador($event)"
           (editarDeclaranteRenta)="irAlPaso(1)"
         ></app-registro-persona-natural-paso-3>
       }
@@ -172,8 +152,10 @@
       [esUltimoPaso]="currentStep === totalSteps"
       [estadoMensaje]="estadoMensaje"
       [estadoDetalle]="estadoDetalle"
+      [mostrarGuardar]="false"
+      [deshabilitarContinuar]="guardando || envioIndeterminado"
+      tituloFinal="Guardar paso"
       (regreso)="regresar()"
-      (guardar)="guardarBorrador()"
       (continuar)="continuar()"
       (finalizar)="finalizarRegistro()"
     ></barra-acciones-formulario>

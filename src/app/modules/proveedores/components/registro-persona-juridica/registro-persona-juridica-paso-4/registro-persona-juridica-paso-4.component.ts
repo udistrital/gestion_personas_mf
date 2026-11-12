@@ -172,11 +172,11 @@ export class RegistroPersonaJuridicaPaso4Component
     const seleccionadas = new Set(this.idsSeleccionados());
     this.actividadesCiiuDisponibles = this.catalogoCiiu
       .filter(actividad => !seleccionadas.has(actividad.id))
+      .sort((a, b) => this.comparadorCiiu.compare(a.nombre, b.nombre))
       .map(actividad => ({
         id: actividad.id,
         etiqueta: `${actividad.codigo ?? actividad.id} — ${actividad.nombre}`,
-      }))
-      .sort((a, b) => this.comparadorCiiu.compare(a.etiqueta, b.etiqueta));
+      }));
   }
 
   private idsSeleccionados(): number[] {

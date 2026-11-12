@@ -5,6 +5,7 @@ import { environment } from 'src/environments/environment';
 import {
   descartarRegistrosVacios,
   obtenerTodasLasPaginas,
+  ordenarOpcionesAlfabeticamente,
 } from '../registro-persona-juridica/services/registro-persona-juridica-paginacion';
 
 type Registro = Record<string, unknown>;
@@ -89,7 +90,7 @@ export class RegistroPersonaNaturalCatalogosService {
 
   obtenerCatalogosTercerosPaso1(): Observable<CatalogosTercerosPaso1> {
     return forkJoin({
-      tiposDocumento: this.opciones(`${this.tercerosUrl}/tipo_documento`, undefined, false),
+      tiposDocumento: this.obtenerTiposDocumento(),
       genero: this.complementaria('Grupo_6'),
       perfilRolPrincipal: this.complementaria('Grupo_5'),
       grupoEtnico: this.complementaria('Grupo_3'),
@@ -98,6 +99,10 @@ export class RegistroPersonaNaturalCatalogosService {
       estadoCivil: this.complementaria('Grupo_2'),
       discapacidad: this.complementaria('Grupo_1'),
     });
+  }
+
+  obtenerTiposDocumento(): Observable<OpcionNatural[]> {
+    return this.opciones(`${this.tercerosUrl}/tipo_documento`, undefined, false);
   }
 
   obtenerCatalogosPaso2(): Observable<CatalogosPersonaNaturalPaso2> {
@@ -149,7 +154,7 @@ export class RegistroPersonaNaturalCatalogosService {
             hijos.set(hijo['Id'], { id: hijo['Id'], nombre: hijo['Nombre'] });
           }
         }
-        return [...hijos.values()];
+        return ordenarOpcionesAlfabeticamente([...hijos.values()]);
       }),
     );
   }
@@ -177,13 +182,15 @@ export class RegistroPersonaNaturalCatalogosService {
       false,
     ).pipe(
       map(lugares =>
-        lugares
-          .filter(
-            lugar =>
-              lugar['Activo'] !== false
-              && this.objeto(lugar['TipoLugarId'])?.['CodigoAbreviacion'] === codigoTipoLugar,
-          )
-          .map(lugar => ({ id: lugar['Id'] as number, nombre: this.nombre(lugar) })),
+        ordenarOpcionesAlfabeticamente(
+          lugares
+            .filter(
+              lugar =>
+                lugar['Activo'] !== false
+                && this.objeto(lugar['TipoLugarId'])?.['CodigoAbreviacion'] === codigoTipoLugar,
+            )
+            .map(lugar => ({ id: lugar['Id'] as number, nombre: this.nombre(lugar) })),
+        ),
       ),
     );
   }
@@ -209,17 +216,8 @@ export class RegistroPersonaNaturalCatalogosService {
                 && registro['Descripcion'].trim().length > 0
                 ? registro['Descripcion']
                 : undefined,
-            orden: registro['NumeroOrden'],
           }));
-        const ordenadas = opciones.every(opcion => typeof opcion.orden === 'number')
-          ? [...opciones].sort((a, b) => Number(a.orden) - Number(b.orden))
-          : opciones;
-        return ordenadas.map(({ id, nombre, codigo, descripcion }) => ({
-          id,
-          nombre,
-          codigo,
-          descripcion,
-        }));
+        return ordenarOpcionesAlfabeticamente(opciones);
       }),
     );
   }

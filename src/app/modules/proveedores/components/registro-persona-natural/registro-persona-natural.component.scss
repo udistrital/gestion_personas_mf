@@ -11,57 +11,6 @@
   margin: 0;
 }
 
-/* ── Aviso de borrador restaurado ───────────────────────────────────────── */
-.aviso-borrador {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  box-sizing: border-box;
-  width: min(100% - 3rem, 86.25rem);
-  margin: 0 auto 1.25rem;
-  padding: 0.875rem 1rem;
-  border: 1px solid var(--agora-success-border);
-  border-radius: 0.5rem;
-  background: var(--agora-success-surface);
-  color: var(--agora-success);
-}
-
-.aviso-borrador__texto {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-  min-width: 0;
-}
-
-.aviso-borrador__texto strong {
-  font-size: 0.875rem;
-}
-
-.aviso-borrador__texto span {
-  font-size: 0.75rem;
-  line-height: 1.45;
-}
-
-.aviso-borrador__descartar {
-  flex: 0 0 auto;
-  padding: 0.5rem 0.875rem;
-  border: 0;
-  border-radius: 0.375rem;
-  background: var(--agora-primary);
-  color: var(--agora-on-primary);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.8125rem;
-  font-weight: 700;
-  transition: .3s ease all;
-}
-
-.aviso-borrador__descartar:hover,
-.aviso-borrador__descartar:focus-visible {
-  background: var(--agora-primary-dark);
-}
-
 /* ── TEMPORAL: acceso a la constancia de ejemplo ───────────────────────── */
 .aviso-ejemplo {
   display: flex;
@@ -199,12 +148,6 @@
 
 /* ── Responsive ─────────────────────────────────────────────────────────── */
 @media (max-width: t.$bp-sm) {
-  .aviso-borrador {
-    width: calc(100% - 1.5rem);
-    align-items: stretch;
-    flex-direction: column;
-  }
-
   .persona-natural-stepper {
     width: calc(100% - 1.5rem);
   }
