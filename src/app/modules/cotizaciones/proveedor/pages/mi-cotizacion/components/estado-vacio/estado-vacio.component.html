@@ -1,0 +1,96 @@
+<section class="vacio" aria-labelledby="titulo-sin-respuesta">
+  <span class="vacio__icono" aria-hidden="true">
+    <mat-icon>assignment_late</mat-icon>
+  </span>
+
+  <div class="vacio__textos">
+    <h2 id="titulo-sin-respuesta">{{ titulo }}</h2>
+    <p>
+      {{ descripcion }}
+      @if (puedeResponder) {
+        La solicitud se encuentra en plazo hábil de recepción.
+      }
+    </p>
+  </div>
+
+  <div class="vacio__datos">
+    <div class="vacio__dato">
+      <span class="vacio__rotulo">
+        <mat-icon aria-hidden="true">calendar_month</mat-icon>
+        Fecha límite
+      </span>
+      <strong>{{ fechaLimite }}</strong>
+    </div>
+    <div class="vacio__dato">
+      <span class="vacio__rotulo">
+        <mat-icon aria-hidden="true">schedule</mat-icon>
+        Tiempo restante
+      </span>
+      <contador-regresivo [fechaCierre]="cierre"></contador-regresivo>
+      <span class="vacio__nota">
+        {{ puedeResponder ? "Recepción habilitada" : "Recepción finalizada" }}
+      </span>
+    </div>
+    <div class="vacio__dato">
+      <span class="vacio__rotulo">
+        <mat-icon aria-hidden="true">payments</mat-icon>
+        Presupuesto oficial estimado
+      </span>
+      <strong>{{ presupuestoTexto }}</strong>
+      <span class="vacio__nota">COP</span>
+    </div>
+  </div>
+
+  <div class="vacio__acciones">
+    @if (puedeResponder) {
+      <button
+        type="button"
+        class="boton-recto boton-recto--vino"
+        (click)="responder.emit()"
+      >
+        <mat-icon aria-hidden="true">edit_square</mat-icon>
+        <span>Responder solicitud ahora</span>
+        <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+      </button>
+    }
+    <button type="button" class="boton-recto" (click)="verSolicitud.emit()">
+      <mat-icon aria-hidden="true">description</mat-icon>
+      <span>Ver pliego y especificaciones completas</span>
+    </button>
+  </div>
+
+  @if (puedeResponder) {
+    <div class="vacio__pasos">
+      <h3>Pasos para registrar su propuesta formal en ÁGORA</h3>
+      <ol>
+        <li>
+          <span class="vacio__paso-numero" aria-hidden="true">1</span>
+          <span>
+            <strong>Diligenciar ítems</strong>
+            Ingrese valores unitarios, IVA y observaciones de cada bien o
+            servicio.
+          </span>
+        </li>
+        <li>
+          <span class="vacio__paso-numero" aria-hidden="true">2</span>
+          <span>
+            <strong>Anexos técnicos</strong>
+            Cargue el soporte de la cotización y los documentos exigidos.
+          </span>
+        </li>
+        <li>
+          <span class="vacio__paso-numero" aria-hidden="true">3</span>
+          <span>
+            <strong>Radicación</strong>
+            Confirme la declaración y reciba su radicado con la constancia.
+          </span>
+        </li>
+      </ol>
+    </div>
+  }
+
+  <etiqueta-por-definir
+    texto="Por definir (RF-016)"
+    detalle="El historial de versiones de la cotización se muestra en la constancia de una respuesta radicada; en el estado vacío no aplica."
+  ></etiqueta-por-definir>
+</section>

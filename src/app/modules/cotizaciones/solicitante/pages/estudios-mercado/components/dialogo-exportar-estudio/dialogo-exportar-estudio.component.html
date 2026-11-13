@@ -1,0 +1,53 @@
+<div class="dialogo-exportar">
+  <header class="dialogo-exportar__cabecera">
+    <div class="dialogo-exportar__titulo-bloque">
+      <span class="dialogo-exportar__icono" aria-hidden="true">
+        <mat-icon>file_download</mat-icon>
+      </span>
+      <div>
+        <h2 id="dialogo-exportar-titulo" class="dialogo-exportar__titulo">
+          Exportar estudio {{ datos.estudio.id }}
+        </h2>
+        <p class="dialogo-exportar__subtitulo">
+          Seleccione el formato para el expediente contractual.
+        </p>
+      </div>
+    </div>
+    <button
+      class="dialogo-exportar__cerrar"
+      type="button"
+      aria-label="Cerrar el modal de exportación"
+      (click)="cerrar()"
+    >
+      <mat-icon aria-hidden="true">close</mat-icon>
+    </button>
+  </header>
+
+  <mat-dialog-content class="dialogo-exportar__contenido">
+    <p class="dialogo-exportar__texto">
+      La exportación es simulada mientras el gestor documental institucional no
+      esté conectado. El archivo se generará con los datos del estudio y sus
+      ofertas vinculadas.
+    </p>
+
+    <button class="dialogo-exportar__opcion" type="button" (click)="exportar('pdf')">
+      <mat-icon aria-hidden="true">picture_as_pdf</mat-icon>
+      <span>
+        <strong>Formato oficial PDF</strong>
+        <small>Listo para radicar en el expediente precontractual.</small>
+      </span>
+    </button>
+
+    <button class="dialogo-exportar__opcion" type="button" (click)="exportar('xlsx')">
+      <mat-icon aria-hidden="true">table_view</mat-icon>
+      <span>
+        <strong>Matriz detallada en Excel (XLSX / CSV)</strong>
+        <small>Con las ofertas, la metodología y el valor de referencia.</small>
+      </span>
+    </button>
+  </mat-dialog-content>
+
+  <footer class="dialogo-exportar__pie">
+    <button mat-stroked-button class="boton-secundario-estudio" type="button" (click)="cerrar()">Cerrar</button>
+  </footer>
+</div>

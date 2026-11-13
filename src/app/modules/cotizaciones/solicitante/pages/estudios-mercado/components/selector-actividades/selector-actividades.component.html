@@ -1,0 +1,134 @@
+<section class="selector" [formGroup]="form" aria-labelledby="selector-actividades-titulo">
+  <header class="selector__cabecera">
+    <div class="selector__titulo">
+      <mat-icon aria-hidden="true">category</mat-icon>
+      <h2 id="selector-actividades-titulo">Actividades económicas (CIIU)</h2>
+    </div>
+    <span class="selector__contador">
+      {{ actividades().length }}
+      {{ actividades().length === 1 ? "vinculada" : "vinculadas" }}
+    </span>
+  </header>
+
+  <div class="campo">
+    <label class="campo__etiqueta" for="estudio-ciiu">
+      Seleccionar actividad CIIU <b aria-hidden="true">*</b>
+    </label>
+    <app-search-selection
+      id="estudio-ciiu"
+      [ngModel]="actividadSeleccionada()"
+      (ngModelChange)="seleccionarActividad($event)"
+      [ngModelOptions]="{ standalone: true }"
+      [items]="opcionesCiiu"
+      labelKey="etiqueta"
+      valueKey="codigo"
+      icon="category"
+      placeholder="Buscar código o descripción…"
+      ariaLabel="Seleccionar actividad CIIU"
+    ></app-search-selection>
+    <button
+      mat-stroked-button
+      class="boton-primario selector__agregar"
+      type="button"
+      [disabled]="deshabilitado || !actividadSeleccionada()"
+      (click)="agregarActividad()"
+    >
+      <mat-icon aria-hidden="true">add_circle</mat-icon>
+      <span>Agregar</span>
+    </button>
+    <span class="campo__ayuda">Revisión 4 A.C. · Catálogo DANE</span>
+  </div>
+
+  <ul class="selector__lista" aria-label="Actividades CIIU vinculadas">
+    @for (actividad of actividades(); track actividad.id) {
+      <li class="selector__item">
+        <span class="selector__codigo">{{ actividad.codigo }}</span>
+        <span class="selector__descripcion" [title]="actividad.descripcion">
+          {{ actividad.descripcion }}
+        </span>
+        <button
+          class="selector__quitar"
+          type="button"
+          [disabled]="deshabilitado"
+          [attr.aria-label]="'Quitar actividad ' + actividad.codigo"
+          (click)="eliminarActividad(actividad.id)"
+        >
+          <mat-icon aria-hidden="true">close</mat-icon>
+        </button>
+      </li>
+    } @empty {
+      <li class="selector__vacio">
+        <mat-icon aria-hidden="true">category</mat-icon>
+        <span>
+          Todavía no hay actividades vinculadas. Busque un código CIIU para
+          iniciar la segmentación.
+        </span>
+      </li>
+    }
+  </ul>
+
+  <div class="selector__snies">
+    <div class="selector__titulo selector__titulo--secundario">
+      <mat-icon aria-hidden="true">school</mat-icon>
+      <h3>Núcleo de conocimiento (SNIES)</h3>
+    </div>
+
+    @if (sniesAplica) {
+      <div class="campo">
+        <label class="campo__etiqueta" for="estudio-area-snies">
+          Área de conocimiento
+        </label>
+        <mat-form-field appearance="outline">
+          <mat-icon matPrefix aria-hidden="true">account_balance</mat-icon>
+          <mat-select
+            id="estudio-area-snies"
+            formControlName="areaSnies"
+            placeholder="Seleccione el área"
+          >
+            <mat-option value="">Sin clasificar</mat-option>
+            @for (area of areasSnies; track area.valor) {
+              <mat-option [value]="area.valor">{{ area.etiqueta }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="campo">
+        <label class="campo__etiqueta" for="estudio-nucleo-snies">
+          Núcleo básico de conocimiento (NBC)
+        </label>
+        <app-search-selection
+          id="estudio-nucleo-snies"
+          formControlName="nucleoSnies"
+          [items]="nucleosSnies"
+          labelKey="etiqueta"
+          valueKey="valor"
+          icon="school"
+          placeholder="Seleccione el núcleo básico"
+          ariaLabel="Núcleo básico de conocimiento NBC"
+        ></app-search-selection>
+      </div>
+
+      <p class="selector__nota" role="note">
+        <mat-icon aria-hidden="true">info</mat-icon>
+        <span>
+          El SNIES es opcional y no restringe la búsqueda: la coincidencia se
+          calcula por actividad CIIU (RN-03 / RN-15 provisional).
+        </span>
+      </p>
+    } @else {
+      <p class="selector__nota" role="note">
+        <mat-icon aria-hidden="true">info</mat-icon>
+        <span>
+          Para bienes solo se registran actividades económicas. El SNIES aplica
+          a servicios y bienes y servicios.
+        </span>
+      </p>
+    }
+  </div>
+
+  <etiqueta-por-definir
+    texto="SNIES provisional"
+    detalle="La obligatoriedad y el carácter restrictivo del NBC están en revisión (RN-03 / RN-15)."
+  ></etiqueta-por-definir>
+</section>

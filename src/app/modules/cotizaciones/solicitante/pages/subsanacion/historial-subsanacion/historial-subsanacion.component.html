@@ -1,0 +1,567 @@
+<plantilla-pagina-contenedora
+  [breadcrumb]="breadcrumb"
+  title="Historial de cambios"
+  [mostrarBotonRegresar]="true"
+  (regresar)="volver()"
+>
+  <section class="historial" aria-labelledby="historial-titulo">
+    @if (vista() === "no-encontrado") {
+      <div class="historial__estado" role="status">
+        <mat-icon aria-hidden="true">search_off</mat-icon>
+        <h2 id="historial-titulo">Solicitud no encontrada</h2>
+        <p>No existe una solicitud con ese identificador o ya no está disponible.</p>
+        <button class="boton-recto" type="button" (click)="volver()">
+          <mat-icon aria-hidden="true">arrow_back</mat-icon>
+          Volver
+        </button>
+      </div>
+    } @else if (vista() === "error") {
+      <div class="historial__estado historial__estado--error" role="alert">
+        <mat-icon aria-hidden="true">error_outline</mat-icon>
+        <h2 id="historial-titulo">No pudimos cargar el historial</h2>
+        <p>
+          {{
+            mensajeError() ||
+              "Ocurrió un problema al consultar el historial de subsanación. Intente nuevamente."
+          }}
+        </p>
+        <button class="boton-recto" type="button" (click)="reintentar()">
+          <mat-icon aria-hidden="true">refresh</mat-icon>
+          Reintentar
+        </button>
+      </div>
+    } @else if (solicitud(); as s) {
+      <header class="historial__cabecera">
+        <div class="historial__cabecera-principal">
+          <div class="historial__textos">
+            <div class="historial__chips">
+              <span class="historial__icono" aria-hidden="true">
+                <mat-icon>history_edu</mat-icon>
+              </span>
+              <h2 id="historial-titulo" class="historial__titulo">
+                Historial de cambios
+              </h2>
+              <span class="chip chip--recto">{{ s.id }}</span>
+              <span class="chip chip--primario">
+                <mat-icon aria-hidden="true">verified_user</mat-icon>
+                Auditoría y trazabilidad
+              </span>
+            </div>
+            <p class="historial__descripcion">
+              Registro inmutable de actuaciones, cargues de documentos y
+              modificaciones en el periodo de subsanación formal.
+            </p>
+          </div>
+
+          <div class="historial__acciones-cabecera">
+            <button
+              class="boton-recto"
+              type="button"
+              [matMenuTriggerFor]="menuExportar"
+              aria-haspopup="true"
+            >
+              <mat-icon aria-hidden="true">download</mat-icon>
+              <span>Exportar</span>
+              <mat-icon aria-hidden="true">expand_more</mat-icon>
+            </button>
+            <mat-menu #menuExportar="matMenu" xPosition="before">
+              <button mat-menu-item type="button" (click)="exportar('pdf')">
+                <mat-icon aria-hidden="true" color="primary">description</mat-icon>
+                <span>Exportar Acta (PDF)</span>
+              </button>
+              <button mat-menu-item type="button" (click)="exportar('excel')">
+                <mat-icon aria-hidden="true" color="primary">table_chart</mat-icon>
+                <span>Registro de Eventos (Excel)</span>
+              </button>
+            </mat-menu>
+            <button class="boton-recto" type="button" (click)="volver()">
+              <mat-icon aria-hidden="true">arrow_back</mat-icon>
+              <span>Volver a la subsanación</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <p class="visually-oculto" aria-live="polite">{{ anuncio() }}</p>
+
+      <section class="historial__callout" role="note">
+        <span class="historial__callout-icono" aria-hidden="true">
+          <mat-icon>gavel</mat-icon>
+        </span>
+        <div>
+          <span class="historial__callout-rotulo">
+            Cadena de custodia digital · Art. 18 Ley 1437
+          </span>
+          <p>
+            Todos los eventos quedan sellados con marca de tiempo UTC-5 y hash
+            criptográfico. Las versiones sustituidas se conservan inalterables
+            para fines de control posterior y auditoría institucional.
+          </p>
+        </div>
+      </section>
+
+      @if (vista() === "sin-permiso") {
+        <div class="historial__estado" role="status">
+          <mat-icon aria-hidden="true">lock</mat-icon>
+          <h3>Acceso restringido a los roles solicitantes</h3>
+          <p>
+            El historial de subsanación está disponible para el Jefe de
+            Dependencia y el Ordenador del Gasto.
+          </p>
+          <button class="boton-recto" type="button" (click)="volver()">
+            <mat-icon aria-hidden="true">arrow_back</mat-icon>
+            Volver
+          </button>
+        </div>
+      } @else if (vista() === "no-disponible") {
+        <div class="historial__estado historial__estado--bloqueo" role="status">
+          <mat-icon aria-hidden="true">lock_clock</mat-icon>
+          <h3>El historial no está disponible en este estado</h3>
+          <p>
+            La solicitud debe tener un periodo de subsanación registrado y el
+            usuario debe pertenecer al área solicitante.
+          </p>
+          <button class="boton-recto" type="button" (click)="volver()">
+            <mat-icon aria-hidden="true">arrow_back</mat-icon>
+            Volver a la subsanación
+          </button>
+        </div>
+      } @else if (vista() === "cargando") {
+        <div class="historial__esqueleto" aria-busy="true" aria-live="polite">
+          <span class="visually-oculto">Cargando el historial de subsanación…</span>
+          <div class="historial__esqueleto-columnas" aria-hidden="true">
+            <span class="esqueleto esqueleto--tabla"></span>
+            <span class="esqueleto esqueleto--tarjeta"></span>
+          </div>
+        </div>
+      } @else if (vista() === "sin-actuaciones") {
+        <div class="historial__estado" role="status">
+          <mat-icon aria-hidden="true">folder_off</mat-icon>
+          <h3>Sin actuaciones registradas</h3>
+          <p>
+            No hay un periodo de subsanación configurado o los proponentes aún no
+            han remitido sustituciones documentales en el portal de contratación.
+          </p>
+          @if (subsanacion(); as periodo) {
+            <span class="chip chip--recto">
+              Periodo de subsanación abierto hasta {{ formatear(periodo.fin) }}
+            </span>
+          }
+          <button class="boton-recto" type="button" (click)="volver()">
+            <mat-icon aria-hidden="true">arrow_back</mat-icon>
+            Volver a la subsanación
+          </button>
+        </div>
+      } @else if (subsanacion(); as periodo) {
+        <section class="historial__filtros" aria-label="Filtros del historial">
+          <div class="historial__filtro historial__filtro--busqueda">
+            <label class="campo__etiqueta" for="historial-busqueda">
+              Buscar en el historial
+            </label>
+            <mat-form-field appearance="outline">
+              <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+              <input
+                matInput
+                id="historial-busqueda"
+                type="search"
+                placeholder="Palabra clave, documento, hash o usuario…"
+                [value]="busqueda()"
+                (input)="buscar($any($event.target).value)"
+                aria-label="Buscar en el historial"
+              />
+            </mat-form-field>
+          </div>
+
+          <div class="historial__filtro">
+            <label class="campo__etiqueta" for="historial-oferente">Oferente</label>
+            <mat-form-field appearance="outline">
+              <mat-select
+                id="historial-oferente"
+                [value]="oferenteId()"
+                (selectionChange)="filtrarOferente($event.value)"
+                aria-label="Filtrar por oferente"
+              >
+                <mat-option value="todos">Todos los oferentes</mat-option>
+                @for (oferente of oferentesFiltro(); track oferente.id) {
+                  <mat-option [value]="oferente.id">{{ oferente.nombre }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <div class="historial__filtro">
+            <label class="campo__etiqueta" for="historial-documento">Documento</label>
+            <mat-form-field appearance="outline">
+              <mat-select
+                id="historial-documento"
+                [value]="documentoId()"
+                (selectionChange)="filtrarDocumento($event.value)"
+                aria-label="Filtrar por documento"
+              >
+                <mat-option value="todos">Todos los documentos</mat-option>
+                @for (documento of documentosFiltro(); track documento.id) {
+                  <mat-option [value]="documento.id">{{ documento.nombre }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <button class="boton-recto historial__limpiar boton-limpiar-filtros" type="button" (click)="limpiarFiltros()">
+            <mat-icon aria-hidden="true">filter_alt_off</mat-icon>
+            Limpiar filtros
+          </button>
+        </section>
+
+        @if (estadoPeriodo() === "vencida") {
+          <section class="historial__banner historial__banner--cerrado" role="status">
+            <mat-icon aria-hidden="true">lock_clock</mat-icon>
+            <div>
+              <strong>Periodo cerrado definitivamente</strong>
+              <p>
+                La recepción de subsanaciones se cerró automáticamente el
+                {{ formatear(periodo.fin) }}. No se aceptan más adjuntos; las versiones cargadas quedan inalterables para
+                auditoría.
+              </p>
+            </div>
+          </section>
+        } @else if (estadoPeriodo() === "cancelada") {
+          <section class="historial__banner historial__banner--cancelado" role="status">
+            <mat-icon aria-hidden="true">cancel</mat-icon>
+            <div>
+              <strong>Periodo cancelado</strong>
+              <p>
+                {{ periodo.cancelacion?.motivo }}
+                @if (periodo.cancelacion?.fecha) {
+                  · {{ formatear(periodo.cancelacion!.fecha) }}
+                }
+              </p>
+            </div>
+          </section>
+        } @else if (estadoPeriodo() === "configurada") {
+          <section class="historial__banner historial__banner--programado" role="status">
+            <mat-icon aria-hidden="true">event_upcoming</mat-icon>
+            <div>
+              <strong>Periodo programado</strong>
+              <p>
+                La ventana de recepción inicia el {{ formatear(periodo.inicio) }}
+                y cierra el {{ formatear(periodo.fin) }}.
+              </p>
+            </div>
+          </section>
+        }
+
+        <div class="historial__columnas">
+          <section class="historial__columna-principal" aria-labelledby="eventos-titulo">
+            <div class="historial__seccion-cabecera">
+              <div>
+                <h3 id="eventos-titulo">Línea de tiempo de eventos</h3>
+                <span class="chip chip--recto">
+                  {{ eventosFiltrados().length }}
+                  {{ eventosFiltrados().length === 1 ? "evento" : "eventos" }}
+                </span>
+              </div>
+              <span class="historial__sello">
+                <mat-icon aria-hidden="true">lock_clock</mat-icon>
+                Sellado criptográfico activo
+              </span>
+            </div>
+
+            @if (lineaTiempo().length > 0) {
+              <linea-tiempo
+                [eventos]="lineaTiempo()"
+                [detallePlantilla]="detalleSubsanacion"
+                etiquetaLista="Eventos del historial de subsanación"
+              ></linea-tiempo>
+            } @else {
+              <div class="historial__vacio">
+                <mat-icon aria-hidden="true">search_off</mat-icon>
+                <p>
+                  Ningún evento coincide con los filtros aplicados. Ajusta el
+                  oferente, el documento o el texto buscado.
+                </p>
+              </div>
+            }
+          </section>
+
+          <aside class="historial__columna-lateral" aria-label="Estado por oferente">
+            <section class="historial__tarjeta" aria-labelledby="estado-oferentes-titulo">
+              <div class="historial__tarjeta-cabecera">
+                <div>
+                  <h3 id="estado-oferentes-titulo">Estado por oferente</h3>
+                  <p>Seguimiento en tiempo real de requerimientos subsanados.</p>
+                </div>
+              </div>
+
+              <div class="historial__progreso-global">
+                <div class="historial__progreso-cabecera">
+                  <span>Progreso global de subsanación</span>
+                  <strong>{{ resumen()?.porcentaje ?? 0 }}%</strong>
+                </div>
+                <mat-progress-bar
+                  mode="determinate"
+                  [value]="resumen()?.porcentaje ?? 0"
+                  aria-label="Progreso global de subsanación"
+                ></mat-progress-bar>
+                <div class="historial__progreso-pie">
+                  <span>{{ resumen()?.oferentes ?? 0 }} oferentes requeridos</span>
+                  <span>
+                    {{ resumen()?.subsanados ?? 0 }} de
+                    {{ resumen()?.totalDocumentos ?? 0 }} documentos
+                  </span>
+                </div>
+              </div>
+
+              <div class="historial__lista-oferentes">
+                @for (oferente of oferentes(); track oferente.proveedorId) {
+                  <article class="historial__oferente">
+                    <div class="historial__oferente-cabecera">
+                      <div>
+                        <strong>{{ oferente.nombre }}</strong>
+                        <span>{{ oferente.nit }} · {{ oferente.tipoPersona }}</span>
+                      </div>
+                      <chip-estado [estado]="oferente.estado"></chip-estado>
+                    </div>
+
+                    <div class="historial__progreso">
+                      <div class="historial__progreso-cabecera">
+                        <span>
+                          {{ oferente.subsanados }} de {{ oferente.total }}
+                          requerimientos
+                        </span>
+                        <strong>{{ oferente.porcentaje }}%</strong>
+                      </div>
+                      <mat-progress-bar
+                        mode="determinate"
+                        [value]="oferente.porcentaje"
+                        [attr.aria-label]="
+                          'Progreso de ' + oferente.nombre + ': ' + oferente.porcentaje + '%'
+                        "
+                      ></mat-progress-bar>
+                    </div>
+
+                    <ul class="historial__documentos">
+                      @for (documento of oferente.documentos; track documento.id) {
+                        <li [class.historial__documento--error]="documento.noSubsanado">
+                          <mat-icon aria-hidden="true">
+                            {{ documento.subsanado ? "check_circle" : "cancel" }}
+                          </mat-icon>
+                          <span>
+                            {{ documento.nombre }}:
+                            {{
+                              documento.subsanado
+                                ? "Subsanado"
+                                : documento.noSubsanado
+                                  ? "No subsanado en plazo"
+                                  : "Pendiente"
+                            }}
+                          </span>
+                        </li>
+                      }
+                    </ul>
+
+                    <div class="historial__oferente-acciones">
+                      <button
+                        class="boton-recto"
+                        type="button"
+                        (click)="verCotizacion(oferente.proveedorId)"
+                      >
+                        <mat-icon aria-hidden="true">visibility</mat-icon>
+                        Ver cotización
+                      </button>
+                      <button
+                        class="boton-recto"
+                        type="button"
+                        [attr.aria-label]="'Ver persona de ' + oferente.nombre"
+                        (click)="verPersona(oferente.proveedorId)"
+                      >
+                        <mat-icon aria-hidden="true">person</mat-icon>
+                      </button>
+                    </div>
+                  </article>
+                }
+              </div>
+            </section>
+
+            <section class="historial__tarjeta historial__auditoria" aria-labelledby="auditoria-titulo">
+              <div class="historial__tarjeta-cabecera">
+                <div>
+                  <h3 id="auditoria-titulo">Resumen de auditoría</h3>
+                  <p>Datos de cierre del periodo.</p>
+                </div>
+                <chip-estado [estado]="estadoPeriodo()!"></chip-estado>
+              </div>
+
+              <dl class="historial__datos">
+                <div>
+                  <dt>Plazo oficial</dt>
+                  <dd>{{ formatear(periodo.inicio) }} a {{ formatear(periodo.fin) }}</dd>
+                </div>
+                <div>
+                  <dt>Estado del periodo</dt>
+                  <dd>{{ etiquetaPeriodo() }}</dd>
+                </div>
+                <div>
+                  <dt>Radicado del acta</dt>
+                  <dd>{{ periodo.radicado }}</dd>
+                </div>
+                <div>
+                  <dt>Notificación</dt>
+                  <dd>{{ periodo.notificar ? "Simulada" : "Sin envío" }}</dd>
+                </div>
+              </dl>
+
+              @if (esActiva()) {
+                <contador-regresivo
+                  [fechaCierre]="periodo.fin"
+                  [mostrarMinutos]="true"
+                  etiquetaCerrado="Periodo cerrado"
+                ></contador-regresivo>
+              }
+
+              <button class="boton-recto boton-recto--vino" type="button" (click)="descargarActa()">
+                <mat-icon aria-hidden="true">picture_as_pdf</mat-icon>
+                Descargar Acta de Cierre (PDF)
+              </button>
+            </section>
+
+            <section class="historial__tarjeta" aria-labelledby="mensaje-formal-titulo">
+              <div class="historial__tarjeta-cabecera">
+                <div>
+                  <h3 id="mensaje-formal-titulo">Mensaje formal de la convocatoria</h3>
+                  <p>Texto notificado a los oferentes convocados.</p>
+                </div>
+              </div>
+              <div
+                class="bloque-lectura historial__mensaje"
+                [innerHTML]="periodo.motivoHtml | htmlSeguro"
+              ></div>
+            </section>
+          </aside>
+        </div>
+      }
+
+      <section class="historial__por-definir" aria-label="Regla de negocio en definición">
+        <mat-icon aria-hidden="true">help</mat-icon>
+        <div>
+          <strong>Regla de negocio en definición (Comité de Contratación UD)</strong>
+          <p>
+            Por definir: por cuánto tiempo se conserva el historial y quién puede
+            descargar versiones anteriores, conforme a la política institucional
+            de retención documental y al régimen de acceso a versiones superadas.
+          </p>
+        </div>
+      </section>
+
+      <ng-template #detalleSubsanacion let-evento>
+        @if (eventoPorId(evento.id); as original) {
+          @if (original.oferenteNombre || original.documentoNombre) {
+            <div class="historial__evento-meta">
+              @if (original.oferenteNombre) {
+                <span>
+                  <mat-icon aria-hidden="true">person</mat-icon>
+                  {{ original.oferenteNombre }}
+                </span>
+              }
+              @if (original.documentoNombre) {
+                <span>
+                  <mat-icon aria-hidden="true">assignment</mat-icon>
+                  {{ original.documentoNombre }}
+                </span>
+              }
+            </div>
+          }
+
+          @if (original.versionAnterior || original.versionNueva) {
+            <div class="historial__comparacion">
+              @if (original.versionAnterior; as anterior) {
+                <div class="historial__archivo historial__archivo--anterior">
+                  <span class="historial__archivo-rotulo">
+                    <mat-icon aria-hidden="true">history</mat-icon>
+                    Versión anterior
+                  </span>
+                  <strong>{{ anterior.nombre }}</strong>
+                  <span>{{ anterior.peso }}</span>
+                  <button
+                    class="boton-recto"
+                    type="button"
+                    [attr.aria-label]="'Descargar versión anterior ' + anterior.nombre"
+                    (click)="descargarArchivo(anterior.nombre)"
+                  >
+                    <mat-icon aria-hidden="true">download</mat-icon>
+                    Descargar anterior
+                  </button>
+                </div>
+              }
+
+              @if (original.versionAnterior && original.versionNueva) {
+                <mat-icon class="historial__flecha" aria-hidden="true">arrow_forward</mat-icon>
+              }
+
+              @if (original.versionNueva; as nueva) {
+                <div
+                  class="historial__archivo"
+                  [class.historial__archivo--nueva]="
+                    original.tipo !== 'intento-extemporaneo'
+                  "
+                  [class.historial__archivo--error]="
+                    original.tipo === 'intento-extemporaneo'
+                  "
+                >
+                  <span class="historial__archivo-rotulo">
+                    <mat-icon aria-hidden="true">
+                      {{ original.tipo === "intento-extemporaneo" ? "block" : "check" }}
+                    </mat-icon>
+                    {{
+                      original.tipo === "intento-extemporaneo"
+                        ? "Archivo rechazado"
+                        : "Versión subsanada"
+                    }}
+                  </span>
+                  <strong>{{ nueva.nombre }}</strong>
+                  <span>{{ nueva.peso }}</span>
+                  <button
+                    class="boton-recto"
+                    type="button"
+                    [attr.aria-label]="'Descargar versión subsanada ' + nueva.nombre"
+                    (click)="descargarArchivo(nueva.nombre)"
+                  >
+                    <mat-icon aria-hidden="true">download</mat-icon>
+                    Descargar nuevo
+                  </button>
+                </div>
+              }
+            </div>
+          }
+
+          <div
+            class="historial__evento-detalle"
+            [innerHTML]="original.detalleHtml | htmlSeguro"
+          ></div>
+
+          @if (original.justificacion) {
+            <p class="historial__justificacion">
+              <strong>Justificación:</strong> {{ original.justificacion }}
+            </p>
+          }
+
+          @if (original.tipo === "intento-extemporaneo") {
+            <div class="historial__extemporaneo" role="alert">
+              <mat-icon aria-hidden="true">block</mat-icon>
+              <span>
+                Intento bloqueado automáticamente por vencimiento de plazo. No
+                incorporado al expediente.
+              </span>
+            </div>
+          }
+
+          @if (original.hash) {
+            <span class="historial__hash">
+              <mat-icon aria-hidden="true">fingerprint</mat-icon>
+              {{ original.hash }}
+            </span>
+          }
+        }
+      </ng-template>
+    }
+  </section>
+</plantilla-pagina-contenedora>

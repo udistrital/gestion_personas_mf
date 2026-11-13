@@ -11,7 +11,7 @@ import {
 } from "src/app/core/constants/estados-solicitud.const";
 import { PermisosSolicitudService } from "src/app/core/services/permisos-solicitud.service";
 import { RolService } from "src/app/core/services/rol.service";
-import { ROLES_CREACION_SOLICITUD } from "src/app/core/constants/roles.const";
+import { ROLES_CREACION_SOLICITUD, ROLES_SOLICITANTE } from "src/app/core/constants/roles.const";
 import { ACCIONES_SOLICITUD_POR_ROL_Y_ESTADO } from "src/app/core/constants/acciones-por-rol-y-estado.const";
 import { CampoFiltro } from "src/app/shared/components/listado-filtros/listado-filtros.component";
 import { AlertService } from "src/app/shared/services/alert.service";
@@ -67,6 +67,11 @@ export class ListadoSolicitudesComponent implements OnInit {
   /** Crear solicitudes: roles declarados en `environment.ROLES_CREACION`. */
   readonly puedeCrearSolicitud = computed(() =>
     this.rol.permisoCreacion(ROLES_CREACION_SOLICITUD),
+  );
+
+  /** Entrada al área de estudios de mercado (S-13). */
+  readonly puedeVerEstudios = computed(() =>
+    this.rol.tieneAlgunRol(ROLES_SOLICITANTE),
   );
 
   readonly breadcrumb =
@@ -441,6 +446,10 @@ export class ListadoSolicitudesComponent implements OnInit {
 
   nuevaSolicitud(): void {
     void this.router.navigate(["cotizaciones", "solicitudes", "nueva"]);
+  }
+
+  irAEstudiosMercado(): void {
+    void this.router.navigate(["cotizaciones", "estudios-mercado"]);
   }
 
   etiquetaUnidad(valor: string): string {

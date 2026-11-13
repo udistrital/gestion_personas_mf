@@ -529,6 +529,25 @@ export class TableroOferentesComponent implements OnInit {
     return this.accionesPorOferente().get(oferente.id) ?? [];
   }
 
+  /**
+   * Estado de la fila según la decisión vigente.
+   *
+   * Solo el proveedor enviado a validación queda resaltado; el color y el badge
+   * cambian con el resultado de la decisión.
+   */
+  estadoFila(
+    oferente: OferenteTablero,
+  ): "pendiente" | "aprobada" | "rechazada" | null {
+    const decision = this.solicitud()?.decision;
+    if (!decision || decision.proveedorId !== oferente.proveedor.id) {
+      return null;
+    }
+    if (decision.fase === "enviada") {
+      return "pendiente";
+    }
+    return decision.fase === "aprobada" ? "aprobada" : "rechazada";
+  }
+
   etiquetaAccion(accion: AccionOferente): string {
     return this.permisos.etiquetaAccionOferente(accion);
   }
@@ -538,6 +557,9 @@ export class TableroOferentesComponent implements OnInit {
     accion: AccionOferente,
     oferente: OferenteTablero,
   ): string {
+    if (accion === "continuar-decision") {
+      return "Enviar a validación";
+    }
     const etiqueta = this.etiquetaAccion(accion);
     return accion === "ver-observaciones" && oferente.observaciones > 0
       ? `${etiqueta} (${oferente.observaciones})`
@@ -557,6 +579,15 @@ export class TableroOferentesComponent implements OnInit {
       return;
     }
     const comandos = this.permisos.rutaAccionOferente(accion, oferente);
+    if (accion === "continuar-decision") {
+      void this.router.navigate(comandos, {
+        queryParams: {
+          volver: "oferentes",
+          proveedorId: oferente.proveedor.id,
+        },
+      });
+      return;
+    }
     if (accion === "ver-observaciones") {
       void this.router.navigate(comandos, {
         queryParams: { proveedor: oferente.proveedor.nit },
@@ -786,9 +817,41 @@ export class TableroOferentesComponent implements OnInit {
     return cierre ? `${cierre} 23:59:59 COT` : "Sin fecha de cierre";
   }
 
+  get puedeAbrirSubsanacion(): boolean {
+    const solicitud = this.solicitud();
+    return (
+      !!solicitud &&
+      (this.vista() === "listo" || this.vista() === "sin-resultados") &&
+      (this.permisos.puedeConfigurarSubsanacion(solicitud) ||
+        !!solicitud.subsanacion)
+    );
+  }
+
+  get etiquetaSubsanacion(): string {
+    return this.solicitud()?.subsanacion
+      ? "Subsanación documental"
+      : "Habilitar subsanación";
+  }
+
+  abrirSubsanacion(): void {
+    const solicitud = this.solicitud();
+    if (!solicitud) {
+      return;
+    }
+    void this.router.navigate(
+      ["/cotizaciones", "solicitudes", solicitud.id, "subsanacion"],
+      { queryParams: { volver: "oferentes" } },
+    );
+  }
+
   /** true cuando el periodo ya terminó; el plazo se pinta en tono neutro. */
   periodoCerrado(): boolean {
     const solicitud = this.solicitud();
     return solicitud ? this.permisos.puedeVerOfertas(solicitud) : false;
+  }
+
+  /** Vuelve al listado de solicitudes de cotización. */
+  volver(): void {
+    void this.router.navigate(["/cotizaciones", "solicitudes"]);
   }
 }

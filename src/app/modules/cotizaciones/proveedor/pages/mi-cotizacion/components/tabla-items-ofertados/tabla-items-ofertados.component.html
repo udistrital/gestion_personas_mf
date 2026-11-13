@@ -1,0 +1,141 @@
+<tarjeta-seccion
+  icono="inventory_2"
+  titulo="Detalle de productos o servicios cotizados"
+  subtitulo="Ítems y especificaciones técnicas ofrecidas frente a lo solicitado."
+>
+  <span acciones class="chip chip--recto">
+    {{ total }} {{ total === 1 ? "ítem cotizado" : "ítems cotizados" }}
+  </span>
+
+  <div class="tabla-scroll">
+    <table class="tabla-ofertada" aria-label="Ítems ofertados frente a lo solicitado">
+      <thead>
+        <tr>
+          <th scope="col" class="th-numero">N.°</th>
+          <th scope="col" class="th-centro">Tipo</th>
+          <th scope="col">Nombre y descripción solicitada</th>
+          <th scope="col" class="th-centro">Cantidad</th>
+          <th scope="col" class="th-numero">Valor unitario</th>
+          <th scope="col" class="th-centro">IVA</th>
+          <th scope="col" class="th-numero">Subtotal</th>
+          <th scope="col">Ficha técnica / observación</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (fila of filas; track fila.item.id; let i = $index) {
+          <tr>
+            <td class="td-numero">{{ rangoInicio + i | number: "2.0" }}</td>
+            <td class="td-centro">
+              <span [class]="claseTipo(fila)">
+                {{ fila.item.tipo === "bien" ? "Bien" : "Servicio" }}
+              </span>
+            </td>
+            <td>
+              <span class="item__nombre">{{ fila.item.nombre }}</span>
+              <span class="item__descripcion">{{ fila.item.descripcion }}</span>
+            </td>
+            <td class="td-centro">
+              <span class="item__cantidad">{{ fila.item.cantidad }}</span>
+              <span class="item__unidad">{{ fila.item.unidad }}</span>
+            </td>
+            <td class="td-numero">{{ moneda(fila.valorUnitario) }}</td>
+            <td class="td-centro">{{ fila.etiquetaIva }}</td>
+            <td class="td-numero td-subtotal">
+              <span class="item__total">{{ moneda(fila.total) }}</span>
+              <span class="item__iva">+ IVA: {{ moneda(fila.iva) }}</span>
+            </td>
+            <td class="item__observacion">
+              {{ fila.nota || "Sin observación registrada" }}
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="8" class="tabla-vacia">
+              <mat-icon aria-hidden="true">inventory_2</mat-icon>
+              <span>La respuesta no tiene ítems para mostrar.</span>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  @if (total > 0) {
+    <footer class="paginador">
+      <div class="paginador__info">
+        <span>Mostrar:</span>
+        <div class="paginador__select">
+          <select
+            [value]="porPagina"
+            (change)="porPaginaCambio.emit($event)"
+            aria-label="Número de ítems por página"
+          >
+            @for (opcion of opcionesPorPagina; track opcion) {
+              <option [value]="opcion">{{ opcion }}</option>
+            }
+          </select>
+          <mat-icon aria-hidden="true">arrow_drop_down</mat-icon>
+        </div>
+        <span>por página</span>
+      </div>
+      <div class="paginador__rango">
+        Mostrando
+        <span class="paginador__valor">{{ rangoInicio }}</span>–<span
+          class="paginador__valor"
+          >{{ rangoInicio + filas.length - 1 }}</span
+        >
+        de <span class="paginador__valor">{{ total }}</span> ítems
+      </div>
+      <nav aria-label="Paginación de ítems ofertados" class="paginador__nav">
+        <button
+          class="paginador__boton"
+          type="button"
+          title="Primera página"
+          [disabled]="pagina === 0"
+          (click)="paginaCambio.emit(0)"
+        >
+          <mat-icon aria-hidden="true">first_page</mat-icon>
+        </button>
+        <button
+          class="paginador__boton"
+          type="button"
+          title="Anterior"
+          [disabled]="pagina === 0"
+          (click)="paginaCambio.emit(pagina - 1)"
+        >
+          <mat-icon aria-hidden="true">chevron_left</mat-icon>
+        </button>
+        @for (numero of paginasVisibles; track numero) {
+          <button
+            class="paginador__boton paginador__boton--pagina"
+            type="button"
+            [attr.aria-current]="numero === pagina + 1 ? 'page' : null"
+            [attr.aria-label]="'Página ' + numero"
+            [class.paginador__boton--activo]="numero === pagina + 1"
+            (click)="paginaCambio.emit(numero - 1)"
+          >
+            {{ numero }}
+          </button>
+        }
+        <button
+          class="paginador__boton"
+          type="button"
+          title="Siguiente"
+          [disabled]="pagina >= totalPaginas - 1"
+          (click)="paginaCambio.emit(pagina + 1)"
+        >
+          <mat-icon aria-hidden="true">chevron_right</mat-icon>
+        </button>
+        <button
+          class="paginador__boton"
+          type="button"
+          title="Última página"
+          [disabled]="pagina >= totalPaginas - 1"
+          (click)="paginaCambio.emit(totalPaginas - 1)"
+        >
+          <mat-icon aria-hidden="true">last_page</mat-icon>
+        </button>
+      </nav>
+    </footer>
+  }
+</tarjeta-seccion>

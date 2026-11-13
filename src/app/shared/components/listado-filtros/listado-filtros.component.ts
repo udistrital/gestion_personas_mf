@@ -4,6 +4,7 @@ import {
   Input,
   OnChanges,
   Output,
+  SimpleChanges,
 } from "@angular/core";
 
 export interface CampoFiltro {
@@ -52,8 +53,13 @@ export class ListadoFiltrosComponent implements OnChanges {
 
   valores: Record<string, string> = {};
 
-  ngOnChanges(): void {
-    this.reiniciarValores();
+  ngOnChanges(cambios: SimpleChanges): void {
+    // Solo se reinician los valores cuando cambia la definición de campos.
+    // Cambios en los filtros rápidos o en su selección no deben borrar lo que
+    // el usuario ya escribió.
+    if (cambios["campos"]) {
+      this.reiniciarValores();
+    }
   }
 
   aplicar(): void {

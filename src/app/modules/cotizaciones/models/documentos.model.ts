@@ -82,6 +82,58 @@ export interface DocumentoOferente {
   readonly icono: string;
   /** Norma que respalda un requisito fijo ("RF-021: Requisito de Oferta"). */
   readonly norma?: string;
+  /**
+   * true si el documento puede corregirse o complementarse en S-12.
+   *
+   * Los requisitos bloqueados por el pliego se muestran en S-12, pero no se
+   * pueden seleccionar. Si se omite, se asume que el documento es subsanable.
+   */
+  readonly subsanable?: boolean;
+  /**
+   * true si el documento afecta el puntaje de la ponderación.
+   *
+   * Es provisional: la regla institucional sobre qué documentos con puntaje se
+   * pueden subsanar todavía no está definida.
+   */
+  readonly afectaPuntaje?: boolean;
+}
+
+/* ── Documentos radicados en una oferta ───────────────────────────────────── */
+
+/** Estado de un documento dentro de la oferta radicada. */
+export type EstadoDocumentoOferta =
+  | "cargado"
+  | "subsanado"
+  | "pendiente"
+  | "no-subsanado";
+
+/**
+ * Documento aportado por el proveedor.
+ *
+ * Es la proyección de lectura que comparten el detalle del proveedor (S-10) y
+ * la consulta de la propia respuesta (P-06). `subsanado` y `pendiente` quedan
+ * definidos para cuando exista S-12 (RF-19/RN-08); hoy la semilla solo produce
+ * documentos cargados.
+ */
+export interface DocumentoOfertaRadicado {
+  readonly id: string;
+  /** Documento de la matriz de S-03; `null` para anexos libres. */
+  readonly requisitoId: string | null;
+  readonly nombre: string;
+  readonly nombreArchivo: string;
+  readonly clasificacion: ClasificacionDocumento;
+  readonly etiquetaClasificacion: string;
+  readonly formato: string;
+  readonly icono: string;
+  readonly estado: EstadoDocumentoOferta;
+  readonly fechaRadicacion: string;
+  readonly pesoBytes: number;
+  readonly peso: string;
+  readonly descripcion: string;
+  /** true para el soporte principal de la cotización. */
+  readonly principal: boolean;
+  /** false cuando el archivo no cumple los formatos de RN-41. */
+  readonly formatoValido: boolean;
 }
 
 /** Resumen de la matriz del oferente (cabecera de la tarjeta 2). */
@@ -289,6 +341,9 @@ export const DOCUMENTOS_OFERENTE_SEMILLA: readonly DocumentoOferente[] = [
     fijo: true,
     icono: "receipt_long",
     norma: "RF-021: Requisito de Oferta",
+    // La cotización formal es el soporte principal: no se subsana en S-12.
+    subsanable: false,
+    afectaPuntaje: false,
   },
   {
     id: "doc-rut",
@@ -298,6 +353,8 @@ export const DOCUMENTOS_OFERENTE_SEMILLA: readonly DocumentoOferente[] = [
       "Registro Único Tributario con actividad económica coincidente con el código CIIU del requerimiento.",
     fijo: false,
     icono: "badge",
+    subsanable: true,
+    afectaPuntaje: false,
   },
   {
     id: "doc-certificacion-bancaria",
@@ -307,6 +364,8 @@ export const DOCUMENTOS_OFERENTE_SEMILLA: readonly DocumentoOferente[] = [
       "Certificación de cuenta activa para abono y dispersión de recursos institucionales.",
     fijo: false,
     icono: "account_balance",
+    subsanable: true,
+    afectaPuntaje: false,
   },
   {
     id: "doc-catalogo-tecnico",
@@ -316,6 +375,8 @@ export const DOCUMENTOS_OFERENTE_SEMILLA: readonly DocumentoOferente[] = [
       "Ficha técnica extendida de fábrica para validación de especificaciones por el comité evaluador de la UD.",
     fijo: false,
     icono: "menu_book",
+    subsanable: true,
+    afectaPuntaje: true,
   },
 ];
 

@@ -1,0 +1,40 @@
+@use "src/app/shared/styles/detalle-solicitud" as detalle;
+
+@include detalle.styles;
+
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.resumen__chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.resumen__hash {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--agora-borde-tarjeta);
+  color: var(--agora-texto-neutro);
+  font-size: 0.75rem;
+
+  mat-icon {
+    width: 1rem;
+    height: 1rem;
+    font-size: 1rem;
+    color: var(--agora-primary);
+  }
+
+  strong {
+    color: var(--agora-text);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    overflow-wrap: anywhere;
+  }
+}

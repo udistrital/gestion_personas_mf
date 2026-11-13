@@ -7,7 +7,6 @@ import {
   OferenteTablero,
   ProveedorElegibleReporte,
   ResultadoTableroOferentes,
-  SeleccionOferenteEvento,
   coincideParticipacion,
   conteosOferentes,
   crearOferentes,
@@ -55,18 +54,6 @@ export abstract class OferentesService {
   ): Observable<ResultadoComparativo>;
 
   /**
-   * Fija o retira la oferta preseleccionada.
-   *
-   * La selección es una recomendación (RN-33/RN-34); no cambia el estado de la
-   * solicitud y se registra en la bitácora.
-   */
-  abstract seleccionarOferente(
-    solicitud: SolicitudDetalle,
-    proveedorId: string | null,
-    oferenteIds?: readonly string[],
-  ): Observable<ResultadoComparativo>;
-
-  /**
    * Detalle de un proveedor y su oferta (S-10).
    *
    * Devuelve `null` cuando el proveedor no pertenece a la solicitud. Un
@@ -75,6 +62,16 @@ export abstract class OferentesService {
   abstract obtenerDetalleProveedor(
     solicitud: SolicitudDetalle,
     proveedorId: string,
+  ): Observable<DetalleProveedorOferta | null>;
+
+  /**
+   * Detalle de S-10 de la oferta seleccionada (S-11).
+   *
+   * Devuelve `null` cuando todavía no hay una oferta seleccionada. Es el
+   * resumen que S-11 muestra antes de enviar la decisión a validación.
+   */
+  abstract obtenerOfertaSeleccionada(
+    solicitud: SolicitudDetalle,
   ): Observable<DetalleProveedorOferta | null>;
 
   /** Consulta simulada de un documento de la oferta (S-10). */
@@ -103,14 +100,6 @@ export abstract class OferentesService {
  */
 @Injectable()
 export class OferentesServiceMock extends OferentesService {
-  /**
-   * Selección vigente por solicitud.
-   *
-   * `null` significa "sin preselección"; la ausencia de la clave indica que
-   * todavía no se tocó y se usa la semilla de S-07.
-   */
-  private readonly seleccionados = new Map<string, string | null>();
-
   constructor(private readonly solicitudes: SolicitudesService) {
     super();
   }
@@ -148,9 +137,9 @@ export class OferentesServiceMock extends OferentesService {
       }).pipe(delay(retardo));
     }
 
-    const todos = this.aplicarSeleccion(
-      crearOferentes(solicitud, cierreSolicitudVencido(solicitud.cierre)),
-      solicitud.id,
+    const todos = crearOferentes(
+      solicitud,
+      cierreSolicitudVencido(solicitud.cierre),
     );
     const filtrados = ordenar(todos.filter((oferente) =>
       coincideCriterios(oferente, criterios),
@@ -199,9 +188,9 @@ export class OferentesServiceMock extends OferentesService {
       ).pipe(delay(retardo));
     }
 
-    const todos = this.aplicarSeleccion(
-      crearOferentes(solicitud, cierreSolicitudVencido(solicitud.cierre)),
-      solicitud.id,
+    const todos = crearOferentes(
+      solicitud,
+      cierreSolicitudVencido(solicitud.cierre),
     );
     const seleccion = oferenteIds?.length
       ? todos.filter(
@@ -226,63 +215,9 @@ export class OferentesServiceMock extends OferentesService {
       construirComparativo(
         solicitud,
         conjunto,
-        this.seleccionadoDe(solicitud.id, todos),
+        solicitud.decision?.proveedorId ?? null,
       ),
     ).pipe(delay(retardo));
-  }
-
-  seleccionarOferente(
-    solicitud: SolicitudDetalle,
-    proveedorId: string | null,
-    oferenteIds?: readonly string[],
-  ): Observable<ResultadoComparativo> {
-    const retardo = Number(
-      new URLSearchParams(window.location.search).get("mockRetardo"),
-    ) || 700;
-    const todos = this.aplicarSeleccion(
-      crearOferentes(solicitud, cierreSolicitudVencido(solicitud.cierre)),
-      solicitud.id,
-    );
-    const objetivo = proveedorId
-      ? todos.find(
-          (oferente) =>
-            oferente.proveedor.id === proveedorId && !!oferente.respuesta,
-        )
-      : null;
-
-    if (proveedorId && !objetivo) {
-      return throwError(
-        () =>
-          new Error(
-            "La oferta seleccionada ya no está disponible para preselección.",
-          ),
-      ).pipe(delay(retardo));
-    }
-
-    const valorCdp = solicitud.presupuesto?.valorCdp ?? 0;
-    if (
-      objetivo &&
-      valorCdp > 0 &&
-      (objetivo.respuesta?.total ?? 0) > valorCdp
-    ) {
-      return throwError(
-        () =>
-          new Error(
-            "La oferta supera el techo presupuestal y no puede preseleccionarse (RN-40).",
-          ),
-      ).pipe(delay(retardo));
-    }
-
-    const seleccion: SeleccionOferenteEvento = {
-      proveedorId: objetivo?.proveedor.id ?? null,
-      proveedorNombre: objetivo?.proveedor.nombre ?? "",
-      valor: objetivo?.respuesta?.total ?? 0,
-      rol: "Jefe de dependencia u ordenador del gasto",
-    };
-    this.seleccionados.set(solicitud.id, seleccion.proveedorId);
-    this.solicitudes.registrarSeleccionOferente(solicitud.id, seleccion);
-
-    return this.obtenerComparativo(solicitud, oferenteIds);
   }
 
   obtenerDetalleProveedor(
@@ -308,6 +243,63 @@ export class OferentesServiceMock extends OferentesService {
     return of(this.construirDetalleProveedor(solicitud, proveedorId)).pipe(
       delay(retardo),
     );
+  }
+
+  /**
+   * Resumen de la oferta seleccionada para S-11.
+   *
+   * Reutiliza la misma proyección de S-10, pero solo de la oferta elegida. Si
+   * la solicitud ya tiene decisión, `crearOferentes` marca como seleccionada la
+   * oferta decidida aunque la preselección de sesión se haya perdido.
+   */
+  obtenerOfertaSeleccionada(
+    solicitud: SolicitudDetalle,
+  ): Observable<DetalleProveedorOferta | null> {
+    const params = new URLSearchParams(window.location.search);
+    const retardo = Number(params.get("mockRetardo")) || 900;
+
+    if (params.get("mockDecision") === "error") {
+      return throwError(
+        () =>
+          new Error(
+            "No fue posible consultar la oferta seleccionada. Intente nuevamente.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    if (params.get("mockDecision") === "sin-oferta") {
+      return of(null).pipe(delay(retardo));
+    }
+
+    const todos = ordenar(
+      crearOferentes(solicitud, cierreSolicitudVencido(solicitud.cierre)),
+    );
+    const indice = todos.findIndex(
+      (oferente) => oferente.seleccionado && !!oferente.respuesta,
+    );
+    if (indice < 0) {
+      return of(null).pipe(delay(retardo));
+    }
+
+    const seleccionadoId = todos[indice].proveedor.id;
+    const comparativo = construirComparativo(
+      solicitud,
+      todos,
+      seleccionadoId,
+    );
+    const oferta =
+      comparativo.ofertas.find((item) => item.id === seleccionadoId) ?? null;
+
+    return of(
+      construirDetalleProveedorOferta(
+        solicitud,
+        todos[indice],
+        todos,
+        indice,
+        oferta,
+        seleccionadoId,
+      ),
+    ).pipe(delay(retardo));
   }
 
   obtenerDocumentoOferta(
@@ -360,10 +352,7 @@ export class OferentesServiceMock extends OferentesService {
     // Mismo orden que el tablero (S-07) para que anterior/siguiente coincidan
     // con lo que el usuario ve en la lista.
     const todos = ordenar(
-      this.aplicarSeleccion(
-        crearOferentes(solicitud, cierreSolicitudVencido(solicitud.cierre)),
-        solicitud.id,
-      ),
+      crearOferentes(solicitud, cierreSolicitudVencido(solicitud.cierre)),
     );
     const indice = todos.findIndex(
       (oferente) => oferente.proveedor.id === proveedorId,
@@ -372,7 +361,7 @@ export class OferentesServiceMock extends OferentesService {
       return null;
     }
 
-    const seleccionadoId = this.seleccionadoDe(solicitud.id, todos);
+    const seleccionadoId = solicitud.decision?.proveedorId ?? null;
     const comparativo = construirComparativo(
       solicitud,
       todos,
@@ -389,33 +378,6 @@ export class OferentesServiceMock extends OferentesService {
       oferta,
       seleccionadoId,
     );
-  }
-
-  /** Aplica la preselección vigente a las filas del tablero y del comparador. */
-  private aplicarSeleccion(
-    oferentes: readonly OferenteTablero[],
-    solicitudId: string,
-  ): readonly OferenteTablero[] {
-    const seleccionado = this.seleccionadoDe(solicitudId, oferentes);
-    return oferentes.map((oferente) => ({
-      ...oferente,
-      seleccionado: oferente.proveedor.id === seleccionado,
-    }));
-  }
-
-  /** Preselección vigente: la de sesión o la semilla de S-07. */
-  private seleccionadoDe(
-    solicitudId: string,
-    oferentes: readonly OferenteTablero[],
-  ): string | null {
-    if (this.seleccionados.has(solicitudId)) {
-      return this.seleccionados.get(solicitudId) ?? null;
-    }
-    const semilla =
-      oferentes.find((oferente) => oferente.seleccionado)?.proveedor.id ??
-      null;
-    this.seleccionados.set(solicitudId, semilla);
-    return semilla;
   }
 }
 

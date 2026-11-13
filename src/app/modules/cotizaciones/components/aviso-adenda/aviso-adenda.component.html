@@ -1,0 +1,54 @@
+<section class="aviso" aria-labelledby="aviso-adenda-titulo">
+  <header class="aviso__cabecera">
+    <span class="aviso__icono" aria-hidden="true">
+      <mat-icon>edit_note</mat-icon>
+    </span>
+    <div class="aviso__textos">
+      <h2 id="aviso-adenda-titulo" class="aviso__titulo">
+        El solicitante realizó modificaciones a esta solicitud
+      </h2>
+      <p>
+        Revise los cambios publicados en la {{ etiquetaAdenda }} y ajuste su
+        cotización antes del cierre vigente.
+      </p>
+      <span class="aviso__meta">
+        {{ etiquetaAdenda }} · {{ versionAnterior }} → {{ versionVigente }}
+        @if (publicadaEl) {
+          · Publicada el {{ publicadaEl }}
+        }
+      </span>
+    </div>
+    <button
+      type="button"
+      class="aviso__boton"
+      [attr.aria-expanded]="abierto"
+      aria-controls="panel-cambios-adenda"
+      (click)="alternarPanel()"
+    >
+      <span>{{ abierto ? "Ocultar cambios" : "Ver qué cambió" }}</span>
+      <mat-icon aria-hidden="true">{{ abierto ? "expand_less" : "expand_more" }}</mat-icon>
+    </button>
+  </header>
+
+  @if (abierto) {
+    <div id="panel-cambios-adenda" class="aviso__panel">
+      <resumen-diferencias
+        [diferencias]="diferencias"
+        titulo="Cuadro comparativo de cambios"
+        [descripcionPersonalizada]="motivo || 'Cambios publicados por la dependencia solicitante.'"
+        variante="tabla"
+        [mostrarPaso]="false"
+        sustantivo="cambio"
+        [publicadoEl]="publicadaEl"
+        [motivo]="motivo"
+      ></resumen-diferencias>
+      <p class="aviso__provisional">
+        <mat-icon aria-hidden="true">help_outline</mat-icon>
+        <span>
+          Por definir (RF-016): la matriz de modificaciones permitidas por
+          estado y el efecto sobre los oferentes que ya respondieron.
+        </span>
+      </p>
+    </div>
+  }
+</section>

@@ -7,41 +7,90 @@
     <div class="dialogo__cabecera-textos">
       <span class="dialogo__etiqueta">Confirmación precontractual</span>
       <h2 id="dialogo-envio-titulo" class="dialogo__titulo">
-        ¿Desea registrar su cotización formalmente?
+        {{ esActualizacion ? "¿Desea actualizar su cotización?" : "¿Desea registrar su cotización formalmente?" }}
       </h2>
     </div>
   </header>
 
   <div class="dialogo__cuerpo">
-    <div class="dialogo__aviso">
-      <p>
-        Una vez radicada, se generará el radicado electrónico de la respuesta y
-        se notificará a la dependencia solicitante.
-      </p>
-      <p class="dialogo__candado">
-        <mat-icon aria-hidden="true">lock</mat-icon>
+    @if (esActualizacion) {
+      <div class="dialogo__aviso dialogo__aviso--advertencia">
+        <p>
+          Al confirmar se generará una nueva versión radicada
+          <strong>{{ datos.versionNueva || "v2.0" }}</strong>
+          @if (datos.adenda) {
+            ({{ datos.adenda }})
+          }
+          de su oferta. La versión anterior quedará custodiada en el histórico
+          probatorio institucional.
+        </p>
+        <p class="dialogo__candado">
+          <mat-icon aria-hidden="true">policy</mat-icon>
+          <span>
+            Solo se permite actualizar una vez por cada modificación de la
+            solicitud.
+          </span>
+        </p>
+      </div>
+
+      <dl class="resumen" aria-label="Resumen de la actualización">
+        <div class="resumen__bloque">
+          <dt>Valor oferta anterior ({{ datos.versionAnterior || "v1.0" }})</dt>
+          <dd class="resumen__anterior">{{ formatoMoneda(datos.totalAnterior ?? 0) }}</dd>
+        </div>
+        <div class="resumen__bloque">
+          <dt>Nuevo valor actualizado ({{ datos.versionNueva || "v2.0" }})</dt>
+          <dd>{{ formatoMoneda(datos.total) }}</dd>
+          <span class="resumen__diferencia">{{ formatoDiferencia(diferencia) }}</span>
+        </div>
+        <div class="resumen__bloque">
+          <dt>Nuevo cierre de la solicitud</dt>
+          <dd>{{ datos.fechaCierre || "Sin fecha" }}</dd>
+        </div>
+        <div class="resumen__bloque">
+          <dt>Radicado anterior</dt>
+          <dd class="resumen__codigo">{{ datos.radicadoPrevio || "Sin radicado" }}</dd>
+        </div>
+      </dl>
+
+      <p class="dialogo__provisional">
+        <mat-icon aria-hidden="true">fingerprint</mat-icon>
         <span>
-          No podrá modificar los valores unitarios ni los documentos anexos
-          desde esta pantalla.
+          Por definir: la firma digital institucional todavía no está
+          implementada. La actualización se registra con fecha, hora y usuario.
         </span>
       </p>
-    </div>
+    } @else {
+      <div class="dialogo__aviso">
+        <p>
+          Una vez radicada, se generará el radicado electrónico de la respuesta
+          y se notificará a la dependencia solicitante.
+        </p>
+        <p class="dialogo__candado">
+          <mat-icon aria-hidden="true">lock</mat-icon>
+          <span>
+            No podrá modificar los valores unitarios ni los documentos anexos
+            desde esta pantalla.
+          </span>
+        </p>
+      </div>
 
-    <dl class="resumen" aria-label="Resumen de la cotización">
-      <div class="resumen__bloque">
-        <dt>Valor total con IVA</dt>
-        <dd>{{ formatoMoneda(datos.total) }}</dd>
-      </div>
-      <div class="resumen__bloque">
-        <dt>Vigencia de la oferta</dt>
-        <dd>{{ vigencia }}</dd>
-        <span class="resumen__detalle">Vence el {{ vencimiento }}</span>
-      </div>
-      <div class="resumen__bloque resumen__bloque--ancho">
-        <dt>Solicitud</dt>
-        <dd class="resumen__codigo">{{ datos.solicitudId }}</dd>
-      </div>
-    </dl>
+      <dl class="resumen" aria-label="Resumen de la cotización">
+        <div class="resumen__bloque">
+          <dt>Valor total con IVA</dt>
+          <dd>{{ formatoMoneda(datos.total) }}</dd>
+        </div>
+        <div class="resumen__bloque">
+          <dt>Vigencia de la oferta</dt>
+          <dd>{{ vigencia }}</dd>
+          <span class="resumen__detalle">Vence el {{ vencimiento }}</span>
+        </div>
+        <div class="resumen__bloque resumen__bloque--ancho">
+          <dt>Solicitud</dt>
+          <dd class="resumen__codigo">{{ datos.solicitudId }}</dd>
+        </div>
+      </dl>
+    }
   </div>
 
   <footer class="dialogo__pie">
@@ -60,7 +109,9 @@
       (click)="confirmar()"
     >
       <mat-icon aria-hidden="true">verified</mat-icon>
-      <span>Confirmar y registrar cotización</span>
+      <span>
+        {{ esActualizacion ? "Confirmar y actualizar cotización" : "Confirmar y registrar cotización" }}
+      </span>
     </button>
   </footer>
 </section>

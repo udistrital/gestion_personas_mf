@@ -12,6 +12,15 @@ import { EntradaCotizacionesComponent } from "./pages/entrada-cotizaciones/entra
 
 const routes: Routes = [
   {
+    path: "estudios-mercado",
+    canMatch: [rolGuard],
+    data: { roles: ROLES_SOLICITANTE },
+    loadChildren: () =>
+      import(
+        "./solicitante/pages/estudios-mercado/estudios-mercado.module"
+      ).then((m) => m.EstudiosMercadoModule),
+  },
+  {
     path: "solicitudes",
     canMatch: [rolGuard],
     data: { roles: ROLES_SOLICITANTE },

@@ -14,6 +14,25 @@ import { DialogoDescartarModule } from "../components/dialogo-descartar/dialogo-
 import { DialogoExcedePresupuestoModule } from "../components/dialogo-excede-presupuesto/dialogo-excede-presupuesto.module";
 import { DialogoConfirmarEnvioModule } from "../components/dialogo-confirmar-envio/dialogo-confirmar-envio.module";
 import { DialogoEnvioExitosoModule } from "../components/dialogo-envio-exitoso/dialogo-envio-exitoso.module";
+import { AvisoAdendaComponent } from "../components/aviso-adenda/aviso-adenda.component";
+import { ResumenDiferenciasModule } from "../components/resumen-diferencias/resumen-diferencias.module";
+import { ExitoActualizacionComponent } from "./pages/actualizar-respuesta/exito-actualizacion/exito-actualizacion.component";
+import { MiCotizacionProveedorComponent } from "./pages/mi-cotizacion/mi-cotizacion-proveedor.component";
+import { ResultadoProveedorComponent } from "./pages/resultado/resultado-proveedor.component";
+import { BannerResultadoComponent } from "./pages/resultado/components/banner-resultado/banner-resultado.component";
+import { TarjetaIdentidadProveedorModule } from "../components/tarjeta-identidad-proveedor/tarjeta-identidad-proveedor.module";
+import { ResumenMiCotizacionComponent } from "./pages/mi-cotizacion/components/resumen-respuesta/resumen-respuesta.component";
+import { TablaItemsOfertadosComponent } from "./pages/mi-cotizacion/components/tabla-items-ofertados/tabla-items-ofertados.component";
+import { ValoresOfertaComponent } from "./pages/mi-cotizacion/components/valores-oferta/valores-oferta.component";
+import { DocumentosOfertadosComponent } from "./pages/mi-cotizacion/components/documentos-ofertados/documentos-ofertados.component";
+import { EstadoVacioMiCotizacionComponent } from "./pages/mi-cotizacion/components/estado-vacio/estado-vacio.component";
+import { SubsanacionProveedorComponent } from "./pages/subsanacion/subsanacion-proveedor.component";
+import { DialogoConfirmarSubsanacionComponent } from "./pages/subsanacion/components/dialogo-confirmar-subsanacion/dialogo-confirmar-subsanacion.component";
+import { DialogoExitoSubsanacionComponent } from "./pages/subsanacion/components/dialogo-exito-subsanacion/dialogo-exito-subsanacion.component";
+import {
+  SubsanacionService,
+  SubsanacionServiceMock,
+} from "../services/subsanacion.service";
 
 @NgModule({
   declarations: [
@@ -22,6 +41,19 @@ import { DialogoEnvioExitosoModule } from "../components/dialogo-envio-exitoso/d
     DetalleSolicitudProveedorComponent,
     ObservacionesProveedorComponent,
     ResponderSolicitudComponent,
+    AvisoAdendaComponent,
+    ExitoActualizacionComponent,
+    MiCotizacionProveedorComponent,
+    ResultadoProveedorComponent,
+    BannerResultadoComponent,
+    ResumenMiCotizacionComponent,
+    TablaItemsOfertadosComponent,
+    ValoresOfertaComponent,
+    DocumentosOfertadosComponent,
+    EstadoVacioMiCotizacionComponent,
+    SubsanacionProveedorComponent,
+    DialogoConfirmarSubsanacionComponent,
+    DialogoExitoSubsanacionComponent,
   ],
   imports: [
     CommonModule,
@@ -33,7 +65,12 @@ import { DialogoEnvioExitosoModule } from "../components/dialogo-envio-exitoso/d
     DialogoExcedePresupuestoModule,
     DialogoConfirmarEnvioModule,
     DialogoEnvioExitosoModule,
+    ResumenDiferenciasModule,
+    TarjetaIdentidadProveedorModule,
     ProveedorRoutingModule,
+  ],
+  providers: [
+    { provide: SubsanacionService, useClass: SubsanacionServiceMock },
   ],
 })
 export class ProveedorModule {}

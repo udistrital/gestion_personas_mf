@@ -473,10 +473,35 @@
                                     Fuera de presupuesto
                                   </span>
                                 }
-                                @if (oferta.seleccionado) {
-                                  <span class="comparador__badge comparador__badge--seleccionado">
-                                    <mat-icon aria-hidden="true">grade</mat-icon>
-                                    Preseleccionado
+                                @if (estadoDecisionOferta(oferta); as estado) {
+                                  <span
+                                    class="comparador__badge"
+                                    [class.comparador__badge--seleccionado]="
+                                      estado === 'pendiente'
+                                    "
+                                    [class.comparador__badge--exito]="
+                                      estado === 'aprobada'
+                                    "
+                                    [class.comparador__badge--error]="
+                                      estado === 'rechazada'
+                                    "
+                                  >
+                                    <mat-icon aria-hidden="true">
+                                      {{
+                                        estado === "pendiente"
+                                          ? "pending_actions"
+                                          : estado === "aprobada"
+                                            ? "verified"
+                                            : "cancel"
+                                      }}
+                                    </mat-icon>
+                                    {{
+                                      estado === "pendiente"
+                                        ? "En validación"
+                                        : estado === "aprobada"
+                                          ? "Aprobada"
+                                          : "Rechazada"
+                                    }}
                                   </span>
                                 }
                               </div>
@@ -588,48 +613,44 @@
 
                       <tr class="comparador__fila comparador__fila--accion">
                         <th scope="row" class="comparador__fila-etiqueta">
-                          <span>Acción evaluadora del proceso</span>
+                          <span>Estado de la decisión</span>
                           <span class="comparador__ayuda">
-                            Preselección para recomendación; no adjudica.
+                            El proveedor se selecciona al enviarlo a validación
+                            desde S-07.
                           </span>
                         </th>
                         @for (oferta of ofertasVisibles; track oferta.id) {
                           <td class="comparador__td comparador__td--accion">
                             <div class="comparador__acciones-celda">
-                              @if (oferta.seleccionado) {
-                                <span class="comparador__preseleccionada">
-                                  <mat-icon aria-hidden="true">check_circle</mat-icon>
-                                  Preseleccionada
+                              @if (estadoDecisionOferta(oferta); as estado) {
+                                <span
+                                  class="comparador__preseleccionada"
+                                  [class.comparador__preseleccionada--aprobada]="
+                                    estado === 'aprobada'
+                                  "
+                                  [class.comparador__preseleccionada--rechazada]="
+                                    estado === 'rechazada'
+                                  "
+                                >
+                                  <mat-icon aria-hidden="true">
+                                    {{
+                                      estado === "pendiente"
+                                        ? "pending_actions"
+                                        : estado === "aprobada"
+                                          ? "verified"
+                                          : "cancel"
+                                    }}
+                                  </mat-icon>
+                                  {{
+                                    estado === "pendiente"
+                                      ? "En validación"
+                                      : estado === "aprobada"
+                                        ? "Aprobada"
+                                        : "Rechazada"
+                                  }}
                                 </span>
-                              } @else if (puedePreseleccionar(oferta)) {
-                                <button
-                                  class="boton-recto boton-recto--vino"
-                                  type="button"
-                                  [disabled]="preseleccionando()"
-                                  [attr.aria-label]="
-                                    'Preseleccionar la oferta de ' + oferta.proveedor.nombre
-                                  "
-                                  (click)="preseleccionar(oferta)"
-                                >
-                                  <mat-icon aria-hidden="true">how_to_reg</mat-icon>
-                                  Preseleccionar esta oferta
-                                </button>
-                              }
-                              @if (
-                                oferta.seleccionado &&
-                                puedeQuitarPreseleccion()
-                              ) {
-                                <button
-                                  class="comparador__enlace"
-                                  type="button"
-                                  [disabled]="preseleccionando()"
-                                  [attr.aria-label]="
-                                    'Quitar la preselección de ' + oferta.proveedor.nombre
-                                  "
-                                  (click)="quitarPreseleccion()"
-                                >
-                                  Quitar preselección
-                                </button>
+                              } @else {
+                                <span class="comparador__ayuda">Sin decisión</span>
                               }
                               @if (oferta.excedePresupuesto) {
                                 <span class="comparador__nota-error">
@@ -691,9 +712,35 @@
                               <span class="proveedor-col__meta">
                                 {{ oferta.proveedor.nit }}
                               </span>
-                              @if (oferta.seleccionado) {
-                                <span class="comparador__badge comparador__badge--seleccionado">
-                                  Preseleccionado
+                              @if (estadoDecisionOferta(oferta); as estado) {
+                                <span
+                                  class="comparador__badge"
+                                  [class.comparador__badge--seleccionado]="
+                                    estado === 'pendiente'
+                                  "
+                                  [class.comparador__badge--exito]="
+                                    estado === 'aprobada'
+                                  "
+                                  [class.comparador__badge--error]="
+                                    estado === 'rechazada'
+                                  "
+                                >
+                                  <mat-icon aria-hidden="true">
+                                    {{
+                                      estado === "pendiente"
+                                        ? "pending_actions"
+                                        : estado === "aprobada"
+                                          ? "verified"
+                                          : "cancel"
+                                    }}
+                                  </mat-icon>
+                                  {{
+                                    estado === "pendiente"
+                                      ? "En validación"
+                                      : estado === "aprobada"
+                                        ? "Aprobada"
+                                        : "Rechazada"
+                                  }}
                                 </span>
                               }
                             </div>
@@ -837,58 +884,6 @@
                   </div>
                 } @else {
                   <p class="panel__vacio">Sin CDP registrado para esta solicitud.</p>
-                }
-              </section>
-
-              <section
-                class="panel panel--preseleccion"
-                aria-labelledby="panel-preseleccion"
-              >
-                <header class="panel__cabecera panel__cabecera--simple">
-                  <h2 id="panel-preseleccion">
-                    <mat-icon aria-hidden="true">verified</mat-icon>
-                    Oferta preseleccionada
-                  </h2>
-                </header>
-                @if (ofertaPreseleccionada; as preseleccionada) {
-                  <p class="panel__preseleccion-nombre">
-                    {{ preseleccionada.proveedor.nombre }}
-                  </p>
-                  <p class="panel__preseleccion-valor">
-                    {{ moneda(preseleccionada.total) }}
-                    <span>COP</span>
-                  </p>
-                  @if (ahorroPreseleccionado > 0) {
-                    <p class="panel__preseleccion-ahorro">
-                      <mat-icon aria-hidden="true">savings</mat-icon>
-                      Ahorro efectivo: {{ moneda(ahorroPreseleccionado) }} COP
-                      frente al CDP
-                    </p>
-                  }
-                  <p class="panel__preseleccion-nota">
-                    Preselección para recomendación. La decisión final
-                    corresponde al Ordenador del Gasto.
-                  </p>
-                } @else {
-                  <p class="panel__vacio">
-                    Sin oferta preseleccionada. Elija una oferta en la matriz
-                    para preparar la recomendación.
-                  </p>
-                }
-
-                <button
-                  class="boton-recto boton-recto--vino panel__continuar"
-                  type="button"
-                  [disabled]="!puedeContinuarDecision"
-                  (click)="continuarDecision()"
-                >
-                  Continuar a decisión
-                  <mat-icon aria-hidden="true">arrow_forward</mat-icon>
-                </button>
-                @if (!puedeContinuarDecision) {
-                  <p class="panel__nota">
-                    Preseleccione una oferta para habilitar el paso a decisión.
-                  </p>
                 }
               </section>
             </aside>

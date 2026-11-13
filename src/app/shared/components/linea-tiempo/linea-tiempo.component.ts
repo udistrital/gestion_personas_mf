@@ -1,4 +1,4 @@
-import { Component, Input } from "@angular/core";
+import { Component, Input, TemplateRef } from "@angular/core";
 import { EstadoSolicitud } from "src/app/core/constants/estados-solicitud.const";
 
 /**
@@ -8,7 +8,12 @@ import { EstadoSolicitud } from "src/app/core/constants/estados-solicitud.const"
  * - `destacado` — vinotinto profundo (`--agora-primary-dark`).
  * - `neutro` — gris de hito inactivo.
  */
-export type TonoNodoLineaTiempo = "primario" | "destacado" | "neutro";
+export type TonoNodoLineaTiempo =
+  | "primario"
+  | "destacado"
+  | "neutro"
+  | "exito"
+  | "error";
 
 /** Tono de un chip de texto dentro de la línea de tiempo. */
 export type TonoEtiquetaLineaTiempo =
@@ -123,6 +128,17 @@ export class LineaTiempoComponent {
 
   /** Nombre accesible de la lista. */
   @Input() etiquetaLista = "Línea de tiempo de eventos";
+
+  /**
+   * Plantilla opcional para el detalle de cada evento.
+   *
+   * Permite que una pantalla concreta (S-12) pinte una comparación de archivos
+   * sin duplicar el riel, la cabecera ni el pie de autoría. Las vistas que no la
+   * pasan conservan el detalle HTML de siempre.
+   */
+  @Input() detallePlantilla: TemplateRef<{
+    $implicit: EventoLineaTiempo;
+  }> | null = null;
 
   /** Número de orden de un evento según el sentido de la lista. */
   numero(indice: number): number {

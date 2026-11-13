@@ -142,6 +142,12 @@
   font-weight: 600;
 }
 
+.detalle-oferta__chip--rechazo {
+  border-color: var(--agora-error-border);
+  background: var(--agora-error-surface);
+  color: var(--agora-error);
+}
+
 /* ── Pestañas ─────────────────────────────────────────────────────────────── */
 
 .detalle-oferta__tabs {
@@ -710,6 +716,16 @@
   color: var(--agora-warning-text);
 }
 
+.detalle-oferta__aviso--exito {
+  border-color: var(--agora-success-border);
+  border-left-color: var(--agora-success);
+  background: var(--agora-success-surface);
+}
+
+.detalle-oferta__aviso--exito > mat-icon {
+  color: var(--agora-success);
+}
+
 .detalle-oferta__aviso--info {
   border-color: var(--agora-borde-tarjeta);
   border-left-color: var(--agora-border-strong);
@@ -878,12 +894,22 @@
   font-size: 0.625rem;
 }
 
-/* ── Respuesta / preselección ─────────────────────────────────────────────── */
+/* ── Respuesta del ordenador del gasto ───────────────────────────────────── */
 
 .detalle-oferta__respuesta {
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
+}
+
+.detalle-oferta__notificaciones {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0.35rem 0 0;
+  padding-left: 1rem;
+  color: var(--agora-text);
+  font-size: var(--agora-font-sm);
 }
 
 .detalle-oferta__respuesta > p {

@@ -12,8 +12,8 @@
  */
 
 import type {
-  ClasificacionDocumento,
   DocumentoOferente,
+  DocumentoOfertaRadicado,
 } from "./documentos.model";
 import {
   etiquetaClasificacion,
@@ -22,6 +22,7 @@ import {
 } from "./documentos.model";
 import type { OfertaComparada } from "./comparativo.model";
 import type { OferenteTablero } from "./oferente.model";
+import { formatoFechaHoraOferente } from "./oferente.model";
 import { identidadProveedor } from "./proveedores.model";
 import type { ProveedorObjetivo } from "./proveedores.model";
 import {
@@ -32,38 +33,18 @@ import {
 import { esFormatoSoporteOferta } from "./respuesta-proveedor.model";
 import type { SolicitudDetalle } from "./solicitud.model";
 import { formatoTamano } from "./items.model";
+import { estadoSubsanacion, eventoDocumento } from "./subsanacion.model";
 
 /* ── Documentos de la oferta ──────────────────────────────────────────────── */
 
-/** Estado de un documento dentro de la oferta radicada. */
-export type EstadoDocumentoOferta = "cargado" | "subsanado" | "pendiente";
-
 /**
- * Documento aportado por el proveedor.
- *
- * `subsanado` y `pendiente` quedan definidos para cuando exista S-12
- * (RF-19/RN-08); hoy la semilla solo produce documentos cargados.
+ * El tipo del documento radicado vive en `documentos.model.ts` porque también
+ * lo usa P-06. Se reexporta para no cambiar las importaciones de S-10.
  */
-export interface DocumentoOfertaRadicado {
-  readonly id: string;
-  /** Documento de la matriz de S-03; `null` para anexos libres. */
-  readonly requisitoId: string | null;
-  readonly nombre: string;
-  readonly nombreArchivo: string;
-  readonly clasificacion: ClasificacionDocumento;
-  readonly etiquetaClasificacion: string;
-  readonly formato: string;
-  readonly icono: string;
-  readonly estado: EstadoDocumentoOferta;
-  readonly fechaRadicacion: string;
-  readonly pesoBytes: number;
-  readonly peso: string;
-  readonly descripcion: string;
-  /** true para el soporte principal de la cotización. */
-  readonly principal: boolean;
-  /** false cuando el archivo no cumple los formatos de RN-41. */
-  readonly formatoValido: boolean;
-}
+export type {
+  DocumentoOfertaRadicado,
+  EstadoDocumentoOferta,
+} from "./documentos.model";
 
 /** Resultado de pedir un documento de la oferta al servicio simulado. */
 export interface DocumentoOfertaResuelto {
@@ -220,13 +201,36 @@ export function crearDocumentosOferta(
   const version = respuesta?.version ?? oferta.version;
 
   const documentos = requeridos.map((documento, posicion) => {
-    const nombreArchivo = nombreArchivoDocumento(
-      documento,
-      oferente.proveedor,
-      indice,
-      version,
+    const periodo = solicitud.subsanacion;
+    const oferentePeriodo = periodo?.oferentes.find(
+      (item) => item.proveedorId === oferente.proveedor.id,
     );
-    const pesoBytes = PESOS_DOCUMENTO[posicion % PESOS_DOCUMENTO.length];
+    const seleccionado =
+      oferentePeriodo?.documentos.some(
+        (item) => item.id === documento.id && item.seleccionado,
+      ) ?? false;
+    const evento = periodo
+      ? eventoDocumento(periodo, oferente.proveedor.id, documento.id)
+      : null;
+    const vencida = periodo
+      ? estadoSubsanacion(periodo) === "vencida"
+      : false;
+    const nombreArchivo =
+      evento?.versionNueva?.nombre ??
+      nombreArchivoDocumento(
+        documento,
+        oferente.proveedor,
+        indice,
+        version,
+      );
+    const pesoBytes =
+      evento?.versionNueva?.pesoBytes ??
+      PESOS_DOCUMENTO[posicion % PESOS_DOCUMENTO.length];
+    const estado: DocumentoOfertaRadicado["estado"] = evento
+      ? "subsanado"
+      : vencida && seleccionado
+        ? "no-subsanado"
+        : "cargado";
     return {
       id: documento.id,
       requisitoId: documento.id,
@@ -236,8 +240,10 @@ export function crearDocumentosOferta(
       etiquetaClasificacion: etiquetaClasificacion(documento.clasificacion),
       formato: etiquetaFormato(nombreArchivo),
       icono: iconoPorFormato(nombreArchivo),
-      estado: "cargado" as const,
-      fechaRadicacion: fecha,
+      estado,
+      fechaRadicacion: evento
+        ? formatoFechaHoraOferente(evento.fecha)
+        : fecha,
       pesoBytes,
       peso: formatoTamano(pesoBytes),
       descripcion: documento.instruccion,

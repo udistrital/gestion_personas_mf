@@ -118,6 +118,25 @@ export interface CambioCampo {
   readonly anterior: string;
   /** Valor nuevo en texto plano; vacío = campo eliminado. */
   readonly nuevo: string;
+  /** Fecha de la modificación, cuando la fuente la conoce (adenda). */
+  readonly fecha?: string;
+  /** Motivo o justificación de la modificación, cuando la fuente la conoce. */
+  readonly motivo?: string;
+}
+
+/** Clasificación de un ítem frente a la versión anterior de la solicitud. */
+export type TipoCambioItemSolicitud =
+  | "sin-cambios"
+  | "modificado"
+  | "agregado"
+  | "eliminado";
+
+/** Comparación de un ítem entre dos versiones de la solicitud. */
+export interface CambioItemSolicitud {
+  readonly itemId: string;
+  readonly tipo: TipoCambioItemSolicitud;
+  readonly anterior?: ItemSolicitud;
+  readonly vigente?: ItemSolicitud;
 }
 
 /** Cambios agrupados por paso; el paso 7 los pinta en tarjetas. */

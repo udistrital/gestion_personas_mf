@@ -1,0 +1,49 @@
+<section
+  class="banner-resultado"
+  [class.banner-resultado--exito]="datos.tono === 'exito'"
+  [class.banner-resultado--error]="datos.tono === 'error'"
+  [class.banner-resultado--advertencia]="datos.tono === 'advertencia'"
+  [class.banner-resultado--info]="datos.tono === 'info'"
+  [class.banner-resultado--neutro]="datos.tono === 'neutro'"
+  role="status"
+  aria-labelledby="resultado-titulo"
+>
+  <span class="banner-resultado__icono" aria-hidden="true">
+    <mat-icon>{{ datos.icono }}</mat-icon>
+  </span>
+
+  <div class="banner-resultado__cuerpo">
+    <div class="banner-resultado__cabecera">
+      <span class="banner-resultado__eyebrow">{{ datos.eyebrow }}</span>
+      <span class="banner-resultado__etiqueta">{{ datos.etiqueta }}</span>
+    </div>
+
+    <h2 id="resultado-titulo" class="banner-resultado__titulo">
+      {{ datos.titulo }}
+    </h2>
+    <p class="banner-resultado__descripcion">{{ datos.descripcion }}</p>
+
+    @if (datos.datos.length) {
+      <dl class="banner-resultado__datos">
+        @for (dato of datos.datos; track dato.etiqueta) {
+          <div class="banner-resultado__dato">
+            <dt>
+              <mat-icon aria-hidden="true">{{ dato.icono }}</mat-icon>
+              <span>{{ dato.etiqueta }}</span>
+            </dt>
+            <dd>{{ dato.valor }}</dd>
+          </div>
+        }
+      </dl>
+    }
+
+    @if (datos.accionConstancia) {
+      <div class="banner-resultado__acciones">
+        <button class="boton-recto" type="button" (click)="descargar.emit()">
+          <mat-icon aria-hidden="true">download</mat-icon>
+          <span>{{ datos.accionConstancia }}</span>
+        </button>
+      </div>
+    }
+  </div>
+</section>

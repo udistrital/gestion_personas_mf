@@ -1,0 +1,196 @@
+<div class="dialogo-detalle">
+  <header class="dialogo-detalle__cabecera">
+    <div class="dialogo-detalle__titulo-bloque">
+      <span class="dialogo-detalle__icono" aria-hidden="true">
+        <mat-icon>analytics</mat-icon>
+      </span>
+      <div>
+        <span class="dialogo-detalle__sello">Ficha del estudio</span>
+        <h2 id="dialogo-detalle-estudio-titulo" class="dialogo-detalle__titulo">
+          {{ estudio.id }}
+        </h2>
+        <p class="dialogo-detalle__objeto">{{ estudio.objeto }}</p>
+      </div>
+    </div>
+    <div class="dialogo-detalle__cabecera-acciones">
+      <chip-estado [estado]="estado"></chip-estado>
+      <button
+        class="dialogo-detalle__cerrar"
+        type="button"
+        aria-label="Cerrar el detalle del estudio"
+        (click)="cerrar()"
+      >
+        <mat-icon aria-hidden="true">close</mat-icon>
+      </button>
+    </div>
+  </header>
+
+  <mat-dialog-content class="dialogo-detalle__contenido">
+    <section class="dialogo-detalle__resumen" aria-label="Resumen del estudio">
+      <div class="dialogo-detalle__metrica">
+        <span class="dialogo-detalle__metrica-etiqueta">Valor de referencia</span>
+        <strong class="dialogo-detalle__metrica-valor">
+          {{ moneda(estudio.valorReferencia) }}
+        </strong>
+      </div>
+      <div class="dialogo-detalle__metrica">
+        <span class="dialogo-detalle__metrica-etiqueta">Metodología</span>
+        <strong class="dialogo-detalle__metrica-valor">{{ metodo }}</strong>
+      </div>
+      <div class="dialogo-detalle__metrica">
+        <span class="dialogo-detalle__metrica-etiqueta">Invitados</span>
+        <strong class="dialogo-detalle__metrica-valor">
+          {{ invitadosDe(estudio) }}
+        </strong>
+      </div>
+      <div class="dialogo-detalle__metrica">
+        <span class="dialogo-detalle__metrica-etiqueta">Respondieron</span>
+        <strong class="dialogo-detalle__metrica-valor">
+          {{ respondieronDe(estudio) }}
+        </strong>
+      </div>
+    </section>
+
+    <section class="dialogo-detalle__seccion" aria-labelledby="detalle-datos-titulo">
+      <h3 id="detalle-datos-titulo" class="dialogo-detalle__seccion-titulo">
+        <mat-icon aria-hidden="true">description</mat-icon>
+        Datos del estudio
+      </h3>
+      <div class="dialogo-detalle__grid">
+        <div>
+          <span class="dialogo-detalle__etiqueta">Solicitud asociada</span>
+          <span class="dialogo-detalle__dato">{{ estudio.solicitudId }}</span>
+        </div>
+        <div>
+          <span class="dialogo-detalle__etiqueta">Dependencia</span>
+          <span class="dialogo-detalle__dato">{{ estudio.dependencia }}</span>
+        </div>
+        <div>
+          <span class="dialogo-detalle__etiqueta">Responsable técnico</span>
+          <span class="dialogo-detalle__dato">{{ estudio.responsable }}</span>
+        </div>
+        <div>
+          <span class="dialogo-detalle__etiqueta">Vigencia</span>
+          <span class="dialogo-detalle__dato">{{ estudio.vigencia }}</span>
+        </div>
+        <div>
+          <span class="dialogo-detalle__etiqueta">Fuente de información</span>
+          <span class="dialogo-detalle__dato">{{ fuente }}</span>
+        </div>
+        <div>
+          <span class="dialogo-detalle__etiqueta">Fecha límite</span>
+          <span class="dialogo-detalle__dato">
+            {{ formatoFecha(estudio.fechaLimite) }}
+          </span>
+        </div>
+        <div>
+          <span class="dialogo-detalle__etiqueta">Presupuesto base</span>
+          <span class="dialogo-detalle__dato">
+            {{ moneda(estudio.presupuestoBase) }}
+          </span>
+        </div>
+        <div>
+          <span class="dialogo-detalle__etiqueta">Presupuesto fijado</span>
+          <span class="dialogo-detalle__dato">
+            {{ estudio.presupuestoFijado ? "Sí" : "No" }}
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <section class="dialogo-detalle__seccion" aria-labelledby="detalle-actividades-titulo">
+      <h3 id="detalle-actividades-titulo" class="dialogo-detalle__seccion-titulo">
+        <mat-icon aria-hidden="true">category</mat-icon>
+        Actividades económicas
+      </h3>
+      <div class="dialogo-detalle__chips">
+        @for (actividad of estudio.actividades; track actividad.id) {
+          <span class="dialogo-detalle__chip" [title]="actividad.descripcion">
+            {{ actividad.codigo }}
+          </span>
+        } @empty {
+          <span class="dialogo-detalle__dato">Sin actividades registradas.</span>
+        }
+      </div>
+      @if (estudio.areaSnies || estudio.nucleoSnies) {
+        <p class="dialogo-detalle__nota">
+          SNIES: {{ estudio.areaSnies || "Sin clasificar" }} ·
+          {{ estudio.nucleoSnies || "No aplica" }}
+        </p>
+      }
+    </section>
+
+    <section class="dialogo-detalle__seccion" aria-labelledby="detalle-invitaciones-titulo">
+      <h3 id="detalle-invitaciones-titulo" class="dialogo-detalle__seccion-titulo">
+        <mat-icon aria-hidden="true">groups</mat-icon>
+        Proveedores invitados
+      </h3>
+      @if (estudio.invitaciones.length === 0) {
+        <p class="dialogo-detalle__dato">
+          El estudio aún no tiene invitaciones cursadas.
+        </p>
+      } @else {
+        <div class="dialogo-detalle__tabla-scroll">
+          <table class="dialogo-detalle__tabla" aria-label="Proveedores invitados al estudio">
+            <caption class="visually-oculto">
+              Proveedores invitados, estado de la invitación y radicado
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Proveedor</th>
+                <th scope="col">Documento</th>
+                <th scope="col">Estado</th>
+                <th scope="col">Enviada</th>
+                <th scope="col">Radicado</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (invitacion of estudio.invitaciones; track invitacion.id) {
+                <tr>
+                  <td>{{ nombreProveedor(invitacion) }}</td>
+                  <td>{{ nitProveedor(invitacion) }}</td>
+                  <td>
+                    <chip-estado [estado]="invitacion.estado"></chip-estado>
+                  </td>
+                  <td>{{ formatoFecha(invitacion.fechaEnvio) }}</td>
+                  <td class="dialogo-detalle__radicado">
+                    {{ invitacion.radicado }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+
+    <section class="dialogo-detalle__seccion" aria-labelledby="detalle-eventos-titulo">
+      <h3 id="detalle-eventos-titulo" class="dialogo-detalle__seccion-titulo">
+        <mat-icon aria-hidden="true">history</mat-icon>
+        Trazabilidad de eventos
+      </h3>
+      <linea-tiempo
+        [eventos]="eventosLineaTiempo"
+        etiquetaLista="Trazabilidad del estudio de mercado"
+        prefijoEvento="Evento"
+      ></linea-tiempo>
+    </section>
+  </mat-dialog-content>
+
+  <footer class="dialogo-detalle__pie">
+    <button mat-stroked-button class="boton-secundario-estudio" type="button" (click)="cerrar()">
+      Cerrar ficha
+    </button>
+    @if (puedeInvitar) {
+      <button
+        mat-flat-button
+        class="boton-primario"
+        type="button"
+        (click)="invitar()"
+      >
+        <mat-icon aria-hidden="true">forward_to_inbox</mat-icon>
+        Invitar proveedores
+      </button>
+    }
+  </footer>
+</div>

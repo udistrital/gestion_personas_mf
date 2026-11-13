@@ -1,0 +1,280 @@
+@use "src/app/shared/styles/tokens" as t;
+@use "src/app/shared/styles/campos-registro" as campos;
+
+@include campos.estilos;
+
+:host {
+  display: block;
+}
+
+.dialogo {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  color: var(--agora-text);
+}
+
+.dialogo__cabecera {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 1.25rem 1.25rem 0;
+}
+
+.dialogo__icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-surface-soft);
+  color: var(--agora-primary);
+}
+
+.dialogo__icono--exito {
+  border-color: var(--agora-success-border);
+  background: var(--agora-success-surface);
+  color: var(--agora-success);
+}
+
+.dialogo__icono--error {
+  border-color: var(--agora-error-border);
+  background: var(--agora-error-surface);
+  color: var(--agora-error);
+}
+
+.dialogo__titulos {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.dialogo__sello {
+  color: var(--agora-primary);
+  font-size: var(--agora-font-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dialogo__titulo {
+  margin: 0;
+  color: var(--agora-primary);
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.dialogo__subtitulo {
+  margin: 0;
+  color: var(--agora-texto-neutro);
+  font-size: var(--agora-font-sm);
+  line-height: 1.45;
+}
+
+.dialogo__cerrar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: var(--agora-radio-sm);
+  background: transparent;
+  color: var(--agora-texto-neutro);
+  cursor: pointer;
+}
+
+.dialogo__cerrar:hover {
+  background: var(--agora-resalte-neutro);
+  color: var(--agora-primary);
+}
+
+.dialogo__cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 0 1.25rem;
+}
+
+.dialogo__texto,
+.dialogo__nota {
+  margin: 0;
+  color: var(--agora-texto-neutro);
+  font-size: var(--agora-font-sm);
+  line-height: 1.5;
+}
+
+.dialogo__exito-texto {
+  margin: 0;
+  color: var(--agora-text);
+  font-size: var(--agora-font-md);
+  line-height: 1.5;
+}
+
+.dialogo__aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-left: 3px solid var(--agora-primary);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-surface-soft);
+  font-size: var(--agora-font-sm);
+}
+
+.dialogo__aviso p {
+  margin: 0;
+}
+
+.dialogo__aviso--info {
+  border-left-color: var(--agora-info);
+  background: var(--agora-info-surface);
+}
+
+.dialogo__aviso--error {
+  border-color: var(--agora-error-border);
+  border-left-color: var(--agora-error);
+  background: var(--agora-error-surface);
+  color: var(--agora-error);
+}
+
+.dialogo__resumen {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.85rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-surface-soft);
+}
+
+.dialogo__resumen-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.dialogo__datos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin: 0;
+}
+
+.dialogo__datos dt {
+  color: var(--agora-texto-neutro);
+  font-size: var(--agora-font-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.dialogo__datos dd {
+  margin: 0.1rem 0 0;
+  color: var(--agora-text);
+  font-size: var(--agora-font-sm);
+  font-weight: 600;
+}
+
+.dialogo__grupo {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.dialogo__grupo legend {
+  margin-bottom: 0.35rem;
+}
+
+.dialogo__formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dialogo__pie {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.85rem 1.25rem 1.25rem;
+  border-top: 1px solid var(--agora-borde-tarjeta);
+}
+
+.dialogo__enviando {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  color: var(--agora-texto-neutro);
+  font-size: var(--agora-font-sm);
+}
+
+.boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 2.5rem;
+  padding: 0 1rem;
+  border: 1px solid var(--agora-borde-control);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-surface);
+  color: var(--agora-text);
+  font: inherit;
+  font-size: var(--agora-font-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s ease all;
+}
+
+.boton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.boton--secundario:hover:not(:disabled) {
+  background: var(--agora-surface-soft);
+}
+
+.boton--primario {
+  border-color: var(--agora-primary);
+  background: var(--agora-primary);
+  color: var(--agora-on-primary);
+}
+
+.boton--primario:hover:not(:disabled) {
+  border-color: var(--agora-primary-dark);
+  background: var(--agora-primary-dark);
+}
+
+.boton--peligro {
+  border-color: var(--agora-error);
+  background: var(--agora-error);
+  color: var(--agora-on-primary);
+}
+
+.boton--peligro:hover:not(:disabled) {
+  background: var(--agora-error-border);
+}
+
+@media (max-width: 40rem) {
+  .dialogo__datos {
+    grid-template-columns: 1fr;
+  }
+
+  .dialogo__pie {
+    flex-direction: column-reverse;
+  }
+
+  .boton {
+    width: 100%;
+  }
+}

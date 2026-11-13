@@ -1,0 +1,128 @@
+<section class="exito" aria-labelledby="exito-actualizacion-titulo">
+  <div class="exito__franja">
+    <span>
+      <mat-icon aria-hidden="true">verified_user</mat-icon>
+      SISTEMA ÁGORA · CONTRATACIÓN PÚBLICA ELECTRÓNICA
+    </span>
+    <span class="exito__id">ACTUALIZACIÓN DE RESPUESTA</span>
+  </div>
+
+  <div class="exito__cuerpo">
+    <span class="exito__icono" aria-hidden="true">
+      <mat-icon>check_circle</mat-icon>
+    </span>
+
+    <div class="exito__chips">
+      <span class="chip chip--exito">{{ tituloAdenda }}</span>
+      <span class="chip chip--recto">Versión {{ version }} oficial</span>
+    </div>
+
+    <h2 id="exito-actualizacion-titulo" class="exito__titulo">
+      Cotización modificada correctamente
+    </h2>
+    <p class="exito__mensaje">
+      Su oferta actualizada fue radicada formalmente ante la Universidad
+      Distrital Francisco José de Caldas y transmitida a la dependencia
+      solicitante para su evaluación.
+    </p>
+
+    <article class="constancia" aria-labelledby="constancia-titulo">
+      <header class="constancia__cabecera">
+        <h3 id="constancia-titulo">
+          <mat-icon aria-hidden="true">description</mat-icon>
+          Constancia de radicación electrónica
+        </h3>
+        <span class="constancia__valida">
+          <span class="constancia__punto" aria-hidden="true"></span>
+          Radicado válido
+        </span>
+      </header>
+
+      <dl class="constancia__datos">
+        <div class="constancia__dato">
+          <dt>Número de radicado de modificación</dt>
+          <dd class="constancia__radicado">{{ resultado.respuesta.radicado }}</dd>
+        </div>
+        <div class="constancia__dato">
+          <dt>Fecha y hora de radicación</dt>
+          <dd>{{ fecha }}</dd>
+        </div>
+        <div class="constancia__dato constancia__dato--ancho">
+          <dt>Solicitud vinculada</dt>
+          <dd>{{ solicitudId }} · {{ solicitudTitulo }}</dd>
+        </div>
+        <div class="constancia__dato">
+          <dt>Nuevo valor total registrado (IVA incluido)</dt>
+          <dd class="constancia__total">{{ formatoMoneda(resultado.respuesta.total) }}</dd>
+        </div>
+        <div class="constancia__dato">
+          <dt>Ítems ratificados</dt>
+          <dd>
+            {{ resultado.itemsActivos }} ítems activos
+            @if (resultado.itemsSuprimidos > 0) {
+              <span class="constancia__nota">
+                ({{ resultado.itemsSuprimidos }} ítem suprimido por la adenda)
+              </span>
+            }
+          </dd>
+        </div>
+        <div class="constancia__dato">
+          <dt>Estado de la respuesta</dt>
+          <dd>Actualizada (en plazo de evaluación técnica)</dd>
+        </div>
+        <div class="constancia__dato">
+          <dt>Cierre de recepción</dt>
+          <dd>{{ cierre || "Sin fecha" }}</dd>
+        </div>
+      </dl>
+
+      <div class="constancia__hash">
+        <span class="constancia__hash-icono" aria-hidden="true">
+          <mat-icon>enhanced_encryption</mat-icon>
+        </span>
+        <div class="constancia__hash-textos">
+          <span class="constancia__hash-titulo">
+            Estampa de tiempo y hash criptográfico
+          </span>
+          <code>{{ resultado.hash }}</code>
+        </div>
+        <span class="constancia__inmutable">
+          <mat-icon aria-hidden="true">lock</mat-icon>
+          Referencia local
+        </span>
+      </div>
+      <p class="constancia__provisional">
+        <mat-icon aria-hidden="true">help_outline</mat-icon>
+        <span>
+          Por definir: la firma digital oficial y el hash institucional se
+          conectarán cuando exista el servicio de firma. Por ahora es una
+          referencia local de integridad.
+        </span>
+      </p>
+    </article>
+
+    <div class="exito__acciones">
+      <button mat-flat-button class="boton-primario" type="button" (click)="continuar.emit()">
+        <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+        Continuar al detalle
+      </button>
+      <button mat-stroked-button class="boton-recto" type="button" (click)="descargar.emit()">
+        <mat-icon aria-hidden="true">download</mat-icon>
+        Descargar constancia (PDF)
+      </button>
+      <button mat-stroked-button class="boton-recto" type="button" (click)="volverABandeja.emit()">
+        <mat-icon aria-hidden="true">list_alt</mat-icon>
+        Volver a la bandeja
+      </button>
+    </div>
+
+    <aside class="exito__nota">
+      <mat-icon aria-hidden="true">info</mat-icon>
+      <p>
+        Puede consultar el historial completo de versiones en el detalle de la
+        solicitud. La versión anterior quedó archivada para efectos de
+        auditoría institucional.
+      </p>
+    </aside>
+  </div>
+</section>

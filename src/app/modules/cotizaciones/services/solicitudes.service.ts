@@ -1,7 +1,10 @@
 import { Injectable } from "@angular/core";
 import { Observable, of, throwError, delay } from "rxjs";
 import { EstadoSolicitud } from "src/app/core/constants/estados-solicitud.const";
-import { ACCIONES_SOLICITUD_POR_ESTADO } from "src/app/core/constants/acciones-por-rol-y-estado.const";
+import {
+  ACCIONES_DECISION_POR_ESTADO,
+  ACCIONES_SOLICITUD_POR_ESTADO,
+} from "src/app/core/constants/acciones-por-rol-y-estado.const";
 import type {
   ConteosFiltrosInvitaciones,
   DetalleInvitacionProveedor,
@@ -9,7 +12,9 @@ import type {
   GrupoFiltroInvitacion,
   InvitacionProveedor,
   InvitacionProveedorConSolicitud,
+  ProveedorPublicoProveedor,
   ResultadoListadoInvitaciones,
+  ResumenRespuestaVigente,
   SolicitudDetalleProveedor,
 } from "../models/invitacion-proveedor.model";
 import {
@@ -23,8 +28,18 @@ import {
   SolicitudDetalle,
   DatosCancelacionSolicitud,
   TipoCotizacion,
+  cierreSolicitudVencido,
+  fechaCierreSolicitud,
   tipoNecesidad,
 } from "../models/solicitud.model";
+import type {
+  DecisionSolicitud,
+  EnvioDecision,
+  NotificacionDecision,
+  RegistroEnvioDecision,
+} from "../models/decision.model";
+import type { ResultadoProveedor } from "../models/resultado-proveedor.model";
+import { construirResultadoProveedor } from "../models/resultado-proveedor.model";
 import {
   CaracteristicasDetalle,
   ContadoresPestanas,
@@ -60,15 +75,16 @@ import {
   ACTIVIDADES_CIIU,
   ActividadCiiu,
   ActividadVinculada,
+  PROVEEDORES_MOCK,
   SegmentacionProveedores,
   buscarProveedores,
   exigeSnies,
+  identidadProveedor,
 } from "../models/proveedores.model";
 import type {
   DatosEdicionSolicitud,
   ModoEdicionSolicitud,
   ModificacionPendiente,
-  ResumenDiferencias,
   ResultadoGuardadoSolicitud,
   VersionEdicionSolicitud,
 } from "../models/edicion-solicitud.model";
@@ -79,7 +95,29 @@ import {
   versionSolicitud,
 } from "../models/edicion-solicitud.model";
 import type { ResultadoCruce } from "../models/necesidad.model";
-import { contarOfertasRecibidasDesde, SeleccionOferenteEvento } from "../models/oferente.model";
+import {
+  contarOfertasRecibidasDesde,
+  crearOferentes,
+  formatoFechaHoraOferente,
+} from "../models/oferente.model";
+import type {
+  AmpliacionSubsanacion,
+  CancelacionSubsanacion,
+  EventoSubsanacion,
+  OferenteSubsanacion,
+  RegistroEventoSubsanacion,
+  RegistroSubsanacion,
+  Subsanacion,
+} from "../models/subsanacion.model";
+import {
+  SUBSANACIONES_MOCK,
+  crearOferentesSubsanables,
+  estadoSubsanacion,
+  eventoDocumento,
+  eventosVigentes,
+  metaEventoSubsanacion,
+} from "../models/subsanacion.model";
+import { filtrarSubsanacionProveedor } from "../models/subsanacion-proveedor.model";
 import { DiferenciasSolicitudService } from "./diferencias-solicitud.service";
 import { textoPlanoDesdeHtml } from "src/app/shared/utils/texto-plano";
 import { MIN_CARACTERES_JUSTIFICACION } from "src/app/shared/validators/justificacion.validator";
@@ -126,22 +164,88 @@ export abstract class SolicitudesService {
     id: string,
   ): Observable<DetalleInvitacionProveedor | null>;
 
+  /**
+   * Resultado del proceso para el proveedor actual (P-07).
+   *
+   * Es el único punto de enlace con el futuro backend. La implementación debe
+   * devolver la decisión **filtrada** para el proveedor de la sesión: nunca la
+   * decisión, la oferta ni el valor de otro oferente (RN-29).
+   */
+  abstract obtenerResultadoProveedor(
+    id: string,
+  ): Observable<ResultadoProveedor | null>;
+
   /** Refleja la radicación en la invitación para las vistas P-01 y P-02. */
   abstract registrarRespuestaProveedor(
     solicitudId: string,
     fechaRadicacion: string,
+    respuesta?: ResumenRespuestaVigente,
+  ): void;
+
+  /** Refleja la actualización de la respuesta en P-01 y P-02 (P-05). */
+  abstract registrarActualizacionProveedor(
+    solicitudId: string,
+    respuesta: ResumenRespuestaVigente,
   ): void;
 
   /**
-   * Registra en la bitácora la preselección de una oferta desde S-09.
+   * Registra el envío a validación de una oferta (S-11).
    *
-   * No cambia el estado de la solicitud: la preselección es una recomendación
-   * y la decisión final corresponde al ordenador del gasto (RN-34).
+   * Deja la solicitud en `en-aprobacion`, guarda la justificación y la
+   * notificación simulada, y agrega el evento a la bitácora. No cambia la
+   * invitación a `aceptada`/`rechazada`: eso ocurre cuando las vistas del
+   * Ordenador del Gasto registren la validación final.
+   *
+   * Valida RN-24 (mínimo 20 caracteres), RN-29 (cierre vencido), RN-35 (un solo
+   * envío, salvo reenvío tras rechazo) y RN-40 (la oferta no puede superar el
+   * CDP).
    */
-  abstract registrarSeleccionOferente(
-    solicitudId: string,
-    seleccion: SeleccionOferenteEvento,
-  ): void;
+  abstract registrarEnvioDecision(
+    id: string,
+    datos: RegistroEnvioDecision,
+  ): Observable<SolicitudDetalle>;
+
+  /** Periodos de subsanación registrados para una solicitud (S-12). */
+  abstract obtenerSubsanaciones(
+    id: string,
+  ): Observable<readonly Subsanacion[]>;
+
+  /**
+   * Configura un periodo de subsanación (S-12).
+   *
+   * Solo se permite en `en-evaluacion`, con el cierre vencido y sin una
+   * decisión registrada. Valida fechas, oferentes, documentos y observaciones.
+   */
+  abstract registrarSubsanacion(
+    id: string,
+    datos: RegistroSubsanacion,
+  ): Observable<Subsanacion>;
+
+  /** Amplía el plazo de un periodo programado o activo. */
+  abstract ampliarSubsanacion(
+    id: string,
+    horas: number | null,
+    nuevaFecha: string | null,
+    motivo: string,
+  ): Observable<Subsanacion>;
+
+  /** Cancela un periodo programado o activo. */
+  abstract cancelarSubsanacion(
+    id: string,
+    motivo: string,
+  ): Observable<Subsanacion>;
+
+  /**
+   * Registra un evento del proveedor dentro del periodo vigente (P-08).
+   *
+   * El servicio completa fecha, autor, nombre del oferente y radicado. Valida
+   * que el periodo esté activo, que el proveedor pertenezca a él y que el
+   * documento esté habilitado.
+   */
+  abstract registrarEventoSubsanacion(
+    id: string,
+    registro: RegistroEventoSubsanacion,
+  ): Observable<Subsanacion>;
 
   /**
    * Guarda una edición de la solicitud (S-04).
@@ -224,6 +328,301 @@ function fechaLimiteRelativa(dias: number): string {
   const mes = String(fecha.getMonth() + 1).padStart(2, "0");
   return `${fecha.getFullYear()}-${mes}-${dia}T23:59:00-05:00`;
 }
+
+/**
+ * Decisión de demostración para los escenarios de solo lectura.
+ *
+ * S-11 no produce la validación final; estos registros representan lo que
+ * dejarán las vistas exclusivas del Ordenador del Gasto (O-01 a O-04) cuando
+ * existan. El valor se completa en la vista con el total de la oferta.
+ */
+function decisionSemilla(
+  solicitudId: string,
+  fase: "aprobada" | "rechazada",
+  proveedorId: string,
+  proveedorNombre: string,
+  justificacionEnvio: string,
+  justificacionValidacion: string,
+  fechaEnvio: string,
+  fechaValidacion: string,
+  codigo: string,
+): DecisionSolicitud {
+  return {
+    id: `decision-${solicitudId}`,
+    solicitudId,
+    fase,
+    invitacionId: `INV-${solicitudId.slice(-4)}-${proveedorId.replace("prov-", "")}`,
+    proveedorId,
+    proveedorNombre,
+    valor: 0,
+    envio: {
+      justificacion: justificacionEnvio,
+      justificacionHtml: `<p>${justificacionEnvio}</p>`,
+      usuario: "raquimbayap",
+      autor: "Raúl Quimbaya",
+      rol: "Jefe de Dependencia",
+      fecha: fechaEnvio,
+      fechaIso: "",
+      notificar: true,
+    },
+    validacion: {
+      resultado: fase,
+      justificacion: justificacionValidacion,
+      justificacionHtml: `<p>${justificacionValidacion}</p>`,
+      usuario: "rgomez",
+      autor: "Dr. Ricardo Gómez Morales",
+      rol: "Ordenador del Gasto",
+      fecha: fechaValidacion,
+      fechaIso: "",
+    },
+    notificaciones: [
+      {
+        destinatario: proveedorNombre,
+        correo: "",
+        fecha: fechaValidacion,
+        fechaIso: "",
+        tipo: fase === "aprobada" ? "adjudicacion" : "rechazo",
+        estadoEntrega: "simulada",
+      },
+    ],
+    codigoVerificacion: codigo,
+  };
+}
+
+/**
+ * Decisión de demostración para una oferta enviada a validación.
+ *
+ * S-11 produce este registro y la validación final la registrarán las vistas
+ * del Ordenador del Gasto. P-07 lo usa para el estado «en validación».
+ */
+function decisionEnValidacionSemilla(
+  solicitudId: string,
+  proveedorId: string,
+  proveedorNombre: string,
+  justificacion: string,
+  fechaEnvio: string,
+  codigo: string,
+): DecisionSolicitud {
+  return {
+    id: `decision-${solicitudId}`,
+    solicitudId,
+    fase: "enviada",
+    invitacionId: `INV-${solicitudId.slice(-4)}`,
+    proveedorId,
+    proveedorNombre,
+    valor: 0,
+    envio: {
+      justificacion,
+      justificacionHtml: `<p>${justificacion}</p>`,
+      usuario: "raquimbayap",
+      autor: "Raúl Quimbaya",
+      rol: "Jefe de Dependencia",
+      fecha: fechaEnvio,
+      fechaIso: "",
+      notificar: true,
+    },
+    notificaciones: [
+      {
+        destinatario: proveedorNombre,
+        correo: "licitaciones@sistemasytecnologia.com.co",
+        fecha: fechaEnvio,
+        fechaIso: "",
+        tipo: "validacion",
+        estadoEntrega: "programada",
+      },
+    ],
+    codigoVerificacion: codigo,
+  };
+}
+
+/**
+ * Escenarios de S-11 compartidos por el área solicitante y el portal del
+ * proveedor.
+ *
+ * - `0160`: cerrada, con oferta seleccionada y decisión pendiente (envío).
+ * - `0161`: decisión aprobada por las vistas futuras del OG (solo lectura).
+ * - `0162`: decisión rechazada / declaratoria de desierta (solo lectura).
+ * - `0163`: decisión aprobada del proveedor del portal (P-07 favorable).
+ * - `0164`: decisión rechazada del proveedor del portal (P-07 rechazada).
+ * - `0166`: solicitud cancelada, sin decisión (P-07 cancelada).
+ * - `0167`: oferta enviada a validación (P-07 en validación).
+ */
+const SOLICITUDES_DECISION_MOCK: readonly Solicitud[] = [
+  {
+    id: "SOL-2026-0160",
+    vigencia: 2026,
+    unidadEjecutora: "1",
+    titulo:
+      "Adquisición de servidores blade y componentes de red para el datacenter Paiba",
+    apertura: "02/10/2026",
+    cierre: "20/10/2026",
+    dependencia: "DIRTEI - División de Recursos Tecnológicos e Informáticos",
+    tipoCotizacion: "BIEN",
+    estado: "en-evaluacion",
+    version: "v1.1",
+    revision: 2,
+    ultimaModificacion: "21/10/2026 09:15 COT",
+    fechaLimiteObservaciones: "2026-10-15T18:00:00-05:00",
+  },
+  {
+    id: "SOL-2026-0161",
+    vigencia: 2026,
+    unidadEjecutora: "1",
+    titulo:
+      "Suministro de estaciones de trabajo para el laboratorio de análisis de datos",
+    apertura: "02/10/2026",
+    cierre: "20/10/2026",
+    dependencia: "Vicerrectoría Académica",
+    tipoCotizacion: "BIEN",
+    estado: "adjudicada",
+    version: "v1.2",
+    revision: 3,
+    ultimaModificacion: "24/10/2026 11:20 COT",
+    fechaLimiteObservaciones: "2026-10-15T18:00:00-05:00",
+    decision: decisionSemilla(
+      "SOL-2026-0161",
+      "aprobada",
+      "prov-02",
+      "Soluciones Tecnológicas Universitarias LTDA",
+      "Se selecciona la oferta por cumplir el 100% de las especificaciones técnicas y presentar la mejor relación costo-beneficio.",
+      "Se ratifica la selección de la oferta por cumplir los requisitos técnicos y presupuestales del proceso.",
+      "22/10/2026 14:32 COT",
+      "24/10/2026 11:20 COT",
+      "SIGA-2026-DEC-99841",
+    ),
+  },
+  {
+    id: "SOL-2026-0162",
+    vigencia: 2026,
+    unidadEjecutora: "2",
+    titulo:
+      "Servicio integral de conectividad WAN e internet dedicado para el campus",
+    apertura: "01/09/2026",
+    cierre: "20/09/2026",
+    dependencia: "Red de Datos UD",
+    tipoCotizacion: "SERVICIO",
+    estado: "desierta",
+    version: "v1.0",
+    revision: 1,
+    ultimaModificacion: "25/09/2026 16:40 COT",
+    fechaLimiteObservaciones: "2026-09-15T18:00:00-05:00",
+    decision: decisionSemilla(
+      "SOL-2026-0162",
+      "rechazada",
+      "prov-01",
+      "Redes y Servidores de Colombia S.A.S.",
+      "La oferta no acredita el cumplimiento integral de las especificaciones técnicas ni el plazo de disponibilidad exigido.",
+      "Se rechaza la oferta y se declara desierta la convocatoria por incumplimiento de los requisitos habilitantes.",
+      "22/09/2026 10:05 COT",
+      "25/09/2026 16:40 COT",
+      "SIGA-2026-DEC-99842",
+    ),
+  },
+  {
+    id: "SOL-2026-0163",
+    vigencia: 2026,
+    unidadEjecutora: "1",
+    titulo:
+      "Adquisición de infraestructura de servidores Blade y componentes de red de alta disponibilidad para el Centro de Datos Institucional",
+    apertura: "15/09/2026",
+    cierre: "05/11/2026",
+    dependencia: "DIRTEI - División de Recursos Tecnológicos e Informáticos",
+    tipoCotizacion: "BIEN",
+    estado: "adjudicada",
+    version: "v1.0",
+    revision: 1,
+    ultimaModificacion: "07/11/2026 09:40 COT",
+    fechaLimiteObservaciones: "2026-10-10T18:00:00-05:00",
+    decision: decisionSemilla(
+      "SOL-2026-0163",
+      "aprobada",
+      "prov-28",
+      "Sistemas & Soluciones Tecnológicas de Colombia S.A.S.",
+      "Se selecciona la oferta por cumplir el 100% de las especificaciones técnicas y presentar la mejor relación costo-beneficio.",
+      "Se ratifica la selección de la oferta por cumplir los requisitos técnicos y presupuestales del proceso. Se solicita al proveedor alistar la documentación para la formalización.",
+      "06/11/2026 10:15 COT",
+      "07/11/2026 09:40 COT",
+      "SIGA-2026-DEC-99851",
+    ),
+  },
+  {
+    id: "SOL-2026-0164",
+    vigencia: 2026,
+    unidadEjecutora: "2",
+    titulo:
+      "Adquisición e implantación de infraestructura de red inalámbrica Wi-Fi 6 para los campus Macarena A y B",
+    apertura: "15/09/2026",
+    cierre: "03/11/2026",
+    dependencia: "Oficina de Infraestructura y Servicios",
+    tipoCotizacion: "BIEN",
+    estado: "desierta",
+    version: "v1.0",
+    revision: 1,
+    ultimaModificacion: "04/11/2026 15:05 COT",
+    fechaLimiteObservaciones: "2026-10-10T18:00:00-05:00",
+    decision: decisionSemilla(
+      "SOL-2026-0164",
+      "rechazada",
+      "prov-28",
+      "Sistemas & Soluciones Tecnológicas de Colombia S.A.S.",
+      "La oferta cumple las especificaciones técnicas, pero la validación documental identificó inconsistencias en los soportes habilitantes.",
+      "Se rechaza la cotización por inconsistencias documentales en los soportes habilitantes. La desestimación no genera inhabilidad para futuros procesos de selección.",
+      "04/11/2026 10:20 COT",
+      "04/11/2026 15:05 COT",
+      "SIGA-2026-DEC-99852",
+    ),
+  },
+  {
+    id: "SOL-2026-0166",
+    vigencia: 2026,
+    unidadEjecutora: "3",
+    titulo:
+      "Suministro de equipos de laboratorio para la Facultad de Ingeniería",
+    apertura: "15/09/2026",
+    cierre: "28/10/2026",
+    dependencia: "Facultad de Ingeniería",
+    tipoCotizacion: "BIEN",
+    estado: "cancelada",
+    version: "v1.0",
+    revision: 1,
+    ultimaModificacion: "29/10/2026 08:30 COT",
+    fechaLimiteObservaciones: "2026-10-10T18:00:00-05:00",
+    cancelacion: {
+      estadoAnterior: "en-evaluacion",
+      justificacion:
+        "La necesidad institucional fue replanteada antes de la evaluación definitiva.",
+      fecha: "29/10/2026 08:30 COT",
+      usuario: "raquimbayap",
+      autor: "Raúl Quimbaya",
+      rol: "Solicitante",
+      destinatariosNotificados: 12,
+    },
+  },
+  {
+    id: "SOL-2026-0167",
+    vigencia: 2026,
+    unidadEjecutora: "1",
+    titulo:
+      "Suministro de estaciones de trabajo para el laboratorio de análisis de datos",
+    apertura: "15/09/2026",
+    cierre: "06/11/2026",
+    dependencia: "Vicerrectoría Académica",
+    tipoCotizacion: "BIEN",
+    estado: "en-aprobacion",
+    version: "v1.0",
+    revision: 1,
+    ultimaModificacion: "07/11/2026 11:20 COT",
+    fechaLimiteObservaciones: "2026-10-10T18:00:00-05:00",
+    decision: decisionEnValidacionSemilla(
+      "SOL-2026-0167",
+      "prov-28",
+      "Sistemas & Soluciones Tecnológicas de Colombia S.A.S.",
+      "Se envía la oferta seleccionada a validación del Ordenador del Gasto por cumplir los requisitos técnicos y presupuestales.",
+      "07/11/2026 11:20 COT",
+      "SIGA-2026-DEC-99853",
+    ),
+  },
+];
 
 const DATOS_MOCK: readonly Solicitud[] = [
   {
@@ -498,6 +897,7 @@ const DATOS_MOCK: readonly Solicitud[] = [
     revision: 1,
     ultimaModificacion: "20/09/2024 16:30 COT",
   },
+  ...SOLICITUDES_DECISION_MOCK,
 ];
 
 /**
@@ -522,17 +922,82 @@ const SOLICITUDES_PROVEEDOR_MOCK: readonly Solicitud[] = [
     fechaLimiteObservaciones: fechaLimiteRelativa(5),
   },
   {
+    id: "SOL-2026-0143",
+    vigencia: 2026,
+    unidadEjecutora: "1",
+    titulo:
+      "Adquisición de equipamiento de servidores y virtualización para el centro de cómputo Sede Paiba",
+    apertura: fechaCortaRelativa(-18),
+    // Proceso cerrado con respuesta radicada: reproduce la vista de solo
+    // lectura de P-06 ("Solicitud cerrada / En evaluación técnica").
+    cierre: fechaCortaRelativa(-3),
+    dependencia: "DIRTEI (Tecnología)",
+    tipoCotizacion: "BIEN",
+    estado: "en-evaluacion",
+    fechaLimiteObservaciones: fechaLimiteRelativa(-6),
+    version: "v1.0",
+    revision: 1,
+  },
+  {
     id: "SOL-2026-0139",
     vigencia: 2026,
     unidadEjecutora: "1",
     titulo:
       "Renovación y licenciamiento de plataforma de gestión de laboratorios virtuales STEM",
-    apertura: "24/10/2026",
-    cierre: "02/11/2026",
+    apertura: fechaCortaRelativa(-10),
+    // La fecha base es la versión anterior; la adenda proyecta el cierre nuevo.
+    cierre: fechaCortaRelativa(-1),
     dependencia: "Recursos Educativos",
     tipoCotizacion: "SERVICIO",
     estado: "enviada-con-modificaciones",
-    fechaLimiteObservaciones: "2026-10-30T18:00:00-05:00",
+    fechaLimiteObservaciones: fechaLimiteRelativa(1),
+    version: "v1.0",
+    revision: 1,
+  },
+  {
+    id: "SOL-2026-0138",
+    vigencia: 2026,
+    unidadEjecutora: "1",
+    titulo:
+      "Adquisición de herramientas de analítica y tableros de control para planeación",
+    apertura: fechaCortaRelativa(-12),
+    cierre: fechaCortaRelativa(-2),
+    dependencia: "Oficina Asesora de Planeación",
+    tipoCotizacion: "SERVICIO",
+    estado: "enviada-con-modificaciones",
+    fechaLimiteObservaciones: fechaLimiteRelativa(-1),
+    version: "v1.0",
+    revision: 1,
+  },
+  {
+    id: "SOL-2026-0137",
+    vigencia: 2026,
+    unidadEjecutora: "2",
+    titulo:
+      "Suministro de equipos de laboratorio para prácticas de electrónica básica",
+    apertura: fechaCortaRelativa(-20),
+    cierre: fechaCortaRelativa(-11),
+    dependencia: "Facultad de Ingeniería",
+    tipoCotizacion: "BIEN",
+    estado: "enviada-con-modificaciones",
+    fechaLimiteObservaciones: fechaLimiteRelativa(-12),
+    version: "v1.0",
+    revision: 1,
+  },
+  {
+    id: "SOL-2026-0136",
+    vigencia: 2026,
+    unidadEjecutora: "2",
+    titulo:
+      "Servicio de mantenimiento preventivo de equipos de cómputo institucional",
+    apertura: fechaCortaRelativa(-5),
+    cierre: fechaCortaRelativa(4),
+    dependencia: "División de Planta Física",
+    tipoCotizacion: "SERVICIO",
+    estado: "enviada-proveedores",
+    fechaLimiteObservaciones: fechaLimiteRelativa(2),
+    version: "v1.0",
+    revision: 1,
   },
   {
     id: "SOL-2026-0135",
@@ -619,51 +1084,360 @@ const SOLICITUDES_PROVEEDOR_MOCK: readonly Solicitud[] = [
     tipoCotizacion: "BIEN",
     estado: "enviada-proveedores",
   },
+  {
+    id: "SOL-2026-0165",
+    vigencia: 2026,
+    unidadEjecutora: "1",
+    titulo:
+      "Adquisición de servidores Blade y componentes de red para el Centro de Datos Institucional",
+    apertura: "15/09/2026",
+    cierre: "20/10/2026",
+    dependencia: "DIRTEI - División de Recursos Tecnológicos e Informáticos",
+    tipoCotizacion: "BIEN",
+    estado: "en-evaluacion",
+    version: "v1.0",
+    revision: 1,
+    ultimaModificacion: "10/11/2026 09:00 COT",
+    fechaLimiteObservaciones: "2026-10-10T18:00:00-05:00",
+  },
+  {
+    id: "SOL-2026-0168",
+    vigencia: 2026,
+    unidadEjecutora: "2",
+    titulo:
+      "Adquisición e implantación de infraestructura de red inalámbrica Wi-Fi 6",
+    apertura: "15/09/2026",
+    cierre: "20/10/2026",
+    dependencia: "Oficina de Infraestructura y Servicios",
+    tipoCotizacion: "BIEN",
+    estado: "en-evaluacion",
+    version: "v1.0",
+    revision: 1,
+    ultimaModificacion: "24/10/2026 08:30 COT",
+    fechaLimiteObservaciones: "2026-10-10T18:00:00-05:00",
+  },
+  {
+    id: "SOL-2026-0169",
+    vigencia: 2026,
+    unidadEjecutora: "3",
+    titulo:
+      "Suministro de estaciones de trabajo para el laboratorio de análisis de datos",
+    apertura: "15/09/2026",
+    cierre: "20/10/2026",
+    dependencia: "Vicerrectoría Académica",
+    tipoCotizacion: "BIEN",
+    estado: "en-evaluacion",
+    version: "v1.0",
+    revision: 1,
+    ultimaModificacion: "10/11/2026 11:20 COT",
+    fechaLimiteObservaciones: "2026-10-10T18:00:00-05:00",
+  },
+  ...SOLICITUDES_DECISION_MOCK,
 ];
 
 const INVITACIONES_PROVEEDOR_MOCK: readonly InvitacionProveedor[] = [
+  {
+    id: "INV-0143",
+    solicitudId: "SOL-2026-0143",
+    estado: "enviada",
+    fechaRadicacion: "2026-10-30T09:12:00-05:00",
+    respuestaVigente: {
+      version: "v1.0",
+      revision: 1,
+      radicado: "COT-RESP-SOL-2026-0143-V1",
+      fecha: "2026-10-30T09:12:00-05:00",
+      versionSolicitud: "v1.0",
+      usuario: "900.842.119-4",
+      total: 213_248_000,
+    },
+    versionesRespuesta: [
+      {
+        version: "v1.0",
+        revision: 1,
+        radicado: "COT-RESP-SOL-2026-0143-V1",
+        fecha: "2026-10-30T09:12:00-05:00",
+        versionSolicitud: "v1.0",
+        usuario: "900.842.119-4",
+        total: 213_248_000,
+      },
+    ],
+  },
   { id: "INV-0142", solicitudId: "SOL-2026-0142", estado: "borrador" },
   {
     id: "INV-0139",
     solicitudId: "SOL-2026-0139",
     estado: "pendiente-ajuste",
     fechaRadicacion: "2026-10-25T10:20:00-05:00",
+    respuestaVigente: {
+      version: "v1.0",
+      revision: 1,
+      radicado: "RAD-2026-0881",
+      fecha: "2026-10-25T10:20:00-05:00",
+      versionSolicitud: "v1.0",
+      usuario: "900.842.119-4",
+      total: 207_536_000,
+    },
+    versionesRespuesta: [
+      {
+        version: "v1.0",
+        revision: 1,
+        radicado: "RAD-2026-0881",
+        fecha: "2026-10-25T10:20:00-05:00",
+        versionSolicitud: "v1.0",
+        usuario: "900.842.119-4",
+        total: 207_536_000,
+      },
+    ],
     adendaPublicada: {
+      numero: "1",
       versionAnterior: "v1.0",
       versionVigente: "v1.1",
       publicadaEl: "27/10/2026 09:00 COT",
       anexoId: "anexo-0139-adenda",
+      motivo:
+        "Ajuste de cantidades de cableado estructurado y ampliación del plazo técnico.",
+      cierreAnterior: fechaCortaRelativa(-1),
+      cierreVigente: fechaCortaRelativa(5),
     },
+  },
+  {
+    id: "INV-0138",
+    solicitudId: "SOL-2026-0138",
+    estado: "enviada",
+    fechaRadicacion: "2026-10-29T15:42:00-05:00",
+    respuestaVigente: {
+      version: "v2.0",
+      revision: 2,
+      radicado: "COT-RESP-SOL-2026-0138-V2",
+      fecha: "2026-10-29T15:42:00-05:00",
+      versionSolicitud: "v1.1",
+      usuario: "900.842.119-4",
+      total: 48_900_000,
+      actualizadaParaVersion: "v1.1",
+    },
+    versionesRespuesta: [
+      {
+        version: "v1.0",
+        revision: 1,
+        radicado: "RAD-2026-0874",
+        fecha: "2026-10-22T11:10:00-05:00",
+        versionSolicitud: "v1.0",
+        usuario: "900.842.119-4",
+        total: 45_200_000,
+      },
+      {
+        version: "v2.0",
+        revision: 2,
+        radicado: "COT-RESP-SOL-2026-0138-V2",
+        fecha: "2026-10-29T15:42:00-05:00",
+        versionSolicitud: "v1.1",
+        usuario: "900.842.119-4",
+        total: 48_900_000,
+        actualizadaParaVersion: "v1.1",
+      },
+    ],
+    adendaPublicada: {
+      numero: "1",
+      versionAnterior: "v1.0",
+      versionVigente: "v1.1",
+      publicadaEl: "28/10/2026 08:30 COT",
+      anexoId: "anexo-0138-adenda",
+      motivo: "Ajuste de alcance del tablero de control institucional.",
+      cierreAnterior: fechaCortaRelativa(-9),
+      cierreVigente: fechaCortaRelativa(-2),
+    },
+  },
+  {
+    id: "INV-0137",
+    solicitudId: "SOL-2026-0137",
+    estado: "pendiente-ajuste",
+    fechaRadicacion: "2026-10-18T09:15:00-05:00",
+    respuestaVigente: {
+      version: "v1.0",
+      revision: 1,
+      radicado: "RAD-2026-0869",
+      fecha: "2026-10-18T09:15:00-05:00",
+      versionSolicitud: "v1.0",
+      usuario: "900.842.119-4",
+      total: 31_700_000,
+    },
+    versionesRespuesta: [
+      {
+        version: "v1.0",
+        revision: 1,
+        radicado: "RAD-2026-0869",
+        fecha: "2026-10-18T09:15:00-05:00",
+        versionSolicitud: "v1.0",
+        usuario: "900.842.119-4",
+        total: 31_700_000,
+      },
+    ],
+    adendaPublicada: {
+      numero: "1",
+      versionAnterior: "v1.0",
+      versionVigente: "v1.1",
+      publicadaEl: "19/10/2026 16:20 COT",
+      anexoId: "anexo-0137-adenda",
+      motivo: "Corrección de cantidades de equipos de laboratorio.",
+      cierreAnterior: fechaCortaRelativa(-14),
+      cierreVigente: fechaCortaRelativa(-11),
+    },
+  },
+  {
+    id: "INV-0136",
+    solicitudId: "SOL-2026-0136",
+    estado: "enviada",
+    fechaRadicacion: "2026-11-04T10:05:00-05:00",
+    respuestaVigente: {
+      version: "v1.0",
+      revision: 1,
+      radicado: "RAD-2026-0889",
+      fecha: "2026-11-04T10:05:00-05:00",
+      versionSolicitud: "v1.0",
+      usuario: "900.842.119-4",
+      total: 18_400_000,
+    },
+    versionesRespuesta: [
+      {
+        version: "v1.0",
+        revision: 1,
+        radicado: "RAD-2026-0889",
+        fecha: "2026-11-04T10:05:00-05:00",
+        versionSolicitud: "v1.0",
+        usuario: "900.842.119-4",
+        total: 18_400_000,
+      },
+    ],
   },
   {
     id: "INV-0135",
     solicitudId: "SOL-2026-0135",
     estado: "enviada",
     fechaRadicacion: "2026-10-25T14:35:00-05:00",
+    respuestaVigente: {
+      version: "v1.0",
+      revision: 1,
+      radicado: "COT-RESP-SOL-2026-0135-V1",
+      fecha: "2026-10-25T14:35:00-05:00",
+      versionSolicitud: "v1.0",
+      usuario: "900.842.119-4",
+      total: 28_450_000,
+    },
+    versionesRespuesta: [
+      {
+        version: "v1.0",
+        revision: 1,
+        radicado: "COT-RESP-SOL-2026-0135-V1",
+        fecha: "2026-10-25T14:35:00-05:00",
+        versionSolicitud: "v1.0",
+        usuario: "900.842.119-4",
+        total: 28_450_000,
+      },
+    ],
   },
   {
     id: "INV-0128",
     solicitudId: "SOL-2026-0128",
     estado: "enviada",
     fechaRadicacion: "2026-10-25T15:10:00-05:00",
+    respuestaVigente: {
+      version: "v1.0",
+      revision: 1,
+      radicado: "COT-RESP-SOL-2026-0128-V1",
+      fecha: "2026-10-25T15:10:00-05:00",
+      versionSolicitud: "v1.0",
+      usuario: "900.842.119-4",
+      total: 19_780_000,
+    },
+    versionesRespuesta: [
+      {
+        version: "v1.0",
+        revision: 1,
+        radicado: "COT-RESP-SOL-2026-0128-V1",
+        fecha: "2026-10-25T15:10:00-05:00",
+        versionSolicitud: "v1.0",
+        usuario: "900.842.119-4",
+        total: 19_780_000,
+      },
+    ],
   },
   {
     id: "INV-0115",
     solicitudId: "SOL-2026-0115",
     estado: "excluida",
     fechaRadicacion: "2026-10-15T08:30:00-05:00",
+    respuestaVigente: {
+      version: "v1.0",
+      revision: 1,
+      radicado: "COT-RESP-SOL-2026-0115-V1",
+      fecha: "2026-10-15T08:30:00-05:00",
+      versionSolicitud: "v1.0",
+      usuario: "900.842.119-4",
+      total: 42_300_000,
+    },
+    versionesRespuesta: [
+      {
+        version: "v1.0",
+        revision: 1,
+        radicado: "COT-RESP-SOL-2026-0115-V1",
+        fecha: "2026-10-15T08:30:00-05:00",
+        versionSolicitud: "v1.0",
+        usuario: "900.842.119-4",
+        total: 42_300_000,
+      },
+    ],
   },
   {
     id: "INV-0098",
     solicitudId: "SOL-2026-0098",
     estado: "aceptada",
     fechaRadicacion: "2026-10-18T09:00:00-05:00",
+    respuestaVigente: {
+      version: "v1.0",
+      revision: 1,
+      radicado: "COT-RESP-SOL-2026-0098-V1",
+      fecha: "2026-10-18T09:00:00-05:00",
+      versionSolicitud: "v1.0",
+      usuario: "900.842.119-4",
+      total: 15_900_000,
+    },
+    versionesRespuesta: [
+      {
+        version: "v1.0",
+        revision: 1,
+        radicado: "COT-RESP-SOL-2026-0098-V1",
+        fecha: "2026-10-18T09:00:00-05:00",
+        versionSolicitud: "v1.0",
+        usuario: "900.842.119-4",
+        total: 15_900_000,
+      },
+    ],
   },
   {
     id: "INV-0084",
     solicitudId: "SOL-2026-0084",
     estado: "rechazada",
     fechaRadicacion: "2026-09-10T11:00:00-05:00",
+    respuestaVigente: {
+      version: "v1.0",
+      revision: 1,
+      radicado: "COT-RESP-SOL-2026-0084-V1",
+      fecha: "2026-09-10T11:00:00-05:00",
+      versionSolicitud: "v1.0",
+      usuario: "900.842.119-4",
+      total: 24_600_000,
+    },
+    versionesRespuesta: [
+      {
+        version: "v1.0",
+        revision: 1,
+        radicado: "COT-RESP-SOL-2026-0084-V1",
+        fecha: "2026-09-10T11:00:00-05:00",
+        versionSolicitud: "v1.0",
+        usuario: "900.842.119-4",
+        total: 24_600_000,
+      },
+    ],
   },
   { id: "INV-0072", solicitudId: "SOL-2026-0072", estado: "vencida" },
   {
@@ -671,12 +1445,298 @@ const INVITACIONES_PROVEEDOR_MOCK: readonly InvitacionProveedor[] = [
     solicitudId: "SOL-2026-0064",
     estado: "declinada",
     fechaRadicacion: "2026-10-19T13:15:00-05:00",
+    respuestaVigente: {
+      version: "v1.0",
+      revision: 1,
+      radicado: "COT-RESP-SOL-2026-0064-V1",
+      fecha: "2026-10-19T13:15:00-05:00",
+      versionSolicitud: "v1.0",
+      usuario: "900.842.119-4",
+      total: 11_250_000,
+    },
+    versionesRespuesta: [
+      {
+        version: "v1.0",
+        revision: 1,
+        radicado: "COT-RESP-SOL-2026-0064-V1",
+        fecha: "2026-10-19T13:15:00-05:00",
+        versionSolicitud: "v1.0",
+        usuario: "900.842.119-4",
+        total: 11_250_000,
+      },
+    ],
+  },
+  {
+    id: "INV-0160",
+    solicitudId: "SOL-2026-0160",
+    estado: "enviada",
+    fechaRadicacion: "2026-10-12T10:00:00-05:00",
+    respuestaVigente: {
+      version: "v1.0",
+      revision: 1,
+      radicado: "COT-RESP-SOL-2026-0160-V1",
+      fecha: "2026-10-12T10:00:00-05:00",
+      versionSolicitud: "v1.0",
+      usuario: "900.842.119-4",
+      total: 38_400_000,
+    },
+    versionesRespuesta: [
+      {
+        version: "v1.0",
+        revision: 1,
+        radicado: "COT-RESP-SOL-2026-0160-V1",
+        fecha: "2026-10-12T10:00:00-05:00",
+        versionSolicitud: "v1.0",
+        usuario: "900.842.119-4",
+        total: 38_400_000,
+      },
+    ],
+  },
+  {
+    id: "INV-0161",
+    solicitudId: "SOL-2026-0161",
+    // El proveedor del portal no fue el seleccionado: S-11 registró la
+    // decisión sobre otro oferente.
+    estado: "rechazada",
+    fechaRadicacion: "2026-10-12T10:20:00-05:00",
+    respuestaVigente: {
+      version: "v1.0",
+      revision: 1,
+      radicado: "COT-RESP-SOL-2026-0161-V1",
+      fecha: "2026-10-12T10:20:00-05:00",
+      versionSolicitud: "v1.0",
+      usuario: "900.842.119-4",
+      total: 40_150_000,
+    },
+    versionesRespuesta: [
+      {
+        version: "v1.0",
+        revision: 1,
+        radicado: "COT-RESP-SOL-2026-0161-V1",
+        fecha: "2026-10-12T10:20:00-05:00",
+        versionSolicitud: "v1.0",
+        usuario: "900.842.119-4",
+        total: 40_150_000,
+      },
+    ],
+  },
+  {
+    id: "INV-0162",
+    solicitudId: "SOL-2026-0162",
+    estado: "rechazada",
+    fechaRadicacion: "2026-09-12T09:40:00-05:00",
+    respuestaVigente: {
+      version: "v1.0",
+      revision: 1,
+      radicado: "COT-RESP-SOL-2026-0162-V1",
+      fecha: "2026-09-12T09:40:00-05:00",
+      versionSolicitud: "v1.0",
+      usuario: "900.842.119-4",
+      total: 36_980_000,
+    },
+    versionesRespuesta: [
+      {
+        version: "v1.0",
+        revision: 1,
+        radicado: "COT-RESP-SOL-2026-0162-V1",
+        fecha: "2026-09-12T09:40:00-05:00",
+        versionSolicitud: "v1.0",
+        usuario: "900.842.119-4",
+        total: 36_980_000,
+      },
+    ],
+  },
+  {
+    id: "INV-0163",
+    solicitudId: "SOL-2026-0163",
+    estado: "aceptada",
+    fechaRadicacion: "2026-10-14T13:09:00-05:00",
+    respuestaVigente: {
+      version: "v1.0",
+      revision: 1,
+      radicado: "COT-RESP-SOL-2026-0163-V1",
+      fecha: "2026-10-14T13:09:00-05:00",
+      versionSolicitud: "v1.0",
+      usuario: "900.842.119-4",
+      total: 98_450_000,
+    },
+    versionesRespuesta: [
+      {
+        version: "v1.0",
+        revision: 1,
+        radicado: "COT-RESP-SOL-2026-0163-V1",
+        fecha: "2026-10-14T13:09:00-05:00",
+        versionSolicitud: "v1.0",
+        usuario: "900.842.119-4",
+        total: 98_450_000,
+      },
+    ],
+  },
+  {
+    id: "INV-0164",
+    solicitudId: "SOL-2026-0164",
+    estado: "rechazada",
+    fechaRadicacion: "2026-10-14T13:09:00-05:00",
+    respuestaVigente: {
+      version: "v1.0",
+      revision: 1,
+      radicado: "COT-RESP-SOL-2026-0164-V1",
+      fecha: "2026-10-14T13:09:00-05:00",
+      versionSolicitud: "v1.0",
+      usuario: "900.842.119-4",
+      total: 84_220_000,
+    },
+    versionesRespuesta: [
+      {
+        version: "v1.0",
+        revision: 1,
+        radicado: "COT-RESP-SOL-2026-0164-V1",
+        fecha: "2026-10-14T13:09:00-05:00",
+        versionSolicitud: "v1.0",
+        usuario: "900.842.119-4",
+        total: 84_220_000,
+      },
+    ],
+  },
+  {
+    id: "INV-0166",
+    solicitudId: "SOL-2026-0166",
+    estado: "enviada",
+    fechaRadicacion: "2026-10-14T13:09:00-05:00",
+    respuestaVigente: {
+      version: "v1.0",
+      revision: 1,
+      radicado: "COT-RESP-SOL-2026-0166-V1",
+      fecha: "2026-10-14T13:09:00-05:00",
+      versionSolicitud: "v1.0",
+      usuario: "900.842.119-4",
+      total: 56_780_000,
+    },
+    versionesRespuesta: [
+      {
+        version: "v1.0",
+        revision: 1,
+        radicado: "COT-RESP-SOL-2026-0166-V1",
+        fecha: "2026-10-14T13:09:00-05:00",
+        versionSolicitud: "v1.0",
+        usuario: "900.842.119-4",
+        total: 56_780_000,
+      },
+    ],
+  },
+  {
+    id: "INV-0167",
+    solicitudId: "SOL-2026-0167",
+    estado: "enviada",
+    fechaRadicacion: "2026-10-14T13:09:00-05:00",
+    respuestaVigente: {
+      version: "v1.0",
+      revision: 1,
+      radicado: "COT-RESP-SOL-2026-0167-V1",
+      fecha: "2026-10-14T13:09:00-05:00",
+      versionSolicitud: "v1.0",
+      usuario: "900.842.119-4",
+      total: 45_900_000,
+    },
+    versionesRespuesta: [
+      {
+        version: "v1.0",
+        revision: 1,
+        radicado: "COT-RESP-SOL-2026-0167-V1",
+        fecha: "2026-10-14T13:09:00-05:00",
+        versionSolicitud: "v1.0",
+        usuario: "900.842.119-4",
+        total: 45_900_000,
+      },
+    ],
+  },
+  {
+    id: "INV-0165",
+    solicitudId: "SOL-2026-0165",
+    estado: "enviada",
+    fechaRadicacion: "2026-10-14T13:09:00-05:00",
+    respuestaVigente: {
+      version: "v1.0",
+      revision: 1,
+      radicado: "COT-RESP-SOL-2026-0165-V1",
+      fecha: "2026-10-14T13:09:00-05:00",
+      versionSolicitud: "v1.0",
+      usuario: "900.842.119-4",
+      total: 96_780_000,
+    },
+    versionesRespuesta: [
+      {
+        version: "v1.0",
+        revision: 1,
+        radicado: "COT-RESP-SOL-2026-0165-V1",
+        fecha: "2026-10-14T13:09:00-05:00",
+        versionSolicitud: "v1.0",
+        usuario: "900.842.119-4",
+        total: 96_780_000,
+      },
+    ],
+  },
+  {
+    id: "INV-0168",
+    solicitudId: "SOL-2026-0168",
+    estado: "enviada",
+    fechaRadicacion: "2026-10-14T13:09:00-05:00",
+    respuestaVigente: {
+      version: "v1.0",
+      revision: 1,
+      radicado: "COT-RESP-SOL-2026-0168-V1",
+      fecha: "2026-10-14T13:09:00-05:00",
+      versionSolicitud: "v1.0",
+      usuario: "900.842.119-4",
+      total: 84_220_000,
+    },
+    versionesRespuesta: [
+      {
+        version: "v1.0",
+        revision: 1,
+        radicado: "COT-RESP-SOL-2026-0168-V1",
+        fecha: "2026-10-14T13:09:00-05:00",
+        versionSolicitud: "v1.0",
+        usuario: "900.842.119-4",
+        total: 84_220_000,
+      },
+    ],
+  },
+  {
+    id: "INV-0169",
+    solicitudId: "SOL-2026-0169",
+    estado: "enviada",
+    fechaRadicacion: "2026-10-14T13:09:00-05:00",
+    respuestaVigente: {
+      version: "v1.0",
+      revision: 1,
+      radicado: "COT-RESP-SOL-2026-0169-V1",
+      fecha: "2026-10-14T13:09:00-05:00",
+      versionSolicitud: "v1.0",
+      usuario: "900.842.119-4",
+      total: 52_400_000,
+    },
+    versionesRespuesta: [
+      {
+        version: "v1.0",
+        revision: 1,
+        radicado: "COT-RESP-SOL-2026-0169-V1",
+        fecha: "2026-10-14T13:09:00-05:00",
+        versionSolicitud: "v1.0",
+        usuario: "900.842.119-4",
+        total: 52_400_000,
+      },
+    ],
   },
 ];
 
 const ORDENADORES_PROVEEDOR_MOCK: Readonly<Record<string, string>> = {
   "SOL-2026-0142": "Dr. Ricardo Gómez Morales",
+  "SOL-2026-0143": "Dr. Ricardo Gómez Morales",
   "SOL-2026-0139": "Dr. Ricardo Gómez Morales",
+  "SOL-2026-0138": "Dra. Elvia María Sanabria",
+  "SOL-2026-0137": "Ing. Martha Cecilia Bello",
+  "SOL-2026-0136": "Dr. Carlos Julio González",
   "SOL-2026-0135": "Ing. Martha Cecilia Bello",
   "SOL-2026-0128": "Dr. Carlos Julio González",
   "SOL-2026-0115": "Dr. Ricardo Gómez Morales",
@@ -684,6 +1744,16 @@ const ORDENADORES_PROVEEDOR_MOCK: Readonly<Record<string, string>> = {
   "SOL-2026-0084": "Dr. Ricardo Gómez Morales",
   "SOL-2026-0072": "Lic. Fernando Triana",
   "SOL-2026-0064": "Ing. Martha Cecilia Bello",
+  "SOL-2026-0160": "Dr. Ricardo Gómez Morales",
+  "SOL-2026-0161": "Dr. Ricardo Gómez Morales",
+  "SOL-2026-0162": "Dr. Ricardo Gómez Morales",
+  "SOL-2026-0163": "Dr. Ricardo Gómez Morales",
+  "SOL-2026-0164": "Dr. Ricardo Gómez Morales",
+  "SOL-2026-0166": "Dr. Ricardo Gómez Morales",
+  "SOL-2026-0167": "Dr. Ricardo Gómez Morales",
+  "SOL-2026-0165": "Dr. Ricardo Gómez Morales",
+  "SOL-2026-0168": "Dra. Elvia María Sanabria",
+  "SOL-2026-0169": "Ing. Martha Cecilia Bello",
 };
 
 const MAPA_TIPOS: Readonly<Record<string, TipoCotizacion>> = {
@@ -848,6 +1918,26 @@ const FIRMAS_MOCK: readonly FirmaAval[] = [
 ];
 
 /**
+ * CDP de los escenarios de S-11.
+ *
+ * El techo del mockup de S-11 es superior al CDP genérico del expediente; se
+ * sube solo para los escenarios nuevos, de modo que la oferta seleccionada
+ * pueda enviarse a validación sin caer en RN-40.
+ */
+const CDP_POR_SOLICITUD: Readonly<Record<string, number>> = {
+  "SOL-2026-0160": 320_000_000,
+  "SOL-2026-0161": 320_000_000,
+  "SOL-2026-0162": 320_000_000,
+  "SOL-2026-0163": 320_000_000,
+  "SOL-2026-0164": 320_000_000,
+  "SOL-2026-0166": 320_000_000,
+  "SOL-2026-0167": 320_000_000,
+  "SOL-2026-0165": 320_000_000,
+  "SOL-2026-0168": 320_000_000,
+  "SOL-2026-0169": 320_000_000,
+};
+
+/**
  * Presupuesto de una solicitud.
  *
  * Devuelve `null` cuando la solicitud todavía no tiene CDP (borrador): así la
@@ -859,8 +1949,16 @@ function presupuestoDetalle(solicitud: Solicitud): PresupuestoDetalle | null {
     return null;
   }
 
+  const valorCdp = CDP_POR_SOLICITUD[solicitud.id] ?? VALOR_CDP_MOCK;
+  const imputaciones =
+    valorCdp === VALOR_CDP_MOCK
+      ? IMPUTACIONES_MOCK
+      : IMPUTACIONES_MOCK.map((imputacion, indice) =>
+          indice === 0 ? { ...imputacion, valor: valorCdp } : imputacion,
+        );
+
   return {
-    valorCdp: VALOR_CDP_MOCK,
+    valorCdp,
     sincronizado: true,
     mensajeSincronizacion: "SICAPITAL: Sincronizado y Aprobado",
     descripcionCdp:
@@ -868,9 +1966,9 @@ function presupuestoDetalle(solicitud: Solicitud): PresupuestoDetalle | null {
     saldo: {
       numeroCdp: NUMERO_CDP_MOCK,
       fechaExpedicion: "28 de Febrero de 2026",
-      saldoDisponible: 210_000_000,
+      saldoDisponible: valorCdp,
     },
-    imputaciones: IMPUTACIONES_MOCK,
+    imputaciones,
     firmas: FIRMAS_MOCK,
     textoNormativo: TEXTO_NORMATIVO_PRESUPUESTO,
   };
@@ -1708,42 +2806,166 @@ function eventoHistorial(semilla: EventoHistorialSemilla): EventoHistorial {
 }
 
 /**
- * Evento de preselección de una oferta (S-09).
- *
- * Deja constancia del proveedor y del valor, sin cambiar el estado de la
- * solicitud. El texto recuerda que la decisión final es del ordenador del gasto.
+ * Escapa el texto libre antes de interpolarlo en un detalle HTML de la
+ * bitácora. La justificación escribe el usuario y no debe interpretarse como
+ * marcado.
  */
-function eventoSeleccionOferente(
-  solicitud: Solicitud,
-  seleccion: SeleccionOferenteEvento,
-  fecha: string,
-  hora: string,
+function escaparHtml(texto: string): string {
+  return texto
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+/** Separa la fecha visible `dd/MM/yyyy HH:mm COT` en fecha y hora. */
+function partesFechaHora(fecha: string): { fecha: string; hora: string } {
+  const [dia = "", hora = "00:00"] = fecha.split(" ");
+  return { fecha: dia, hora };
+}
+
+/**
+ * Evento de bitácora del envío a validación (S-11).
+ *
+ * No se guarda en `historialEdiciones`: se deriva de la decisión, de modo que
+ * el evento sobrevive a una recarga y no se duplica con el que genera la
+ * validación final.
+ */
+function eventoEnvioDecision(
+  solicitudId: string,
+  decision: DecisionSolicitud,
+  estadoAnterior: EstadoSolicitud,
 ): EventoHistorial {
-  const retirada = !seleccion.proveedorId;
+  const { fecha, hora } = partesFechaHora(decision.envio.fecha);
   return eventoHistorial({
-    id: `evento-${solicitud.id}-seleccion-${Date.now()}`,
+    id: `evento-${solicitudId}-envio-${decision.id}`,
     fecha,
     hora,
     tipo: "estado",
-    titulo: retirada
-      ? "Preselección de oferta retirada"
-      : "Oferta preseleccionada para recomendación",
-    detalle: retirada
-      ? "Se retiró la preselección de la oferta. La decisión final continúa en cabeza del Ordenador del Gasto (RN-34)."
-      : `Se preseleccionó la oferta de <strong>${seleccion.proveedorNombre}</strong> por <strong>${formatoCop(seleccion.valor)} COP</strong>. Esta preselección es una recomendación y no constituye adjudicación (RN-34).`,
-    usuario: "sesion",
-    nombreUsuario: "Usuario autenticado",
-    rol: seleccion.rol,
-    estadoAnterior: solicitud.estado,
-    estadoNuevo: solicitud.estado,
-    icono: retirada ? "remove_done" : "how_to_reg",
-    tono: "primario",
-    resultado: retirada ? "Preselección retirada" : "Preselección registrada",
+    titulo: "Decisión enviada a validación del Ordenador del Gasto",
+    detalle: `Se remitió a validación la oferta de <strong>${escaparHtml(
+      decision.proveedorNombre,
+    )}</strong>. Justificación: ${escaparHtml(
+      decision.envio.justificacion,
+    )}`,
+    usuario: decision.envio.usuario,
+    nombreUsuario: decision.envio.autor,
+    rol: decision.envio.rol,
+    estadoAnterior,
+    estadoNuevo: "en-aprobacion",
+    icono: "send",
+    tono: "destacado",
+    resultado: "Enviada a validación",
     tonoResultado: "primario",
     evidencia: {
       icono: "verified_user",
-      texto: "Sujeta a la decisión del Ordenador del Gasto",
+      texto: "Pendiente de la decisión del Ordenador del Gasto",
     },
+  });
+}
+
+/**
+ * Evento de bitácora de la validación final.
+ *
+ * S-11 no lo produce; lo usan las semillas de los escenarios ya decididos y lo
+ * reutilizarán las vistas exclusivas del Ordenador del Gasto (O-01 a O-04).
+ */
+function eventoValidacionDecision(
+  solicitudId: string,
+  decision: DecisionSolicitud,
+  estadoAnterior: EstadoSolicitud,
+): EventoHistorial {
+  const validacion = decision.validacion;
+  const { fecha, hora } = partesFechaHora(validacion?.fecha ?? "");
+  const aprobada = validacion?.resultado === "aprobada";
+  return eventoHistorial({
+    id: `evento-${solicitudId}-validacion-${decision.id}`,
+    fecha,
+    hora,
+    tipo: "estado",
+    titulo: aprobada
+      ? "Decisión aprobada por el Ordenador del Gasto"
+      : "Cotización rechazada — declaratoria de desierta",
+    detalle: validacion
+      ? `Resultado: <strong>${aprobada ? "Aprobada" : "Rechazada"}</strong>. ${escaparHtml(
+          validacion.justificacion,
+        )}`
+      : "Se registró la validación de la decisión.",
+    usuario: validacion?.usuario ?? "sesion",
+    nombreUsuario: validacion?.autor ?? "Usuario autenticado",
+    rol: validacion?.rol ?? "Ordenador del Gasto",
+    estadoAnterior,
+    estadoNuevo: aprobada ? "adjudicada" : "desierta",
+    icono: aprobada ? "verified" : "cancel",
+    tono: "destacado",
+    resultado: aprobada ? "Decisión aprobada" : "Declaratoria de desierta",
+    tonoResultado: aprobada ? "exito" : "advertencia",
+    evidencia: {
+      icono: "campaign",
+      texto: "Notificación al proveedor simulada (RF-13)",
+    },
+  });
+}
+
+/**
+ * Eventos de todas las decisiones registradas, incluidas las anteriores a un
+ * reenvío después de un rechazo.
+ */
+function eventosDecisiones(solicitud: Solicitud): readonly EventoHistorial[] {
+  const decisiones = [
+    ...(solicitud.historialDecisiones ?? []),
+    ...(solicitud.decision ? [solicitud.decision] : []),
+  ];
+  return decisiones.flatMap((decision) => [
+    eventoEnvioDecision(solicitud.id, decision, "en-evaluacion"),
+    ...(decision.validacion
+      ? [eventoValidacionDecision(solicitud.id, decision, "en-aprobacion")]
+      : []),
+  ]);
+}
+
+/**
+ * Convierte un evento de subsanación en un evento de la bitácora de S-03.
+ *
+ * La subsanación no cambia el estado de la solicitud: el evento conserva el
+ * estado vigente y la pestaña Historial oculta el chip de estado para este tipo.
+ */
+function eventoSubsanacionAHistorial(
+  evento: EventoSubsanacion,
+  estado: EstadoSolicitud,
+): EventoHistorial {
+  const meta = metaEventoSubsanacion(evento.tipo);
+  const { fecha, hora } = partesFechaHora(
+    formatoFechaHoraOferente(evento.fecha),
+  );
+  const tono: TonoNodoHistorial =
+    meta.tono === "exito" || meta.tono === "primario"
+      ? "primario"
+      : meta.tono === "neutro"
+        ? "neutro"
+        : "destacado";
+  return eventoHistorial({
+    id: `subsanacion-${evento.id}`,
+    fecha,
+    hora,
+    tipo: "subsanacion",
+    titulo: meta.titulo,
+    detalle: evento.detalleHtml,
+    usuario: evento.usuario,
+    nombreUsuario: evento.nombreUsuario,
+    rol: evento.rol,
+    estadoAnterior: estado,
+    estadoNuevo: estado,
+    icono: meta.icono,
+    tono,
+    resultado: meta.resultado,
+    tonoResultado:
+      meta.tonoResultado === "advertencia" ? "advertencia" : meta.tonoResultado,
+    evidencia: evento.hash
+      ? { icono: "fingerprint", texto: evento.hash }
+      : evento.radicado
+        ? { icono: "fact_check", texto: `Radicado ${evento.radicado}` }
+        : undefined,
   });
 }
 
@@ -2118,6 +3340,10 @@ function historialPorDefecto(
   );
 
   if (solicitud.estado === "en-aprobacion") {
+    if (solicitud.decision) {
+      eventos.push(...eventosDecisiones(solicitud));
+      return eventos;
+    }
     eventos.push(
       eventoModificacion(
         `evento-${solicitud.id}-modificacion-pendiente`,
@@ -2147,6 +3373,11 @@ function historialPorDefecto(
         "09:15",
       ),
     );
+    return eventos;
+  }
+
+  if (solicitud.decision || solicitud.historialDecisiones?.length) {
+    eventos.push(...eventosDecisiones(solicitud));
     return eventos;
   }
 
@@ -2240,6 +3471,19 @@ function historialDetalle(
     selloTiempo: SELLO_TIEMPO_HISTORIAL,
     notaIntegridad: NOTA_INTEGRIDAD_HISTORIAL,
   };
+}
+
+/** Autor simulado de las actuaciones de subsanación (RN-08). */
+const AUTOR_SUBSANACION_MOCK = {
+  usuario: "raquimbayap",
+  autor: "Raúl Quimbaya",
+  rol: "Jefe de Dependencia",
+} as const;
+
+/** Fecha y hora en ISO-8601 con desfase de Colombia. */
+function isoColombia(fecha: Date): string {
+  const local = new Date(fecha.getTime() - 5 * 3_600_000);
+  return `${local.toISOString().slice(0, 19)}-05:00`;
 }
 
 /** Formatea una fecha/hora al estilo del expediente ("18/02/2026 11:40 COT"). */
@@ -2621,27 +3865,76 @@ function comoDetalle(
 
 function valoresConAdendaPublicada(
   valores: DatosEdicionSolicitud,
+  cierreVigente?: string,
 ): DatosEdicionSolicitud {
-  // Fixture provisional para demostrar una adenda publicada que cambia cantidades.
-  const [primerItem, ...demasItems] = valores.items.registros;
+  // Fixture provisional: la adenda ajusta el cableado (ítem 4), suprime la
+  // capacitación (ítem 5) y amplía el cierre. Los ids son los del fixture de
+  // ítems del módulo.
+  const registros = valores.items.registros
+    .filter((item) => item.id !== "5")
+    .map((item) =>
+      item.id === "4" ? { ...item, cantidad: 55 } : item,
+    );
   return {
     ...valores,
+    datosGenerales: {
+      ...valores.datosGenerales,
+      fechaCierre: cierreVigente
+        ? fechaIsoDesdeCorta(cierreVigente)
+        : valores.datosGenerales.fechaCierre,
+    },
     items: {
       ...valores.items,
-      registros: primerItem
-        ? [{ ...primerItem, cantidad: primerItem.cantidad + 1 }, ...demasItems]
-        : demasItems,
+      registros,
     },
   };
 }
 
-function diferenciasProveedor(
-  diferencias: ResumenDiferencias,
-): ResumenDiferencias {
-  const grupos = diferencias.grupos.filter((grupo) => grupo.paso !== 5);
+function proveedorPublicoMock(): ProveedorPublicoProveedor {
+  const base =
+    PROVEEDORES_MOCK.find((proveedor) => proveedor.id === "prov-28") ??
+    PROVEEDORES_MOCK[0];
+  const identidad = identidadProveedor(base);
   return {
-    grupos,
-    total: grupos.reduce((total, grupo) => total + grupo.cambios.length, 0),
+    id: base.id,
+    nombre: base.nombre,
+    nit: base.nit,
+    tipoPersona: identidad.etiquetaTipoPersona,
+    correo: identidad.correo,
+    direccion: identidad.direccionFiscal,
+    representante: identidad.representante,
+    ciudad: base.ciudad,
+  };
+}
+
+/**
+ * Proyección de la solicitud con la versión vigente de la adenda.
+ *
+ * La bandeja y el detalle del proveedor necesitan la misma fecha de cierre y
+ * la misma versión que la fotografía que se usa para calcular diferencias. Si
+ * solo se proyectara el detalle, P-01 mostraría el cierre anterior.
+ */
+function solicitudProveedorVigente(
+  invitacion: InvitacionProveedor,
+  solicitud: Solicitud,
+): Solicitud {
+  if (!invitacion.adendaPublicada) {
+    return solicitud;
+  }
+  const anteriores = datosEdicionDesdeDetalle(solicitud);
+  const vigentes = valoresConAdendaPublicada(
+    anteriores,
+    invitacion.adendaPublicada.cierreVigente,
+  );
+  return {
+    ...solicitud,
+    version:
+      invitacion.adendaPublicada.versionVigente ??
+      solicitud.version ??
+      "v1.0",
+    cierre:
+      fechaCortaDesdeIso(vigentes.datosGenerales.fechaCierre) ??
+      solicitud.cierre,
   };
 }
 
@@ -2688,10 +3981,7 @@ function proyectarSolicitudProveedor(
         }
       : null,
     itemsDetalle: solicitud.itemsDetalle,
-    items: solicitud.items.map((item) => ({
-      ...item,
-      valorUnitarioTecho: null,
-    })),
+    items: solicitud.items,
     contratacion: solicitud.contratacion,
     documentos: solicitud.documentos
       ? {
@@ -2738,6 +4028,7 @@ interface VersionGuardada {
  * - `?mockRetardo=3000` → retardo en ms (ver el loader más tiempo)
  * - `?mockDetalle=error` → falla la carga del detalle (estado de error de S-03)
  * - `?mockDetalleProveedor=error` → falla la carga del detalle P-02
+ * - `?mockResultado=error` → falla la consulta del resultado P-07
  * - `?mockNoInvitado=1` → simula una solicitud sin invitación para el proveedor
  * - `?mockGuardar=error` → falla el guardado de la edición (S-04)
  * - `?mockCancelar=error` → falla una cancelación (S-05)
@@ -2760,8 +4051,14 @@ export class SolicitudesServiceMock extends SolicitudesService {
   >();
   private readonly invitacionesActualizadas = new Map<string, InvitacionProveedor>();
 
+  /** Periodos de subsanación por solicitud, del más antiguo al más reciente. */
+  private readonly subsanaciones = new Map<string, readonly Subsanacion[]>();
+
   constructor(private readonly diferencias: DiferenciasSolicitudService) {
     super();
+    for (const [solicitudId, periodos] of Object.entries(SUBSANACIONES_MOCK)) {
+      this.subsanaciones.set(solicitudId, periodos);
+    }
   }
 
   listar(
@@ -2832,19 +4129,28 @@ export class SolicitudesServiceMock extends SolicitudesService {
         solicitud,
       ]),
     );
+    const proveedorId = proveedorPublicoMock().id;
     const filas: InvitacionProveedorConSolicitud[] =
       INVITACIONES_PROVEEDOR_MOCK.flatMap((invitacionBase) => {
         const invitacion =
           this.invitacionesActualizadas.get(invitacionBase.solicitudId) ??
           invitacionBase;
-        const solicitud = solicitudes.get(invitacion.solicitudId);
-        if (!solicitud) {
+        const solicitudBase = solicitudes.get(invitacion.solicitudId);
+        if (!solicitudBase) {
           return [];
         }
+        const solicitud = solicitudProveedorVigente(invitacion, solicitudBase);
         return [
           {
             invitacion,
-            solicitud,
+            solicitud: {
+              ...solicitud,
+              subsanacion: filtrarSubsanacionProveedor(
+                this.ultimaSubsanacion(solicitud.id),
+                proveedorId,
+              ),
+            },
+            proveedorId,
             ordenadorGasto:
               ORDENADORES_PROVEEDOR_MOCK[solicitud.id] ??
               "Por definir"
@@ -2906,9 +4212,16 @@ export class SolicitudesServiceMock extends SolicitudesService {
       ? { ...solicitud, modificacionPendiente: pendiente }
       : solicitud;
 
-    return of(
-      comoDetalle(fila, edicion, this.historialEdiciones.get(id) ?? []),
-    ).pipe(delay(retardo));
+    const extras = [
+      ...(this.historialEdiciones.get(id) ?? []),
+      ...this.eventosSubsanacionHistorial(id, fila.estado),
+    ];
+    const detalle = comoDetalle(fila, edicion, extras);
+
+    return of({
+      ...detalle,
+      subsanacion: this.ultimaSubsanacion(id),
+    }).pipe(delay(retardo));
   }
 
   obtenerDetalleProveedor(
@@ -2936,16 +4249,18 @@ export class SolicitudesServiceMock extends SolicitudesService {
     const invitacion = invitacionBase
       ? this.invitacionesActualizadas.get(id) ?? invitacionBase
       : undefined;
-    const solicitud = SOLICITUDES_PROVEEDOR_MOCK.find(
-      (item) => item.id === id,
-    );
+    const solicitud = this.fila(id);
     if (!invitacion || !solicitud) {
       return of(null).pipe(delay(retardo));
     }
+    const proveedor = proveedorPublicoMock();
 
     const valoresAnteriores = datosEdicionDesdeDetalle(solicitud);
     const valoresVigentes = invitacion.adendaPublicada
-      ? valoresConAdendaPublicada(valoresAnteriores)
+      ? valoresConAdendaPublicada(
+          valoresAnteriores,
+          invitacion.adendaPublicada.cierreVigente,
+        )
       : valoresAnteriores;
     const solicitudVigente = comoDetalle(
       {
@@ -2954,33 +4269,92 @@ export class SolicitudesServiceMock extends SolicitudesService {
           invitacion.adendaPublicada?.versionVigente ??
           solicitud.version ??
           "v1.0",
+        cierre:
+          fechaCortaDesdeIso(valoresVigentes.datosGenerales.fechaCierre) ??
+          solicitud.cierre,
       },
       valoresVigentes,
     );
     const diferencias = invitacion.adendaPublicada
-      ? diferenciasProveedor(
-          this.diferencias.calcular(valoresAnteriores, valoresVigentes),
+      ? this.diferencias.calcular(
+          valoresAnteriores,
+          valoresVigentes,
+          "restringida",
         )
       : null;
 
     return of({
       invitacion,
-      solicitud: proyectarSolicitudProveedor(solicitudVigente),
-      yaRespondio:
-        tienePostulacionRadicada(invitacion),
+      solicitud: {
+        ...proyectarSolicitudProveedor(solicitudVigente),
+        subsanacion: filtrarSubsanacionProveedor(
+          this.ultimaSubsanacion(id),
+          proveedor.id,
+        ),
+      },
+      yaRespondio: tienePostulacionRadicada(invitacion),
+      proveedor,
       adenda:
         invitacion.adendaPublicada && diferencias
           ? {
               ...invitacion.adendaPublicada,
               diferencias,
+              itemsAnteriores: valoresAnteriores.items.registros,
             }
           : null,
     }).pipe(delay(retardo));
   }
 
+  /**
+   * Resultado de P-07.
+   *
+   * La decisión se filtra con `construirResultadoProveedor`, que solo devuelve
+   * la del proveedor de la sesión. El resto de la solicitud (historial,
+   * decisiones de otros, ofertas ajenas) no sale de este método.
+   */
+  obtenerResultadoProveedor(
+    id: string,
+  ): Observable<ResultadoProveedor | null> {
+    const params = new URLSearchParams(window.location.search);
+    const retardo = Number(params.get("mockRetardo")) || 700;
+
+    if (params.get("mockResultado") === "error") {
+      return throwError(
+        () =>
+          new Error(
+            "No fue posible consultar la respuesta del solicitante. Intente nuevamente.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    if (params.get("mockNoInvitado") === "1") {
+      return of(null).pipe(delay(retardo));
+    }
+
+    const invitacionBase = INVITACIONES_PROVEEDOR_MOCK.find(
+      (item) => item.solicitudId === id,
+    );
+    const invitacion = invitacionBase
+      ? this.invitacionesActualizadas.get(id) ?? invitacionBase
+      : undefined;
+    const solicitud = this.fila(id);
+    if (!invitacion || !solicitud) {
+      return of(null).pipe(delay(retardo));
+    }
+
+    return of(
+      construirResultadoProveedor(
+        solicitud,
+        invitacion,
+        proveedorPublicoMock(),
+      ),
+    ).pipe(delay(retardo));
+  }
+
   registrarRespuestaProveedor(
     solicitudId: string,
     fechaRadicacion: string,
+    respuesta?: ResumenRespuestaVigente,
   ): void {
     const invitacion =
       this.invitacionesActualizadas.get(solicitudId) ??
@@ -2990,35 +4364,878 @@ export class SolicitudesServiceMock extends SolicitudesService {
     if (!invitacion) {
       throw new Error("No existe la invitación asociada a la solicitud.");
     }
+    const versiones = respuesta
+      ? [
+          ...(invitacion.versionesRespuesta ?? []).filter(
+            (version) => version.version !== respuesta.version,
+          ),
+          respuesta,
+        ]
+      : invitacion.versionesRespuesta;
     this.invitacionesActualizadas.set(solicitudId, {
       ...invitacion,
       estado: "enviada",
       fechaRadicacion,
+      respuestaVigente: respuesta ?? invitacion.respuestaVigente,
+      versionesRespuesta: versiones,
     });
   }
 
-  registrarSeleccionOferente(
+  registrarActualizacionProveedor(
     solicitudId: string,
-    seleccion: SeleccionOferenteEvento,
+    respuesta: ResumenRespuestaVigente,
   ): void {
-    const solicitud = this.fila(solicitudId);
-    if (!solicitud) {
-      return;
+    const invitacion =
+      this.invitacionesActualizadas.get(solicitudId) ??
+      INVITACIONES_PROVEEDOR_MOCK.find(
+        (item) => item.solicitudId === solicitudId,
+      );
+    if (!invitacion) {
+      throw new Error("No existe la invitación asociada a la solicitud.");
+    }
+    const versiones = [
+      ...(invitacion.versionesRespuesta ?? []).filter(
+        (version) => version.version !== respuesta.version,
+      ),
+      respuesta,
+    ];
+    this.invitacionesActualizadas.set(solicitudId, {
+      ...invitacion,
+      estado: "enviada",
+      fechaRadicacion: respuesta.fecha,
+      respuestaVigente: respuesta,
+      versionesRespuesta: versiones,
+    });
+  }
+
+  /**
+   * Registra el envío a validación de una oferta (S-11).
+   *
+   * Es el único punto que cambia el estado a `en-aprobacion` y guarda la
+   * decisión. La validación final la registrarán las vistas exclusivas del
+   * Ordenador del Gasto; aquí solo se deja preparada la estructura.
+   */
+  registrarEnvioDecision(
+    id: string,
+    datos: RegistroEnvioDecision,
+  ): Observable<SolicitudDetalle> {
+    const params = new URLSearchParams(window.location.search);
+    const retardo = Number(params.get("mockRetardo")) || 800;
+
+    if (params.get("mockDecision") === "error-envio") {
+      return throwError(
+        () =>
+          new Error(
+            "No fue posible enviar la decisión a validación. Intente nuevamente.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const actual = this.fila(id);
+    if (!actual) {
+      return throwError(
+        () => new Error("La solicitud ya no existe en el expediente."),
+      ).pipe(delay(retardo));
+    }
+
+    const decisionVigente = actual.decision;
+    const reenvio = decisionVigente?.fase === "rechazada";
+
+    if (decisionVigente && !reenvio) {
+      return throwError(
+        () =>
+          new Error(
+            "La decisión ya fue enviada a validación y no puede modificarse (RN-35).",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    if (reenvio && decisionVigente.proveedorId === datos.proveedorId) {
+      return throwError(
+        () =>
+          new Error(
+            "El proveedor rechazado no puede volver a enviarse a validación. Selecciona otro proveedor.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    if (actual.estado === "desierta" && !reenvio) {
+      return throwError(
+        () =>
+          new Error(
+            "La solicitud está desierta y no tiene una decisión rechazada que permita reenviar.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const decisionesProveedor = [
+      ...(actual.historialDecisiones ?? []),
+      ...(actual.decision ? [actual.decision] : []),
+    ].filter((decision) => decision.proveedorId === datos.proveedorId);
+
+    if (decisionesProveedor.some((decision) => decision.fase === "rechazada")) {
+      return throwError(
+        () =>
+          new Error(
+            "El proveedor ya fue rechazado por el Ordenador del Gasto y no puede volver a enviarse a validación.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    if (
+      !ACCIONES_DECISION_POR_ESTADO[actual.estado].includes(
+        "enviar-a-validacion",
+      )
+    ) {
+      return throwError(
+        () =>
+          new Error(
+            "La solicitud cambió de estado y ya no se puede enviar a validación.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    if (!cierreSolicitudVencido(actual.cierre)) {
+      return throwError(
+        () =>
+          new Error(
+            "El periodo de cotización aún no ha terminado; la decisión se habilita al cierre (RN-29).",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const justificacion = textoPlanoDesdeHtml(datos.justificacionHtml).trim();
+    if (justificacion.length < MIN_CARACTERES_JUSTIFICACION) {
+      return throwError(
+        () =>
+          new Error(
+            `La justificación debe tener al menos ${MIN_CARACTERES_JUSTIFICACION} caracteres (RN-24).`,
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const valorCdp = presupuestoDetalle(actual)?.valorCdp ?? 0;
+    if (valorCdp > 0 && datos.valor > valorCdp) {
+      return throwError(
+        () =>
+          new Error(
+            "La oferta supera el techo presupuestal y no puede enviarse a validación (RN-40).",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    if (!datos.proveedorId || !datos.invitacionId) {
+      return throwError(
+        () =>
+          new Error(
+            "No hay una oferta seleccionada para enviar a validación.",
+          ),
+      ).pipe(delay(retardo));
     }
 
     const ahora = new Date();
-    const fecha = `${String(ahora.getDate()).padStart(2, "0")}/${String(
-      ahora.getMonth() + 1,
-    ).padStart(2, "0")}/${ahora.getFullYear()}`;
-    const hora = `${String(ahora.getHours()).padStart(2, "0")}:${String(
-      ahora.getMinutes(),
-    ).padStart(2, "0")}`;
-    const evento = eventoSeleccionOferente(solicitud, seleccion, fecha, hora);
+    const fecha = fechaHoraExpediente(ahora);
+    const codigo = `SIGA-${ahora.getFullYear()}-DEC-${String(
+      Date.now(),
+    ).slice(-5)}`;
 
-    this.historialEdiciones.set(solicitudId, [
-      ...(this.historialEdiciones.get(solicitudId) ?? []),
-      evento,
-    ]);
+    const envio: EnvioDecision = {
+      justificacion,
+      justificacionHtml: datos.justificacionHtml,
+      usuario: "sesion",
+      autor: "Usuario autenticado",
+      rol: "Solicitante (JD u OG)",
+      fecha,
+      fechaIso: ahora.toISOString(),
+      notificar: datos.notificar,
+    };
+
+    const notificaciones: readonly NotificacionDecision[] = datos.notificar
+      ? [
+          {
+            destinatario: datos.proveedorNombre,
+            correo: datos.correoProveedor ?? "",
+            fecha,
+            fechaIso: ahora.toISOString(),
+            tipo: "validacion",
+            estadoEntrega: "programada",
+          },
+        ]
+      : [];
+
+    const decision: DecisionSolicitud = {
+      id: `decision-${id}-${ahora.getTime()}`,
+      solicitudId: id,
+      fase: "enviada",
+      invitacionId: datos.invitacionId,
+      proveedorId: datos.proveedorId,
+      proveedorNombre: datos.proveedorNombre,
+      valor: datos.valor,
+      envio,
+      notificaciones,
+      codigoVerificacion: codigo,
+    };
+
+    const historialDecisiones = decisionVigente
+      ? [...(actual.historialDecisiones ?? []), decisionVigente]
+      : (actual.historialDecisiones ?? []);
+
+    const actualizada: Solicitud = {
+      ...actual,
+      estado: "en-aprobacion",
+      decision,
+      historialDecisiones,
+      ultimaModificacion: fecha,
+    };
+    this.filasEditadas.set(id, actualizada);
+
+    return of(
+      comoDetalle(
+        actualizada,
+        this.edicionBase(actualizada),
+        this.historialEdiciones.get(id) ?? [],
+      ),
+    ).pipe(delay(retardo));
+  }
+
+  obtenerSubsanaciones(id: string): Observable<readonly Subsanacion[]> {
+    return of(this.subsanaciones.get(id) ?? []).pipe(delay(350));
+  }
+
+  registrarSubsanacion(
+    id: string,
+    datos: RegistroSubsanacion,
+  ): Observable<Subsanacion> {
+    const params = new URLSearchParams(window.location.search);
+    const retardo = Number(params.get("mockRetardo")) || 800;
+
+    if (params.get("mockSubsanacion") === "error-envio") {
+      return throwError(
+        () =>
+          new Error(
+            "No fue posible habilitar el periodo de subsanación. Intente nuevamente.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const actual = this.fila(id);
+    if (!actual) {
+      return throwError(
+        () => new Error("La solicitud ya no existe en el expediente."),
+      ).pipe(delay(retardo));
+    }
+
+    if (actual.estado !== "en-evaluacion") {
+      return throwError(
+        () =>
+          new Error(
+            "La subsanación solo se puede configurar cuando la solicitud está en evaluación.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    if (actual.decision) {
+      return throwError(
+        () =>
+          new Error(
+            "La solicitud ya tiene una decisión registrada; la subsanación quedó cerrada.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const existente = this.ultimaSubsanacion(id);
+    if (existente && !existente.cancelacion) {
+      return throwError(
+        () =>
+          new Error(
+            "Ya existe un periodo de subsanación vigente para esta solicitud.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    if (!datos.oferentes.length) {
+      return throwError(
+        () =>
+          new Error(
+            "Debe seleccionar al menos un oferente para habilitar la subsanación.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const cierreMarca = fechaCierreSolicitud(actual.cierre);
+    const inicioMarca = Date.parse(datos.inicio);
+    const finMarca = Date.parse(datos.fin);
+
+    if (!Number.isFinite(inicioMarca) || !Number.isFinite(finMarca)) {
+      return throwError(
+        () =>
+          new Error(
+            "Las fechas del periodo de subsanación no son válidas.",
+          ),
+      ).pipe(delay(retardo));
+    }
+    if (cierreMarca !== null && inicioMarca <= cierreMarca) {
+      return throwError(
+        () =>
+          new Error(
+            "El inicio de la subsanación debe ser posterior al cierre de la cotización.",
+          ),
+      ).pipe(delay(retardo));
+    }
+    if (inicioMarca < Date.now() - 5 * 60_000) {
+      return throwError(
+        () =>
+          new Error(
+            "El inicio de la subsanación no puede estar en el pasado.",
+          ),
+      ).pipe(delay(retardo));
+    }
+    if (finMarca <= inicioMarca) {
+      return throwError(
+        () =>
+          new Error(
+            "La fecha de finalización debe ser posterior a la fecha de inicio.",
+          ),
+      ).pipe(delay(retardo));
+    }
+    if (finMarca <= Date.now()) {
+      return throwError(
+        () =>
+          new Error(
+            "La fecha de finalización debe ser futura.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const motivo = textoPlanoDesdeHtml(datos.motivoHtml).trim();
+    if (motivo.length < MIN_CARACTERES_JUSTIFICACION) {
+      return throwError(
+        () =>
+          new Error(
+            `El mensaje formal debe tener al menos ${MIN_CARACTERES_JUSTIFICACION} caracteres.`,
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const detalle = comoDetalle(actual);
+    const candidatos = crearOferentesSubsanables(
+      { id: actual.id, documentos: documentosDetalle(actual) },
+      crearOferentes(detalle, cierreSolicitudVencido(actual.cierre)),
+    );
+
+    const oferentes: OferenteSubsanacion[] = [];
+    const proveedoresVistos = new Set<string>();
+    for (const registro of datos.oferentes) {
+      if (proveedoresVistos.has(registro.proveedorId)) {
+        return throwError(
+          () =>
+            new Error(
+              "Un oferente está repetido en la configuración de la subsanación.",
+            ),
+        ).pipe(delay(retardo));
+      }
+      proveedoresVistos.add(registro.proveedorId);
+      const candidato = candidatos.find(
+        (item) => item.proveedorId === registro.proveedorId,
+      );
+      if (!candidato) {
+        return throwError(
+          () =>
+            new Error(
+              "Uno de los oferentes seleccionados ya no tiene una oferta válida.",
+            ),
+        ).pipe(delay(retardo));
+      }
+      if (!registro.documentos.length) {
+        return throwError(
+          () =>
+            new Error(
+              `Selecciona al menos un documento para ${candidato.nombre}.`,
+            ),
+        ).pipe(delay(retardo));
+      }
+
+      const vistos = new Set<string>();
+      const documentos = registro.documentos.map((item) => {
+        if (vistos.has(item.documentoId)) {
+          throw new Error(
+            `El documento ${item.documentoId} está repetido para ${candidato.nombre}.`,
+          );
+        }
+        vistos.add(item.documentoId);
+        const documento = candidato.documentos.find(
+          (doc) => doc.id === item.documentoId,
+        );
+        if (!documento) {
+          throw new Error(
+            `El documento ${item.documentoId} no pertenece a la matriz del oferente.`,
+          );
+        }
+        if (!documento.subsanable) {
+          throw new Error(
+            `El documento ${documento.nombre} no es subsanable conforme al pliego.`,
+          );
+        }
+        if (
+          item.observacion.trim().length < MIN_CARACTERES_JUSTIFICACION
+        ) {
+          throw new Error(
+            `La observación de ${documento.nombre} debe tener al menos ${MIN_CARACTERES_JUSTIFICACION} caracteres.`,
+          );
+        }
+        return {
+          ...documento,
+          estado: "pendiente" as const,
+          observacion: item.observacion.trim(),
+          seleccionado: true,
+        };
+      });
+
+      oferentes.push({ ...candidato, documentos });
+    }
+
+    const ahora = new Date();
+    const periodos = this.subsanaciones.get(id) ?? [];
+    const radicado = `ACT-SUB-${ahora.getFullYear()}-${String(
+      periodos.length + 1,
+    ).padStart(4, "0")}`;
+    const inicio = datos.inicio;
+    const fin = datos.fin;
+    const programado = Date.parse(inicio) > ahora.getTime();
+    const totalDocumentos = oferentes.reduce(
+      (total, oferente) => total + oferente.documentos.length,
+      0,
+    );
+
+    const periodo: Subsanacion = {
+      id: `subsanacion-${id}-${ahora.getTime()}`,
+      radicado,
+      solicitudId: id,
+      oferentes,
+      inicio,
+      fin,
+      motivoHtml: datos.motivoHtml,
+      notificar: datos.notificar,
+      permitirReemplazo: datos.permitirReemplazo,
+      configuradaPor: AUTOR_SUBSANACION_MOCK,
+      configuradaEl: isoColombia(ahora),
+      ampliaciones: [],
+      eventos: [
+        {
+          id: `evento-${id}-subsanacion-apertura-${ahora.getTime()}`,
+          tipo: "periodo-abierto",
+          fecha: isoColombia(ahora),
+          usuario: AUTOR_SUBSANACION_MOCK.usuario,
+          nombreUsuario: AUTOR_SUBSANACION_MOCK.autor,
+          rol: AUTOR_SUBSANACION_MOCK.rol,
+          detalleHtml: `${programado ? "Se programó" : "Se habilitó"} el periodo de subsanación del <strong>${formatoFechaHoraOferente(
+            inicio,
+          )}</strong> al <strong>${formatoFechaHoraOferente(
+            fin,
+          )}</strong> para <strong>${oferentes.length} oferentes</strong> y <strong>${totalDocumentos} documentos</strong>.`,
+          radicado,
+          dentroDelPeriodo: true,
+        },
+      ],
+    };
+
+    this.subsanaciones.set(id, [...periodos, periodo]);
+    return of(periodo).pipe(delay(retardo));
+  }
+
+  ampliarSubsanacion(
+    id: string,
+    horas: number | null,
+    nuevaFecha: string | null,
+    motivo: string,
+  ): Observable<Subsanacion> {
+    const params = new URLSearchParams(window.location.search);
+    const retardo = Number(params.get("mockRetardo")) || 700;
+
+    if (params.get("mockSubsanacion") === "error-ampliar") {
+      return throwError(
+        () =>
+          new Error(
+            "No fue posible ampliar el plazo de subsanación. Intente nuevamente.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const solicitud = this.fila(id);
+    if (!solicitud || solicitud.estado !== "en-evaluacion" || solicitud.decision) {
+      return throwError(
+        () =>
+          new Error(
+            "El periodo ya no admite cambios porque la solicitud salió de evaluación o tiene una decisión registrada.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const periodo = this.ultimaSubsanacion(id);
+    if (!periodo) {
+      return throwError(
+        () => new Error("No existe un periodo de subsanación para ampliar."),
+      ).pipe(delay(retardo));
+    }
+    if (periodo.cancelacion) {
+      return throwError(
+        () => new Error("El periodo fue cancelado y no se puede ampliar."),
+      ).pipe(delay(retardo));
+    }
+    if (estadoSubsanacion(periodo) === "vencida") {
+      return throwError(
+        () => new Error("El periodo ya venció y no se puede ampliar."),
+      ).pipe(delay(retardo));
+    }
+    if (motivo.trim().length < MIN_CARACTERES_JUSTIFICACION) {
+      return throwError(
+        () =>
+          new Error(
+            `El motivo de la ampliación debe tener al menos ${MIN_CARACTERES_JUSTIFICACION} caracteres.`,
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const ahora = new Date();
+    let fin: string;
+    if (nuevaFecha) {
+      const marca = Date.parse(nuevaFecha);
+      if (
+        !Number.isFinite(marca) ||
+        marca <= Date.parse(periodo.fin) ||
+        marca <= ahora.getTime()
+      ) {
+        return throwError(
+          () =>
+            new Error(
+              "La nueva fecha debe ser posterior al cierre actual y futura.",
+            ),
+        ).pipe(delay(retardo));
+      }
+      fin = nuevaFecha;
+    } else {
+      if (horas !== 24 && horas !== 48) {
+        return throwError(
+          () =>
+            new Error(
+              "Selecciona una ampliación de 24 o 48 horas, o una fecha personalizada.",
+            ),
+        ).pipe(delay(retardo));
+      }
+      fin = isoColombia(
+        new Date(Date.parse(periodo.fin) + horas * 3_600_000),
+      );
+    }
+
+    const ampliacion: AmpliacionSubsanacion = {
+      fecha: isoColombia(ahora),
+      nuevaFecha: fin,
+      horas: horas ?? undefined,
+      motivo: motivo.trim(),
+      usuario: AUTOR_SUBSANACION_MOCK.usuario,
+      autor: AUTOR_SUBSANACION_MOCK.autor,
+      rol: AUTOR_SUBSANACION_MOCK.rol,
+    };
+
+    const actualizado: Subsanacion = {
+      ...periodo,
+      fin,
+      ampliaciones: [...periodo.ampliaciones, ampliacion],
+      eventos: [
+        ...periodo.eventos,
+        {
+          id: `evento-${id}-subsanacion-ampliacion-${ahora.getTime()}`,
+          tipo: "periodo-ampliado",
+          fecha: isoColombia(ahora),
+          usuario: AUTOR_SUBSANACION_MOCK.usuario,
+          nombreUsuario: AUTOR_SUBSANACION_MOCK.autor,
+          rol: AUTOR_SUBSANACION_MOCK.rol,
+          detalleHtml: `El plazo se amplió hasta <strong>${formatoFechaHoraOferente(
+            fin,
+          )}</strong>. Motivo: ${escaparHtml(motivo.trim())}`,
+          justificacion: motivo.trim(),
+          dentroDelPeriodo: true,
+        },
+      ],
+    };
+
+    this.reemplazarUltimaSubsanacion(id, actualizado);
+    return of(actualizado).pipe(delay(retardo));
+  }
+
+  cancelarSubsanacion(
+    id: string,
+    motivo: string,
+  ): Observable<Subsanacion> {
+    const params = new URLSearchParams(window.location.search);
+    const retardo = Number(params.get("mockRetardo")) || 700;
+
+    if (params.get("mockSubsanacion") === "error-cancelar") {
+      return throwError(
+        () =>
+          new Error(
+            "No fue posible cancelar el periodo de subsanación. Intente nuevamente.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const solicitud = this.fila(id);
+    if (!solicitud || solicitud.estado !== "en-evaluacion" || solicitud.decision) {
+      return throwError(
+        () =>
+          new Error(
+            "El periodo ya no admite cambios porque la solicitud salió de evaluación o tiene una decisión registrada.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const periodo = this.ultimaSubsanacion(id);
+    if (!periodo) {
+      return throwError(
+        () => new Error("No existe un periodo de subsanación para cancelar."),
+      ).pipe(delay(retardo));
+    }
+    if (periodo.cancelacion) {
+      return throwError(
+        () => new Error("El periodo ya fue cancelado."),
+      ).pipe(delay(retardo));
+    }
+    if (estadoSubsanacion(periodo) === "vencida") {
+      return throwError(
+        () => new Error("El periodo ya venció y no se puede cancelar."),
+      ).pipe(delay(retardo));
+    }
+    if (motivo.trim().length < MIN_CARACTERES_JUSTIFICACION) {
+      return throwError(
+        () =>
+          new Error(
+            `El motivo de la cancelación debe tener al menos ${MIN_CARACTERES_JUSTIFICACION} caracteres.`,
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const ahora = new Date();
+    const cancelacion: CancelacionSubsanacion = {
+      fecha: isoColombia(ahora),
+      motivo: motivo.trim(),
+      usuario: AUTOR_SUBSANACION_MOCK.usuario,
+      autor: AUTOR_SUBSANACION_MOCK.autor,
+      rol: AUTOR_SUBSANACION_MOCK.rol,
+    };
+
+    const actualizado: Subsanacion = {
+      ...periodo,
+      cancelacion,
+      eventos: [
+        ...periodo.eventos,
+        {
+          id: `evento-${id}-subsanacion-cancelacion-${ahora.getTime()}`,
+          tipo: "periodo-cancelado",
+          fecha: isoColombia(ahora),
+          usuario: AUTOR_SUBSANACION_MOCK.usuario,
+          nombreUsuario: AUTOR_SUBSANACION_MOCK.autor,
+          rol: AUTOR_SUBSANACION_MOCK.rol,
+          detalleHtml: `El periodo de subsanación fue cancelado. Motivo: ${escaparHtml(
+            motivo.trim(),
+          )}`,
+          justificacion: motivo.trim(),
+          dentroDelPeriodo: true,
+        },
+      ],
+    };
+
+    this.reemplazarUltimaSubsanacion(id, actualizado);
+    return of(actualizado).pipe(delay(retardo));
+  }
+
+  registrarEventoSubsanacion(
+    id: string,
+    registro: RegistroEventoSubsanacion,
+  ): Observable<Subsanacion> {
+    const params = new URLSearchParams(window.location.search);
+    const retardo = Number(params.get("mockRetardo")) || 650;
+    const esRadicacion = registro.tipo === "subsanacion-radicada";
+
+    if (
+      params.get("mockSubsanacionProveedor") ===
+      (esRadicacion ? "error-envio" : "error-adjunto")
+    ) {
+      return throwError(
+        () =>
+          new Error(
+            esRadicacion
+              ? "No fue posible radicar la subsanación. Intente nuevamente."
+              : "No fue posible registrar el documento. Intente nuevamente.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const periodo = this.ultimaSubsanacion(id);
+    if (!periodo) {
+      return throwError(
+        () => new Error("No existe un periodo de subsanación vigente."),
+      ).pipe(delay(retardo));
+    }
+    if (estadoSubsanacion(periodo) !== "activa") {
+      return throwError(
+        () =>
+          new Error(
+            "El periodo de subsanación no está activo; no se aceptan cambios.",
+          ),
+      ).pipe(delay(retardo));
+    }
+    if (periodo.cancelacion) {
+      return throwError(
+        () => new Error("El periodo de subsanación fue cancelado."),
+      ).pipe(delay(retardo));
+    }
+
+    const oferente = periodo.oferentes.find(
+      (item) => item.proveedorId === registro.proveedorId,
+    );
+    if (!oferente) {
+      return throwError(
+        () =>
+          new Error(
+            "Su empresa no está incluida en el periodo de subsanación.",
+          ),
+      ).pipe(delay(retardo));
+    }
+    const radicacionPrevia = periodo.eventos.some(
+      (evento) =>
+        evento.tipo === "subsanacion-radicada" &&
+        evento.oferenteId === registro.proveedorId,
+    );
+    if (radicacionPrevia) {
+      return throwError(
+        () =>
+          new Error(
+            "La subsanación ya fue radicada y no admite nuevos cambios.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    const seleccionados = oferente.documentos.filter(
+      (documento) => documento.seleccionado,
+    );
+    if (seleccionados.length === 0) {
+      return throwError(
+        () =>
+          new Error(
+            "El periodo no tiene documentos habilitados para su empresa.",
+          ),
+      ).pipe(delay(retardo));
+    }
+
+    if (!esRadicacion) {
+      const documento = seleccionados.find(
+        (item) => item.id === registro.documentoId,
+      );
+      if (!documento) {
+        return throwError(
+          () =>
+            new Error(
+              "El documento no está habilitado para su empresa en este periodo.",
+            ),
+        ).pipe(delay(retardo));
+      }
+      if (!documento.subsanable || documento.bloqueadoPorPliego) {
+        return throwError(
+          () =>
+            new Error(
+              "El documento está bloqueado por el pliego y no admite subsanación.",
+            ),
+        ).pipe(delay(retardo));
+      }
+      const existente = eventoDocumento(
+        periodo,
+        registro.proveedorId,
+        documento.id,
+      );
+      if (existente && !periodo.permitirReemplazo) {
+        return throwError(
+          () =>
+            new Error(
+              "El periodo no permite reemplazar un documento ya cargado.",
+            ),
+        ).pipe(delay(retardo));
+      }
+    }
+
+    if (esRadicacion) {
+      const faltantes = seleccionados.filter(
+        (documento) =>
+          documento.clasificacion === "obligatorio" &&
+          !eventoDocumento(periodo, registro.proveedorId, documento.id),
+      );
+      if (faltantes.length > 0) {
+        return throwError(
+          () =>
+            new Error(
+              `Faltan ${faltantes.length} documento(s) obligatorio(s) por cargar antes de radicar.`,
+            ),
+        ).pipe(delay(retardo));
+      }
+    }
+
+    const ahora = new Date();
+    const existente = registro.documentoId
+      ? eventoDocumento(periodo, registro.proveedorId, registro.documentoId)
+      : null;
+    const tipo = esRadicacion
+      ? "subsanacion-radicada"
+      : existente
+        ? "documento-reemplazado"
+        : "documento-cargado";
+    const completados = seleccionados.filter((documento) =>
+      eventoDocumento(periodo, registro.proveedorId, documento.id),
+    ).length;
+    const radicado = esRadicacion
+      ? `SUB-${ahora.getFullYear()}-${id.slice(-4)}-${String(
+          periodo.eventos.filter(
+            (evento) => evento.tipo === "subsanacion-radicada",
+          ).length + 1,
+        ).padStart(3, "0")}`
+      : undefined;
+    const justificacion = registro.justificacion?.trim() ?? "";
+    const detalleHtml = esRadicacion
+      ? `Radicación formal de la subsanación con <strong>${completados} de ${seleccionados.length}</strong> documentos habilitados.${
+          justificacion
+            ? ` <p><strong>Justificación:</strong> ${escaparHtml(justificacion)}</p>`
+            : ""
+        }`
+      : `El proveedor ${
+          tipo === "documento-cargado" ? "cargó" : "reemplazó"
+        } el documento <strong>${escaparHtml(
+          registro.documentoNombre ?? "documento",
+        )}</strong> dentro del periodo de subsanación.`;
+
+    const evento: EventoSubsanacion = {
+      id: `evento-${id}-${tipo}-${ahora.getTime()}`,
+      tipo,
+      fecha: isoColombia(ahora),
+      usuario: registro.usuario,
+      nombreUsuario: registro.nombreUsuario,
+      rol: registro.rol,
+      oferenteId: registro.proveedorId,
+      oferenteNombre: oferente.nombre,
+      documentoId: registro.documentoId,
+      documentoNombre: registro.documentoNombre,
+      detalleHtml,
+      justificacion: justificacion || undefined,
+      versionAnterior: registro.versionAnterior,
+      versionNueva: registro.versionNueva,
+      hash: registro.hash,
+      radicado,
+      dentroDelPeriodo: true,
+    };
+    const actualizado: Subsanacion = {
+      ...periodo,
+      eventos: [...periodo.eventos, evento],
+    };
+
+    this.reemplazarUltimaSubsanacion(id, actualizado);
+    return of(actualizado).pipe(delay(retardo));
   }
 
   /**
@@ -3366,7 +5583,39 @@ export class SolicitudesServiceMock extends SolicitudesService {
   private fila(id: string): Solicitud | undefined {
     return (
       this.filasEditadas.get(id) ??
-      DATOS_MOCK.find((solicitud) => solicitud.id === id)
+      DATOS_MOCK.find((solicitud) => solicitud.id === id) ??
+      SOLICITUDES_PROVEEDOR_MOCK.find((solicitud) => solicitud.id === id)
+    );
+  }
+
+  /** Último periodo de subsanación de una solicitud. */
+  private ultimaSubsanacion(id: string): Subsanacion | null {
+    return this.subsanaciones.get(id)?.at(-1) ?? null;
+  }
+
+  /** Reemplaza el último periodo (ampliación o cancelación). */
+  private reemplazarUltimaSubsanacion(
+    id: string,
+    periodo: Subsanacion,
+  ): void {
+    const periodos = this.subsanaciones.get(id) ?? [];
+    if (periodos.length === 0) {
+      this.subsanaciones.set(id, [periodo]);
+      return;
+    }
+    this.subsanaciones.set(id, [...periodos.slice(0, -1), periodo]);
+  }
+
+  /** Eventos de todas las subsanaciones, listos para la bitácora de S-03. */
+  private eventosSubsanacionHistorial(
+    id: string,
+    estado: EstadoSolicitud,
+  ): readonly EventoHistorial[] {
+    const periodos = this.subsanaciones.get(id) ?? [];
+    return periodos.flatMap((periodo) =>
+      eventosVigentes(periodo).map((evento) =>
+        eventoSubsanacionAHistorial(evento, estado),
+      ),
     );
   }
 

@@ -1,0 +1,77 @@
+<section class="dialogo" aria-labelledby="dialogo-decision-titulo">
+  <header class="dialogo__cabecera">
+    <span class="dialogo__icono" aria-hidden="true">
+      <mat-icon>send</mat-icon>
+    </span>
+    <div class="dialogo__titulos">
+      <span class="dialogo__sello">Confirmación de trámite único</span>
+      <h2 id="dialogo-decision-titulo" class="dialogo__titulo">
+        ¿Enviar la decisión a validación?
+      </h2>
+      <p class="dialogo__subtitulo">
+        La oferta seleccionada quedará a la espera de la decisión del
+        Ordenador del Gasto.
+      </p>
+    </div>
+    <button
+      class="dialogo__cerrar"
+      type="button"
+      aria-label="Cerrar diálogo"
+      (click)="cancelar()"
+    >
+      <mat-icon aria-hidden="true">close</mat-icon>
+    </button>
+  </header>
+
+  <div class="dialogo__cuerpo" id="dialogo-decision-descripcion">
+    <div class="dialogo__resumen">
+      <div class="dialogo__fila">
+        <span class="dialogo__fila-etiqueta">Solicitud</span>
+        <span class="dialogo__fila-valor">{{ datos.solicitudId }}</span>
+      </div>
+      <div class="dialogo__fila">
+        <span class="dialogo__fila-etiqueta">Proveedor</span>
+        <span class="dialogo__fila-valor">{{ datos.proveedorNombre }}</span>
+      </div>
+      <div class="dialogo__fila">
+        <span class="dialogo__fila-etiqueta">Valor total con IVA</span>
+        <span class="dialogo__fila-valor dialogo__fila-valor--vino">
+          {{ moneda(datos.valor) }} COP
+        </span>
+      </div>
+      <div class="dialogo__fila">
+        <span class="dialogo__fila-etiqueta">Notificación al proveedor</span>
+        <span class="dialogo__fila-valor">
+          {{ datos.notificar ? "Programada (simulada)" : "No se registrará" }}
+        </span>
+      </div>
+    </div>
+
+    <div class="dialogo__aviso">
+      <mat-icon aria-hidden="true">warning</mat-icon>
+      <p>
+        Solo se permite enviar la decisión una vez. Verifique la información:
+        no se podrá modificar después de confirmar (RN-35).
+      </p>
+    </div>
+  </div>
+
+  <footer class="dialogo__pie">
+    <button
+      class="boton-recto dialogo__cancelar"
+      type="button"
+      (click)="cancelar()"
+    >
+      Cancelar y revisar
+    </button>
+    <button
+      mat-flat-button
+      class="boton-primario"
+      type="button"
+      (click)="confirmar()"
+    >
+      <mat-icon aria-hidden="true">send</mat-icon>
+      Confirmar y enviar
+    </button>
+  </footer>
+</section>

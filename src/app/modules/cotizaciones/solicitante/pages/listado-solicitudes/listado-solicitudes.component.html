@@ -11,16 +11,28 @@
           y compras institucionales.
         </p>
       </div>
-      @if (puedeCrearSolicitud()) {
-        <button
-          class="listado__boton-nueva"
-          type="button"
-          (click)="nuevaSolicitud()"
-        >
-          <mat-icon aria-hidden="true">add</mat-icon>
-          <span>Nueva solicitud</span>
-        </button>
-      }
+      <div class="listado__acciones">
+        @if (puedeVerEstudios()) {
+          <button
+            class="listado__boton-secundario"
+            type="button"
+            (click)="irAEstudiosMercado()"
+          >
+            <mat-icon aria-hidden="true">query_stats</mat-icon>
+            <span>Estudios de mercado</span>
+          </button>
+        }
+        @if (puedeCrearSolicitud()) {
+          <button
+            class="listado__boton-nueva"
+            type="button"
+            (click)="nuevaSolicitud()"
+          >
+            <mat-icon aria-hidden="true">add</mat-icon>
+            <span>Nueva solicitud</span>
+          </button>
+        }
+      </div>
     </header>
 
     <!-- 2. Filtros -->

@@ -172,7 +172,36 @@
                     <span class="bandeja__tipo">{{ etiquetaTipo(fila) }}</span>
                   </td>
                   <td class="bandeja__td">
-                    <chip-estado [estado]="fila.invitacion.estado" />
+                    @let estadoActualizacion = permisos.estadoActualizacion(
+                      fila.invitacion,
+                      fila.solicitud
+                    );
+                    <chip-estado
+                      [estado]="
+                        estadoActualizacion === 'sin-modificacion'
+                          ? fila.invitacion.estado
+                          : estadoActualizacion
+                      "
+                    />
+                    @if (permisos.puedeVerResultado(fila.solicitud)) {
+                      <span class="bandeja__resultado">
+                        <mat-icon aria-hidden="true">task_alt</mat-icon>
+                        <span>Resultado disponible</span>
+                      </span>
+                    }
+                    @if (subsanacionDe(fila); as subsanacion) {
+                      <span class="bandeja__subsanacion">
+                        <chip-estado
+                          [estado]="subsanacion.estadoPeriodo"
+                        ></chip-estado>
+                        <span class="bandeja__subsanacion-texto">
+                          {{ etiquetaSubsanacion(subsanacion) }}
+                          @if (subsanacion.total > 0) {
+                            · {{ subsanacion.completados }}/{{ subsanacion.total }}
+                          }
+                        </span>
+                      </span>
+                    }
                   </td>
                   @if (hayColumnaAcciones()) {
                     <td class="bandeja__td bandeja__td--acciones">

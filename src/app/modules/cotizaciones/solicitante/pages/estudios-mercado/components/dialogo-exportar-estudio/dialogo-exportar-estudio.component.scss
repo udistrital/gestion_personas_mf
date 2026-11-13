@@ -1,0 +1,167 @@
+:host {
+  display: block;
+}
+
+.dialogo-exportar {
+  display: flex;
+  flex-direction: column;
+  background: var(--agora-surface);
+  color: var(--agora-text);
+}
+
+.dialogo-exportar__cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.15rem;
+  border-bottom: 1px solid var(--agora-borde-tarjeta);
+  background: var(--agora-superficie-neutra);
+}
+
+.dialogo-exportar__titulo-bloque {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 0.7rem;
+}
+
+.dialogo-exportar__icono {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-primary);
+  color: var(--agora-on-primary);
+}
+
+.dialogo-exportar__icono mat-icon {
+  width: 1.2rem;
+  height: 1.2rem;
+  font-size: 1.2rem;
+}
+
+.dialogo-exportar__titulo {
+  margin: 0;
+  color: var(--agora-primary-dark);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.dialogo-exportar__subtitulo {
+  margin: 0.15rem 0 0;
+  color: var(--agora-texto-neutro);
+  font-size: 0.75rem;
+}
+
+.dialogo-exportar__cerrar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--agora-texto-neutro);
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.dialogo-exportar__cerrar:hover {
+  background: var(--agora-borde-tarjeta);
+  color: var(--agora-primary);
+}
+
+.dialogo-exportar__cerrar:focus-visible {
+  outline: 2px solid var(--agora-primary);
+  outline-offset: 2px;
+}
+
+.dialogo-exportar__contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1.15rem;
+}
+
+.dialogo-exportar__texto {
+  margin: 0 0 0.25rem;
+  color: var(--agora-texto-neutro);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.dialogo-exportar__opcion {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 0.7rem;
+  border: 1px solid var(--agora-borde-tarjeta);
+  border-radius: var(--agora-radio-md);
+  background: var(--agora-superficie-neutra);
+  color: var(--agora-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.dialogo-exportar__opcion:hover {
+  border-color: var(--agora-primary);
+  background: var(--agora-surface);
+  box-shadow: 0 6px 14px color-mix(in srgb, var(--agora-primary) 12%, transparent);
+  transform: translateY(-1px);
+}
+
+.dialogo-exportar__opcion:focus-visible {
+  outline: 2px solid var(--agora-primary);
+  outline-offset: 2px;
+}
+
+.dialogo-exportar__opcion mat-icon {
+  flex: 0 0 auto;
+  color: var(--agora-primary);
+  transition: color 0.2s ease;
+}
+
+.dialogo-exportar__opcion:hover mat-icon {
+  color: var(--agora-primary-dark);
+}
+
+.dialogo-exportar__opcion span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.dialogo-exportar__opcion strong {
+  color: var(--agora-primary-dark);
+  font-size: 0.8125rem;
+  transition: color 0.2s ease;
+}
+
+.dialogo-exportar__opcion small {
+  color: var(--agora-texto-neutro);
+  font-size: 0.6875rem;
+  line-height: 1.4;
+  transition: color 0.2s ease;
+}
+
+.dialogo-exportar__pie {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.75rem 1.15rem;
+  border-top: 1px solid var(--agora-borde-tarjeta);
+  background: var(--agora-superficie-neutra);
+}

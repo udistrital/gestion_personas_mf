@@ -17,6 +17,11 @@ import type {
 } from "src/app/shared/components/linea-tiempo/linea-tiempo.component";
 import { AlertService } from "src/app/shared/services/alert.service";
 import { ResultadoResolverSolicitud } from "../../../resolvers/solicitud.resolver";
+import { decisionDeProveedor } from "../../../models/decision.model";
+import {
+  estadoSubsanacion,
+  eventoDocumento,
+} from "../../../models/subsanacion.model";
 import {
   formatoPorcentaje,
   type OfertaComparada,
@@ -44,7 +49,7 @@ type EstadoVista =
 
 type EstadoResolucion = "ok" | "no-encontrada" | "error";
 type PestanaDetalle = "cotizacion" | "persona" | "respuesta";
-type OrigenDetalle = "comparador" | "oferentes";
+type OrigenDetalle = "comparador" | "oferentes" | "subsanacion";
 
 /** Fila de la tabla de ítems, calculada para la plantilla. */
 interface FilaItemOferta {
@@ -109,7 +114,7 @@ export class DetalleProveedorOfertaComponent implements OnInit {
     },
     {
       id: "respuesta",
-      etiqueta: "3. Respuesta del solicitante",
+      etiqueta: "3. Respuesta del ordenador del gasto",
       icono: "gavel",
     },
   ];
@@ -124,11 +129,10 @@ export class DetalleProveedorOfertaComponent implements OnInit {
   readonly detalle = signal<DetalleProveedorOferta | null>(null);
   readonly pestana = signal<PestanaDetalle>("cotizacion");
   readonly anuncio = signal("");
-  readonly procesando = signal(false);
   readonly descargando = signal<string | null>(null);
   readonly errorDescarga = signal("");
 
-  private proveedorId = "";
+  private readonly proveedorId = signal("");
   private origen: OrigenDetalle = "oferentes";
   private vigiaCierre?: Subscription;
   private cargaActual?: Subscription;
@@ -148,9 +152,41 @@ export class DetalleProveedorOfertaComponent implements OnInit {
     );
   });
 
-  readonly documentos = computed<readonly DocumentoOfertaRadicado[]>(
-    () => this.detalle()?.documentos ?? [],
-  );
+  readonly documentos = computed<readonly DocumentoOfertaRadicado[]>(() => {
+    const documentos = this.detalle()?.documentos ?? [];
+    const periodo = this.solicitud()?.subsanacion;
+    if (!periodo) {
+      return documentos;
+    }
+    const oferente = periodo.oferentes.find(
+      (item) => item.proveedorId === this.proveedorId(),
+    );
+    if (!oferente) {
+      return documentos;
+    }
+    return documentos.map((documento) => {
+      const configurado = oferente.documentos.find(
+        (item) => item.id === documento.requisitoId || item.id === documento.id,
+      );
+      if (!configurado) {
+        return documento;
+      }
+      const evento = eventoDocumento(
+        periodo,
+        this.proveedorId(),
+        configurado.id,
+      );
+      const vencida = estadoSubsanacion(periodo) === "vencida";
+      const estado: DocumentoOfertaRadicado["estado"] = evento
+        ? "subsanado"
+        : configurado.seleccionado
+          ? vencida
+            ? "no-subsanado"
+            : "pendiente"
+          : documento.estado;
+      return { ...documento, estado };
+    });
+  });
 
   readonly documentoPrincipal = computed<DocumentoOfertaRadicado | null>(
     () => this.documentos().find((documento) => documento.principal) ?? null,
@@ -191,7 +227,52 @@ export class DetalleProveedorOfertaComponent implements OnInit {
 
   readonly navegacion = computed(() => this.detalle()?.navegacion ?? null);
 
-  readonly seleccionado = computed(() => this.detalle()?.seleccionado ?? false);
+  /** Última decisión registrada para este proveedor (actual o histórica). */
+  readonly decisionProveedor = computed(() => {
+    const solicitud = this.solicitud();
+    return solicitud ? decisionDeProveedor(solicitud, this.proveedorId()) : null;
+  });
+
+  readonly estadoDecision = computed<
+    "pendiente" | "aprobada" | "rechazada" | null
+  >(() => {
+    const decision = this.decisionProveedor();
+    if (!decision) {
+      return null;
+    }
+    if (decision.fase === "enviada") {
+      return "pendiente";
+    }
+    return decision.fase === "aprobada" ? "aprobada" : "rechazada";
+  });
+
+  readonly etiquetaDecision = computed(() => {
+    switch (this.estadoDecision()) {
+      case "pendiente":
+        return "En validación";
+      case "aprobada":
+        return "Aprobada";
+      case "rechazada":
+        return "Rechazada";
+      default:
+        return "";
+    }
+  });
+
+  readonly justificacionDecision = computed(() => {
+    const decision = this.decisionProveedor();
+    if (!decision) {
+      return "";
+    }
+    return (
+      decision.validacion?.justificacionHtml ??
+      decision.envio.justificacionHtml
+    );
+  });
+
+  readonly notificacionesDecision = computed(
+    () => this.decisionProveedor()?.notificaciones ?? [],
+  );
 
   readonly acciones = computed<readonly AccionDetalleProveedor[]>(() => {
     const solicitud = this.solicitud();
@@ -240,16 +321,24 @@ export class DetalleProveedorOfertaComponent implements OnInit {
   });
 
   readonly pestanasVisibles = computed(() =>
-    this.vista() === "sin-oferta"
-      ? this.pestanas.filter((pestana) => pestana.id === "persona")
-      : this.pestanas,
+    this.pestanas.filter((pestana) => {
+      if (this.vista() === "sin-oferta") {
+        return pestana.id === "persona";
+      }
+      if (pestana.id === "respuesta") {
+        return !!this.decisionProveedor();
+      }
+      return true;
+    }),
   );
 
   ngOnInit(): void {
     const resolucion = this.ruta.snapshot.data[
       "solicitud"
     ] as ResultadoResolverSolicitud;
-    this.proveedorId = this.ruta.snapshot.paramMap.get("proveedorId") ?? "";
+    this.proveedorId.set(
+      this.ruta.snapshot.paramMap.get("proveedorId") ?? "",
+    );
     this.leerQueryParams();
 
     if (resolucion.estado !== "ok") {
@@ -279,8 +368,8 @@ export class DetalleProveedorOfertaComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((params) => {
         const id = params.get("proveedorId") ?? "";
-        if (id && id !== this.proveedorId) {
-          this.proveedorId = id;
+        if (id && id !== this.proveedorId()) {
+          this.proveedorId.set(id);
           this.cargar();
         }
       });
@@ -295,7 +384,8 @@ export class DetalleProveedorOfertaComponent implements OnInit {
           tab &&
           this.esPestana(tab) &&
           this.vista() !== "sin-oferta" &&
-          this.vista() !== "cargando"
+          this.vista() !== "cargando" &&
+          this.pestanasVisibles().some((pestana) => pestana.id === tab)
         ) {
           this.pestana.set(tab);
         }
@@ -306,7 +396,7 @@ export class DetalleProveedorOfertaComponent implements OnInit {
 
   cargar(): void {
     const solicitud = this.solicitud();
-    if (!solicitud || !this.proveedorId) {
+    if (!solicitud || !this.proveedorId()) {
       this.vista.set("no-encontrado");
       return;
     }
@@ -318,7 +408,7 @@ export class DetalleProveedorOfertaComponent implements OnInit {
     this.cargaActual?.unsubscribe();
 
     this.cargaActual = this.servicio
-      .obtenerDetalleProveedor(solicitud, this.proveedorId)
+      .obtenerDetalleProveedor(solicitud, this.proveedorId())
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (detalle) => {
@@ -335,6 +425,9 @@ export class DetalleProveedorOfertaComponent implements OnInit {
               `${detalle.oferente.proveedor.nombre} no presentó cotización.`,
             );
           } else {
+            if (this.pestana() === "respuesta" && !this.decisionProveedor()) {
+              this.pestana.set("cotizacion");
+            }
             this.anuncio.set(
               `Detalle de ${detalle.oferente.proveedor.nombre} y su oferta cargado.`,
             );
@@ -401,8 +494,17 @@ export class DetalleProveedorOfertaComponent implements OnInit {
         return this.oferta()?.version ?? "Sin oferta";
       case "persona":
         return "Registro UD";
-      case "respuesta":
-        return "S-11";
+      case "respuesta": {
+        const estado = this.estadoDecision();
+        if (!estado) {
+          return "OG";
+        }
+        return estado === "pendiente"
+          ? "Pendiente"
+          : estado === "aprobada"
+            ? "Aprobada"
+            : "Rechazada";
+      }
     }
   }
 
@@ -413,7 +515,11 @@ export class DetalleProveedorOfertaComponent implements OnInit {
   private leerQueryParams(): void {
     const params = this.ruta.snapshot.queryParamMap;
     this.origen =
-      params.get("volver") === "comparador" ? "comparador" : "oferentes";
+      params.get("volver") === "comparador"
+        ? "comparador"
+        : params.get("volver") === "subsanacion"
+          ? "subsanacion"
+          : "oferentes";
     const tab = params.get("tab");
     if (tab && this.esPestana(tab)) {
       this.pestana.set(tab);
@@ -422,30 +528,13 @@ export class DetalleProveedorOfertaComponent implements OnInit {
 
   /* ── Permisos y acciones ───────────────────────────────────────────────── */
 
-  get puedePreseleccionar(): boolean {
-    const oferta = this.oferta();
+  get puedeEnviarAValidacion(): boolean {
+    const solicitud = this.solicitud();
     return (
-      !!oferta &&
-      !oferta.excedePresupuesto &&
-      !this.seleccionado() &&
-      !this.procesando() &&
-      this.acciones().includes("preseleccionar")
-    );
-  }
-
-  get puedeQuitarPreseleccion(): boolean {
-    return (
-      this.seleccionado() &&
-      !this.procesando() &&
-      this.acciones().includes("quitar-preseleccion")
-    );
-  }
-
-  get puedeContinuarDecision(): boolean {
-    return (
-      this.seleccionado() &&
-      !this.procesando() &&
-      this.acciones().includes("continuar-decision")
+      !!solicitud &&
+      this.vista() === "listo" &&
+      this.acciones().includes("continuar-decision") &&
+      this.permisos.puedeEnviarAValidacion(solicitud, this.proveedorId())
     );
   }
 
@@ -455,9 +544,45 @@ export class DetalleProveedorOfertaComponent implements OnInit {
   }
 
   get etiquetaVolver(): string {
-    return this.origen === "comparador"
-      ? "Volver al comparador"
-      : "Volver al tablero de oferentes";
+    if (this.origen === "comparador") {
+      return "Volver al comparador";
+    }
+    if (this.origen === "subsanacion") {
+      return "Volver a la subsanación";
+    }
+    return "Volver al tablero de oferentes";
+  }
+
+  get puedeAbrirSubsanacion(): boolean {
+    const solicitud = this.solicitud();
+    return (
+      !!solicitud &&
+      this.vista() === "listo" &&
+      (this.permisos.puedeConfigurarSubsanacion(solicitud) ||
+        !!solicitud.subsanacion)
+    );
+  }
+
+  get etiquetaSubsanacion(): string {
+    return this.solicitud()?.subsanacion
+      ? "Subsanación documental"
+      : "Habilitar subsanación";
+  }
+
+  abrirSubsanacion(): void {
+    const solicitud = this.solicitud();
+    if (!solicitud) {
+      return;
+    }
+    void this.router.navigate(
+      ["/cotizaciones", "solicitudes", solicitud.id, "subsanacion"],
+      {
+        queryParams: {
+          volver: "detalle",
+          proveedorId: this.proveedorId(),
+        },
+      },
+    );
   }
 
   get etiquetaDocumento(): string {
@@ -493,6 +618,8 @@ export class DetalleProveedorOfertaComponent implements OnInit {
         return "Subsanado";
       case "pendiente":
         return "Pendiente";
+      case "no-subsanado":
+        return "No subsanado";
     }
   }
 
@@ -511,88 +638,9 @@ export class DetalleProveedorOfertaComponent implements OnInit {
     )}%)`;
   }
 
-  async preseleccionar(): Promise<void> {
-    const solicitud = this.solicitud();
-    const oferta = this.oferta();
-    if (!solicitud || !oferta || !this.puedePreseleccionar) {
-      return;
-    }
-
-    const reemplaza = this.detalle()?.preseleccionadoNombre ?? null;
-    const confirmacion = await this.alerta.showConfirmAlert(
-      reemplaza
-        ? `Se reemplazará la preselección de ${reemplaza} por ${oferta.proveedor.nombre}. Esta acción es una recomendación y no constituye adjudicación (RN-34).`
-        : `Se preseleccionará la oferta de ${oferta.proveedor.nombre} por ${this.moneda(oferta.total)}. Esta acción es una recomendación y no constituye adjudicación (RN-34).`,
-      reemplaza ? "Reemplazar preselección" : "Preseleccionar oferta",
-    );
-    if (!confirmacion.isConfirmed) {
-      return;
-    }
-
-    this.procesando.set(true);
-    this.servicio
-      .seleccionarOferente(solicitud, oferta.id)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: () => {
-          this.procesando.set(false);
-          void this.alerta.showSuccessAlert(
-            `${oferta.proveedor.nombre} quedó preseleccionada. La decisión final corresponde al Ordenador del Gasto.`,
-            "Preselección registrada",
-          );
-          this.cargar();
-        },
-        error: (error: Error) => {
-          this.procesando.set(false);
-          void this.alerta.showErrorAlert(
-            error.message ||
-              "No fue posible registrar la preselección. Intente nuevamente.",
-          );
-        },
-      });
-  }
-
-  async quitarPreseleccion(): Promise<void> {
-    const solicitud = this.solicitud();
-    const oferta = this.oferta();
-    if (!solicitud || !oferta || !this.puedeQuitarPreseleccion) {
-      return;
-    }
-
-    const confirmacion = await this.alerta.showConfirmAlert(
-      `Se retirará la preselección de ${oferta.proveedor.nombre}. La decisión final sigue en cabeza del Ordenador del Gasto.`,
-      "Quitar preselección",
-    );
-    if (!confirmacion.isConfirmed) {
-      return;
-    }
-
-    this.procesando.set(true);
-    this.servicio
-      .seleccionarOferente(solicitud, null)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: () => {
-          this.procesando.set(false);
-          void this.alerta.showSuccessAlert(
-            "La preselección fue retirada del expediente.",
-            "Preselección retirada",
-          );
-          this.cargar();
-        },
-        error: (error: Error) => {
-          this.procesando.set(false);
-          void this.alerta.showErrorAlert(
-            error.message ||
-              "No fue posible retirar la preselección. Intente nuevamente.",
-          );
-        },
-      });
-  }
-
   continuarDecision(): void {
     const solicitud = this.solicitud();
-    if (!solicitud || !this.puedeContinuarDecision) {
+    if (!solicitud || !this.puedeEnviarAValidacion) {
       return;
     }
     const comandos = this.permisos.rutaAccionDetalleProveedor(
@@ -600,7 +648,9 @@ export class DetalleProveedorOfertaComponent implements OnInit {
       solicitud.id,
     );
     if (comandos) {
-      void this.router.navigate(comandos);
+      void this.router.navigate(comandos, {
+        queryParams: { volver: this.origen, proveedorId: this.proveedorId() },
+      });
     }
   }
 
@@ -682,7 +732,9 @@ export class DetalleProveedorOfertaComponent implements OnInit {
     const destino =
       this.origen === "comparador"
         ? ["/cotizaciones", "solicitudes", solicitud.id, "evaluacion"]
-        : ["/cotizaciones", "solicitudes", solicitud.id, "oferentes"];
+        : this.origen === "subsanacion"
+          ? ["/cotizaciones", "solicitudes", solicitud.id, "subsanacion"]
+          : ["/cotizaciones", "solicitudes", solicitud.id, "oferentes"];
     void this.router.navigate(destino);
   }
 
@@ -796,5 +848,10 @@ export class DetalleProveedorOfertaComponent implements OnInit {
       },
       evidencia: evento.evidencia,
     };
+  }
+
+  /** Vuelve al listado de solicitudes de cotización. */
+  volverListaSolicitudes(): void {
+    void this.router.navigate(["/cotizaciones", "solicitudes"]);
   }
 }

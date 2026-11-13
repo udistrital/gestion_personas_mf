@@ -1,0 +1,47 @@
+<div class="dialogo-descartar" role="alertdialog" aria-labelledby="dialogo-descartar-estudio-titulo">
+  <div class="dialogo-descartar__icono" aria-hidden="true">
+    <mat-icon>warning</mat-icon>
+  </div>
+  <h2 id="dialogo-descartar-estudio-titulo" class="dialogo-descartar__titulo">
+    ¿Descartar este borrador?
+  </h2>
+  <p class="dialogo-descartar__texto">
+    Esta acción eliminará el borrador del estudio de mercado
+    <strong>{{ datos.estudio.id }}</strong>. Las solicitudes y ofertas originales
+    no serán afectadas.
+  </p>
+
+  @if (error()) {
+    <div class="dialogo-descartar__error" role="alert">
+      <mat-icon aria-hidden="true">error_outline</mat-icon>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  <div class="dialogo-descartar__pie">
+    <button
+      class="dialogo-descartar__seguir boton-secundario-estudio"
+      mat-stroked-button
+      type="button"
+      [disabled]="descartando()"
+      (click)="cerrar()"
+    >
+      <mat-icon aria-hidden="true">edit</mat-icon>
+      Seguir editando
+    </button>
+    <button
+      class="dialogo-descartar__confirmar"
+      mat-flat-button
+      type="button"
+      [disabled]="descartando()"
+      (click)="descartar()"
+    >
+      @if (descartando()) {
+        <mat-spinner diameter="18"></mat-spinner>
+      } @else {
+        <mat-icon aria-hidden="true">delete</mat-icon>
+      }
+      <span>{{ descartando() ? "Descartando…" : "Sí, descartar" }}</span>
+    </button>
+  </div>
+</div>

@@ -432,6 +432,67 @@
     background-color: var(--agora-primary-light);
   }
 
+  /*
+   * Botón secundario canónico (mismo lenguaje que `.boton-recto` de P-02).
+   *
+   * Material pinta un state layer con el color primario al presionar; en un
+   * botón secundario eso oscurece el fondo y deja el texto ilegible. Se anulan
+   * hover/focus/pressed y se declaran explícitamente los tres estados.
+   */
+  .formulario-material .mat-mdc-outlined-button.boton-recto {
+    --mat-button-outlined-label-text-color: var(--agora-text);
+    --mat-button-outlined-outline-color: var(--agora-borde-control);
+    --mat-button-outlined-hover-state-layer-opacity: 0 !important;
+    --mat-button-outlined-focus-state-layer-opacity: 0 !important;
+    --mat-button-outlined-pressed-state-layer-opacity: 0 !important;
+    background: var(--agora-surface);
+    color: var(--agora-text);
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease,
+      color 0.2s ease !important;
+  }
+
+  .formulario-material .mat-mdc-outlined-button.boton-recto:hover,
+  .formulario-material .mat-mdc-outlined-button.boton-recto:focus-visible {
+    --mat-button-outlined-label-text-color: var(--agora-text);
+    --mat-button-outlined-outline-color: var(--agora-borde-control);
+    background: var(--agora-superficie-neutra);
+    color: var(--agora-text);
+  }
+
+  .formulario-material .mat-mdc-outlined-button.boton-recto:active {
+    --mat-button-outlined-label-text-color: var(--agora-text);
+    --mat-button-outlined-outline-color: var(--agora-borde-control);
+    background: var(--agora-resalte-neutro);
+    color: var(--agora-text);
+  }
+
+  .formulario-material .mat-mdc-outlined-button.boton-recto .mat-mdc-button-persistent-ripple,
+  .formulario-material .mat-mdc-outlined-button.boton-recto .mat-ripple {
+    display: none;
+  }
+
+  /* Variante primaria compacta para botones Material outlined. */
+  .formulario-material .mat-mdc-outlined-button.boton-recto--vino {
+    --mat-button-outlined-label-text-color: var(--agora-on-primary);
+    --mat-button-outlined-outline-color: var(--agora-primary);
+    --mat-button-outlined-hover-state-layer-opacity: 0 !important;
+    --mat-button-outlined-focus-state-layer-opacity: 0 !important;
+    --mat-button-outlined-pressed-state-layer-opacity: 0 !important;
+    background: var(--agora-primary);
+    color: var(--agora-on-primary);
+  }
+
+  .formulario-material .mat-mdc-outlined-button.boton-recto--vino:hover,
+  .formulario-material .mat-mdc-outlined-button.boton-recto--vino:focus-visible,
+  .formulario-material .mat-mdc-outlined-button.boton-recto--vino:active {
+    --mat-button-outlined-label-text-color: var(--agora-on-primary);
+    --mat-button-outlined-outline-color: var(--agora-primary-dark);
+    background: var(--agora-primary-dark);
+    color: var(--agora-on-primary);
+  }
+
   .formulario-material :is(.boton-primario, .documento__boton--principal).mat-mdc-outlined-button {
     --mat-button-outlined-label-text-color: var(--agora-on-primary);
     --mat-button-outlined-outline-color: var(--agora-primary);
@@ -459,7 +520,8 @@
   }
 
   .formulario-material :is(.boton-primario, .documento__boton--principal):is(.mat-mdc-flat-button, .mat-mdc-unelevated-button):hover,
-  .formulario-material :is(.boton-primario, .documento__boton--principal):is(.mat-mdc-flat-button, .mat-mdc-unelevated-button):focus-visible {
+  .formulario-material :is(.boton-primario, .documento__boton--principal):is(.mat-mdc-flat-button, .mat-mdc-unelevated-button):focus-visible,
+  .formulario-material :is(.boton-primario, .documento__boton--principal):is(.mat-mdc-flat-button, .mat-mdc-unelevated-button):active {
     --mat-button-filled-container-color: var(--agora-primary-dark);
     --mat-button-filled-label-text-color: var(--agora-on-primary);
     background-color: var(--agora-primary-dark);

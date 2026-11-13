@@ -1,9 +1,11 @@
 <span class="etiqueta-por-definir" [attr.title]="detalle || null">
-  <mat-icon class="etiqueta-por-definir__icono" aria-hidden="true">{{
-    icono
-  }}</mat-icon>
-  <span class="etiqueta-por-definir__texto">{{ texto }}</span>
+  <span class="etiqueta-por-definir__cabecera">
+    <mat-icon class="etiqueta-por-definir__icono" aria-hidden="true">{{
+      icono
+    }}</mat-icon>
+    <span class="etiqueta-por-definir__texto">{{ texto }}</span>
+  </span>
   @if (detalle) {
-    <span class="etiqueta-por-definir__detalle">: {{ detalle }}</span>
+    <span class="etiqueta-por-definir__detalle">{{ detalle }}</span>
   }
 </span>

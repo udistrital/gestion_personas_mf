@@ -94,6 +94,23 @@ const BASE_UNITARIO: readonly number[] = [
 ];
 
 /**
+ * Valor techo simulado de un ítem.
+ *
+ * Es la misma semilla que usa el comparador para que la tabla «Ítems y valores
+ * techo» de P-02 y las ofertas simuladas de S-09/S-10 no se contradigan. Si el
+ * pliego ya publica `valorUnitarioTecho`, ese valor tiene prioridad.
+ */
+export function valorUnitarioTechoSimulado(
+  item: ItemSolicitud,
+  indice: number,
+): number {
+  return (
+    item.valorUnitarioTecho ??
+    BASE_UNITARIO[indice % BASE_UNITARIO.length]
+  );
+}
+
+/**
  * Configuración por solicitud y proveedor.
  *
  * `SOL-2026-0039` reproduce el caso base: una oferta con adenda, una con
@@ -226,8 +243,7 @@ export function crearOfertaSimulada(
     (item, indice) => ({
       itemId: item.id,
       valorUnitario: Math.round(
-        (item.valorUnitarioTecho ??
-          BASE_UNITARIO[indice % BASE_UNITARIO.length]) * semilla.factor,
+        valorUnitarioTechoSimulado(item, indice) * semilla.factor,
       ),
       iva: "19",
       nota: "",

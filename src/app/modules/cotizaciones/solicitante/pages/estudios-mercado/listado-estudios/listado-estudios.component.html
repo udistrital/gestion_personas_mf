@@ -1,0 +1,332 @@
+<plantilla-pagina-contenedora [breadcrumb]="breadcrumb">
+  <section class="estudios" aria-labelledby="titulo-estudios">
+    <header class="estudios__encabezado">
+      <div class="estudios__textos">
+        <h1 id="titulo-estudios" class="estudios__titulo">
+          Estudios de mercado
+        </h1>
+        <p class="estudios__descripcion">
+          Consulte los estudios formulados, su metodología de precio y las
+          invitaciones cursadas a proveedores por actividad económica.
+        </p>
+      </div>
+      @if (puedeCrear()) {
+        <button
+          class="estudios__boton-nuevo"
+          type="button"
+          (click)="abrirNuevo()"
+        >
+          <mat-icon aria-hidden="true">add_circle</mat-icon>
+          <span>Nuevo estudio de mercado</span>
+        </button>
+      }
+    </header>
+
+    <aside class="estudios__callout" role="note">
+      <span class="estudios__callout-icono" aria-hidden="true">
+        <mat-icon>gavel</mat-icon>
+      </span>
+      <div>
+        <span class="estudios__callout-rotulo">
+          Cadena de valor y estudio del sector precontractual · Art. 18 Ac. 004
+        </span>
+        <p>
+          El estudio de mercado fundamenta el presupuesto oficial a través del
+          análisis de ofertas, fuentes históricas y el catálogo de bienes y
+          servicios. La invitación a proveedores no constituye adjudicación ni
+          compromiso presupuestal.
+        </p>
+      </div>
+    </aside>
+
+    <p class="visually-oculto" aria-live="polite">{{ anuncio() }}</p>
+
+    <listado-filtros
+      [campos]="camposFiltro"
+      [filtrosRapidos]="filtrosRapidos"
+      [filtroRapidoActivo]="grupoActivo"
+      nota="Los estudios de mercado son procesos independientes de las solicitudes de cotización. Los conteos de los filtros rápidos se calculan sobre todos los estudios visibles."
+      (filtrar)="filtrar($event)"
+      (filtroRapido)="filtrarRapido($event)"
+      (limpiar)="limpiar()"
+    />
+
+    <div class="estudios__tabla-bloque">
+      <div class="estudios__tarjeta">
+        @if (vista() === "cargando") {
+          <div class="estudios__esqueleto" aria-busy="true" aria-live="polite">
+            <span class="visually-oculto">Cargando estudios de mercado…</span>
+            @for (fila of [1, 2, 3, 4, 5, 6]; track fila) {
+              <span class="estudios__esqueleto-fila" aria-hidden="true"></span>
+            }
+          </div>
+        } @else if (vista() === "error") {
+          <div class="estudios__estado estudios__estado--error" role="alert">
+            <mat-icon class="estudios__estado-icono" aria-hidden="true">
+              error_outline
+            </mat-icon>
+            <h2 class="estudios__estado-titulo">
+              No pudimos cargar los estudios de mercado
+            </h2>
+            <p class="estudios__estado-texto">
+              {{
+                mensajeError() ||
+                  "Ocurrió un problema al consultar el listado. Intente nuevamente."
+              }}
+            </p>
+            <button class="estudios__boton-estado" type="button" (click)="cargar()">
+              <mat-icon aria-hidden="true">refresh</mat-icon>
+              <span>Reintentar</span>
+            </button>
+          </div>
+        } @else if (total === 0 && !hayFiltrosAplicados) {
+          <div class="estudios__estado">
+            <mat-icon class="estudios__estado-icono" aria-hidden="true">
+              folder_off
+            </mat-icon>
+            <h2 class="estudios__estado-titulo">
+              Aún no hay estudios de mercado formulados
+            </h2>
+            <p class="estudios__estado-texto">
+              Inicie un estudio para identificar proveedores por actividad
+              económica y cursar las invitaciones formales.
+            </p>
+            @if (puedeCrear()) {
+              <button
+                class="estudios__boton-estado"
+                type="button"
+                (click)="abrirNuevo()"
+              >
+                <mat-icon aria-hidden="true">add_circle</mat-icon>
+                <span>Crear primer estudio</span>
+              </button>
+            }
+          </div>
+        } @else if (total === 0) {
+          <div class="estudios__estado">
+            <mat-icon class="estudios__estado-icono" aria-hidden="true">
+              search_off
+            </mat-icon>
+            <h2 class="estudios__estado-titulo">
+              No se encontraron estudios con esos filtros
+            </h2>
+            <p class="estudios__estado-texto">
+              Ajuste la vigencia, el estado, la dependencia o el texto de
+              búsqueda.
+            </p>
+            <button class="estudios__boton-estado" type="button" (click)="limpiar()">
+              <mat-icon aria-hidden="true">restart_alt</mat-icon>
+              <span>Limpiar filtros</span>
+            </button>
+          </div>
+        } @else {
+          <div class="estudios__scroll">
+            <table
+              class="estudios__tabla"
+              aria-label="Listado de estudios de mercado"
+            >
+              <caption class="visually-oculto">
+                Estudios de mercado con su objeto, metodología, valor de
+                referencia, responsables, invitados y estado
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col" class="estudios__th">Código / Radicado</th>
+                  <th scope="col" class="estudios__th">Objeto contractual</th>
+                  <th scope="col" class="estudios__th">Fecha elaboración</th>
+                  <th scope="col" class="estudios__th">Metodología</th>
+                  <th scope="col" class="estudios__th estudios__th--numero">
+                    Valor referencia
+                  </th>
+                  <th scope="col" class="estudios__th">Responsable técnico</th>
+                  <th scope="col" class="estudios__th">Invitados</th>
+                  <th scope="col" class="estudios__th">Estado</th>
+                  @if (hayColumnaAcciones()) {
+                    <th scope="col" class="estudios__th estudios__th--acciones">
+                      Acciones
+                    </th>
+                  }
+                </tr>
+              </thead>
+              <tbody>
+                @for (estudio of estudios; track estudio.id) {
+                  <tr class="estudios__fila">
+                    <td class="estudios__td">
+                      <span class="estudios__codigo">{{ estudio.id }}</span>
+                      <span class="estudios__nota">
+                        {{ estudio.solicitudId }}
+                      </span>
+                    </td>
+                    <td class="estudios__td estudios__td--objeto">
+                      <span class="estudios__objeto">{{ estudio.objeto }}</span>
+                      <span class="estudios__nota">
+                        {{ estudio.solicitudTitulo }}
+                      </span>
+                    </td>
+                    <td class="estudios__td estudios__td--fecha">
+                      {{ formatoFechaHora(estudio.creadoEl) }}
+                    </td>
+                    <td class="estudios__td">
+                      <span class="estudios__metodo">
+                        {{ etiquetaMetodo(estudio) }}
+                      </span>
+                      @if (estudio.presupuestoFijado) {
+                        <span class="estudios__nota estudios__nota--exito">
+                          <mat-icon aria-hidden="true">verified</mat-icon>
+                          Presupuesto fijado
+                        </span>
+                      }
+                    </td>
+                    <td class="estudios__td estudios__td--numero">
+                      <span class="estudios__valor">
+                        {{ moneda(estudio.valorReferencia) }}
+                      </span>
+                      <span class="estudios__nota">
+                        Base {{ moneda(estudio.presupuestoBase) }}
+                      </span>
+                    </td>
+                    <td class="estudios__td estudios__td--responsable">
+                      {{ estudio.responsable }}
+                    </td>
+                    <td class="estudios__td">
+                      <span class="estudios__invitados">
+                        {{ invitadosDe(estudio) }} invitados
+                      </span>
+                      <span class="estudios__nota">
+                        {{ respondieronDe(estudio) }} respondieron
+                      </span>
+                    </td>
+                    <td class="estudios__td">
+                      <chip-estado [estado]="estudio.estado"></chip-estado>
+                    </td>
+                    @if (hayColumnaAcciones()) {
+                      <td class="estudios__td estudios__td--acciones">
+                        <button
+                          mat-icon-button
+                          type="button"
+                          class="estudios__boton-acciones"
+                          [class.estudios__boton-acciones--activo]="
+                            filaMenuAbierto === estudio.id
+                          "
+                          [matMenuTriggerFor]="menuAcciones"
+                          [attr.aria-label]="'Acciones del estudio ' + estudio.id"
+                          (menuOpened)="abrirMenuAcciones(estudio.id)"
+                          (menuClosed)="cerrarMenuAcciones()"
+                        >
+                          <mat-icon aria-hidden="true" color="primary">
+                            more_vert
+                          </mat-icon>
+                        </button>
+                        <mat-menu
+                          #menuAcciones="matMenu"
+                          panelClass="estudios__menu-acciones"
+                          xPosition="before"
+                        >
+                          @for (accion of accionesDe(estudio); track accion) {
+                            <button
+                              mat-menu-item
+                              type="button"
+                              [class.estudios__menu-item--peligro]="esPeligro(accion)"
+                              (click)="ejecutarAccion(accion, estudio)"
+                            >
+                              <mat-icon aria-hidden="true" color="primary">
+                                {{ ACCIONES[accion].icono }}
+                              </mat-icon>
+                              <span>{{ etiquetaAccion(accion) }}</span>
+                            </button>
+                          }
+                        </mat-menu>
+                      </td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <div class="estudios__paginador">
+            <div class="estudios__paginador-info">
+              <span>Mostrar:</span>
+              <div class="estudios__paginador-select">
+                <select
+                  [value]="porPagina"
+                  (change)="cambiarPorPagina($event)"
+                  aria-label="Número de estudios por página"
+                >
+                  @for (opcion of opcionesPorPagina; track opcion) {
+                    <option [value]="opcion">{{ opcion }}</option>
+                  }
+                </select>
+                <mat-icon aria-hidden="true">arrow_drop_down</mat-icon>
+              </div>
+              <span>por página</span>
+            </div>
+
+            <div class="estudios__paginador-rango">
+              Mostrando
+              <span class="estudios__paginador-rango-valor">{{ rangoInicio }}</span
+              >–<span class="estudios__paginador-rango-valor">{{ rangoFin }}</span>
+              de
+              <span class="estudios__paginador-rango-valor">{{ total }}</span>
+              estudios
+            </div>
+
+            <nav
+              class="estudios__paginador-navegacion"
+              aria-label="Paginación de estudios de mercado"
+            >
+              <button
+                class="estudios__paginador-boton"
+                type="button"
+                title="Primera página"
+                [disabled]="pagina === 0"
+                (click)="primeraPagina()"
+              >
+                <mat-icon aria-hidden="true">first_page</mat-icon>
+              </button>
+              <button
+                class="estudios__paginador-boton"
+                type="button"
+                title="Anterior"
+                [disabled]="pagina === 0"
+                (click)="paginaAnterior()"
+              >
+                <mat-icon aria-hidden="true">chevron_left</mat-icon>
+              </button>
+
+              @for (p of paginasVisibles; track p) {
+                <button
+                  class="estudios__paginador-boton estudios__paginador-boton--pagina"
+                  type="button"
+                  [class.estudios__paginador-boton--activo]="p === pagina + 1"
+                  (click)="irAPagina(p - 1)"
+                >
+                  {{ p }}
+                </button>
+              }
+
+              <button
+                class="estudios__paginador-boton"
+                type="button"
+                title="Siguiente"
+                [disabled]="pagina + 1 >= totalPaginas"
+                (click)="paginaSiguiente()"
+              >
+                <mat-icon aria-hidden="true">chevron_right</mat-icon>
+              </button>
+              <button
+                class="estudios__paginador-boton"
+                type="button"
+                title="Última página"
+                [disabled]="pagina + 1 >= totalPaginas"
+                (click)="ultimaPagina()"
+              >
+                <mat-icon aria-hidden="true">last_page</mat-icon>
+              </button>
+            </nav>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+</plantilla-pagina-contenedora>

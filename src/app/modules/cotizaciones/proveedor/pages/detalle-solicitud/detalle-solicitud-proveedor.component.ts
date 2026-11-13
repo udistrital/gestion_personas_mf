@@ -4,11 +4,17 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { PermisosSolicitudService } from "src/app/core/services/permisos-solicitud.service";
 import { AlertService } from "src/app/shared/services/alert.service";
 import { formatoCop } from "../../../models/necesidad.model";
+import { solicitudCerrada } from "../../../models/solicitud.model";
 import type {
   DetalleInvitacionProveedor,
   AnexoPublicoProveedor,
 } from "../../../models/invitacion-proveedor.model";
 import { SolicitudesService } from "../../../services/solicitudes.service";
+import {
+  etiquetaAvanceSubsanacion,
+  resumenSubsanacionProveedor,
+} from "../../../models/subsanacion-proveedor.model";
+import type { ResumenSubsanacionProveedor } from "../../../models/subsanacion-proveedor.model";
 import { ResultadoResolverDetalleProveedor } from "./detalle-proveedor.resolver";
 
 type EstadoVista = "cargando" | "listo" | "no-encontrada" | "error";
@@ -122,6 +128,27 @@ export class DetalleSolicitudProveedorComponent implements OnInit {
     );
   }
 
+  get puedeActualizar(): boolean {
+    const detalle = this.detalle();
+    return (
+      !!detalle &&
+      this.permisos.puedeActualizarInvitacion(
+        detalle.invitacion,
+        detalle.solicitud,
+      )
+    );
+  }
+
+  get estadoActualizacion() {
+    const detalle = this.detalle();
+    return detalle
+      ? this.permisos.estadoActualizacion(
+          detalle.invitacion,
+          detalle.solicitud,
+        )
+      : "sin-modificacion";
+  }
+
   get puedeDescargarAnexos(): boolean {
     const detalle = this.detalle();
     return !!detalle && this.permisos.puedeDescargarAnexo(detalle.invitacion);
@@ -129,27 +156,126 @@ export class DetalleSolicitudProveedorComponent implements OnInit {
 
   get solicitudCerrada(): boolean {
     const solicitud = this.detalle()?.solicitud;
-    if (!solicitud) {
-      return false;
-    }
-    if (
-      solicitud.estado === "adjudicada" ||
-      solicitud.estado === "desierta" ||
-      solicitud.estado === "cancelada"
-    ) {
-      return true;
-    }
-    return this.permisos.solicitudCerradaPorFecha(solicitud);
+    return !!solicitud && solicitudCerrada(solicitud);
   }
 
-  navegarA(accion: "observar" | "responder"): void {
+  /** true si el proveedor ya radicó y puede consultar su propia respuesta. */
+  get puedeVerMiCotizacion(): boolean {
+    const detalle = this.detalle();
+    return (
+      !!detalle &&
+      detalle.yaRespondio &&
+      this.permisos.puedeVerMiCotizacion()
+    );
+  }
+
+  /** true si el proceso cerró y el proveedor puede consultar el resultado. */
+  get puedeVerResultado(): boolean {
+    const detalle = this.detalle();
+    return !!detalle && this.permisos.puedeVerResultado(detalle.solicitud);
+  }
+
+  /** Resumen del periodo de subsanación que involucra al proveedor. */
+  get subsanacion(): ResumenSubsanacionProveedor | null {
+    const detalle = this.detalle();
+    const periodo = detalle?.solicitud.subsanacion;
+    return detalle && periodo
+      ? resumenSubsanacionProveedor(periodo, detalle.proveedor.id)
+      : null;
+  }
+
+  get puedeVerSubsanacion(): boolean {
+    const detalle = this.detalle();
+    return (
+      !!detalle &&
+      this.permisos.puedeVerSubsanacionProveedor(
+        detalle.solicitud,
+        detalle.proveedor.id,
+      )
+    );
+  }
+
+  get etiquetaSubsanacion(): string {
+    const resumen = this.subsanacion;
+    return resumen
+      ? etiquetaAvanceSubsanacion(resumen.estadoProveedor)
+      : "Subsanación documental";
+  }
+
+  get etiquetaBotonSubsanacion(): string {
+    const detalle = this.detalle();
+    return detalle &&
+      this.permisos.puedeEditarSubsanacion(
+        detalle.solicitud,
+        detalle.proveedor.id,
+      )
+      ? "Subsanar documentos"
+      : "Consultar subsanación";
+  }
+
+  verSubsanacion(): void {
+    const detalle = this.detalle();
+    if (!detalle || !this.puedeVerSubsanacion) {
+      return;
+    }
+    const ruta = this.permisos.rutaAccionInvitacion("subsanar");
+    if (ruta) {
+      void this.router.navigate(
+        ruta
+          .split("/")
+          .map((segmento) =>
+            segmento === ":id" ? detalle.solicitud.id : segmento,
+          ),
+      );
+    }
+  }
+
+  verResultado(): void {
+    const detalle = this.detalle();
+    if (!detalle || !this.puedeVerResultado) {
+      return;
+    }
+    const ruta = this.permisos.rutaAccionInvitacion("ver-resultado");
+    if (ruta) {
+      void this.router.navigate(
+        ruta
+          .split("/")
+          .map((segmento) =>
+            segmento === ":id" ? detalle.solicitud.id : segmento,
+          ),
+      );
+    }
+  }
+
+  verMiCotizacion(): void {
+    const detalle = this.detalle();
+    if (!detalle || !this.puedeVerMiCotizacion) {
+      return;
+    }
+    const ruta = this.permisos.rutaAccionInvitacion("ver-mi-cotizacion");
+    if (ruta) {
+      void this.router.navigate(
+        ruta
+          .split("/")
+          .map((segmento) =>
+            segmento === ":id" ? detalle.solicitud.id : segmento,
+          ),
+      );
+    }
+  }
+
+  navegarA(accion: "observar" | "responder" | "actualizar"): void {
     const detalle = this.detalle();
     if (!detalle) {
       return;
     }
 
     const permitida =
-      accion === "observar" ? this.puedeObservar : this.puedeResponder;
+      accion === "observar"
+        ? this.puedeObservar
+        : accion === "actualizar"
+          ? this.puedeActualizar
+          : this.puedeResponder;
     if (!permitida) {
       return;
     }

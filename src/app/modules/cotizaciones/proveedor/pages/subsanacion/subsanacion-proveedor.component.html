@@ -1,0 +1,609 @@
+<plantilla-pagina-contenedora
+  [breadcrumb]="breadcrumb"
+  [title]="tituloPagina"
+  icon="upload_file"
+  [mostrarBotonRegresar]="true"
+  (regresar)="volver()"
+>
+  <div class="subsanacion">
+    @if (vista() === "cargando") {
+      <div class="esqueleto-pagina" aria-busy="true" aria-live="polite">
+        <span class="visually-oculto">Cargando la subsanación documental…</span>
+        <div class="esqueleto-pagina__cabecera" aria-hidden="true">
+          <span class="esqueleto esqueleto--titulo"></span>
+          <span class="esqueleto esqueleto--linea"></span>
+          <span class="esqueleto esqueleto--barra"></span>
+        </div>
+        <div class="esqueleto-pagina__tabla" aria-hidden="true">
+          @for (fila of [1, 2, 3, 4]; track fila) {
+            <span class="esqueleto esqueleto--fila"></span>
+          }
+        </div>
+      </div>
+    } @else if (vista() === "error") {
+      <section class="estado" role="alert">
+        <mat-icon class="estado__icono estado__icono--error" aria-hidden="true">
+          error_outline
+        </mat-icon>
+        <h2 class="estado__titulo">No pudimos cargar la subsanación</h2>
+        <p class="estado__texto">{{ error() }}</p>
+        <div class="estado__acciones">
+          <button class="boton-recto boton-recto--vino" type="button" (click)="reintentar()">
+            <mat-icon aria-hidden="true">refresh</mat-icon>
+            <span>Reintentar</span>
+          </button>
+          <button class="boton-recto" type="button" (click)="volverABandeja()">
+            <mat-icon aria-hidden="true">arrow_back</mat-icon>
+            <span>Volver a mis solicitudes</span>
+          </button>
+        </div>
+      </section>
+    } @else if (vista() === "no-encontrada") {
+      <section class="estado" role="status" aria-live="polite">
+        <mat-icon class="estado__icono" aria-hidden="true">search_off</mat-icon>
+        <h2 class="estado__titulo">Solicitud no encontrada o sin acceso</h2>
+        <p class="estado__texto">
+          No se encontró una invitación que permita consultar la subsanación.
+          Verifique el enlace o regrese a su bandeja de solicitudes.
+        </p>
+        <div class="estado__acciones">
+          <button class="boton-recto" type="button" (click)="volverABandeja()">
+            <mat-icon aria-hidden="true">arrow_back</mat-icon>
+            <span>Volver a mis solicitudes</span>
+          </button>
+        </div>
+      </section>
+    } @else if (vista() === "sin-periodo") {
+      <section class="estado" role="status" aria-live="polite">
+        <mat-icon class="estado__icono" aria-hidden="true">event_busy</mat-icon>
+        <h2 class="estado__titulo">Sin periodo de subsanación habilitado</h2>
+        <p class="estado__texto">
+          No hay un periodo de subsanación vigente para su empresa en esta
+          solicitud. Puede consultar el detalle o volver a su bandeja.
+        </p>
+        <div class="estado__acciones">
+          @if (detalle()) {
+            <button class="boton-recto" type="button" (click)="volver()">
+              <mat-icon aria-hidden="true">visibility</mat-icon>
+              <span>Ver solicitud</span>
+            </button>
+          }
+          <button class="boton-recto" type="button" (click)="volverABandeja()">
+            <mat-icon aria-hidden="true">arrow_back</mat-icon>
+            <span>Volver a mis solicitudes</span>
+          </button>
+        </div>
+      </section>
+    } @else if (detalle(); as d) {
+      @if (proyeccion(); as p) {
+        <header class="cabecera">
+          <div class="cabecera__principal">
+            <div class="cabecera__textos">
+              <div class="cabecera__chips">
+                <span class="chip chip--recto">
+                  <span class="cabecera__chip-etiqueta">N.° Solicitud:</span>
+                  <span class="cabecera__chip-valor">{{ d.solicitud.id }}</span>
+                </span>
+                <span class="chip chip--recto">
+                  <span class="cabecera__chip-etiqueta">Vigencia:</span>
+                  <span class="cabecera__chip-valor">{{ d.solicitud.vigencia }}</span>
+                </span>
+                <chip-estado [estado]="d.solicitud.estado"></chip-estado>
+                <chip-estado [estado]="p.estadoPeriodo"></chip-estado>
+                @if (p.radicada) {
+                  <span class="chip chip--exito">
+                    <mat-icon aria-hidden="true">send</mat-icon>
+                    <span>Subsanación radicada</span>
+                  </span>
+                }
+              </div>
+
+              <p class="cabecera__objeto">{{ d.solicitud.titulo }}</p>
+
+              <div class="cabecera__meta">
+                <span class="cabecera__dato">
+                  <mat-icon aria-hidden="true">domain</mat-icon>
+                  <span>{{ d.solicitud.dependencia }}</span>
+                </span>
+                <span class="cabecera__dato">
+                  <mat-icon aria-hidden="true">event_available</mat-icon>
+                  <span>
+                    Cierre de cotización:
+                    <strong>
+                      <time>{{ d.solicitud.cierre ?? "Por definir" }}</time>
+                    </strong>
+                  </span>
+                </span>
+              </div>
+            </div>
+
+            <div class="cabecera__periodo">
+              <span class="cabecera__periodo-rotulo">{{ etiquetaPeriodo }}</span>
+              @if (p.estadoPeriodo === "activa") {
+                <contador-regresivo
+                  [fechaCierre]="p.subsanacion.fin"
+                  etiquetaCerrado="Plazo vencido"
+                  [mostrarMinutos]="true"
+                ></contador-regresivo>
+                <span class="cabecera__periodo-fecha">{{ textoPeriodo }}</span>
+              } @else {
+                <span class="cabecera__periodo-fecha">{{ textoPeriodo }}</span>
+              }
+            </div>
+          </div>
+        </header>
+
+        @if (p.estadoPeriodo === "vencida") {
+          <aside class="aviso-vencido" role="status">
+            <mat-icon aria-hidden="true">lock_clock</mat-icon>
+            <div>
+              <strong>Plazo de subsanación finalizado</strong>
+              <p>
+                El periodo cerró el {{ formatear(p.subsanacion.fin) }}.
+                @if (p.obligatoriosPendientes > 0) {
+                  Quedaron {{ p.obligatoriosPendientes }} documento(s)
+                  obligatorio(s) sin cargar; la consulta queda en solo lectura.
+                } @else {
+                  Los documentos cargados quedaron registrados y la consulta
+                  queda en solo lectura.
+                }
+              </p>
+            </div>
+          </aside>
+        } @else if (p.estadoPeriodo === "cancelada") {
+          <aside class="aviso-vencido" role="status">
+            <mat-icon aria-hidden="true">cancel</mat-icon>
+            <div>
+              <strong>Periodo de subsanación cancelado</strong>
+              <p>
+                La entidad canceló el periodo. No se aceptan nuevos documentos
+                y la consulta queda en solo lectura.
+              </p>
+            </div>
+          </aside>
+        }
+
+        <aside class="aviso-legal" role="note">
+          <mat-icon aria-hidden="true">warning_amber</mat-icon>
+          <div>
+            <strong>Aviso legal y normativo vinculante</strong>
+            <p>
+              Solo puede cargar o reemplazar los documentos observados por el solicitante y únicamente dentro del periodo habilitado. Pasado el plazo fijado, el sistema bloqueará automáticamente la recepción de insumos y no será posible radicar modificaciones ni sustituciones extemporáneas (Estatuto Contractual Acuerdo 003 UD / Ley 80 de 1993).
+            </p>
+          </div>
+        </aside>
+
+        <div class="panorama">
+          <div class="identidad-panel">
+            <tarjeta-identidad-proveedor
+              [nombre]="d.proveedor.nombre"
+              [nit]="d.proveedor.nit"
+              etiquetaDocumento="NIT"
+              [tipoPersona]="d.proveedor.tipoPersona"
+              [ciudad]="d.proveedor.ciudad"
+              [correo]="d.proveedor.correo"
+              [direccion]="d.proveedor.direccion"
+              [representante]="d.proveedor.representante"
+              [version]="d.solicitud.version"
+              [seleccionado]="true"
+              etiquetaSeleccion="Oferente convocado a subsanación"
+              [nivelTitulo]="2"
+            ></tarjeta-identidad-proveedor>
+          </div>
+
+          <aside class="callout" aria-labelledby="callout-subsanacion-titulo">
+            <mat-icon aria-hidden="true">gavel</mat-icon>
+            <div>
+              <h2 id="callout-subsanacion-titulo">Alcance de la subsanación</h2>
+              <p>
+                La subsanación solo modifica los documentos autorizados. No
+                cambia ítems, precios, descuentos ni el total de su oferta
+                económica. Cada cargue queda registrado con
+                fecha, hora y usuario.
+              </p>
+            </div>
+          </aside>
+        </div>
+
+        <tarjeta-seccion
+          icono="campaign"
+          titulo="Mensaje y condiciones del solicitante"
+          subtitulo="Comunicación oficial del periodo de subsanación."
+        >
+          <div class="comunicacion">
+            <div class="comunicacion__meta">
+              <span>
+                <mat-icon aria-hidden="true">account_circle</mat-icon>
+                <strong>{{ p.subsanacion.configuradaPor.autor }}</strong>
+                · {{ p.subsanacion.configuradaPor.rol }}
+              </span>
+              <time [attr.datetime]="p.subsanacion.configuradaEl">
+                {{ formatear(p.subsanacion.configuradaEl) }}
+              </time>
+            </div>
+            <div
+              class="comunicacion__texto"
+              [innerHTML]="p.subsanacion.motivoHtml | htmlSeguro"
+            ></div>
+            <p class="comunicacion__periodo">
+              <mat-icon aria-hidden="true">schedule</mat-icon>
+              <span>
+                Periodo:
+                <strong>{{ formatear(p.subsanacion.inicio) }}</strong> al
+                <strong>{{ formatear(p.subsanacion.fin) }}</strong>
+              </span>
+            </p>
+            <p class="comunicacion__nota">
+              <mat-icon aria-hidden="true">notifications_active</mat-icon>
+              <span>
+                La notificación al solicitante la registrará el backend. En esta demostración se muestra como provisional.
+              </span>
+            </p>
+          </div>
+        </tarjeta-seccion>
+
+        <tarjeta-seccion
+          icono="assignment_turned_in"
+          titulo="Documentos a subsanar"
+          subtitulo="Revise la observación, el archivo actual y cargue la versión corregida."
+        >
+          <span acciones class="contador-docs">
+            {{ p.completados }} de {{ p.total }} completados
+          </span>
+
+          <div class="progreso" role="group" aria-label="Progreso de la subsanación">
+            <div class="progreso__cabecera">
+              <span>Avance de los documentos habilitados</span>
+              <strong>{{ p.porcentaje }}%</strong>
+            </div>
+            <mat-progress-bar
+              mode="determinate"
+              [value]="p.porcentaje"
+              aria-label="Progreso de la subsanación"
+            ></mat-progress-bar>
+            @if (p.obligatoriosPendientes > 0) {
+              <p class="progreso__alerta" role="status">
+                <mat-icon aria-hidden="true">pending_actions</mat-icon>
+                Faltan {{ p.obligatoriosPendientes }} documento(s)
+                obligatorio(s) para poder radicar.
+              </p>
+            } @else if (p.total > 0) {
+              <p class="progreso__ok" role="status">
+                <mat-icon aria-hidden="true">check_circle</mat-icon>
+                Obligatorios completos. Puede radicar cuando lo desee.
+              </p>
+            }
+          </div>
+
+          <div class="tabla-scroll">
+            <table class="tabla-documentos" aria-label="Documentos a subsanar">
+              <caption class="visually-oculto">
+                Documentos habilitados y bloqueados para la subsanación
+              </caption>
+              <colgroup>
+                <col class="tabla-documentos__col--documento" />
+                <col class="tabla-documentos__col--tipo" />
+                <col class="tabla-documentos__col--observacion" />
+                <col class="tabla-documentos__col--estado" />
+                <col class="tabla-documentos__col--archivo" />
+                <col class="tabla-documentos__col--accion" />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th scope="col">Documento requerido</th>
+                  <th scope="col">Tipo</th>
+                  <th scope="col">Observación del solicitante</th>
+                  <th scope="col">Estado</th>
+                  <th scope="col">Archivo actual</th>
+                  <th scope="col">Acción / Carga</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (documento of p.documentos; track documento.id) {
+                  <tr [class.tabla-documentos__fila--bloqueada]="!documento.habilitado">
+                    <td>
+                      <div class="documento__nombre">
+                        <strong>{{ documento.nombre }}</strong>
+                        @if (documento.bloqueadoPorPliego) {
+                          <mat-icon aria-hidden="true" title="Bloqueado por el pliego">lock</mat-icon>
+                        }
+                        @if (documento.clasificacion === "obligatorio") {
+                          <b class="documento__asterisco" aria-hidden="true">*</b>
+                        }
+                      </div>
+                      <span class="documento__instruccion">{{ documento.instruccion }}</span>
+                    </td>
+                    <td>
+                      <div class="documento__tipo">
+                        <span
+                          class="chip"
+                          [class.chip--clasificacion--obligatorio]="documento.clasificacion === 'obligatorio'"
+                        >
+                          {{ documento.etiquetaClasificacion }}
+                        </span>
+                        @if (documento.afectaPuntaje) {
+                          <span class="chip chip--advertencia">
+                            <mat-icon aria-hidden="true">warning</mat-icon>
+                            <span>Afecta puntaje</span>
+                          </span>
+                        }
+                      </div>
+                    </td>
+                    <td>
+                      @if (documento.observacion) {
+                        <p class="documento__observacion">{{ documento.observacion }}</p>
+                      } @else if (!documento.habilitado) {
+                        <p class="documento__observacion documento__observacion--neutra">
+                          No requiere subsanación o no fue habilitado por el
+                          solicitante.
+                        </p>
+                      } @else {
+                        <p class="documento__observacion documento__observacion--neutra">
+                          Sin observación registrada.
+                        </p>
+                      }
+                    </td>
+                    <td>
+                      <chip-estado [estado]="documento.estado"></chip-estado>
+                    </td>
+                    <td>
+                      @if (documento.archivoActual; as archivo) {
+                        <div class="archivo">
+                          <span class="archivo__nombre">
+                            <mat-icon aria-hidden="true">{{ archivo.icono }}</mat-icon>
+                            <span [title]="archivo.nombre">{{ archivo.nombre }}</span>
+                          </span>
+                          <span class="archivo__meta">
+                            {{ archivo.formato }} · {{ archivo.peso }}
+                          </span>
+                          <time [attr.datetime]="archivo.fechaIso">
+                            {{ archivo.fecha }}
+                          </time>
+                          @if (documento.archivoAnterior; as anterior) {
+                            <span class="archivo__anterior">
+                              Versión anterior: {{ anterior.nombre }}
+                            </span>
+                          }
+                        </div>
+                      } @else {
+                        <span class="texto-bloqueo">Sin archivo radicado</span>
+                      }
+                    </td>
+                    <td class="tabla-documentos__accion">
+                      @if (documento.habilitado) {
+                        @if (p.puedeEditar) {
+                          @if (mostrarCarga(documento)) {
+                            <carga-archivos
+                              [id]="'subsanacion-' + documento.id"
+                              [etiqueta]="'Seleccionar ' + documento.nombre"
+                              [formatos]="formatos"
+                              [tamanoMaxMb]="tamanoMaxMb"
+                              [compacto]="true"
+                              [requerido]="documento.clasificacion === 'obligatorio'"
+                              [formControl]="controlDocumento(documento.id)"
+                            ></carga-archivos>
+                            @if (estaSubiendo(documento.id)) {
+                              <span class="cargando-documento" role="status" aria-live="polite">
+                                <mat-spinner diameter="16"></mat-spinner>
+                                Registrando documento…
+                              </span>
+                            }
+                            @if (esReemplazando(documento.id)) {
+                              <button
+                                class="boton-recto"
+                                type="button"
+                                (click)="cancelarReemplazo(documento.id)"
+                              >
+                                <mat-icon aria-hidden="true">close</mat-icon>
+                                <span>Cancelar reemplazo</span>
+                              </button>
+                            }
+                          } @else if (documento.estado === "pendiente-carga" || documento.estado === "no-subsanado-plazo") {
+                            <span class="texto-bloqueo">
+                              {{
+                                enviando()
+                                  ? "Radicando la subsanación…"
+                                  : "Pendiente de cargue."
+                              }}
+                            </span>
+                          } @else {
+                            <div class="accion-documento">
+                              <span class="chip chip--exito">
+                                <mat-icon aria-hidden="true">check</mat-icon>
+                                <span>Validado y listo</span>
+                              </span>
+                              @if (puedeSustituir(documento)) {
+                                <button
+                                  class="boton-recto"
+                                  type="button"
+                                  (click)="prepararReemplazo(documento)"
+                                >
+                                  <mat-icon aria-hidden="true">swap_horiz</mat-icon>
+                                  <span>Sustituir</span>
+                                </button>
+                              } @else {
+                                <span class="texto-bloqueo">
+                                  {{
+                                    enviando()
+                                      ? "Radicando la subsanación…"
+                                      : subiendo()
+                                        ? "Espere a que termine el cargue en curso."
+                                        : "El periodo no permite reemplazos."
+                                  }}
+                                </span>
+                              }
+                            </div>
+                          }
+                        } @else {
+                          <span class="texto-bloqueo">
+                            {{
+                              p.radicada
+                                ? "Subsanación radicada: solo lectura."
+                                : p.estadoPeriodo === "configurada"
+                                  ? "El periodo aún no inicia."
+                                  : p.estadoPeriodo === "cancelada"
+                                    ? "El periodo fue cancelado."
+                                    : "Periodo cerrado: solo lectura."
+                            }}
+                          </span>
+                        }
+                      } @else {
+                        <span class="texto-bloqueo">
+                          {{
+                            documento.bloqueadoPorPliego
+                              ? "Bloqueado por el pliego."
+                              : "No habilitado para subsanación."
+                          }}
+                        </span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </tarjeta-seccion>
+
+        <tarjeta-seccion
+          icono="edit_note"
+          titulo="Observaciones y justificación del proponente"
+          subtitulo="Espacio opcional para aclaraciones técnicas o número de folios."
+        >
+          <div class="campo">
+            <label
+              class="campo__etiqueta"
+              id="justificacion-subsanacion-etiqueta"
+            >
+              Justificación de la subsanación
+            </label>
+            <editor-enriquecido
+              idEtiqueta="justificacion-subsanacion-etiqueta"
+              [formControl]="justificacion"
+              pista="Describa las aclaraciones o cambios documentales presentados…"
+              ayuda="Opcional · no modifica su oferta económica."
+              [maxCaracteres]="1000"
+              [rows]="4"
+              [nota]="'La justificación se registrará en el evento de radicación de la subsanación.'"
+            ></editor-enriquecido>
+          </div>
+        </tarjeta-seccion>
+
+        <tarjeta-seccion
+          icono="history"
+          titulo="Historial de cambios"
+          subtitulo="Eventos registrados con fecha, hora y usuario (RN-08)."
+        >
+          @if (lineaTiempo().length) {
+            <linea-tiempo
+              [eventos]="lineaTiempo()"
+              etiquetaLista="Historial de la subsanación del proveedor"
+            ></linea-tiempo>
+          } @else {
+            <p class="historial-vacio">
+              Todavía no hay eventos registrados para su empresa.
+            </p>
+          }
+        </tarjeta-seccion>
+
+        @if (errorEnvio()) {
+          <div class="error-envio" role="alert" aria-live="assertive">
+            <mat-icon aria-hidden="true">error_outline</mat-icon>
+            <p>{{ errorEnvio() }}</p>
+            @if (ultimoIntento()) {
+              <button class="boton-recto" type="button" (click)="reintentarAdjunto()">
+                <mat-icon aria-hidden="true">refresh</mat-icon>
+                <span>Reintentar cargue</span>
+              </button>
+              <button class="boton-recto" type="button" (click)="descartarCargaPendiente()">
+                <mat-icon aria-hidden="true">close</mat-icon>
+                <span>Descartar archivo</span>
+              </button>
+            } @else if (puedeRadicar()) {
+              <button class="boton-recto" type="button" (click)="radicar()">
+                <mat-icon aria-hidden="true">refresh</mat-icon>
+                <span>Reintentar envío</span>
+              </button>
+            }
+          </div>
+        }
+
+        <p class="anuncio" role="status" aria-live="polite">{{ anuncio() }}</p>
+
+        <aside class="nota-solo-lectura" aria-labelledby="nota-subsanacion-titulo">
+          <mat-icon aria-hidden="true">lock</mat-icon>
+          <div>
+            <h2 id="nota-subsanacion-titulo">Trazabilidad y solo lectura</h2>
+            <p>
+              @if (p.radicada) {
+                Su subsanación ya fue radicada. La consulta queda en solo
+                lectura y los cambios están custodiados en el historial.
+              } @else {
+                Los documentos autorizados se registran con fecha, hora y
+                usuario. La oferta económica permanece inmutable.
+              }
+            </p>
+          </div>
+        </aside>
+
+        <footer class="dock" aria-label="Acciones de la subsanación">
+          <div class="dock__progreso">
+            <div class="dock__progreso-textos">
+              <strong>{{ p.completados }} de {{ p.total }} documentos cargados</strong>
+              <span>{{ p.porcentaje }}% · {{ avance() }}</span>
+            </div>
+            <mat-progress-bar
+              mode="determinate"
+              [value]="p.porcentaje"
+              aria-label="Progreso total de la subsanación"
+            ></mat-progress-bar>
+            <span class="dock__ayuda">
+              @if (p.radicada) {
+                Subsanación radicada el {{ formatear(p.radicadaEl) }}.
+              } @else if (p.estadoPeriodo !== "activa") {
+                El periodo no está activo; no se admiten nuevos cambios.
+              } @else if (p.obligatoriosPendientes > 0) {
+                Complete los documentos obligatorios para radicar.
+              } @else {
+                Los archivos se guardan al cargarlos; el envío formal bloquea
+                nuevos cambios.
+              }
+            </span>
+          </div>
+          <div class="dock__acciones">
+            @if (ultimoGuardado(); as guardado) {
+              <span class="dock__guardado">
+                <mat-icon aria-hidden="true">cloud_done</mat-icon>
+                Borrador local: {{ guardado }}
+              </span>
+            }
+            <button
+              class="boton-recto"
+              type="button"
+              [disabled]="enviando() || p.radicada || !p.puedeEditar"
+              (click)="guardarBorrador()"
+            >
+              <mat-icon aria-hidden="true">save</mat-icon>
+              <span>Guardar borrador</span>
+            </button>
+            <button
+              class="boton-recto boton-recto--vino"
+              type="button"
+              [disabled]="!puedeRadicar()"
+              [attr.aria-describedby]="p.obligatoriosPendientes > 0 ? 'dock-ayuda-radicar' : null"
+              (click)="abrirConfirmacion()"
+            >
+              <mat-icon aria-hidden="true">send</mat-icon>
+              <span>{{ etiquetaBotonRadicar }}</span>
+            </button>
+            @if (p.obligatoriosPendientes > 0) {
+              <span id="dock-ayuda-radicar" class="visually-oculto">
+                Faltan {{ p.obligatoriosPendientes }} documentos obligatorios
+                por cargar.
+              </span>
+            }
+          </div>
+        </footer>
+      }
+    }
+  </div>
+</plantilla-pagina-contenedora>

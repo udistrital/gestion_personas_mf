@@ -1,0 +1,57 @@
+<section class="acuse" aria-labelledby="dialogo-exito-subsanacion-titulo">
+  <header class="acuse__cabecera">
+    <span class="acuse__icono" aria-hidden="true">
+      <mat-icon>check_circle</mat-icon>
+    </span>
+    <span class="acuse__etiqueta">Radicación exitosa</span>
+    <h2 id="dialogo-exito-subsanacion-titulo" class="acuse__titulo">
+      Subsanación registrada correctamente
+    </h2>
+    <p class="acuse__mensaje">
+      Los documentos fueron sellados electrónicamente y anexados a su propuesta
+      para la solicitud <strong>{{ datos.solicitudId }}</strong>.
+    </p>
+  </header>
+
+  <div class="acuse__cuerpo">
+    <div class="acuse__radicado">
+      <span class="acuse__rotulo">Radicado oficial</span>
+      <span class="acuse__codigo">{{ datos.radicado }}</span>
+    </div>
+
+    <dl class="acuse__detalle" aria-label="Detalle de la radicación">
+      <div>
+        <dt>Estampa cronológica</dt>
+        <dd><time [attr.datetime]="datos.fecha">{{ fecha }}</time></dd>
+      </div>
+      <div>
+        <dt>Operador</dt>
+        <dd>{{ datos.operador }}</dd>
+      </div>
+      <div>
+        <dt>Huella de integridad</dt>
+        <dd class="acuse__hash">{{ datos.hash }}</dd>
+      </div>
+    </dl>
+
+    <p class="acuse__nota">
+      <mat-icon aria-hidden="true">lock</mat-icon>
+      <span>
+        La subsanación quedó radicada y no admite nuevos cambios. El hash
+        definitivo, el acta y la constancia PDF los emitirá el gestor
+        documental institucional (provisional).
+      </span>
+    </p>
+  </div>
+
+  <footer class="acuse__pie">
+    <button class="boton-recto" type="button" (click)="descargarConstancia()">
+      <mat-icon aria-hidden="true">receipt_long</mat-icon>
+      <span>Descargar constancia (PDF)</span>
+    </button>
+    <button class="boton-recto boton-recto--vino" type="button" (click)="irACotizacion()">
+      <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+      <span>Ir a mi cotización</span>
+    </button>
+  </footer>
+</section>

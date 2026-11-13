@@ -25,6 +25,11 @@ import {
   etiquetaTipoCotizacionProveedor,
 } from "../../../models/invitacion-proveedor.model";
 import { SolicitudesService } from "../../../services/solicitudes.service";
+import {
+  etiquetaAvanceSubsanacion,
+  resumenSubsanacionProveedor,
+} from "../../../models/subsanacion-proveedor.model";
+import type { ResumenSubsanacionProveedor } from "../../../models/subsanacion-proveedor.model";
 
 type EstadoVista = "cargando" | "listo" | "error";
 
@@ -293,7 +298,22 @@ export class BandejaSolicitudesComponent implements OnInit {
     return this.permisos.accionesInvitacionPermitidas(
       fila.invitacion,
       fila.solicitud,
+      fila.proveedorId,
     );
+  }
+
+  /** Resumen del periodo de subsanación de la fila, si involucra al proveedor. */
+  subsanacionDe(fila: InvitacionProveedorConSolicitud) {
+    const periodo = fila.solicitud.subsanacion;
+    return periodo && fila.proveedorId
+      ? resumenSubsanacionProveedor(periodo, fila.proveedorId)
+      : null;
+  }
+
+  etiquetaSubsanacion(resumen: ResumenSubsanacionProveedor): string {
+    return resumen.radicada
+      ? "Subsanación radicada"
+      : etiquetaAvanceSubsanacion(resumen.estadoProveedor);
   }
 
   ejecutarAccion(

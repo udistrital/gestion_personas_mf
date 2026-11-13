@@ -10,6 +10,14 @@ export interface DialogoConfirmarEnvioDatos {
   readonly diasVigencia: number | null;
   /** Fecha de vencimiento de la oferta en formato ISO, si existe. */
   readonly fechaVencimiento: string;
+  /** `envio` para P-04 y `actualizacion` para P-05. */
+  readonly modo?: "envio" | "actualizacion";
+  readonly totalAnterior?: number;
+  readonly fechaCierre?: string;
+  readonly versionAnterior?: string;
+  readonly versionNueva?: string;
+  readonly adenda?: string;
+  readonly radicadoPrevio?: string;
 }
 
 /**
@@ -34,6 +42,14 @@ export class DialogoConfirmarEnvioComponent {
     @Inject(MAT_DIALOG_DATA) readonly datos: DialogoConfirmarEnvioDatos,
   ) {}
 
+  get esActualizacion(): boolean {
+    return this.datos.modo === "actualizacion";
+  }
+
+  get diferencia(): number {
+    return this.datos.total - (this.datos.totalAnterior ?? 0);
+  }
+
   get vigencia(): string {
     return this.datos.diasVigencia !== null
       ? `${this.datos.diasVigencia} días calendario`
@@ -55,6 +71,11 @@ export class DialogoConfirmarEnvioComponent {
       currency: "COP",
       maximumFractionDigits: 0,
     });
+  }
+
+  formatoDiferencia(valor: number): string {
+    const signo = valor > 0 ? "+" : "";
+    return `${signo}${this.formatoMoneda(valor)}`;
   }
 
   /** Cierra sin radicar la respuesta. */

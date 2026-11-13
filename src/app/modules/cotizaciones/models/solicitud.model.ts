@@ -14,6 +14,8 @@ import {
   ProveedoresObjetivoDetalle,
 } from "./detalle-solicitud.model";
 import { ItemSolicitud, TipoNecesidadSolicitud } from "./items.model";
+import type { DecisionSolicitud } from "./decision.model";
+import type { Subsanacion } from "./subsanacion.model";
 
 export type TipoCotizacion = "BIEN" | "SERVICIO" | "BIEN_Y_SERVICIO";
 
@@ -54,6 +56,12 @@ export interface Solicitud {
   readonly cancelacion?: DatosCancelacionSolicitud;
   /** Cierre para formular observaciones; distinto del cierre de la solicitud. */
   readonly fechaLimiteObservaciones?: string | null;
+  /** Envío a validación y, si existe, decisión final del Ordenador del Gasto. */
+  readonly decision?: DecisionSolicitud;
+  /** Decisiones anteriores cuando se reenvió a validación tras un rechazo. */
+  readonly historialDecisiones?: readonly DecisionSolicitud[];
+  /** Último periodo de subsanación configurado (S-12). */
+  readonly subsanacion?: Subsanacion | null;
 }
 
 /** Criterios del formulario de filtros de S-01. */
@@ -213,4 +221,29 @@ export function fechaCierreSolicitud(cierre: string | null): number | null {
 export function cierreSolicitudVencido(cierre: string | null): boolean {
   const marca = fechaCierreSolicitud(cierre);
   return marca !== null && marca <= Date.now();
+}
+
+/** Estados terminales en los que la solicitud ya no admite participación. */
+const ESTADOS_SOLICITUD_TERMINALES = [
+  "adjudicada",
+  "desierta",
+  "cancelada",
+] as const;
+
+/**
+ * true cuando la solicitud está cerrada para el proveedor.
+ *
+ * Combina el estado terminal con el vencimiento del plazo de recepción: una
+ * solicitud `en-evaluacion` o `enviada-con-modificaciones` con el cierre
+ * vencido ya no admite respuestas ni actualizaciones. Lo comparten el detalle
+ * del proveedor (P-02) y la consulta de su respuesta (P-06).
+ */
+export function solicitudCerrada(
+  solicitud: Pick<Solicitud, "estado" | "cierre">,
+): boolean {
+  return (
+    (ESTADOS_SOLICITUD_TERMINALES as readonly string[]).includes(
+      solicitud.estado,
+    ) || cierreSolicitudVencido(solicitud.cierre)
+  );
 }
